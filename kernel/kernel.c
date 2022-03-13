@@ -12,7 +12,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
     IDTInit();
     bootloaderTermWrite("done\n");
 
-    // test idt
+    // test idt by issuing a #DE
     int a = 5;
     int b = 0;
     int c = a/b;

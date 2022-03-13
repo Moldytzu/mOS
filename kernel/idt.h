@@ -31,5 +31,3 @@ struct pack IDTGateDescriptor
 
 void IDTSetGate(struct IDTDescriptor *desc, void *handler, uint8_t entry, uint8_t attributes, uint8_t selector);
 void IDTInit();
-
-void IDTBaseHandler();
