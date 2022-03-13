@@ -8,8 +8,8 @@ void _start(struct stivale2_struct *stivale2_struct) {
     // display something
     bootloaderTermWrite("Hello world!");
 
-    // We're done, just hang...
+    // hang
     for (;;) {
-        asm ("hlt");
+        asm volatile ("hlt");
     }
 }

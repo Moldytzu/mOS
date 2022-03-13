@@ -45,7 +45,7 @@ void *bootloaderGetTag(struct stivale2_struct *stivale2_struct, uint64_t id) {
     struct stivale2_tag *current_tag = (void *)stivale2_struct->tags;
     while(1) {
         // check if the list is over
-        if (current_tag == NULL) return NULL;
+        if (current_tag == NULL) hang(); // hang if we don't find it
 
         // check whether the identifier matches.
         if (current_tag->identifier == id) return current_tag;
@@ -59,15 +59,7 @@ void *bootloaderGetTag(struct stivale2_struct *stivale2_struct, uint64_t id) {
 void bootloaderInit(struct stivale2_struct *stivale2_struct)
 {
     termTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID); // get terminal
-    // check if the tag was actually found.
-    if (termTag == NULL) {
-        // if it wasn't found, just hang...
-        for (;;) {
-            asm ("hlt");
-        }
-    }
-
-    termWrite = (void*)termTag->term_write;
+    termWrite = (void*)termTag->term_write; // set write function
 }
 
 // write to stivale2 terminal
