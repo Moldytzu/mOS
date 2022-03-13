@@ -13,12 +13,10 @@ void IDTSetGate(struct IDTDescriptor *desc, void *handler, uint8_t entry, uint8_
     gate->offset3 = (uint32_t)(((uint64_t)handler >> 32));
 }
 
-struct frame;
-
-__attribute__((interrupt)) void IDTBaseHandler(struct frame *frame)
+extern void BaseHandlerEntry();
+extern void BaseHandler(struct IDTInterruptStack *stack)
 {
-    SerialWrite("Intrerrupt!\n"); // show a message on intrerrupt
-    hang();
+    SerialWrite("Intrerrupt!\n");
 }
 
 void IDTInit()
@@ -28,7 +26,7 @@ void IDTInit()
     idtr.offset = (uint64_t)&idtData[0];
     idtr.size = 0xFF;
     for(int i = 0;i<255;i++)
-        IDTSetGate(&idtr, (void *)IDTBaseHandler,i,IDT_InterruptGate,8);
+        IDTSetGate(&idtr, (void *)BaseHandlerEntry,i,IDT_InterruptGate,8);
 
     asm volatile ("lidt %0" :: "m" (idtr));
     asm volatile ("sti"); // enable intrerrupts

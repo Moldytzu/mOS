@@ -7,7 +7,7 @@
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct) {
     bootloaderInit(stivale2_struct); // init bootloader
-    bootloaderTermWrite("Starting up the kernel. Switching to serial console display\n"); // display a message
+    bootloaderTermWrite("Starting up the kernel. Switching to serial console.\n"); // display a message
 
     // initialize the gdt
     SerialWrite("Initializing the GDT...");
@@ -19,10 +19,8 @@ void _start(struct stivale2_struct *stivale2_struct) {
     IDTInit();
     SerialWrite("done\n");
 
-    // test idt by issuing a #DE
-    int a = 5;
-    int b = 0;
-    int c = a/b;
+    // cause an intrerrupt
+    asm volatile ("int $0");
 
     // hang
     for (;;) {
