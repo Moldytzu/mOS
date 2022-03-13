@@ -7,7 +7,7 @@ CC := cc
 LD := ld
 
 # User controllable CFLAGS.
-CFLAGS ?= -O0 -g -Wall -Wextra -Werror
+CFLAGS ?= -O0 -g -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable
 
 # User controllable linker flags. We set none by default.
 LDFLAGS ?=

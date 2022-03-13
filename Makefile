@@ -7,6 +7,10 @@ all: $(OUTPUT)
 run: $(OUTPUT)
 	qemu-system-x86_64 -M q35 -m 2G -cdrom $(OUTPUT) -boot d
 
+.PHONY: run-debug
+run-debug: $(OUTPUT)
+	qemu-system-x86_64 -M q35 -m 2G -cdrom $(OUTPUT) -boot d -no-reboot -no-shutdown -d int
+
 limine:
 	mkdir -p out
 	git clone https://github.com/limine-bootloader/limine.git --branch=v2.0-branch-binary --depth=1

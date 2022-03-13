@@ -1,4 +1,16 @@
 #include <utils.h>
+#include <bootloader.h>
+
+// attributes
+#define IDT_InterruptGate 0b10001110
+#define IDT_InterruptGateU 0b11101110
+#define IDT_CallGate 0b10001100
+#define IDT_CallGateU 0b11101100
+#define IDT_TrapGate 0b10001111
+#define IDT_TrapGateU 0b11101111
+
+// exceptions
+#define IDT_DE 0
 
 struct pack IDTDescriptor
 {
@@ -17,4 +29,7 @@ struct pack IDTGateDescriptor
     uint32_t reserved;
 };
 
+void IDTSetGate(struct IDTDescriptor *desc, void *handler, uint8_t entry, uint8_t attributes, uint8_t selector);
 void IDTInit();
+
+void IDTBaseHandler();
