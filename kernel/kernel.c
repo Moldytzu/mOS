@@ -2,21 +2,22 @@
 #include <bootloader.h>
 #include <idt.h>
 #include <gdt.h>
+#include <serial.h>
 
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct) {
     bootloaderInit(stivale2_struct); // init bootloader
-    bootloaderTermWrite("Starting up the kernel.\n"); // display a message
+    bootloaderTermWrite("Starting up the kernel. Switching to serial console display\n"); // display a message
 
     // initialize the gdt
-    bootloaderTermWrite("Initializing the GDT...");
+    SerialWrite("Initializing the GDT...");
     GDTInit();
-    bootloaderTermWrite("done\n");
+    SerialWrite("done\n");
 
     // initialize the idt
-    bootloaderTermWrite("Initializing the IDT...");
+    SerialWrite("Initializing the IDT...");
     IDTInit();
-    bootloaderTermWrite("done\n");
+    SerialWrite("done\n");
 
     // test idt by issuing a #DE
     int a = 5;

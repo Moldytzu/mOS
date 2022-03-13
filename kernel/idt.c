@@ -17,7 +17,7 @@ struct frame;
 
 __attribute__((interrupt)) void IDTBaseHandler(struct frame *frame)
 {
-    bootloaderTermWrite("Intrerrupt!\n"); // show a message on intrerrupt
+    SerialWrite("Intrerrupt!\n"); // show a message on intrerrupt
     hang();
 }
 

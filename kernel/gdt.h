@@ -1,5 +1,5 @@
+#pragma once
 #include <utils.h>
-#include <bootloader.h>
 
 struct pack GDTDescriptor
 {
