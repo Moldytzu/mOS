@@ -1,4 +1,4 @@
-KERNEL := ../out/kernel.elf
+KERNEL := ../../out/kernel.elf
 
 # use host c compiler
 CC := cc
@@ -31,7 +31,7 @@ INTERNALCFLAGS :=   \
 
 # Internal linker flags that should not be changed by the user.
 INTERNALLDFLAGS :=    \
-	-Tlinker.ld            \
+	-T../linker.ld            \
 	-nostdlib              \
 	-zmax-page-size=0x1000 \
 	-static
@@ -50,7 +50,7 @@ stivale2.h:
 
 # Link rules for the final kernel executable.
 $(KERNEL): $(OBJ)
-	$(LD) obj/$(OBJ) $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
+	cd obj && $(LD) $(OBJ) $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
 
 # Compilation rules for *.c files.
 -include $(HEADER_DEPS)
