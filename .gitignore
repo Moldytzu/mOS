@@ -6,3 +6,6 @@ kernel/stivale2.h
 *.hdd
 *.o
 *.d
+iso_root
+out
+obj

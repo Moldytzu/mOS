@@ -1,28 +1,19 @@
-# This is the name that our final kernel executable will have.
-# Change as needed.
-override KERNEL := kernel.elf
+KERNEL := ../out/kernel.elf
 
-# It is highly recommended to use a custom built cross toolchain to build a kernel.
-# We are only using "cc" as a placeholder here. It may work by using
-# the host system's toolchain, but this is not guaranteed.
-ifeq ($(origin CC), default)
+# use host c compiler
 CC := cc
-endif
 
-# Likewise, "ld" here is just a placeholder and your mileage may vary if using the
-# host's "ld".
-ifeq ($(origin LD), default)
+# use host linker
 LD := ld
-endif
 
 # User controllable CFLAGS.
-CFLAGS ?= -O2 -g -Wall -Wextra -pipe
+CFLAGS ?= -O0 -g -Wall -Wextra -Werror
 
 # User controllable linker flags. We set none by default.
 LDFLAGS ?=
 
 # Internal C flags that should not be changed by the user.
-override INTERNALCFLAGS :=   \
+INTERNALCFLAGS :=   \
 	-I.                  \
 	-std=gnu11           \
 	-ffreestanding       \
@@ -39,16 +30,16 @@ override INTERNALCFLAGS :=   \
 	-MMD
 
 # Internal linker flags that should not be changed by the user.
-override INTERNALLDFLAGS :=    \
+INTERNALLDFLAGS :=    \
 	-Tlinker.ld            \
 	-nostdlib              \
 	-zmax-page-size=0x1000 \
 	-static
 
 # Use find to glob all *.c files in the directory and extract the object names.
-override CFILES := $(shell find ./ -type f -name '*.c')
-override OBJ := $(CFILES:.c=.o)
-override HEADER_DEPS := $(CFILES:.c=.d)
+CFILES := $(shell find . -type f -name '*.c')
+OBJ := $(CFILES:.c=.o)
+HEADER_DEPS := $(CFILES:.c=.d)
 
 # Default target.
 .PHONY: all
@@ -59,12 +50,12 @@ stivale2.h:
 
 # Link rules for the final kernel executable.
 $(KERNEL): $(OBJ)
-	$(LD) $(OBJ) $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
+	$(LD) obj/$(OBJ) $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
 
 # Compilation rules for *.c files.
 -include $(HEADER_DEPS)
 %.o: %.c stivale2.h
-	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o obj/$@
 
 # Remove object files and the final executable.
 .PHONY: clean
