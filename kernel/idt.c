@@ -28,7 +28,7 @@ void IDTInit()
     idtr.offset = (uint64_t)&idtData[0];
     idtr.size = 0xFF;
     for(int i = 0;i<255;i++)
-        IDTSetGate(&idtr, (void *)IDTBaseHandler,i,IDT_InterruptGate,i);
+        IDTSetGate(&idtr, (void *)IDTBaseHandler,i,IDT_InterruptGate,8);
 
     asm volatile ("lidt %0" :: "m" (idtr));
     asm volatile ("sti"); // enable intrerrupts
