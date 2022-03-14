@@ -24,7 +24,7 @@ $(OUTPUT): limine kernel
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf \
-		limine.cfg limine/limine.sys limine/limine-cd.bin limine/limine-eltorito-efi.bin iso_root/
+		limine.cfg limine/limine.sys limine/limine-cd.bin limine/limine-eltorito-efi.bin font-8x16.psf iso_root/
 	xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-eltorito-efi.bin \
@@ -35,10 +35,10 @@ $(OUTPUT): limine kernel
 
 .PHONY: clean
 clean:
-	rm -f iso_root $(OUTPUT) barebones.hdd
+	rm -f iso_root $(OUTPUT)
 	$(MAKE) -C kernel clean
 
 .PHONY: distclean
 distclean: clean
-	rm -rf limine ovmf-x64
+	rm -rf limine
 	$(MAKE) -C kernel distclean

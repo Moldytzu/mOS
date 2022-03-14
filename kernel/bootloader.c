@@ -2,6 +2,7 @@
 
 struct stivale2_struct_tag_framebuffer *framebufTag;
 struct stivale2_struct_tag_terminal *termTag;
+struct stivale2_struct_tag_modules *modsTag;
 
 void (*termWrite)(const char *string, size_t length);
 
@@ -65,6 +66,7 @@ void bootloaderInit(struct stivale2_struct *stivale2_struct)
     termWrite = (void*)termTag->term_write; // set write function
 
     framebufTag = bootloaderGetTag(stivale2_struct,STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID); // get frame buffer info
+    modsTag = bootloaderGetTag(stivale2_struct,STIVALE2_STRUCT_TAG_MODULES_ID); // get modules info
 }
 
 // write to stivale2 terminal
@@ -77,4 +79,17 @@ void bootloaderTermWrite(const char *str)
 struct stivale2_struct_tag_framebuffer *bootloaderGetFramebuf()
 {
     return framebufTag;
+}
+
+// get a specific module
+struct stivale2_module bootloaderGetModule(const char *name)
+{
+    for(uint64_t i = 0; i < modsTag->module_count; i++)
+    {
+        if(strlen(modsTag->modules[i].string) != strlen(name)) continue; // if the lenghts differ we don't have to check the name byte by byte
+        if(memcmp((void*)modsTag->modules[i].string,(void*)name,strlen(name)) == 0) // if the check is successful we return the module
+            return modsTag->modules[i];
+    }
+
+    return *(struct stivale2_module*)NULL; // return a null pointer
 }

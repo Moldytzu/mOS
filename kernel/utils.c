@@ -39,3 +39,12 @@ void memset64(void *dest, uint64_t data, size_t count)
         *(uint64_t *)dest = data;
 }
 
+int memcmp(void *a, void *b, size_t len)
+{
+    for(size_t i = 0; i < len; i++, a++, b++)
+    {
+        if(*(uint8_t*)a != *(uint8_t*)b)
+            return *(uint8_t*)a-*(uint8_t*)b;
+    }
+    return 0;
+}
