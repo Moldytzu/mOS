@@ -13,12 +13,7 @@ void framebufferInit()
         hang();
     }
 
-    font = bootloaderGetModule("font-8x16.psf"); // default font
-    if(strlen(font.string) != strlen("font-8x16.psf")) // check the strlen
-    {
-        bootloaderTermWrite("Failed to load default font \"font-8x16.psf\".\n");
-        hang();
-    }
+    framebufferLoadFont("font-8x16.psf"); // load default font
 
     framebufferClear(0x000000);
 }
@@ -26,4 +21,16 @@ void framebufferInit()
 void framebufferClear(uint32_t colour)
 {
     memset32((void*)framebufTag->framebuffer_addr,colour,framebufTag->framebuffer_pitch*framebufTag->framebuffer_height); // clear the screen
+}
+
+void framebufferLoadFont(const char *module)
+{
+    font = bootloaderGetModule(module);
+    if(strlen(font.string) != strlen(module))
+    {
+        bootloaderTermWrite("Failed to load font \"");
+        bootloaderTermWrite(module);
+        bootloaderTermWrite("\".\n");
+        hang();
+    }
 }

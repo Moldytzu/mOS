@@ -4,3 +4,4 @@
 
 void framebufferInit();
 void framebufferClear(uint32_t colour);
+void framebufferLoadFont(const char *module);
