@@ -4,7 +4,7 @@ struct psf1_header *font;
 struct stivale2_module fontMod;
 struct stivale2_struct_tag_framebuffer *framebufTag;
 
-uint32_t cursorX = 0, cursorY = 0;
+uint32_t cursorX = 0, cursorY = 0, cursorColour = 0xFFFFFF;
 
 void framebufferInit()
 {
@@ -60,7 +60,7 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
         {
             uint8_t mask = 0b10000000 >> dx; // create a bitmask that shifts based on which pixel from the line we're indexing
             if(*character & mask) // and the mask with the line
-                framebufferPlotp(dx+x,dy+y,0xFFFFFF);
+                framebufferPlotp(dx+x,dy+y,cursorColour);
         }
     }
 }
@@ -80,4 +80,20 @@ void framebufferWrite(const char *str)
         cursorX += 8 + 1; // add character's width and a 1 px padding
     }
     
+}
+
+struct framebuffer_cursor_info framebufferGetCursor()
+{
+    struct framebuffer_cursor_info info;
+    info.colour = cursorColour;
+    info.X = cursorX;
+    info.Y = cursorY;
+    return info;
+}
+
+void framebufferSetCursor(struct framebuffer_cursor_info info)
+{
+    cursorColour = info.colour;
+    cursorX = info.X;
+    cursorY = info.Y;
 }
