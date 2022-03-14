@@ -48,7 +48,7 @@ error: // show an error message
 
 void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {
-    *(uint32_t*)((uint32_t*)framebufTag->framebuffer_addr + x + y * framebufTag->framebuffer_width) = colour; // set the pixel to colour
+    *(uint32_t*)((uint64_t)framebufTag->framebuffer_addr + x * framebufTag->framebuffer_bpp/8 + y * framebufTag->framebuffer_pitch) = colour; // set the pixel to colour
 }
 
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
