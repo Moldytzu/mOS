@@ -11,5 +11,5 @@
 #define COM7 0x5E8
 #define COM8 0x4E8
 
-void SerialWritec(char c);
-void SerialWrite(const char *str);
+void serialWritec(char c);
+void serialWrite(const char *str);

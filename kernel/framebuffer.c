@@ -4,11 +4,13 @@ struct psf1_header *font;
 struct stivale2_module fontMod;
 struct stivale2_struct_tag_framebuffer *framebufTag;
 
+uint32_t cursorX = 0, cursorY = 0;
+
 void framebufferInit()
 {
-    framebufTag = bootloaderGetFramebuf();
+    framebufTag = bootloaderGetFramebuf(); // get the tag
 
-    if (framebufTag->memory_model != 1)
+    if (framebufTag->memory_model != 1) // check if we use RGB memory model
     {
         bootloaderTermWrite("Unsupported framebuffer memory model.\n");
         hang();
@@ -26,8 +28,8 @@ void framebufferClear(uint32_t colour)
 
 void framebufferLoadFont(const char *module)
 {
-    fontMod = bootloaderGetModule(module);
-    font = (struct psf1_header *)((void *)fontMod.begin);
+    fontMod = bootloaderGetModule(module); // get the module
+    font = (struct psf1_header *)((void *)fontMod.begin); // cast the begining
 
     if(strlen(fontMod.string) != strlen(module)) // if the modules' string len doesn't match, just fail
         goto error;
@@ -37,7 +39,7 @@ void framebufferLoadFont(const char *module)
 
     return;
 
-error:
+error: // show an error message
     bootloaderTermWrite("Failed to load font \"");
     bootloaderTermWrite(module);
     bootloaderTermWrite("\".\n");
@@ -61,4 +63,21 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
                 framebufferPlotp(dx+x,dy+y,0xFFFFFF);
         }
     }
+}
+
+void framebufferWrite(const char *str)
+{
+    for (int i = 0; str[i]; i++)
+    {
+        if(str[i] == '\n') // new line
+        {
+            cursorY += font->charsize + 1; // add character's height and a 1 px padding
+            cursorX = 0; // reset cursor X
+            continue;
+        }
+
+        framebufferPlotc(str[i],cursorX,cursorY);
+        cursorX += 8 + 1; // add character's width and a 1 px padding
+    }
+    
 }

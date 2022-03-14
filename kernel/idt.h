@@ -1,6 +1,6 @@
 #pragma once
 #include <utils.h>
-#include <serial.h>
+#include <framebuffer.h>
 
 // attributes
 #define IDT_InterruptGate 0b10001110

@@ -16,7 +16,7 @@ void IDTSetGate(struct IDTDescriptor *desc, void *handler, uint8_t entry, uint8_
 extern void BaseHandlerEntry();
 extern void BaseHandler(struct IDTInterruptStack *stack)
 {
-    SerialWrite("Intrerrupt!\n");
+    framebufferWrite("Intrerrupt!\n");
 }
 
 void IDTInit()

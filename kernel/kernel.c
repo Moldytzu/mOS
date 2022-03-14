@@ -12,17 +12,18 @@ void _start(struct stivale2_struct *stivale2_struct) {
     // initialize framebuffer
     framebufferInit();
 
-    framebufferPlotc('A',0,0); // plot an "A"
+    // display message
+    framebufferWrite("Starting up the kernel.\n");
 
     // initialize the gdt
-    SerialWrite("Initializing the GDT...");
+    framebufferWrite("Initializing the GDT...");
     GDTInit();
-    SerialWrite("done\n");
+    framebufferWrite("done\n");
 
     // initialize the idt
-    SerialWrite("Initializing the IDT...");
+    framebufferWrite("Initializing the IDT...");
     IDTInit();
-    SerialWrite("done\n");
+    framebufferWrite("done\n");
 
     // cause an intrerrupt
     asm volatile ("int $0");
