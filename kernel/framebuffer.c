@@ -1,13 +1,14 @@
 #include <framebuffer.h>
 
-struct stivale2_module font;
+struct psf1_header *font;
+struct stivale2_module fontMod;
 struct stivale2_struct_tag_framebuffer *framebufTag;
 
 void framebufferInit()
 {
     framebufTag = bootloaderGetFramebuf();
 
-    if(framebufTag->memory_model != 1)
+    if (framebufTag->memory_model != 1)
     {
         bootloaderTermWrite("Unsupported framebuffer memory model.\n");
         hang();
@@ -15,22 +16,34 @@ void framebufferInit()
 
     framebufferLoadFont("font-8x16.psf"); // load default font
 
-    framebufferClear(0x000000);
+    framebufferClear(0x000000); // clear framebuffer
 }
 
 void framebufferClear(uint32_t colour)
 {
-    memset32((void*)framebufTag->framebuffer_addr,colour,framebufTag->framebuffer_pitch*framebufTag->framebuffer_height); // clear the screen
+    memset32((void *)framebufTag->framebuffer_addr, colour, framebufTag->framebuffer_pitch * framebufTag->framebuffer_height); // clear the screen
 }
 
 void framebufferLoadFont(const char *module)
 {
-    font = bootloaderGetModule(module);
-    if(strlen(font.string) != strlen(module))
-    {
-        bootloaderTermWrite("Failed to load font \"");
-        bootloaderTermWrite(module);
-        bootloaderTermWrite("\".\n");
-        hang();
-    }
+    fontMod = bootloaderGetModule(module);
+    font = (struct psf1_header *)((void *)fontMod.begin);
+
+    if(strlen(fontMod.string) != strlen(module)) // if the modules' string len doesn't match, just fail
+        goto error;
+
+    if (font->magic[0] != PSF1_MAGIC0 && font->magic[0] != PSF1_MAGIC1) // if the psf1's magic isn't the one we expect, just fail
+        goto error;
+
+    return;
+
+error:
+    bootloaderTermWrite("Failed to load font \"");
+    bootloaderTermWrite(module);
+    bootloaderTermWrite("\".\n");
+    hang();
+}
+
+void framebufferPlotc(char c, uint32_t x, uint32_t y)
+{
 }
