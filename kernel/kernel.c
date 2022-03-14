@@ -12,6 +12,8 @@ void _start(struct stivale2_struct *stivale2_struct) {
     // initialize framebuffer
     framebufferInit();
 
+    framebufferPlotc('A',0,0); // plot an "A"
+
     // initialize the gdt
     SerialWrite("Initializing the GDT...");
     GDTInit();
