@@ -3,11 +3,14 @@
 #include <idt.h>
 #include <gdt.h>
 #include <serial.h>
+#include <framebuffer.h>
 
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct) {
     bootloaderInit(stivale2_struct); // init bootloader
-    bootloaderTermWrite("Starting up the kernel. Switching to serial console.\n"); // display a message
+
+    // initialize framebuffer
+    framebufferInit();
 
     // initialize the gdt
     SerialWrite("Initializing the GDT...");

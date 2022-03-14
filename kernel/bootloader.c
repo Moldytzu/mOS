@@ -65,11 +65,16 @@ void bootloaderInit(struct stivale2_struct *stivale2_struct)
     termWrite = (void*)termTag->term_write; // set write function
 
     framebufTag = bootloaderGetTag(stivale2_struct,STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID); // get frame buffer info
-    memset((void*)framebufTag->framebuffer_addr,0xFF,framebufTag->framebuffer_pitch*framebufTag->framebuffer_height); // fill the screen with white
 }
 
 // write to stivale2 terminal
 void bootloaderTermWrite(const char *str)
 {
     termWrite(str,strlen(str));
+}
+
+// get stivale2 frame buffer
+struct stivale2_struct_tag_framebuffer *bootloaderGetFramebuf()
+{
+    return framebufTag;
 }
