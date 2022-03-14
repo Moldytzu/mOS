@@ -52,7 +52,7 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
         for(size_t dx = 0; dx < 8; dx++) // 8 pixels wide
         {
             if((*(character) & (0b10000000 >> dx)) > 0)
-                *(uint32_t*)((uint32_t*)framebufTag->framebuffer_addr + dx + (dy * framebufTag->framebuffer_width)) = 0xFFFFFF;
+                *(uint32_t*)((uint32_t*)framebufTag->framebuffer_addr + (dx + x) + (dy + y) * framebufTag->framebuffer_width) = 0xFFFFFF;
         }
         character++;
     }
