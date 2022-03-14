@@ -46,13 +46,14 @@ error:
 
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
-    uint32_t offset = sizeof(struct psf1_header) + c * 16; // get the offset by skipping the header and indexing the character
+    uint8_t *character = (uint8_t*)font + sizeof(struct psf1_header) + c * font->charsize; // get the offset by skipping the header and indexing the character
     for(size_t dy = 0; dy < font->charsize; dy++) // loop thru each line of the character
     {
         for(size_t dx = 0; dx < 8; dx++) // 8 pixels wide
         {
-            if((*(uint8_t*)(font + offset + dy) & (0b10000000 >> dx)) > 0)
-                *(uint32_t*)((uint32_t*)framebufTag->framebuffer_addr + dy + (dx * framebufTag->framebuffer_width)) = 0xFFFFFF;
+            if((*(character) & (0b10000000 >> dx)) > 0)
+                *(uint32_t*)((uint32_t*)framebufTag->framebuffer_addr + dx + (dy * framebufTag->framebuffer_width)) = 0xFFFFFF;
         }
+        character++;
     }
 }
