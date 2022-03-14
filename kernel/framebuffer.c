@@ -52,13 +52,13 @@ void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
     uint8_t *character = (uint8_t*)font + sizeof(struct psf1_header) + c * font->charsize; // get the offset by skipping the header and indexing the character
-    for(size_t dy = 0; dy < font->charsize; dy++) // loop thru each line of the character
+    for(size_t dy = 0; dy < font->charsize; dy++, character++) // loop thru each line of the character
     {
         for(size_t dx = 0; dx < 8; dx++) // 8 pixels wide
         {
-            if((*(character) & (0b10000000 >> dx)) > 0)
+            uint8_t mask = 0b10000000 >> dx; // create a bitmask that shifts based on which pixel from the line we're indexing
+            if(*character & mask) // and the mask with the line
                 framebufferPlotp(dx+x,dy+y,0xFFFFFF);
         }
-        character++;
     }
 }
