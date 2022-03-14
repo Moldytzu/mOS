@@ -3,3 +3,4 @@
 #include <bootloader.h>
 
 void framebufferInit();
+void framebufferClear(uint32_t colour);

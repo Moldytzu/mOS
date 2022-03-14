@@ -20,3 +20,22 @@ void memset(void *dest, uint8_t data, size_t count)
     for (size_t i = 0; i < count; i++, dest++)
         *(uint8_t *)dest = data;
 }
+
+void memset16(void *dest, uint16_t data, size_t count)
+{
+    for (size_t i = 0; i < count; i++, dest+=sizeof(uint16_t))
+        *(uint16_t *)dest = data;
+}
+
+void memset32(void *dest, uint32_t data, size_t count)
+{
+    for (size_t i = 0; i < count; i++, dest+=sizeof(uint32_t))
+        *(uint32_t *)dest = data;
+}
+
+void memset64(void *dest, uint64_t data, size_t count)
+{
+    for (size_t i = 0; i < count; i++, dest+=sizeof(uint64_t))
+        *(uint64_t *)dest = data;
+}
+
