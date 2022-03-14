@@ -7,4 +7,5 @@
 #define pack __attribute__((__packed__))
 
 uint32_t strlen(const char *str);
+void memset(void *dest, uint8_t data, size_t count);
 void hang();

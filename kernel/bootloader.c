@@ -1,6 +1,8 @@
 #include <bootloader.h>
 
+struct stivale2_struct_tag_framebuffer *framebufTag;
 struct stivale2_struct_tag_terminal *termTag;
+
 void (*termWrite)(const char *string, size_t length);
 
 // We need to tell the stivale bootloader where we want our stack to be.
@@ -43,7 +45,8 @@ static struct stivale2_header stivale_hdr = {
 // get tag
 void *bootloaderGetTag(struct stivale2_struct *stivale2_struct, uint64_t id) {
     struct stivale2_tag *current_tag = (void *)stivale2_struct->tags;
-    while(1) {
+    while(true)
+    {
         // check if the list is over
         if (current_tag == NULL) hang(); // hang if we don't find it
 
@@ -60,6 +63,9 @@ void bootloaderInit(struct stivale2_struct *stivale2_struct)
 {
     termTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID); // get terminal
     termWrite = (void*)termTag->term_write; // set write function
+
+    framebufTag = bootloaderGetTag(stivale2_struct,STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID); // get frame buffer info
+    memset((void*)framebufTag->framebuffer_addr,0xFF,framebufTag->framebuffer_pitch*framebufTag->framebuffer_height); // fill the screen with white
 }
 
 // write to stivale2 terminal
