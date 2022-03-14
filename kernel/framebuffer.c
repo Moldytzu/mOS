@@ -44,6 +44,11 @@ error:
     hang();
 }
 
+void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
+{
+    *(uint32_t*)((uint32_t*)framebufTag->framebuffer_addr + x + y * framebufTag->framebuffer_width) = colour; // set the pixel to colour
+}
+
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
     uint8_t *character = (uint8_t*)font + sizeof(struct psf1_header) + c * font->charsize; // get the offset by skipping the header and indexing the character
@@ -52,7 +57,7 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
         for(size_t dx = 0; dx < 8; dx++) // 8 pixels wide
         {
             if((*(character) & (0b10000000 >> dx)) > 0)
-                *(uint32_t*)((uint32_t*)framebufTag->framebuffer_addr + (dx + x) + (dy + y) * framebufTag->framebuffer_width) = 0xFFFFFF;
+                framebufferPlotp(dx+x,dy+y,0xFFFFFF);
         }
         character++;
     }

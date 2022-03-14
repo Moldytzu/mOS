@@ -22,4 +22,5 @@ struct pack psf1_header { // https://www.win.tue.nl/~aeb/linux/kbd/font-formats-
 void framebufferInit();
 void framebufferClear(uint32_t colour);
 void framebufferLoadFont(const char *module);
+void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour);
 void framebufferPlotc(char c, uint32_t x, uint32_t y);
