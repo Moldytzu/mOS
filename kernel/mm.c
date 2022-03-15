@@ -12,7 +12,7 @@ void *mmAllocatePage()
 
     while (byte != info.allocableBase) // loop thru all the bytes in the bitmap
     {
-        for(int j = 1; j <= 8; j++)
+        for(int j = 0; j < 8; j++)
         {
             if(!((0b10000000 >> j) & *byte))
             {
