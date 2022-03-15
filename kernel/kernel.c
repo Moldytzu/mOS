@@ -4,9 +4,12 @@
 #include <gdt.h>
 #include <serial.h>
 #include <framebuffer.h>
+#include <fpu.h>
 
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct) {
+    fpuInit(); // init fpu
+
     bootloaderInit(stivale2_struct); // init bootloader
 
     // initialize framebuffer
