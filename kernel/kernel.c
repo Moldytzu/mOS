@@ -15,6 +15,13 @@ void _start(struct stivale2_struct *stivale2_struct) {
     // display message
     framebufferWrite("Starting up the kernel.\n");
 
+    // display framebuffer information
+    framebufferWrite("Got framebuffer with the size ");
+    framebufferWrite(to_string(bootloaderGetFramebuf()->framebuffer_width));
+    framebufferWrite("x");
+    framebufferWrite(to_string(bootloaderGetFramebuf()->framebuffer_height));
+    framebufferWrite(".\n");
+
     // initialize the gdt
     framebufferWrite("Initializing the GDT...");
     GDTInit();
