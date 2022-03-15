@@ -23,7 +23,7 @@ void *mmAllocatePage()
         }
         bitmapByte++; // increase byte in bitmap
     }
-    
+
     return NULL; // return a null pointer if we don't find an available page
 }
 
@@ -69,6 +69,9 @@ void mmInit()
 
     // align the allocableBase to 4096
     info.allocableBase = (void*)align((uint64_t)info.allocableBase,4096);
+
+    // assign the start byte 
+    bitmapByte = info.base;
 
     memset64(info.base,0,(bytes*8)/64); // zero all the bytes
 }
