@@ -18,6 +18,9 @@ void *mmAllocatePage()
             {
                 info.available -= 4096; // decrement the available memory by a page
                 *byte |= (0b10000000 >> j); // set that bit
+
+                memset64((void*)(info.allocableBase + i * 4096), 0, 512); // zero out 
+
                 return info.allocableBase + i * 4096; // return the pointer
             }
             i++; // increase page index in memory
@@ -71,7 +74,7 @@ void mmInit()
     // align the allocableBase to 4096
     info.allocableBase = (void*)align((uint64_t)info.allocableBase,4096);
 
-    memset(info.base,0,bytes); // zero all the are
+    memset64(info.base,0,(bytes*8)/64); // zero all the bytes
 }
 
 struct mm_info mmGetInfo()
