@@ -5,27 +5,23 @@ struct stivale2_struct_tag_memmap *map;
 
 struct mm_info info; // memory info
 
+uint8_t *bitmapByte; // byte in the bitmap
+size_t idx = 0; // index
 void *mmAllocatePage()
 {
-    uint8_t *byte = info.base; // byte in the bitmap
-    size_t i = 0; // index
-
-    while (byte != info.allocableBase) // loop thru all the bytes in the bitmap
+    while (bitmapByte != info.allocableBase) // loop thru all the bytes in the bitmap
     {
         for(int j = 0; j < 8; j++)
         {
-            if(!((0b10000000 >> j) & *byte)) // if there isn't a bit set, it means that there is a page available
+            if(!((0b10000000 >> j) & *bitmapByte)) // if there isn't a bit set, it means that there is a page available
             {
                 info.available -= 4096; // decrement the available memory by a page
-                *byte |= (0b10000000 >> j); // set that bit
-
-                memset64((void*)(info.allocableBase + i * 4096), 0, 512); // zero out 
-
-                return info.allocableBase + i * 4096; // return the pointer
+                *bitmapByte |= (0b10000000 >> j); // set that bit
+                return (void*)(info.allocableBase + idx * 4096); // return the address
             }
-            i++; // increase page index in memory
+            idx++; // increase page index in memory
         }
-        byte++; // increase byte in bitmap
+        bitmapByte++; // increase byte in bitmap
     }
     
     return NULL; // return a null pointer if we don't find an available page
