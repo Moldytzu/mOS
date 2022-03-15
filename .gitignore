@@ -9,3 +9,4 @@ kernel/stivale2.h
 iso_root
 out
 obj
+.vscode

@@ -47,6 +47,12 @@ void _start(struct stivale2_struct *stivale2_struct) {
     framebufferWrite(to_string(toMB(mmGetInfo().total)));
     framebufferWrite(" MB\n");
 
+    for(int i = 0; i < 16; i++) // allocate 16 pages
+    {
+        framebufferWrite(to_string((uint64_t)mmAllocatePage()));
+        framebufferWrite("\n");
+    }
+
     // cause an intrerrupt
     asm volatile ("int $0");
 

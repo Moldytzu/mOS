@@ -57,6 +57,7 @@ const char *to_string(uint64_t val)
     for(; check; digits++, check /= 10); // cut last digit while counting it
 
     memset64(to_stringout,0,4); // clear output, (64/8)*4 = 32 bytes
+    to_stringout[0] = '0'; // set a '0'
     for(int i = digits-1; val; i--, val /= 10)
         to_stringout[i] = (val % 10) + '0';
 

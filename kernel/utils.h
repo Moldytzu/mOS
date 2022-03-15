@@ -7,6 +7,7 @@
 #define pack __attribute__((__packed__))
 #define toMB(x) (x/1024/1024)
 #define toKB(x) (x/1024)
+#define align(val,alg) (val + (alg - val % alg))
 
 // strlen
 uint32_t strlen(const char *str);
