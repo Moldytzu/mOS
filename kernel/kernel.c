@@ -43,9 +43,10 @@ void _start(struct stivale2_struct *stivale2_struct) {
     mmInit();
     framebufferWrite("done\n");
 
+    // display the memory available
     framebufferWrite("Memory available for the kernel ");
     framebufferWrite(to_string(toMB(mmGetInfo().available)));
-    framebufferWrite(" MB\n");
+    framebufferWrite(" MB.\n");
 
     // cause an intrerrupt
     asm volatile ("int $0");
