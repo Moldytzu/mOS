@@ -20,12 +20,14 @@ void mmInit()
             baseMem = (void*)map->memmap[i].base; // and set the base memory address
         }
     }
+}
 
-    // debug info
-    framebufferWrite("\n\nstart debug info");
-    framebufferWrite("\nmap->entries = ");
-    framebufferWrite(to_string(map->entries));
-    framebufferWrite("\navailableMem = ");
-    framebufferWrite(to_string(availableMem));
-    framebufferWrite("\nend debug info\n\n");
+struct mm_info mmGetInfo()
+{
+    struct mm_info info;
+    info.available = availableMem;
+    info.base = baseMem;
+    info.total = totalMem;
+    info.used = usedMem;
+    return info;
 }
