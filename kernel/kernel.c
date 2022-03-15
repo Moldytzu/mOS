@@ -5,12 +5,15 @@
 #include <serial.h>
 #include <framebuffer.h>
 #include <fpu.h>
+#include <mm.h>
 
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct) {
-    fpuInit(); // init fpu
+    // initialize the fpu
+    fpuInit();
 
-    bootloaderInit(stivale2_struct); // init bootloader
+    // initialize the bootloader interface
+    bootloaderInit(stivale2_struct);
 
     // initialize framebuffer
     framebufferInit();
@@ -33,6 +36,11 @@ void _start(struct stivale2_struct *stivale2_struct) {
     // initialize the idt
     framebufferWrite("Initializing the IDT...");
     idtInit();
+    framebufferWrite("done\n");
+
+    // initialize the memory manager
+    framebufferWrite("Initializing the Memory Manager...");
+    mmInit();
     framebufferWrite("done\n");
 
     // cause an intrerrupt
