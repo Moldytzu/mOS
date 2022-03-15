@@ -14,8 +14,9 @@ void *mmAllocatePage()
     {
         for(int j = 0; j < 8; j++)
         {
-            if(!((0b10000000 >> j) & *byte))
+            if(!((0b10000000 >> j) & *byte)) // if there isn't a bit set, it means that there is a page available
             {
+                info.available -= 4096; // decrement the available memory by a page
                 *byte |= (0b10000000 >> j); // set that bit
                 return info.allocableBase + i * 4096; // return the pointer
             }
