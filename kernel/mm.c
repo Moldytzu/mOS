@@ -7,6 +7,7 @@ struct mm_info info; // memory info
 
 uint8_t *bitmapByte; // byte in the bitmap
 size_t idx = 0; // index
+bool loop = false;
 void *mmAllocatePage()
 {
     while (bitmapByte != info.allocableBase) // loop thru all the bytes in the bitmap
@@ -17,6 +18,7 @@ void *mmAllocatePage()
             {
                 info.available -= 4096; // decrement the available memory by a page
                 *bitmapByte |= (0b10000000 >> j); // set that bit
+                loop = false; // indicate that we are done
                 return (void*)(info.allocableBase + idx * 4096); // return the address
             }
             idx++; // increase page index in memory
@@ -24,7 +26,14 @@ void *mmAllocatePage()
         bitmapByte++; // increase byte in bitmap
     }
 
-    return NULL; // return a null pointer if we don't find an available page
+    // if we don't find an available page search again from the begining
+
+    if(loop) // if the second search was unsucessful return null
+        return NULL;
+
+    bitmapByte = info.base; // reset byte
+    loop = true; // indicate that we are using recursivity
+    return mmAllocatePage();
 }
 
 void mmDeallocatePage(void *address)
