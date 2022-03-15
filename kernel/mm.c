@@ -28,6 +28,27 @@ void *mmAllocatePage()
     return NULL; // return a null pointer if we don't find an available page
 }
 
+void mmDeallocatePage(void *address)
+{
+    uint8_t *byte = info.base; // byte in the bitmap
+    size_t i = 0; // index
+
+    while (byte != info.allocableBase) // loop thru all the bytes in the bitmap
+    {
+        for(int j = 0; j < 8; j++)
+        {
+            if((void*)(info.allocableBase + i * 4096) == address) // check if we indexed the address
+            {
+                *byte &= ~(0b10000000 >> j); // clear that bit
+                info.available += 4096; // increase available memory
+                return; // return
+            }
+            i++; // increase page index in memory
+        }
+        byte++; // increase byte in bitmap
+    }
+}
+
 void mmInit()
 {
     map = bootloaderGetMemMap(); // get the map

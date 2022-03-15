@@ -11,6 +11,7 @@ struct mm_info
     void *allocableBase; // base address of the allocable memory
 };
 
+void mmDeallocatePage(void *address);
 void *mmAllocatePage();
 void mmInit();
 struct mm_info mmGetInfo();
