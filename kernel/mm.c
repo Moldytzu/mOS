@@ -3,10 +3,7 @@
 
 struct stivale2_struct_tag_memmap *map;
 
-uint64_t totalMem = 0; // total memory
-uint64_t availableMem = 0; // available memory
-uint64_t usedMem = 0; // used memory
-void *baseMem = 0; // base address of the physical memory
+struct mm_info info; // memory info
 
 void mmInit()
 {
@@ -14,20 +11,15 @@ void mmInit()
 
     for(uint64_t i = 0; i < map->entries; i++)
     {
-        if (totalMem < map->memmap[i].length && map->memmap[i].type == STIVALE2_MMAP_USABLE) // check if this is the longest strip of memory and if it's usable
+        if (info.total < map->memmap[i].length && map->memmap[i].type == STIVALE2_MMAP_USABLE) // check if this is the longest strip of memory and if it's usable
         {
-            totalMem = availableMem = map->memmap[i].length; // if yes set the total memory and available memory to the length of the strip
-            baseMem = (void*)map->memmap[i].base; // and set the base memory address
+            info.total = info.available = map->memmap[i].length; // if yes set the total memory and available memory to the length of the strip
+            info.base = (void*)map->memmap[i].base; // and set the base memory address
         }
     }
 }
 
 struct mm_info mmGetInfo()
 {
-    struct mm_info info;
-    info.available = availableMem;
-    info.base = baseMem;
-    info.total = totalMem;
-    info.used = usedMem;
     return info;
 }

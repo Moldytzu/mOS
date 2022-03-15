@@ -4,6 +4,8 @@ struct psf1_header *font;
 struct stivale2_module fontMod;
 struct stivale2_struct_tag_framebuffer *framebufTag;
 
+struct framebuffer_cursor_info cursor; // info
+
 uint32_t cursorX = 0, cursorY = 0, cursorColour = 0xFFFFFF;
 
 void framebufferInit()
@@ -71,29 +73,23 @@ void framebufferWrite(const char *str)
     {
         if(str[i] == '\n') // new line
         {
-            cursorY += font->charsize + 1; // add character's height and a 1 px padding
-            cursorX = 0; // reset cursor X
+            cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
+            cursor.X = 0; // reset cursor X
             continue;
         }
 
-        framebufferPlotc(str[i],cursorX,cursorY);
-        cursorX += 8 + 1; // add character's width and a 1 px padding
+        framebufferPlotc(str[i],cursor.X,cursor.Y);
+        cursor.X += 8 + 1; // add character's width and a 1 px padding
     }
     
 }
 
 struct framebuffer_cursor_info framebufferGetCursor()
 {
-    struct framebuffer_cursor_info info;
-    info.colour = cursorColour;
-    info.X = cursorX;
-    info.Y = cursorY;
-    return info;
+    return cursor;
 }
 
 void framebufferSetCursor(struct framebuffer_cursor_info info)
 {
-    cursorColour = info.colour;
-    cursorX = info.X;
-    cursorY = info.Y;
+    cursor = info;
 }
