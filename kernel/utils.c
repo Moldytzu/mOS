@@ -48,3 +48,17 @@ int memcmp(void *a, void *b, size_t len)
     }
     return 0;
 }
+
+char to_stringout[32]; 
+const char *to_string(uint64_t val)
+{
+    uint64_t check = val; // variable we will process to count the digits
+    uint8_t digits = 0; // we store the digits here
+    for(; check; digits++, check /= 10); // cut last digit while counting it
+
+    memset64(to_stringout,0,4); // clear output, (64/8)*4 = 32 bytes
+    for(int i = digits-1; val; i--, val /= 10)
+        to_stringout[i] = (val % 10) + '0';
+
+    return to_stringout;
+}

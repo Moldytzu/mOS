@@ -18,5 +18,8 @@ void memset64(void *dest, uint64_t data, size_t count);
 // memcmp
 int memcmp(void *a, void *b, size_t len);
 
+// to_string
+const char *to_string(uint64_t val);
+
 // hang
 void hang();
