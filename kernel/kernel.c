@@ -27,12 +27,12 @@ void _start(struct stivale2_struct *stivale2_struct) {
 
     // initialize the gdt
     framebufferWrite("Initializing the GDT...");
-    GDTInit();
+    gdtInit();
     framebufferWrite("done\n");
 
     // initialize the idt
     framebufferWrite("Initializing the IDT...");
-    IDTInit();
+    idtInit();
     framebufferWrite("done\n");
 
     // cause an intrerrupt

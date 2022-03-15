@@ -18,5 +18,5 @@ struct pack GDTSegment
     uint8_t base3;
 };
 
-void GDTCreateSegment(uint8_t access, uint8_t offset);
-void GDTInit();
+void gdtCreateSegment(uint8_t access, uint8_t offset);
+void gdtInit();

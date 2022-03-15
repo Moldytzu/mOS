@@ -1,8 +1,8 @@
 bits 64
 
-global LoadGDT
+global gdtLoad
 
-LoadGDT:
+gdtLoad:
     lgdt [rdi]
     mov ax, 16
     mov ds, ax

@@ -1,12 +1,12 @@
 bits 64
 
-global SSEInit, x87Init
+global sseInit, x87Init
 
 x87Init:
     fninit ; init x87
     ret
 
-SSEInit:    
+sseInit:    
     mov rax, cr0
     and rax, 0xFFFFFFFFFFFFFFFB ; CR0 &= 0xFFFFFFFFFFFFFFFB, clear CR0.EM
     or rax, 0x2 ; CR0 |= 0x2, set CR0.MP
