@@ -20,7 +20,10 @@ void _start(struct stivale2_struct *stivale2_struct)
     framebufferInit();
 
     // display message
-    framebufferWrite("Starting up the kernel.\n");
+    framebufferWrite("Starting up the kernel in ");
+    if(bootloaderGetFirmwareType()) framebufferWrite("BIOS");
+    else framebufferWrite("UEFI");
+    framebufferWrite(" mode.\n");
 
     // display framebuffer information
     framebufferWrite("Got framebuffer with the size ");

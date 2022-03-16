@@ -4,6 +4,7 @@ struct stivale2_struct_tag_framebuffer *framebufTag;
 struct stivale2_struct_tag_terminal *termTag;
 struct stivale2_struct_tag_modules *modsTag;
 struct stivale2_struct_tag_memmap *memTag;
+struct stivale2_struct_tag_firmware *fwTag;
 
 void (*termWrite)(const char *string, size_t length);
 
@@ -69,6 +70,7 @@ void bootloaderInit(struct stivale2_struct *stivale2_struct)
     framebufTag = bootloaderGetTag(stivale2_struct,STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID); // get frame buffer info
     modsTag = bootloaderGetTag(stivale2_struct,STIVALE2_STRUCT_TAG_MODULES_ID); // get modules info
     memTag = bootloaderGetTag(stivale2_struct,STIVALE2_STRUCT_TAG_MEMMAP_ID); // get memory map
+    fwTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FIRMWARE_ID); // get firmware information
 }
 
 // write to stivale2 terminal
@@ -100,4 +102,10 @@ struct stivale2_module bootloaderGetModule(const char *name)
 struct stivale2_struct_tag_memmap *bootloaderGetMemMap()
 {
     return memTag;
+}
+
+// get firmware type
+uint8_t bootloaderGetFirmwareType()
+{
+    return fwTag->flags & 0b1; // 1 bios, 0 uefi
 }
