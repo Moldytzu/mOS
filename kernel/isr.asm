@@ -40,18 +40,11 @@ bits 64
 global BaseHandlerEntry, PITHandlerEntry
 extern BaseHandler, PITHandler
 
-align 16
-
 BaseHandlerEntry:
     PUSH_REG
     call BaseHandler
     POP_REG
     iretq
 
-align 16
-
 PITHandlerEntry:
-    PUSH_REG
-    call PITHandler
-    POP_REG
-    iretq
+    jmp $
