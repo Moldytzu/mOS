@@ -6,6 +6,8 @@
 #include <framebuffer.h>
 #include <fpu.h>
 #include <mm.h>
+#include <pic.h>
+#include <pit.h>
 
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct)
@@ -40,6 +42,16 @@ void _start(struct stivale2_struct *stivale2_struct)
     // initialize the idt
     framebufferWrite("Initializing the IDT...");
     idtInit();
+    framebufferWrite("done\n");
+
+    // initialize the pic chips
+    framebufferWrite("Initializing the PICs...");
+    picInit();
+    framebufferWrite("done\n");
+
+    // initialize the timer
+    framebufferWrite("Initializing the PIT...");
+    pitInit();
     framebufferWrite("done\n");
 
     // initialize the memory manager
