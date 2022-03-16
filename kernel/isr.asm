@@ -1,7 +1,5 @@
 bits 64
 
-ALIGN 16
-
 %macro    PUSH_REG    0
     push    r15
     push    r14
@@ -39,11 +37,21 @@ ALIGN 16
     pop    r15
 %endmacro
 
-global BaseHandlerEntry
-extern BaseHandler
+global BaseHandlerEntry, PITHandlerEntry
+extern BaseHandler, PITHandler
+
+align 16
 
 BaseHandlerEntry:
     PUSH_REG
     call BaseHandler
+    POP_REG
+    iretq
+
+align 16
+
+PITHandlerEntry:
+    PUSH_REG
+    call PITHandler
     POP_REG
     iretq

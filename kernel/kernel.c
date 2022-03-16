@@ -64,9 +64,6 @@ void _start(struct stivale2_struct *stivale2_struct)
     framebufferWrite(to_string(toMB(mmGetInfo().available)));
     framebufferWrite(" MB.\n");
 
-    // cause an intrerrupt
-    asm volatile("int $0");
-
     // hang
     while (1)
         asm volatile("hlt");
