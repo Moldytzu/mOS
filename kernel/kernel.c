@@ -8,7 +8,8 @@
 #include <mm.h>
 
 // entry point of the kernel
-void _start(struct stivale2_struct *stivale2_struct) {
+void _start(struct stivale2_struct *stivale2_struct)
+{
     // initialize the fpu
     fpuInit();
 
@@ -49,10 +50,9 @@ void _start(struct stivale2_struct *stivale2_struct) {
     framebufferWrite(" MB.\n");
 
     // cause an intrerrupt
-    asm volatile ("int $0");
+    asm volatile("int $0");
 
     // hang
-    for (;;) {
-        asm volatile ("hlt");
-    }
+    while (1)
+        asm volatile("hlt");
 }

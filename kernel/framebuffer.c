@@ -26,7 +26,8 @@ void framebufferInit()
 
 inline void framebufferClear(uint32_t colour)
 {
-    memset32((void *)framebufTag->framebuffer_addr, colour, framebufTag->framebuffer_pitch * framebufTag->framebuffer_height); // clear the screen
+    cursor.X = cursor.Y = 0; // reset cursor position
+    memset64((void *)framebufTag->framebuffer_addr, (uint64_t)colour << 32 | colour, framebufTag->framebuffer_pitch * framebufTag->framebuffer_height / 2); // clear the screen
 }
 
 void framebufferLoadFont(const char *module)
