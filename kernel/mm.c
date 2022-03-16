@@ -29,7 +29,10 @@ void *mmAllocatePage()
     // if we don't find an available page search again from the begining
 
     if(loop) // if the second search was unsucessful return null
+    {
+        loop = false; // reset
         return NULL;
+    }
 
     bitmapByte = info.base; // reset byte
     loop = true; // indicate that we are using recursivity
