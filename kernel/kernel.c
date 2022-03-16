@@ -48,10 +48,6 @@ void _start(struct stivale2_struct *stivale2_struct) {
     framebufferWrite(to_string(toMB(mmGetInfo().available)));
     framebufferWrite(" MB.\n");
 
-    // test the memory allocation algorithm's speed by allocating 3200000 pages
-    for(int i = 0; i < 3200000; i++)
-        mmAllocatePage();
-
     // cause an intrerrupt
     asm volatile ("int $0");
 

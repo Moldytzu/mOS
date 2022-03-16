@@ -14,10 +14,10 @@ void *mmAllocatePage()
     {
         for(int j = 0; j < 8; j++)
         {
-            if(!((0b10000000 >> j) & *bitmapByte)) // if there isn't a bit set, it means that there is a page available
+            if((0b10000000 >> j) & *bitmapByte) // if there is a bit set, it means that there is a page available
             {
                 info.available -= 4096; // decrement the available memory by a page
-                *bitmapByte |= (0b10000000 >> j); // set that bit
+                *bitmapByte &= ~(0b10000000 >> j); // set that bit
                 loop = false; // indicate that we are done
                 return (void*)(info.allocableBase + idx * 4096); // return the address
             }
@@ -47,7 +47,7 @@ void mmDeallocatePage(void *address)
         {
             if((void*)(info.allocableBase + i * 4096) == address) // check if we indexed the address
             {
-                *byte &= ~(0b10000000 >> j); // clear that bit
+                *byte |= 0b10000000 >> j; // set that bit
                 info.available += 4096; // increase available memory
                 return; // return
             }
@@ -82,7 +82,7 @@ void mmInit()
     // assign the start byte 
     bitmapByte = info.base;
 
-    memset64(info.base,0,(bytes*8)/64); // zero all the bytes
+    memset64(info.base,0xFF,(bytes*8)/64); // fill all the bytes
 }
 
 struct mm_info mmGetInfo()
