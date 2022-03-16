@@ -24,7 +24,7 @@ void framebufferInit()
     cursor.X = cursor.Y = 0; // upper left corner
 }
 
-void framebufferClear(uint32_t colour)
+inline void framebufferClear(uint32_t colour)
 {
     memset32((void *)framebufTag->framebuffer_addr, colour, framebufTag->framebuffer_pitch * framebufTag->framebuffer_height); // clear the screen
 }
@@ -49,7 +49,7 @@ error: // show an error message
     hang();
 }
 
-void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
+inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {
     *(uint32_t *)((uint64_t)framebufTag->framebuffer_addr + x * framebufTag->framebuffer_bpp / 8 + y * framebufTag->framebuffer_pitch) = colour; // set the pixel to colour
 }
