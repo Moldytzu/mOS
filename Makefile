@@ -28,7 +28,7 @@ $(OUTPUT): limine kernel
 	xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-eltorito-efi.bin \
-		-efi-boot-part --efi-boot-image --protective-msdos-label \
+		-efi-boot-part --efi-boot-image -J \
 		iso_root -o $(OUTPUT)
 	limine/limine-install $(OUTPUT)
 	rm -rf iso_root
