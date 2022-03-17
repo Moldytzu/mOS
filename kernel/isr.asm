@@ -47,4 +47,7 @@ BaseHandlerEntry:
     iretq
 
 PITHandlerEntry:
-    jmp $
+    PUSH_REG
+    call PITHandler
+    POP_REG
+    iretq

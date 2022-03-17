@@ -25,8 +25,8 @@ void idtInit()
     asm volatile ("cli"); // disable intrerrupts
 
     idtr.offset = (uint64_t)&idtData[0];
-    idtr.size = 0xFF;
-    for(int i = 0;i<255;i++)
+    idtr.size = 0xFF*sizeof(struct IDTGateDescriptor)-1;
+    for(int i = 0;i<0xFF;i++)
         idtSetGate((void *)BaseHandlerEntry,i,IDT_InterruptGate);
 
     asm volatile ("lidt %0" :: "m" (idtr));
