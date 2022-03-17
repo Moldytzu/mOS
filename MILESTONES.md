@@ -1,15 +1,20 @@
-# Milestones
-### find a name
-### scheduler
+# Milestones to reach
+### TSS
+### virtual memory manager
+### scheduler with ring 3 support
 ### system calls using intrerrupt 0x51
-### elf binaries
+### ELF binaries
 ### shell
-### libc
+### libc (maybe mlibc or something)
 ### driver support
+### custom gcc build
+### basic gui infrastructure
 
-# Reached
+# Reached milestones
 ### IDT and GDT
 ### using the framebuffer as the display
 ### booting up sse and x87 fpu
 ### read the memory map
-### memory manager and allocator
+### physical memory manager
+### using the pit as the system-wide timer
+### find a name
