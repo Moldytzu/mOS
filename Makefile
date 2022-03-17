@@ -1,4 +1,5 @@
 OUTPUT = out/dvd.iso
+OUTPUTEFI = out/efi.iso
 
 .PHONY: all
 all: $(OUTPUT)
@@ -31,6 +32,16 @@ $(OUTPUT): limine kernel
 		-efi-boot-part --efi-boot-image -J \
 		iso_root -o $(OUTPUT)
 	limine/limine-install $(OUTPUT)
+	rm -rf iso_root
+
+efi: limine kernel
+	rm -rf iso_root
+	mkdir -p iso_root
+	mkdir -p iso_root/EFI
+	mkdir -p iso_root/EFI/BOOT
+	cp out/kernel.elf limine.cfg font-8x16.psf iso_root/
+	cp limine/BOOTX64.EFI iso_root/EFI/BOOT/
+	xorrisofs -r -J -o $(OUTPUTEFI) iso_root
 	rm -rf iso_root
 
 .PHONY: clean
