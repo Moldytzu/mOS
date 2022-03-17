@@ -3,10 +3,15 @@
 
 struct pit_packet packet;
 
+uint32_t tickspersec = 0;
+uint64_t ticks = 0;
+
 extern void PITHandlerEntry();
 extern void PITHandler()
 {
-    framebufferWrite("T");
+    ticks++;
+    if(ticks % tickspersec == 0) // display "second" every second
+        framebufferWrite("second ");
     picEOI();
 }
 
@@ -16,7 +21,8 @@ void pitSet(uint32_t hz)
     outb(PIT_CMD, unsafe_cast(packet,uint8_t));
 
     // send divisor
-    int div = PIT_DIV / hz;
+    tickspersec = hz;
+    uint16_t div = PIT_DIV / hz;
     outb(PIT_CH_0, div & 0xFF); // low
     outb(PIT_CH_0, (div & 0xFF00) >> 8); // high
 }
@@ -40,4 +46,14 @@ void pitInit()
     outb(PIC_MASTER_DAT,inb(PIC_MASTER_DAT) & ~0b00000001);
     
     asm volatile("sti"); // enable intrerrupts
+}
+
+uint64_t pitGetTicks()
+{
+    return ticks;
+}
+
+uint32_t pitGetScale()
+{
+    return tickspersec;
 }

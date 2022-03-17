@@ -1,5 +1,4 @@
 # Milestones
-### using the pit as the system-wide timer
 ### find a name
 ### scheduler
 ### system calls using intrerrupt 0x51

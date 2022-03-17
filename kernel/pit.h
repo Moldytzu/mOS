@@ -19,5 +19,7 @@ struct pack pit_packet
     unsigned channel : 2; 
 };
 
+uint64_t pitGetTicks();
+uint32_t pitGetScale();
 void pitSet(uint32_t hz);
 void pitInit();
