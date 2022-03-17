@@ -13,13 +13,13 @@
 // exceptions
 #define IDT_DE 0
 
-struct pack IDTDescriptor
+struct pack idt_descriptor
 {
     uint16_t size;
     uint64_t offset;
 };
 
-struct pack IDTGateDescriptor
+struct pack idt_gate_descriptor
 {
     uint16_t offset;
     uint16_t segmentselector;
@@ -30,7 +30,7 @@ struct pack IDTGateDescriptor
     uint32_t reserved;
 };
 
-struct pack IDTInterruptStack
+struct pack idt_intrerrupt_stack
 {
     uint64_t rax;
     uint64_t rbx;

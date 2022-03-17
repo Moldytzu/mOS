@@ -6,9 +6,9 @@ void picInit()
     outb(PIC_MASTER_CMD,PIC_INIT_CMD);
     outb(PIC_SLAVE_CMD,PIC_INIT_CMD);
 
-    // 0x20 offset
-    outb(PIC_MASTER_DAT, 0x20); 
-    outb(PIC_SLAVE_DAT, 0x20); 
+    // set the offset/base
+    outb(PIC_MASTER_DAT, PIC_IRQ_BASE); 
+    outb(PIC_SLAVE_DAT, PIC_IRQ_BASE); 
 
     // inform the chips that they're working together
     outb(PIC_MASTER_DAT, 4);
