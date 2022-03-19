@@ -9,7 +9,7 @@ extern void tssLoad();
 
 void gdtInit()
 {
-    gdtr.size = 4 * sizeof(struct gdt_segment) + 1 * sizeof(struct gdt_system_segment) - 1; // 4 segments + 1 system segmnet
+    gdtr.size = 5 * sizeof(struct gdt_segment) + 1 * sizeof(struct gdt_system_segment) - 1; // 5 segments + 1 system segmnet
     gdtr.offset = (uint64_t)&gdtData[0];
 
     gdtCreateSegment(0,0); // null
