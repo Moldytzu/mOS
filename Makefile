@@ -46,10 +46,5 @@ efi: limine kernel
 
 .PHONY: clean
 clean:
-	rm -f iso_root $(OUTPUT)
+	rm -rf iso_root $(OUTPUT) limine
 	$(MAKE) -C kernel clean
-
-.PHONY: distclean
-distclean: clean
-	rm -rf limine
-	$(MAKE) -C kernel distclean

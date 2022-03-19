@@ -73,8 +73,4 @@ $(KERNEL): $(OBJ)
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS)
-
-.PHONY: distclean
-distclean: clean
-	rm -f stivale2.h
+	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) stivale2.h

@@ -1,5 +1,4 @@
 # Milestones to reach
-### TSS
 ### virtual memory manager
 ### scheduler with ring 3 support
 ### system calls using intrerrupt 0x51
@@ -18,3 +17,4 @@
 ### physical memory manager
 ### using the pit as the system-wide timer
 ### find a name
+### TSS
