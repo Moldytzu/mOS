@@ -24,8 +24,7 @@ struct pack gdt_system_segment
     uint16_t base;
     uint8_t base2;
     uint8_t access;
-    unsigned limit2 : 4;
-    unsigned flags : 4;
+    uint8_t limit2;
     uint8_t base3;
     uint32_t base4;
     uint32_t ignore;
