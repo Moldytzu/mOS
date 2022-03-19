@@ -67,8 +67,14 @@ void *mmAllocatePage()
 
 void mmDeallocatePage(void *address)
 {
-    // todo: select pool from the array
-    mmDeallocatePagePool(pools[0],address);
+    for(int i = 0; pools[i].total != UINT64_MAX; i++)
+    {
+        if((uint64_t)pools[i].allocableBase <= (uint64_t)address && (uint64_t)address <= (uint64_t)pools[i].allocableBase + (uint64_t)pools[i].used) // check if the address is in the boundries of the pool's physical memory region
+        {
+            mmDeallocatePagePool(pools[i],address);
+            return;
+        }    
+    }
 }
 
 void mmInit()
@@ -86,14 +92,14 @@ void mmInit()
         {
             pools[idx++].allocableBase = (void *)map->memmap[i].base; // set the base memory address
             pools[idx].base = (void *)map->memmap[i].base;
-            pools[idx].total = map->memmap[i].base; // set the total memory and available memory to the length of the pool
-            pools[idx].available = map->memmap[i].base;
+            pools[idx].total = map->memmap[i].length; // set the total memory and available memory to the length of the pool
+            pools[idx].available = map->memmap[i].length;
         }
     }
 
     // we need to calculate how many bytes we need for the allocator's bitmap, storing information about 8 pages per byte (we need to calculate this for each pool)
     // let x -> usable memory in bytes; bytes = x/(4096*8);
-    for (int i = 0; pools[i].total != 0xFFFFFFFFFFFFFFFF; i++)
+    for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
         size_t bytes = pools[i].available / (4096 * 8);
         pools[i].allocableBase += bytes;

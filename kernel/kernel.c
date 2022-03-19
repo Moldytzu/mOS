@@ -59,14 +59,20 @@ void _start(struct stivale2_struct *stivale2_struct)
     mmInit();
     framebufferWrite("done\n");
 
+    // get the pools
+    struct mm_pool *pools = mmGetPools();
+    size_t available = 0;
+    for(int i = 0; pools[i].total != UINT64_MAX; i++)
+        available += pools[i].available;
+
     // display the memory available
     framebufferWrite("Memory available for the kernel ");
-    framebufferWrite(to_string(0));
+    framebufferWrite(to_string(toMB(available)));
     framebufferWrite(" MB.\n");
 
     // display the pools
-    struct mm_pool *pools = mmGetPools();
-    for(int i = 0; pools[i].total != 0xFFFFFFFFFFFFFFFF; i++)
+
+    for(int i = 0; pools[i].total != UINT64_MAX; i++)
     {
         framebufferWrite("Total: ");
         framebufferWrite(to_string(pools[i].total));
@@ -78,8 +84,10 @@ void _start(struct stivale2_struct *stivale2_struct)
     // allocate some memory
     for(int i = 0; i < 16; i++)
     {
-        framebufferWrite(to_string((uint64_t)mmAllocatePage()));
+        void *page = mmAllocatePage();
+        framebufferWrite(to_string((uint64_t)page));
         framebufferWrite("\n");
+        mmDeallocatePage(page);
     }
 
     // hang
