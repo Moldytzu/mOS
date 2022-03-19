@@ -70,19 +70,8 @@ void _start(struct stivale2_struct *stivale2_struct)
     framebufferWrite(to_string(toMB(available)));
     framebufferWrite(" MB.\n");
 
-    // display the pools
-
-    for(int i = 0; pools[i].total != UINT64_MAX; i++)
-    {
-        framebufferWrite("Total: ");
-        framebufferWrite(to_string(pools[i].total));
-        framebufferWrite(" Available: ");
-        framebufferWrite(to_string(pools[i].total));
-        framebufferWrite("\n");
-    }
-
     // allocate some memory
-    for(int i = 0; i < 16; i++)
+    for(int i = 0; i < 256; i++)
     {
         framebufferWrite(to_string((uint64_t)mmAllocatePage()));
         framebufferWrite(" ");

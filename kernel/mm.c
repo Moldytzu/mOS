@@ -26,7 +26,6 @@ void mmDeallocatePagePool(struct mm_pool pool, void *address)
     }
 }
 
-bool loop = false;
 void *mmAllocatePagePool(struct mm_pool pool)
 {
     while (pool.bitmapByte != pool.allocableBase) // loop thru all the bytes in the bitmap
@@ -37,7 +36,6 @@ void *mmAllocatePagePool(struct mm_pool pool)
             {
                 pool.available -= 4096;                                        // decrement the available memory by a page
                 *pool.bitmapByte &= ~(0b10000000 >> j);                        // set that bit
-                loop = false;                                                  // indicate that we are done
                 return (void *)(pool.allocableBase + pool.bitmapIndex * 4096); // return the address
             }
             pool.bitmapIndex++; // increase page index in memory
@@ -45,17 +43,8 @@ void *mmAllocatePagePool(struct mm_pool pool)
         pool.bitmapByte++; // increase byte in bitmap
     }
 
-    // if we don't find an available page search again from the begining
-
-    if (loop) // if the second search was unsucessful return null
-    {
-        loop = false; // reset
-        return NULL;
-    }
-
-    pool.bitmapByte = pool.base; // reset byte
-    loop = true;                 // indicate that we are using recursivity
-    return mmAllocatePage();
+    // if we don't find an available page return null
+    return NULL;
 }
 
 void *mmAllocatePage()
@@ -63,7 +52,11 @@ void *mmAllocatePage()
     for(int i = 0; pools[i].total != UINT64_MAX; i++)
     {
         if(pools[i].available >= 4096) // check if a page is available
-            return mmAllocatePagePool(pools[i]);
+        {
+            void *page = mmAllocatePagePool(pools[i]);
+            if(page) // if we've got a page
+                return page;
+        }
     }
     return NULL;
 }
@@ -102,7 +95,7 @@ void mmInit()
     // let x -> usable memory in bytes; bytes = x/(4096*8);
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
-        size_t bytes = pools[i].available / (4096 * 8);
+        size_t bytes = pools[i].available / 8 / 4096;
         pools[i].allocableBase += bytes;
         pools[i].available -= bytes;
 
