@@ -64,6 +64,17 @@ void _start(struct stivale2_struct *stivale2_struct)
     framebufferWrite(to_string(toMB(mmGetInfo().available)));
     framebufferWrite(" MB.\n");
 
+    // display the pools
+    struct mm_pool *pools = mmGetPools();
+    for(int i = 0;pools[i].allocableBase;i++)
+    {
+        framebufferWrite("Total: ");
+        framebufferWrite(to_string(pools[i].total));
+        framebufferWrite(" Available: ");
+        framebufferWrite(to_string(pools[i].total));
+        framebufferWrite("\n");
+    }
+
     // hang
     while (1)
         asm volatile("hlt");

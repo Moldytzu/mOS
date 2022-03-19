@@ -1,6 +1,9 @@
 #include <mm.h>
 #include <framebuffer.h>
 
+struct mm_pool pools[0xFFFF]; // 16k pools should be enough
+uint16_t poolIdx = 0;
+
 struct stivale2_struct_tag_memmap *map;
 
 struct mm_info info; // memory info
@@ -64,8 +67,20 @@ void mmInit()
 {
     map = bootloaderGetMemMap(); // get the map
 
+    // clear the pools
+    for(int i = 0xFFFF-1; i; i--)
+        memset64(&pools[i],0,5); // 3 uint64_t and 2 pointers
+
     for(uint64_t i = 0; i < map->entries; i++)
     {
+        if(map->memmap[i].type == STIVALE2_MMAP_USABLE)
+        {
+            pools[poolIdx++].allocableBase = (void*)map->memmap[i].base; // set the base memory address
+            pools[poolIdx].base = (void*)map->memmap[i].base;
+            pools[poolIdx].total = map->memmap[i].base; // set the total memory and available memory to the length of the pool
+            pools[poolIdx].available = map->memmap[i].base;
+        }
+        
         if (info.total < map->memmap[i].length && map->memmap[i].type == STIVALE2_MMAP_USABLE) // check if this is the longest strip of memory and if it's usable
         {
             info.total = info.available = map->memmap[i].length; // if yes set the total memory and available memory to the length of the strip
@@ -91,4 +106,9 @@ void mmInit()
 struct mm_info mmGetInfo()
 {
     return info;
+}
+
+struct mm_pool *mmGetPools()
+{
+    return pools;
 }
