@@ -58,11 +58,14 @@ void *mmAllocatePagePool(struct mm_pool pool)
     return mmAllocatePage();
 }
 
-
 void *mmAllocatePage()
 {
-    // todo: select pool from the array
-    return mmAllocatePagePool(pools[0]);
+    for(int i = 0; pools[i].total != UINT64_MAX; i++)
+    {
+        if(pools[i].available >= 4096) // check if a page is available
+            return mmAllocatePagePool(pools[i]);
+    }
+    return NULL;
 }
 
 void mmDeallocatePage(void *address)
@@ -85,7 +88,7 @@ void mmInit()
     uint16_t idx = 0;
     for (uint64_t i = 0; i < map->entries; i++)
     {
-        if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length) // if the pool of memory is usable take it
+        if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length >= 4096) // if the pool of memory is usable take it
         {
             uint16_t index = idx++;
             pools[index].allocableBase = (void *)map->memmap[i].base; // set the base memory address
