@@ -18,7 +18,8 @@ void gdtInit()
     gdtCreateSegment(0b11111010,24); // user code
     gdtCreateSegment(0b11110010,32); // user data
 
-    memset64(&tss,0,13); // the tss contains 13 * 64 unsigned integers
+    tss.iopb = sizeof(struct gdt_system_segment);
+    memset(&tss,0,sizeof(struct gdt_system_segment)); // clear tss
 
     gdtCreateSystemSegment((uint64_t)&tss,0b10001001,40); // tss
 
