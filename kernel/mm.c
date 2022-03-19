@@ -68,13 +68,7 @@ void *mmAllocatePage()
 void mmDeallocatePage(void *address)
 {
     for(int i = 0; pools[i].total != UINT64_MAX; i++)
-    {
-        if((uint64_t)pools[i].allocableBase <= (uint64_t)address && (uint64_t)address <= (uint64_t)pools[i].allocableBase + (uint64_t)pools[i].used) // check if the address is in the boundries of the pool's physical memory region
-        {
-            mmDeallocatePagePool(pools[i],address);
-            return;
-        }    
-    }
+        mmDeallocatePagePool(pools[i],address);
 }
 
 void mmInit()
