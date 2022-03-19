@@ -66,7 +66,7 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // display the pools
     struct mm_pool *pools = mmGetPools();
-    for(int i = 0; pools[i].allocableBase; i++)
+    for(int i = 0; pools[i].total != 0xFFFFFFFFFFFFFFFF; i++)
     {
         framebufferWrite("Total: ");
         framebufferWrite(to_string(pools[i].total));
