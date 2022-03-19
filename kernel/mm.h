@@ -16,5 +16,4 @@ struct mm_pool
 void mmDeallocatePage(void *address);
 void *mmAllocatePage();
 void mmInit();
-struct mm_pool mmGetInfo();
 struct mm_pool *mmGetPools();

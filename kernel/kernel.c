@@ -61,7 +61,7 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // display the memory available
     framebufferWrite("Memory available for the kernel ");
-    framebufferWrite(to_string(toMB(mmGetInfo().available)));
+    framebufferWrite(to_string(0));
     framebufferWrite(" MB.\n");
 
     // display the pools
