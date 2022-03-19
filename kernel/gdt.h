@@ -41,6 +41,6 @@ struct pack gdt_tss
     uint16_t iopb; // io map base address
 };
 
-void gdtCreateSegment(uint8_t access, uint8_t offset);
-void gdtCreateSystemSegment(uint64_t base, uint8_t access, uint8_t offset);
+void gdtCreateSegment(uint8_t access);
+void gdtCreateSystemSegment(uint64_t base, uint8_t access);
 void gdtInit();
