@@ -68,7 +68,10 @@ void *mmAllocatePage()
 void mmDeallocatePage(void *address)
 {
     for(int i = 0; pools[i].total != UINT64_MAX; i++)
-        mmDeallocatePagePool(pools[i],address);
+    {
+        if((uint64_t)pools[i].allocableBase <= (uint64_t)address && (uint64_t)address <= (uint64_t)pools[i].allocableBase + pools[i].total) // check if the memory address is in the boundries of the pool's physical memory range 
+            mmDeallocatePagePool(pools[i],address);
+    }
 }
 
 void mmInit()
@@ -82,12 +85,13 @@ void mmInit()
     uint16_t idx = 0;
     for (uint64_t i = 0; i < map->entries; i++)
     {
-        if (map->memmap[i].type == STIVALE2_MMAP_USABLE) // if the pool of memory is usable take it
+        if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length) // if the pool of memory is usable take it
         {
-            pools[idx++].allocableBase = (void *)map->memmap[i].base; // set the base memory address
-            pools[idx].base = (void *)map->memmap[i].base;
-            pools[idx].total = map->memmap[i].length; // set the total memory and available memory to the length of the pool
-            pools[idx].available = map->memmap[i].length;
+            uint16_t index = idx++;
+            pools[index].allocableBase = (void *)map->memmap[i].base; // set the base memory address
+            pools[index].base = (void *)map->memmap[i].base;
+            pools[index].total = map->memmap[i].length; // set the total memory and available memory to the length of the pool
+            pools[index].available = map->memmap[i].length;
         }
     }
 
