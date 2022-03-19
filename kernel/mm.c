@@ -6,27 +6,25 @@ uint16_t poolIdx = 0;
 
 struct stivale2_struct_tag_memmap *map;
 
-struct mm_info info; // memory info
+struct mm_pool info; // memory info
 
-uint8_t *bitmapByte; // byte in the bitmap
-size_t idx = 0; // index
 bool loop = false;
 void *mmAllocatePage()
 {
-    while (bitmapByte != info.allocableBase) // loop thru all the bytes in the bitmap
+    while (info.bitmapByte != info.allocableBase) // loop thru all the bytes in the bitmap
     {
         for(int j = 0; j < 8; j++)
         {
-            if((0b10000000 >> j) & *bitmapByte) // if there is a bit set, it means that there is a page available
+            if((0b10000000 >> j) & *info.bitmapByte) // if there is a bit set, it means that there is a page available
             {
                 info.available -= 4096; // decrement the available memory by a page
-                *bitmapByte &= ~(0b10000000 >> j); // set that bit
+                *info.bitmapByte &= ~(0b10000000 >> j); // set that bit
                 loop = false; // indicate that we are done
-                return (void*)(info.allocableBase + idx * 4096); // return the address
+                return (void*)(info.allocableBase + info.bitmapIndex * 4096); // return the address
             }
-            idx++; // increase page index in memory
+            info.bitmapIndex++; // increase page index in memory
         }
-        bitmapByte++; // increase byte in bitmap
+        info.bitmapByte++; // increase byte in bitmap
     }
 
     // if we don't find an available page search again from the begining
@@ -37,7 +35,7 @@ void *mmAllocatePage()
         return NULL;
     }
 
-    bitmapByte = info.base; // reset byte
+    info.bitmapByte = info.base; // reset byte
     loop = true; // indicate that we are using recursivity
     return mmAllocatePage();
 }
@@ -98,12 +96,12 @@ void mmInit()
     info.allocableBase = (void*)align((uint64_t)info.allocableBase,4096);
 
     // assign the start byte 
-    bitmapByte = info.base;
+    info.bitmapByte = info.base;
 
     memset64(info.base,0xFF,(bytes*8)/64); // fill all the bytes
 }
 
-struct mm_info mmGetInfo()
+struct mm_pool mmGetInfo()
 {
     return info;
 }

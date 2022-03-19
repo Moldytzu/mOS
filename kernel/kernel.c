@@ -66,12 +66,19 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // display the pools
     struct mm_pool *pools = mmGetPools();
-    for(int i = 0;pools[i].allocableBase;i++)
+    for(int i = 0; pools[i].allocableBase; i++)
     {
         framebufferWrite("Total: ");
         framebufferWrite(to_string(pools[i].total));
         framebufferWrite(" Available: ");
         framebufferWrite(to_string(pools[i].total));
+        framebufferWrite("\n");
+    }
+
+    // allocate some memory
+    for(int i = 0; i < 16; i++)
+    {
+        framebufferWrite(to_string((uint64_t)mmAllocatePage()));
         framebufferWrite("\n");
     }
 
