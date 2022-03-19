@@ -29,6 +29,7 @@ void gdtInit()
 void gdtCreateSegment(uint8_t access, uint8_t offset)
 {
     struct gdt_segment *segment = (struct gdt_segment *)(gdtr.offset + offset);
+    memset((void*)segment,0,sizeof(struct gdt_segment));
     segment->access = access;
     segment->flags = 0b1010; // 4k pages, long mode
 }
@@ -36,9 +37,11 @@ void gdtCreateSegment(uint8_t access, uint8_t offset)
 void gdtCreateSystemSegment(uint64_t base, uint8_t access, uint8_t offset)
 {
     struct gdt_system_segment *segment = (struct gdt_system_segment *)(gdtr.offset + offset);
+    memset((void*)segment,0,sizeof(struct gdt_system_segment));
     segment->access = access;
     segment->base = base & 0x000000000000FFFF;
     segment->base2 = (base & 0x0000000000FF0000) >> 16;
     segment->base3 = (base & 0x00000000FF000000) >> 24;
     segment->base3 = (base & 0xFFFFFFFF00000000) >> 32;
+    segment->limit = sizeof(struct gdt_tss);
 }
