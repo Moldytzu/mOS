@@ -3,7 +3,7 @@ bits 64
 global gdtLoad
 
 gdtLoad:
-    lgdt [rdi]
+    lgdt [rdi] ; load gdt from the first argument
     mov ax, 16
     mov ds, ax
     mov es, ax
