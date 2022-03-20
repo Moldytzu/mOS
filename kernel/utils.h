@@ -13,6 +13,9 @@
 // strlen
 uint32_t strlen(const char *str);
 
+// strrev
+void strrev(char *str);
+
 // memsets
 void memset(void *dest, uint8_t data, size_t count);
 void memset16(void *dest, uint16_t data, size_t count);

@@ -53,18 +53,27 @@ int memcmp(void *a, void *b, size_t len)
     return 0;
 }
 
+void strrev(char *str)
+{
+	size_t len = strlen(str);
+	for (int i = 0, j = len - 1; i < j; i++, j--)
+	{
+		const char a = str[i];
+		str[i] = str[j];
+		str[j] = a;
+	} 
+}
+
 char to_stringout[32]; 
 const char *to_string(uint64_t val)
 {
     if(!val) return "0"; // if the value is 0 then return a constant string "0"
 
-    uint64_t check = val; // variable we will process to count the digits
-    uint8_t digits = 0; // we store the digits here
-    for(; check; digits++, check /= 10); // cut last digit while counting it
-
     memset64(to_stringout,0,4); // clear output, (64/8)*4 = 32 bytes
-    for(int i = digits-1; val; i--, val /= 10)
+    for(int i = 0; val; i++, val /= 10)
         to_stringout[i] = (val % 10) + '0';
+
+    strrev(to_stringout); // reverse string
 
     return to_stringout;
 }
@@ -77,8 +86,20 @@ const char *to_hstring(uint64_t val)
 
     memset64(to_stringout,0,4); // clear output, (64/8)*4 = 32 bytes
 
-    for(int i = 0; i < 16; i++, val = val << 4) // shift the value by 4 to get each nibble
-        to_hstringout[i] = digits[(val & 0xF000000000000000) >> 60]; // get each nibble
+    uint8_t nibbles = 0;
+    if(val > UINT32_MAX)
+        nibbles = 16; // it's 64 bit
+    else if(val > UINT16_MAX)
+        nibbles = 8; // it's 32 bit
+    else if(val > UINT8_MAX)
+        nibbles = 4; // it's 16 bit
+    else
+        nibbles = 2;
+
+    for(int i = 0; i < nibbles; i++, val = val >> 4) // shift the value by 4 to get each nibble
+        to_hstringout[i] = digits[val & 0xF]; // get each nibble
+
+    strrev(to_hstringout); // reverse string
 
     return to_hstringout;
 }
