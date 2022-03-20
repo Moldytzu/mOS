@@ -10,7 +10,7 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
     uint8_t *byte = pool->base; // byte in the bitmap
     size_t i = 0;               // index
 
-    while (byte != pool->allocableBase) // loop thru all the bytes in the bitmap
+    while (byte != pool->base + pool->bitmapReserved) // loop thru all the bytes in the bitmap
     {
         for (int j = 0; j < 8; j++)
         {
@@ -30,7 +30,7 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
 
 void *mmAllocatePagePool(struct mm_pool *pool)
 {
-    while (pool->bitmapByte != pool->allocableBase) // loop thru all the bytes in the bitmap
+    while (pool->bitmapByte != pool->base + pool->bitmapReserved) // loop thru all the bytes in the bitmap
     {
         for (int j = 0; j < 8; j++)
         {
@@ -101,9 +101,9 @@ void mmInit()
     // let x -> usable memory in bytes; bytes = x/(4096*8);
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
-        size_t bytes = pools[i].available / 8 / 4096;
-        pools[i].allocableBase += bytes;
-        pools[i].available -= bytes;
+        pools[i].bitmapReserved = pools[i].available / 8 / 4096;
+        pools[i].allocableBase += pools[i].bitmapReserved;
+        pools[i].available -= pools[i].bitmapReserved;
 
         // align the allocableBase to 4096
         pools[i].allocableBase = (void *)align((uint64_t)pools[i].allocableBase, 4096);
@@ -111,7 +111,7 @@ void mmInit()
         // assign the start byte
         pools[i].bitmapByte = pools[i].base;
 
-        memset64(pools[i].base, 0xFF, (bytes * 8) / 64); // clear all the bytes in the bitmap
+        memset64(pools[i].base, 0xFF, (pools[i].bitmapReserved * 8) / 64); // clear all the bytes in the bitmap
     }
 }
 
