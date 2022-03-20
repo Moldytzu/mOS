@@ -34,11 +34,12 @@ void *mmAllocatePagePool(struct mm_pool *pool)
     {
         for (int j = 0; j < 8; j++)
         {
-            if ((0b10000000 >> j) & *pool->bitmapByte) // if there is a bit set, it means that there is a page available
+            register uint8_t mask = 0b10000000 >> j;
+            if (mask & *pool->bitmapByte) // if there is a bit set, it means that there is a page available
             {
-                pool->available -= 4096;                 // decrement the available memory by a page
-                *pool->bitmapByte &= ~(0b10000000 >> j); // set that bit
-                if (pool->available < 4096)              // if we don't have any more capacity to store another page then we're full
+                pool->available -= 4096;    // decrement the available memory by a page
+                *pool->bitmapByte &= ~mask; // set that bit
+                if (pool->available < 4096) // if we don't have any more capacity to store another page then we're full
                     pool->full = true;
                 return (void *)(pool->allocableBase + pool->bitmapIndex * 4096); // return the address
             }
