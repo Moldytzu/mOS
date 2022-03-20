@@ -22,42 +22,38 @@ void _start(struct stivale2_struct *stivale2_struct)
     framebufferInit();
 
     // display message
-    framebufferWrite("Starting up mOS' kernel in ");
-    if(bootloaderGetFirmwareType()) framebufferWrite("BIOS");
-    else framebufferWrite("UEFI");
-    framebufferWrite(" mode.\n");
+    printk("Starting up mOS' kernel in ");
+    if(bootloaderGetFirmwareType()) printk("BIOS");
+    else printk("UEFI");
+    printk(" mode.\n");
 
     // display framebuffer information
-    framebufferWrite("Got framebuffer with the size ");
-    framebufferWrite(to_string(bootloaderGetFramebuf()->framebuffer_width));
-    framebufferWrite("x");
-    framebufferWrite(to_string(bootloaderGetFramebuf()->framebuffer_height));
-    framebufferWrite(".\n");
+    printk("Got framebuffer with the size %dx%d.\n",bootloaderGetFramebuf()->framebuffer_width,bootloaderGetFramebuf()->framebuffer_height);
 
     // initialize the gdt
-    framebufferWrite("Initializing the GDT...");
+    printk("Initializing the GDT...");
     gdtInit();
-    framebufferWrite("done\n");
+    printk("done\n");
 
     // initialize the idt
-    framebufferWrite("Initializing the IDT...");
+    printk("Initializing the IDT...");
     idtInit();
-    framebufferWrite("done\n");
+    printk("done\n");
 
     // initialize the pic chips
-    framebufferWrite("Initializing the PICs...");
+    printk("Initializing the PICs...");
     picInit();
-    framebufferWrite("done\n");
+    printk("done\n");
 
     // initialize the timer
-    framebufferWrite("Initializing the PIT...");
+    printk("Initializing the PIT...");
     pitInit();
-    framebufferWrite("done\n");
+    printk("done\n");
 
     // initialize the memory manager
-    framebufferWrite("Initializing the Memory Manager...");
+    printk("Initializing the Memory Manager...");
     mmInit();
-    framebufferWrite("done\n");
+    printk("done\n");
 
     // get the pools
     struct mm_pool *pools = mmGetPools();
@@ -66,16 +62,11 @@ void _start(struct stivale2_struct *stivale2_struct)
         available += pools[i].available;
 
     // display the memory available
-    framebufferWrite("Memory available for the kernel ");
-    framebufferWrite(to_string(toMB(available)));
-    framebufferWrite(" MB.\n");
+    printk("Memory available for the kernel %d MB.\n",toMB(available));
 
     // allocate some memory
     for(int i = 0; i < 256; i++)
-    {
-        framebufferWrite(to_hstring((uint64_t)mmAllocatePage()));
-        framebufferWrite(" ");
-    }
+        printk("%p ",mmAllocatePage());
 
     // hang
     while (1)

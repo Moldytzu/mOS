@@ -16,7 +16,7 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes)
 extern void BaseHandlerEntry();
 extern void BaseHandler(struct idt_intrerrupt_stack *stack)
 {
-    framebufferWrite("Intrerrupt!\n");
+    printk("Intrerrupt!\n");
     hang();
 }
 

@@ -1,4 +1,5 @@
 #include <utils.h>
+#include <framebuffer.h>
 
 uint32_t strlen(const char *str)
 {
@@ -98,4 +99,29 @@ const char *to_hstring(uint64_t val)
     strrev(to_hstringout); // reverse string
 
     return to_hstringout;
+}
+
+void printk(const char *fmt, ...)
+{
+    va_list list;
+    va_start(list,fmt); // start a variable arguments list
+
+    while(*fmt)
+    {
+        if(*fmt == '%')
+        {
+            fmt++;
+            if(*fmt == 'd')
+                framebufferWrite(to_string(va_arg(list, uint64_t))); // decimal
+            else if (*fmt == 'p')
+                framebufferWrite(to_hstring((uint64_t)va_arg(list, void*))); // pointer
+            else if (*fmt == 'x')
+                framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
+        }
+        else
+            framebufferWritec(*fmt);
+        fmt++;
+    }
+
+    va_end(list); // clean up
 }

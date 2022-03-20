@@ -21,12 +21,12 @@ void framebufferInit()
     framebufferClear(0x000000); // clear framebuffer
 
     cursor.colour = 0xFFFFFF; // white cursor
-    cursor.X = cursor.Y = 0; // upper left corner
+    cursor.X = cursor.Y = 0;  // upper left corner
 }
 
 inline void framebufferClear(uint32_t colour)
 {
-    cursor.X = cursor.Y = 0; // reset cursor position
+    cursor.X = cursor.Y = 0;                                                                                                                                // reset cursor position
     memset64((void *)framebufTag->framebuffer_addr, (uint64_t)colour << 32 | colour, framebufTag->framebuffer_pitch * framebufTag->framebuffer_height / 2); // clear the screen
 }
 
@@ -67,6 +67,19 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
                 framebufferPlotp(dx + x, dy + y, cursor.colour);
         }
     }
+}
+
+void framebufferWritec(char c)
+{
+    if (c == '\n' || cursor.X > framebufTag->framebuffer_width) // new line or the cursor isn't in view
+    {
+        cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
+        cursor.X = 0;                   // reset cursor X
+        return;
+    }
+
+    framebufferPlotc(c, cursor.X, cursor.Y);
+    cursor.X += 8 + 1; // add character's width and a 1 px padding
 }
 
 void framebufferWrite(const char *str)

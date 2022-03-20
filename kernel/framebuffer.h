@@ -31,5 +31,6 @@ void framebufferLoadFont(const char *module);
 void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour);
 void framebufferPlotc(char c, uint32_t x, uint32_t y);
 void framebufferWrite(const char *str);
+void framebufferWritec(char c);
 struct framebuffer_cursor_info framebufferGetCursor();
 void framebufferSetCursor(struct framebuffer_cursor_info info);

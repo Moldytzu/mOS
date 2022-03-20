@@ -11,7 +11,7 @@ extern void PITHandler()
 {
     ticks++;
     if(ticks % tickspersec == 0) // display "second" every second
-        framebufferWrite("second ");
+        printk("second ");
     picEOI();
 }
 
