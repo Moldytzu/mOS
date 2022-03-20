@@ -16,9 +16,9 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
         {
             if ((void *)(pool->allocableBase + i * 4096) == address) // check if we indexed the address
             {
-                *byte |= 0b10000000 >> j; // set that bit
-                pool->available += 4096;  // increase available memory
-                return;                   // return
+                *byte &= ~(0b10000000 >> j); // unset that bit
+                pool->available += 4096;     // increase available memory
+                return;                      // return
             }
             i++; // increase page index in memory
         }
@@ -32,18 +32,18 @@ void *mmAllocatePagePool(struct mm_pool *pool)
 {
     while (pool->bitmapByte != pool->base + pool->bitmapReserved) // loop thru all the bytes in the bitmap
     {
-        for (int j = 0; j < 8; j++)
+        for (int j = 0; j < 8; j++, pool->bitmapIndex++)
         {
             register uint8_t mask = 0b10000000 >> j;
-            if (mask & *pool->bitmapByte) // if there is a bit set, it means that there is a page available
+            if (!(mask & *pool->bitmapByte)) // if there isn't a bit set, it means that there is a page available
             {
                 pool->available -= 4096;    // decrement the available memory by a page
-                *pool->bitmapByte &= ~mask; // set that bit
+                *pool->bitmapByte |= mask;  // set that bit
                 if (pool->available < 4096) // if we don't have any more capacity to store another page then we're full
                     pool->full = true;
+                printk("%d ",pool->bitmapIndex);
                 return (void *)(pool->allocableBase + pool->bitmapIndex * 4096); // return the address
             }
-            pool->bitmapIndex++; // increase page index in memory
         }
         pool->bitmapByte++; // increase byte in bitmap
     }
@@ -112,7 +112,7 @@ void mmInit()
         // assign the start byte
         pools[i].bitmapByte = pools[i].base;
 
-        memset64(pools[i].base, 0xFF, (pools[i].bitmapReserved * 8) / 64); // clear all the bytes in the bitmap
+        memset64(pools[i].base, 0, (pools[i].bitmapReserved * 8) / 64); // clear all the bytes in the bitmap
     }
 }
 
