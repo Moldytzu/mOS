@@ -24,6 +24,8 @@ void mmDeallocatePagePool(struct mm_pool pool, void *address)
         }
         byte++; // increase byte in bitmap
     }
+
+    pool.full = false; // since we deallocated some memory, we can be sure it's not full
 }
 
 void *mmAllocatePagePool(struct mm_pool pool)
@@ -43,7 +45,8 @@ void *mmAllocatePagePool(struct mm_pool pool)
         pool.bitmapByte++; // increase byte in bitmap
     }
 
-    // if we don't find an available page return null
+    // if we don't find an available say that the pool is full by returning null
+    pool.full = true;
     return NULL;
 }
 
@@ -51,7 +54,7 @@ void *mmAllocatePage()
 {
     for(int i = 0; pools[i].total != UINT64_MAX; i++)
     {
-        if(pools[i].available >= 4096) // check if a page is available
+        if(!pools[i].full) // check if the pool isn't full
         {
             void *page = mmAllocatePagePool(pools[i]);
             if(page) // if we've got a page
@@ -88,6 +91,7 @@ void mmInit()
             pools[index].base = (void *)map->memmap[i].base;
             pools[index].total = map->memmap[i].length; // set the total memory and available memory to the length of the pool
             pools[index].available = map->memmap[i].length;
+            pools[index].full = false; // it has available memory
         }
     }
 
