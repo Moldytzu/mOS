@@ -69,14 +69,22 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
     }
 }
 
+inline static void newline()
+{
+    cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
+    cursor.X = 0;                   // reset cursor X
+}
+
 void framebufferWritec(char c)
 {
-    if (c == '\n' || cursor.X > framebufTag->framebuffer_width) // new line or the cursor isn't in view
+    if (c == '\n') // new line
     {
-        cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
-        cursor.X = 0;                   // reset cursor X
+        newline();
         return;
     }
+
+    if (cursor.X > framebufTag->framebuffer_width)
+        newline();
 
     framebufferPlotc(c, cursor.X, cursor.Y);
     cursor.X += 8 + 1; // add character's width and a 1 px padding
@@ -85,17 +93,7 @@ void framebufferWritec(char c)
 void framebufferWrite(const char *str)
 {
     for (int i = 0; str[i]; i++)
-    {
-        if (str[i] == '\n' || cursor.X > framebufTag->framebuffer_width) // new line or the cursor isn't in view
-        {
-            cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
-            cursor.X = 0;                   // reset cursor X
-            continue;
-        }
-
-        framebufferPlotc(str[i], cursor.X, cursor.Y);
-        cursor.X += 8 + 1; // add character's width and a 1 px padding
-    }
+        framebufferWritec(str[i]); // write characters
 }
 
 struct framebuffer_cursor_info framebufferGetCursor()
