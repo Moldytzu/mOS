@@ -5,19 +5,19 @@ struct mm_pool pools[0xFFFF]; // 16k pools should be enough
 
 struct stivale2_struct_tag_memmap *map;
 
-void mmDeallocatePagePool(struct mm_pool pool, void *address)
+void mmDeallocatePagePool(struct mm_pool *pool, void *address)
 {
-    uint8_t *byte = pool.base; // byte in the bitmap
+    uint8_t *byte = pool->base; // byte in the bitmap
     size_t i = 0;              // index
 
-    while (byte != pool.allocableBase) // loop thru all the bytes in the bitmap
+    while (byte != pool->allocableBase) // loop thru all the bytes in the bitmap
     {
         for (int j = 0; j < 8; j++)
         {
-            if ((void *)(pool.allocableBase + i * 4096) == address) // check if we indexed the address
+            if ((void *)(pool->allocableBase + i * 4096) == address) // check if we indexed the address
             {
                 *byte |= 0b10000000 >> j; // set that bit
-                pool.available += 4096;   // increase available memory
+                pool->available += 4096;   // increase available memory
                 return;                   // return
             }
             i++; // increase page index in memory
@@ -25,28 +25,28 @@ void mmDeallocatePagePool(struct mm_pool pool, void *address)
         byte++; // increase byte in bitmap
     }
 
-    pool.full = false; // since we deallocated some memory, we can be sure it's not full
+    pool->full = false; // since we deallocated some memory, we can be sure it's not full
 }
 
-void *mmAllocatePagePool(struct mm_pool pool)
+void *mmAllocatePagePool(struct mm_pool *pool)
 {
-    while (pool.bitmapByte != pool.allocableBase) // loop thru all the bytes in the bitmap
+    while (pool->bitmapByte != pool->allocableBase) // loop thru all the bytes in the bitmap
     {
         for (int j = 0; j < 8; j++)
         {
-            if ((0b10000000 >> j) & *pool.bitmapByte) // if there is a bit set, it means that there is a page available
+            if ((0b10000000 >> j) & *pool->bitmapByte) // if there is a bit set, it means that there is a page available
             {
-                pool.available -= 4096;                                        // decrement the available memory by a page
-                *pool.bitmapByte &= ~(0b10000000 >> j);                        // set that bit
-                return (void *)(pool.allocableBase + pool.bitmapIndex * 4096); // return the address
+                pool->available -= 4096;                                        // decrement the available memory by a page
+                *pool->bitmapByte &= ~(0b10000000 >> j);                        // set that bit
+                return (void *)(pool->allocableBase + pool->bitmapIndex * 4096); // return the address
             }
-            pool.bitmapIndex++; // increase page index in memory
+            pool->bitmapIndex++; // increase page index in memory
         }
-        pool.bitmapByte++; // increase byte in bitmap
+        pool->bitmapByte++; // increase byte in bitmap
     }
 
     // if we don't find an available say that the pool is full by returning null
-    pool.full = true;
+    pool->full = true;
     return NULL;
 }
 
@@ -56,7 +56,7 @@ void *mmAllocatePage()
     {
         if(!pools[i].full) // check if the pool isn't full
         {
-            void *page = mmAllocatePagePool(pools[i]);
+            void *page = mmAllocatePagePool(&pools[i]);
             if(page) // if we've got a page
                 return page;
         }
@@ -69,7 +69,7 @@ void mmDeallocatePage(void *address)
     for(int i = 0; pools[i].total != UINT64_MAX; i++)
     {
         if((uint64_t)pools[i].allocableBase <= (uint64_t)address && (uint64_t)address <= (uint64_t)pools[i].allocableBase + pools[i].total) // check if the memory address is in the boundries of the pool's physical memory range 
-            mmDeallocatePagePool(pools[i],address);
+            mmDeallocatePagePool(&pools[i],address);
     }
 }
 

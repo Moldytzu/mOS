@@ -23,12 +23,14 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // display message
     printk("Starting up mOS' kernel in ");
-    if(bootloaderGetFirmwareType()) printk("BIOS");
-    else printk("UEFI");
+    if (bootloaderGetFirmwareType())
+        printk("BIOS");
+    else
+        printk("UEFI");
     printk(" mode.\n");
 
     // display framebuffer information
-    printk("Got framebuffer with the size %dx%d.\n",bootloaderGetFramebuf()->framebuffer_width,bootloaderGetFramebuf()->framebuffer_height);
+    printk("Got framebuffer with the size %dx%d.\n", bootloaderGetFramebuf()->framebuffer_width, bootloaderGetFramebuf()->framebuffer_height);
 
     // initialize the gdt
     printk("Initializing the GDT...");
@@ -58,15 +60,23 @@ void _start(struct stivale2_struct *stivale2_struct)
     // get the pools
     struct mm_pool *pools = mmGetPools();
     size_t available = 0;
-    for(int i = 0; pools[i].total != UINT64_MAX; i++)
+    for (int i = 0; pools[i].total != UINT64_MAX; i++)
         available += pools[i].available;
 
     // display the memory available
-    printk("Memory available for the kernel %d MB.\n",toMB(available));
+    printk("Memory available for the kernel %d MB.\n", toMB(available));
 
     // allocate some memory
-    for(int i = 0; i < 256; i++)
-        printk("%p ",mmAllocatePage());
+    for (int i = 0; i < 4096; i++)
+        mmAllocatePage();
+
+    pools = mmGetPools();
+    available = 0;
+    for (int i = 0; pools[i].total != UINT64_MAX; i++)
+        available += pools[i].available;
+
+    // display the memory available
+    printk("Memory available for the kernel %d MB.\n", toMB(available));
 
     // hang
     while (1)
