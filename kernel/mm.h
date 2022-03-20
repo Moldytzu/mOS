@@ -4,13 +4,13 @@
 
 struct mm_pool
 {
-    uint64_t total;        // total memory
-    uint64_t available;    // available memory
-    uint64_t used;         // used memory
-    void *base;            // base address of the physical memory in the pool
-    void *allocableBase;   // base address of the allocable memory in the pool
-    size_t bitmapReserved; // bytes reserved for the bitmap
-    bool full;             // if there isn't any available memory available
+    uint64_t total;         // total memory
+    uint64_t available;     // available memory
+    uint64_t used;          // used memory
+    bool full;              // if there isn't any available memory available
+    void *base;             // base address of the physical memory in the pool
+    void *allocableBase;    // base address of the allocable memory in the pool
+    size_t bitmapReserved;  // bytes reserved for the bitmap
 };
 
 void mmDeallocatePage(void *address);
