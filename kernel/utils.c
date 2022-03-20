@@ -10,13 +10,9 @@ uint32_t strlen(const char *str)
 
 void hang()
 {
-    asm volatile("cli"); // disable intrerrupts
+    iasm("cli"); // disable intrerrupts
     for (;;)
-        asm volatile("hlt"); // halt
-}
-
-void memcpy(void *dest, const void *src, size_t count)
-{
+        iasm("hlt"); // halt
 }
 
 void memset(void *dest, uint8_t data, size_t count)

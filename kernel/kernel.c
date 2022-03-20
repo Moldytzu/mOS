@@ -79,5 +79,5 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // hang
     while (1)
-        asm volatile("hlt");
+        iasm("hlt");
 }

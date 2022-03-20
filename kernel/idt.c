@@ -22,13 +22,13 @@ extern void BaseHandler(struct idt_intrerrupt_stack *stack)
 
 void idtInit()
 {
-    asm volatile ("cli"); // disable intrerrupts
+    iasm("cli"); // disable intrerrupts
 
     idtr.offset = (uint64_t)&idtData[0]; // set the offset to the data
     idtr.size = 0xFF*sizeof(struct idt_gate_descriptor)-1; // the size is in bytes -1
     for(int i = 0;i<0xFF;i++) // set all 255 irqs to the base handler
         idtSetGate((void *)BaseHandlerEntry,i,IDT_InterruptGate);
 
-    asm volatile ("lidt %0" :: "m" (idtr));
-    asm volatile ("sti"); // enable intrerrupts
+    iasm("lidt %0" :: "m" (idtr));
+    iasm("sti"); // enable intrerrupts
 }

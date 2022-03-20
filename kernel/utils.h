@@ -9,6 +9,7 @@
 #define toKB(x) (x/1024)
 #define align(val,alg) (val + (alg - val % alg))
 #define unsafe_cast(val,type) (*(type*)&val)
+#define iasm asm volatile
 
 // strlen
 uint32_t strlen(const char *str);
@@ -21,9 +22,6 @@ void memset(void *dest, uint8_t data, size_t count);
 void memset16(void *dest, uint16_t data, size_t count);
 void memset32(void *dest, uint32_t data, size_t count);
 void memset64(void *dest, uint64_t data, size_t count);
-
-// memcpy
-void memcpy(void *dest, const void *src, size_t count);
 
 // memcmp
 int memcmp(void *a, void *b, size_t len);
