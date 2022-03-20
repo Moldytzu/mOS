@@ -1,5 +1,6 @@
 OUTPUT = out/dvd.iso
 OUTPUTEFI = out/efi.iso
+CORES = $(shell nproc)
 
 .PHONY: all
 all: $(OUTPUT)
@@ -19,7 +20,7 @@ limine:
 
 .PHONY: kernel
 kernel:
-	$(MAKE) -C kernel
+	$(MAKE) -C kernel -j$(CORES)
 
 $(OUTPUT): limine kernel
 	rm -rf iso_root
