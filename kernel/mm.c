@@ -8,7 +8,7 @@ struct stivale2_struct_tag_memmap *map;
 void mmDeallocatePagePool(struct mm_pool *pool, void *address)
 {
     uint8_t *byte = pool->base; // byte in the bitmap
-    size_t i = 0;              // index
+    size_t i = 0;               // index
 
     while (byte != pool->allocableBase) // loop thru all the bytes in the bitmap
     {
@@ -17,7 +17,7 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
             if ((void *)(pool->allocableBase + i * 4096) == address) // check if we indexed the address
             {
                 *byte |= 0b10000000 >> j; // set that bit
-                pool->available += 4096;   // increase available memory
+                pool->available += 4096;  // increase available memory
                 return;                   // return
             }
             i++; // increase page index in memory
@@ -36,8 +36,10 @@ void *mmAllocatePagePool(struct mm_pool *pool)
         {
             if ((0b10000000 >> j) & *pool->bitmapByte) // if there is a bit set, it means that there is a page available
             {
-                pool->available -= 4096;                                        // decrement the available memory by a page
-                *pool->bitmapByte &= ~(0b10000000 >> j);                        // set that bit
+                pool->available -= 4096;                 // decrement the available memory by a page
+                *pool->bitmapByte &= ~(0b10000000 >> j); // set that bit
+                if (pool->available < 4096)              // if we don't have any more capacity to store another page then we're full
+                    pool->full = true;
                 return (void *)(pool->allocableBase + pool->bitmapIndex * 4096); // return the address
             }
             pool->bitmapIndex++; // increase page index in memory
@@ -52,12 +54,12 @@ void *mmAllocatePagePool(struct mm_pool *pool)
 
 void *mmAllocatePage()
 {
-    for(int i = 0; pools[i].total != UINT64_MAX; i++)
+    for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
-        if(!pools[i].full) // check if the pool isn't full
+        if (!pools[i].full) // check if the pool isn't full
         {
             void *page = mmAllocatePagePool(&pools[i]);
-            if(page) // if we've got a page
+            if (page) // if we've got a page
                 return page;
         }
     }
@@ -66,10 +68,10 @@ void *mmAllocatePage()
 
 void mmDeallocatePage(void *address)
 {
-    for(int i = 0; pools[i].total != UINT64_MAX; i++)
+    for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
-        if((uint64_t)pools[i].allocableBase <= (uint64_t)address && (uint64_t)address <= (uint64_t)pools[i].allocableBase + pools[i].total) // check if the memory address is in the boundries of the pool's physical memory range 
-            mmDeallocatePagePool(&pools[i],address);
+        if ((uint64_t)pools[i].allocableBase <= (uint64_t)address && (uint64_t)address <= (uint64_t)pools[i].allocableBase + pools[i].total) // check if the memory address is in the boundries of the pool's physical memory range
+            mmDeallocatePagePool(&pools[i], address);
     }
 }
 

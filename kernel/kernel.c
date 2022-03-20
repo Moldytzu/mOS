@@ -67,10 +67,9 @@ void _start(struct stivale2_struct *stivale2_struct)
     printk("Memory available for the kernel %d MB.\n", toMB(available));
 
     // allocate some memory
-    for (int i = 0; i < 4096; i++)
-        mmAllocatePage();
+    for (int i = 0; i < 256; i++)
+        printk("%p ", mmAllocatePage());
 
-    pools = mmGetPools();
     available = 0;
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
         available += pools[i].available;

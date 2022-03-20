@@ -3,12 +3,12 @@
 void picInit()
 {
     // start initialization sequence
-    outb(PIC_MASTER_CMD,PIC_INIT_CMD);
-    outb(PIC_SLAVE_CMD,PIC_INIT_CMD);
+    outb(PIC_MASTER_CMD, PIC_INIT_CMD);
+    outb(PIC_SLAVE_CMD, PIC_INIT_CMD);
 
     // set the offset/base
-    outb(PIC_MASTER_DAT, PIC_IRQ_BASE); 
-    outb(PIC_SLAVE_DAT, PIC_IRQ_BASE); 
+    outb(PIC_MASTER_DAT, PIC_IRQ_BASE);
+    outb(PIC_SLAVE_DAT, PIC_IRQ_BASE);
 
     // inform the chips that they're working together
     outb(PIC_MASTER_DAT, 4);
@@ -26,6 +26,6 @@ void picInit()
 void picEOI()
 {
     // send end of intrerrupt command to both chips
-    outb(PIC_SLAVE_CMD,PIC_EOI_CMD);
-    outb(PIC_MASTER_CMD,PIC_EOI_CMD);
+    outb(PIC_SLAVE_CMD, PIC_EOI_CMD);
+    outb(PIC_MASTER_CMD, PIC_EOI_CMD);
 }
