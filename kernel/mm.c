@@ -16,41 +16,42 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
         {
             if ((void *)(pool->allocableBase + i * 4096) == address) // check if we indexed the address
             {
-                *byte &= ~(0b10000000 >> j); // unset that bit
-                pool->available += 4096;     // increase available memory
-                return;                      // return
+                *byte &= ~(0b10000000 >> j);   // unset that bit
+                pool->available += 4096;       // increase available memory
+                pool->full = false;            // since we deallocated some memory, we can be sure it's not full
+                pool->bitmapByte = pool->base; // reset the bitmap byte
+                return;                        // return
             }
             i++; // increase page index in memory
         }
         byte++; // increase byte in bitmap
     }
-
-    pool->full = false; // since we deallocated some memory, we can be sure it's not full
 }
 
 void *mmAllocatePagePool(struct mm_pool *pool)
 {
-    while (pool->bitmapByte != pool->base + pool->bitmapReserved) // loop thru all the bytes in the bitmap
+    uint8_t *currentBitmapByte = pool->base;
+    size_t bitmapByteIndex = 0, pageIndex = 0;
+
+    while(bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
     {
-        for (int j = 0; j < 8; j++, pool->bitmapIndex++)
+        for(int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
         {
-            register uint8_t mask = 0b10000000 >> j;
-            if (!(mask & *pool->bitmapByte)) // if there isn't a bit set, it means that there is a page available
+            register uint8_t mask = 0b10000000 >> j; // create the mask
+            if(!(mask & currentBitmapByte[bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
             {
-                pool->available -= 4096;    // decrement the available memory by a page
-                *pool->bitmapByte |= mask;  // set that bit
-                if (pool->available < 4096) // if we don't have any more capacity to store another page then we're full
+                pool->available -= 4096; // decrement the available bytes
+                if(pool->available < 4096) // if there isn't room for any page it means it's full
                     pool->full = true;
-                printk("%d ",pool->bitmapIndex);
-                return (void *)(pool->allocableBase + pool->bitmapIndex * 4096); // return the address
+                currentBitmapByte[bitmapByteIndex] |= mask; // apply the mask
+                return (void *)(pool->allocableBase + pageIndex * 4096); // return the address
             }
         }
-        pool->bitmapByte++; // increase byte in bitmap
+        bitmapByteIndex++; // increase the byte index
     }
 
-    // if we don't find an available say that the pool is full by returning null
-    pool->full = true;
-    return NULL;
+    pool->full = true; // we're full
+    return NULL; // return null
 }
 
 void *mmAllocatePage()
