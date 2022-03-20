@@ -19,11 +19,18 @@ void memset16(void *dest, uint16_t data, size_t count);
 void memset32(void *dest, uint32_t data, size_t count);
 void memset64(void *dest, uint64_t data, size_t count);
 
+// memcpy
+void memcpy(void *dest, const void *src, size_t count);
+
 // memcmp
 int memcmp(void *a, void *b, size_t len);
 
 // to_string
 const char *to_string(uint64_t val);
+const char *to_hstring(uint64_t val);
 
 // hang
 void hang();
+
+// printk
+void printk(const char *fmt, ...);

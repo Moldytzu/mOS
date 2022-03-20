@@ -73,7 +73,7 @@ void _start(struct stivale2_struct *stivale2_struct)
     // allocate some memory
     for(int i = 0; i < 256; i++)
     {
-        framebufferWrite(to_string((uint64_t)mmAllocatePage()));
+        framebufferWrite(to_hstring((uint64_t)mmAllocatePage()));
         framebufferWrite(" ");
     }
 
