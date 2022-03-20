@@ -7,24 +7,23 @@ struct stivale2_struct_tag_memmap *map;
 
 void mmDeallocatePagePool(struct mm_pool *pool, void *address)
 {
-    uint8_t *byte = pool->base; // byte in the bitmap
-    size_t i = 0;               // index
+    uint8_t *currentBitmapByte = pool->base;
+    size_t bitmapByteIndex = 0, pageIndex = 0;
 
-    while (byte != pool->base + pool->bitmapReserved) // loop thru all the bytes in the bitmap
+     while(bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
     {
-        for (int j = 0; j < 8; j++)
+        for(int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
         {
-            if ((void *)(pool->allocableBase + i * 4096) == address) // check if we indexed the address
+            if ((void *)(pool->allocableBase + pageIndex * 4096) == address) // check if we indexed the address
             {
-                *byte &= ~(0b10000000 >> j);   // unset that bit
+                *currentBitmapByte &= ~(0b10000000 >> j);   // unset that bit
                 pool->available += 4096;       // increase available memory
                 pool->full = false;            // since we deallocated some memory, we can be sure it's not full
-                pool->bitmapByte = pool->base; // reset the bitmap byte
                 return;                        // return
             }
-            i++; // increase page index in memory
+            pageIndex++; // increase page index
         }
-        byte++; // increase byte in bitmap
+        currentBitmapByte++; // increase the byte index
     }
 }
 
@@ -109,9 +108,6 @@ void mmInit()
 
         // align the allocableBase to 4096
         pools[i].allocableBase = (void *)align((uint64_t)pools[i].allocableBase, 4096);
-
-        // assign the start byte
-        pools[i].bitmapByte = pools[i].base;
 
         memset64(pools[i].base, 0, (pools[i].bitmapReserved * 8) / 64); // clear all the bytes in the bitmap
     }
