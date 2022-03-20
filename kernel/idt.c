@@ -6,6 +6,9 @@ char idtData[0x1000];
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes)
 {
     struct idt_gate_descriptor *gate = (struct idt_gate_descriptor *)(idtr.offset + entry * sizeof(struct idt_gate_descriptor)); // select the gate
+    if(gate->segmentselector == 0) // detect if we didn't touch the gate
+        idtr.size += sizeof(struct idt_gate_descriptor); // if we didn't we can safely increase the size
+
     gate->attributes = attributes;                                                                                               // attributes
     gate->segmentselector = 8;                                                                                                   // gdt selector
     gate->offset = (uint16_t)((uint64_t)handler) & 0xFFFF;                                                                       // offsets
@@ -24,11 +27,15 @@ void idtInit()
 {
     iasm("cli"); // disable intrerrupts
 
-    idtr.offset = (uint64_t)&idtData[0];                       // set the offset to the data
-    idtr.size = 0xFF * sizeof(struct idt_gate_descriptor) - 1; // the size is in bytes -1
-    for (int i = 0; i < 0xFF; i++)                             // set all 255 irqs to the base handler
+    // clear the idt
+    memset64(idtData,0,512);
+
+    idtr.offset = (uint64_t)&idtData[0]; // set the offset to the data
+    idtr.size = 0;                       // reset the size
+    for (int i = 0; i < 0xFF; i++)       // set all 255 irqs to the base handler
         idtSetGate((void *)BaseHandlerEntry, i, IDT_InterruptGate);
 
+    idtr.size--; // decrement to comply with the spec
     iasm("lidt %0" ::"m"(idtr));
     iasm("sti"); // enable intrerrupts
 }
