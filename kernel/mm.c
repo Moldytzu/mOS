@@ -116,3 +116,16 @@ struct mm_pool *mmGetPools()
 {
     return pools;
 }
+
+struct mm_pool mmGetTotal()
+{
+    volatile struct mm_pool total;
+    for (int i = 0; pools[i].total != UINT64_MAX; i++) // loop thru each pool
+    {
+        total.available += pools[i].available; // add each useful property
+        total.used += pools[i].used;
+        total.total += pools[i].total;
+        total.bitmapReserved += pools[i].bitmapReserved;
+    }
+    return total; // and return the total
+}

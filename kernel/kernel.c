@@ -57,14 +57,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     mmInit();
     printk("done\n");
 
-    // get the pools
-    struct mm_pool *pools = mmGetPools();
-    size_t available = 0;
-    for (int i = 0; pools[i].total != UINT64_MAX; i++)
-        available += pools[i].available;
+    // get the pool total values
+    struct mm_pool total = mmGetTotal();
 
     // display the memory available
-    printk("Memory available for the kernel %d MB.\n", toMB(available));
+    printk("Memory: total=%d MB; available=%d MB; used=%d MB; \n", toMB(total.total), toMB(total.available), toMB(total.used));
 
     // hang
     while (1)

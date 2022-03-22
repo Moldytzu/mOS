@@ -2,7 +2,7 @@
 #include <utils.h>
 #include <bootloader.h>
 
-struct mm_pool
+struct pack mm_pool
 {
     uint64_t total;         // total memory
     uint64_t available;     // available memory
@@ -19,3 +19,4 @@ void *mmAllocatePage();
 void *mmAllocatePagePool(struct mm_pool *pool);
 void mmInit();
 struct mm_pool *mmGetPools();
+struct mm_pool mmGetTotal();
