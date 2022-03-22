@@ -10,7 +10,7 @@ LD := ld
 ASM := nasm
 
 # User controllable CFLAGS.
-CFLAGS ?= -O2 -g -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable
+CFLAGS ?= -O2 -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable
 
 # User controllable LDFLAGS
 LDFLAGS ?=
