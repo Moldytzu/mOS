@@ -32,6 +32,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     // display framebuffer information
     printk("Got framebuffer with the size %dx%d.\n", bootloaderGetFramebuf()->framebuffer_width, bootloaderGetFramebuf()->framebuffer_height);
 
+    // initialize the memory manager
+    printk("Initializing the Memory Manager...");
+    mmInit();
+    printk("done\n");
+
     // initialize the gdt
     printk("Initializing the GDT...");
     gdtInit();
@@ -52,16 +57,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     pitInit();
     printk("done\n");
 
-    // initialize the memory manager
-    printk("Initializing the Memory Manager...");
-    mmInit();
-    printk("done\n");
-
     // get the pool total values
     struct mm_pool total = mmGetTotal();
 
     // display the memory available
-    printk("Memory: total=%d MB; available=%d MB; used=%d MB; \n", toMB(total.total), toMB(total.available), toMB(total.used));
+    printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved));
 
     // hang
     while (1)

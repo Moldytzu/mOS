@@ -10,16 +10,16 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
     uint8_t *bitmapBase = pool->base;
     size_t bitmapByteIndex = 0, pageIndex = 0;
 
-    while(bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
+    while (bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
     {
-        for(int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
+        for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
         {
             if ((void *)(pool->allocableBase + pageIndex * 4096) == address) // check if we indexed the address
             {
-                bitmapBase[bitmapByteIndex] &= ~(0b10000000 >> j);   // unset that bit
-                pool->available += 4096;       // increase available memory
-                pool->full = false;            // since we deallocated some memory, we can be sure it's not full
-                return;                        // return
+                bitmapBase[bitmapByteIndex] &= ~(0b10000000 >> j); // unset that bit
+                pool->available += 4096;                           // increase available memory
+                pool->full = false;                                // since we deallocated some memory, we can be sure it's not full
+                return;                                            // return
             }
         }
         bitmapByteIndex++; // increase the byte index
@@ -31,17 +31,17 @@ void *mmAllocatePagePool(struct mm_pool *pool)
     uint8_t *bitmapBase = pool->base;
     size_t bitmapByteIndex = 0, pageIndex = 0;
 
-    while(bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
+    while (bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
     {
-        for(int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
+        for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
         {
-            register uint8_t mask = 0b10000000 >> j; // create the mask
-            if(!(mask & bitmapBase[bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
+            register uint8_t mask = 0b10000000 >> j;   // create the mask
+            if (!(mask & bitmapBase[bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
             {
-                pool->available -= 4096; // decrement the available bytes
-                if(pool->available < 4096) // if there isn't room for any page it means it's full
+                pool->available -= 4096;    // decrement the available bytes
+                if (pool->available < 4096) // if there isn't room for any page it means it's full
                     pool->full = true;
-                bitmapBase[bitmapByteIndex] |= mask; // apply the mask
+                bitmapBase[bitmapByteIndex] |= mask;                     // apply the mask
                 return (void *)(pool->allocableBase + pageIndex * 4096); // return the address
             }
         }
@@ -49,7 +49,7 @@ void *mmAllocatePagePool(struct mm_pool *pool)
     }
 
     pool->full = true; // we're full
-    return NULL; // return null
+    return NULL;       // return null
 }
 
 void *mmAllocatePage()
@@ -89,6 +89,7 @@ void mmInit()
         if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length >= 4096) // if the pool of memory is usable take it
         {
             uint16_t index = idx++;
+            memset(&pools[index], 0, sizeof(struct mm_pool));
             pools[index].allocableBase = (void *)map->memmap[i].base; // set the base memory address
             pools[index].base = (void *)map->memmap[i].base;
             pools[index].total = map->memmap[i].length; // set the total memory and available memory to the length of the pool
@@ -108,7 +109,7 @@ void mmInit()
         // align the allocableBase to 4096
         pools[i].allocableBase = (void *)align((uint64_t)pools[i].allocableBase, 4096);
 
-        memset64(pools[i].base, 0, (pools[i].bitmapReserved * 8) / 64); // clear all the bytes in the bitmap
+        memset(pools[i].base, 0, pools[i].bitmapReserved); // clear all the bytes in the bitmap
     }
 }
 
@@ -119,7 +120,10 @@ struct mm_pool *mmGetPools()
 
 struct mm_pool mmGetTotal()
 {
-    volatile struct mm_pool total;
+    struct mm_pool total;
+
+    memset(&total, 0, sizeof(struct mm_pool));
+
     for (int i = 0; pools[i].total != UINT64_MAX; i++) // loop thru each pool
     {
         total.available += pools[i].available; // add each useful property

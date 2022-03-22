@@ -1,16 +1,21 @@
 #include <gdt.h>
+#include <mm.h>
 
 struct gdt_tss tss;
 struct gdt_descriptor gdtr;
-char gdtData[0x1000];
+char *gdtData;
 
 extern void gdtLoad(struct gdt_descriptor *);
 extern void tssLoad();
 
 void gdtInit()
 {
+    // allocate the gdt
+    gdtData = mmAllocatePage();
+    memset(gdtData, 0, 4096);
+
     gdtr.size = 0; // reset the size
-    gdtr.offset = (uint64_t)&gdtData[0];
+    gdtr.offset = (uint64_t)gdtData;
 
     gdtCreateSegment(0);          // null
     gdtCreateSegment(0b10011010); // kernel code
