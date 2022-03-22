@@ -18,6 +18,7 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
             {
                 bitmapBase[bitmapByteIndex] &= ~(0b10000000 >> j); // unset that bit
                 pool->available += 4096;                           // increase available memory
+                pool->used -= 4096;                                // decrease the usage
                 pool->full = false;                                // since we deallocated some memory, we can be sure it's not full
                 return;                                            // return
             }
@@ -39,6 +40,7 @@ void *mmAllocatePagePool(struct mm_pool *pool)
             if (!(mask & bitmapBase[bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
             {
                 pool->available -= 4096;    // decrement the available bytes
+                pool->used += 4096;         // increase the usage
                 if (pool->available < 4096) // if there isn't room for any page it means it's full
                     pool->full = true;
                 bitmapBase[bitmapByteIndex] |= mask;                     // apply the mask
