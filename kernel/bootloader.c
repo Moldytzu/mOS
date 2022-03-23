@@ -9,7 +9,7 @@ struct stivale2_struct_tag_firmware *fwTag;
 void (*termWrite)(const char *string, size_t length);
 
 // We need to tell the stivale bootloader where we want our stack to be.
-static uint8_t stack[8 * 1024 * 1024]; // 8 mb stack
+static uint8_t stack[8 * 1024]; // 8 kb stack
 
 // terminal
 static struct stivale2_header_tag_terminal terminal_hdr_tag = {
