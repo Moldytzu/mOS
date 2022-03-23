@@ -1,5 +1,6 @@
 #include <mm.h>
 #include <framebuffer.h>
+#include <panic.h>
 
 struct mm_pool pools[0xFFFF]; // 16k pools should be enough
 
@@ -65,7 +66,9 @@ void *mmAllocatePage()
                 return page;
         }
     }
-    return NULL;
+
+    panick("Out of memory!"); // panic if we're out of memory
+    return NULL; // unreachable
 }
 
 void mmDeallocatePage(void *address)

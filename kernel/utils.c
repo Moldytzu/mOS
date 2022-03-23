@@ -119,6 +119,8 @@ void printk(const char *fmt, ...)
                 framebufferWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
             else if (*fmt == 'x')
                 framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
+            else if (*fmt == 's')
+                framebufferWrite(va_arg(list, const char *)); // string
         }
         else
             framebufferWritec(*fmt);

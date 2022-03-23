@@ -67,3 +67,9 @@ void _start(struct stivale2_struct *stivale2_struct)
     while (1)
         iasm("hlt");
 }
+
+void panick(const char *msg)
+{
+    printk("\n\nA kernel exception happened.\n%s\n",msg);
+    hang();
+}
