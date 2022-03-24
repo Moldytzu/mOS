@@ -127,6 +127,22 @@ void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
     return NULL; // if we don't find
 }
 
+void *mmAllocatePages(size_t pages)
+{
+    for (int i = 0; pools[i].total != UINT64_MAX; i++)
+    {
+        if (!pools[i].full) // check if the pool isn't full
+        {
+            void *page = mmAllocatePagesPool(&pools[i],pages);
+            if (page) // if we've got the pages
+                return page;
+        }
+    }
+
+    panick("Out of memory!"); // panic if we're out of memory
+    return NULL; // unreachable
+}
+
 void *mmAllocatePage()
 {
     for (int i = 0; pools[i].total != UINT64_MAX; i++)

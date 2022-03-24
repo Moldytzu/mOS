@@ -70,7 +70,7 @@ void _start(struct stivale2_struct *stivale2_struct)
     
     printk("\n");
 
-    mmAllocatePagesPool(&mmGetPools()[0],8);
+    mmAllocatePages(8);
 
     for(int i = 0; i < 20; i++)
         printk("%d ",mmIsFreePage(&mmGetPools()[0],i));
