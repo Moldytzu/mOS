@@ -6,6 +6,25 @@ struct mm_pool pools[0xFFFF]; // 16k pools should be enough
 
 struct stivale2_struct_tag_memmap *map;
 
+bool mmIsFreePage(struct mm_pool *pool, size_t page)
+{
+    uint8_t *bitmapBase = pool->base;
+    size_t bitmapByteIndex = 0, pageIndex = 0;
+
+    while (bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
+    {
+        for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
+        {
+            register uint8_t mask = 0b10000000 >> j;  // create the mask
+            if(pageIndex == page)
+                return !(mask & bitmapBase[bitmapByteIndex]); // apply the mask if we are at the correct page
+        }
+        bitmapByteIndex++; // increase the byte index
+    }
+
+    return false; // return false if we're not finding the page
+}
+
 void mmDeallocatePagePool(struct mm_pool *pool, void *address)
 {
     uint8_t *bitmapBase = pool->base;
