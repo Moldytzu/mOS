@@ -13,11 +13,13 @@ struct pack mm_pool
     size_t bitmapReserved;  // bytes reserved for the bitmap
 };
 
-bool mmIsFreePage(struct mm_pool *pool, size_t pageIndex);
+bool mmIsFreePage(struct mm_pool *pool, size_t page);
 void mmDeallocatePage(void *address);
 void mmDeallocatePagePool(struct mm_pool *pool, void *address);
 void *mmAllocatePage();
 void *mmAllocatePagePool(struct mm_pool *pool);
+void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page);
+void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages);
 void mmInit();
 struct mm_pool *mmGetPools();
 struct mm_pool mmGetTotal();

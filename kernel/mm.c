@@ -15,14 +15,42 @@ bool mmIsFreePage(struct mm_pool *pool, size_t page)
     {
         for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
         {
-            register uint8_t mask = 0b10000000 >> j;  // create the mask
             if(pageIndex == page)
+            {
+                register uint8_t mask = 0b10000000 >> j;  // create the mask
                 return !(mask & bitmapBase[bitmapByteIndex]); // apply the mask if we are at the correct page
+            }
         }
         bitmapByteIndex++; // increase the byte index
     }
 
     return false; // return false if we're not finding the page
+}
+
+void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
+{
+    uint8_t *bitmapBase = pool->base;
+    size_t bitmapByteIndex = 0, pageIndex = 0;
+
+    while (bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
+    {
+        for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
+        {
+            if(pageIndex == page)
+            {
+                register uint8_t mask = 0b10000000 >> j;   // create the mask
+                pool->available -= 4096;    // decrement the available bytes
+                pool->used += 4096;         // increase the usage
+                if (pool->available < 4096) // if there isn't room for any page it means it's full
+                    pool->full = true;
+                bitmapBase[bitmapByteIndex] |= mask;                     // apply the mask
+                return (void *)(pool->allocableBase + pageIndex * 4096); // return the address
+            }
+        }
+        bitmapByteIndex++; // increase the byte index
+    }
+
+    return NULL; // return null if it isn't free
 }
 
 void mmDeallocatePagePool(struct mm_pool *pool, void *address)
@@ -72,6 +100,31 @@ void *mmAllocatePagePool(struct mm_pool *pool)
 
     pool->full = true; // we're full
     return NULL;       // return null
+}
+
+void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
+{
+    size_t poolPageCount = pool->total / 4096;
+
+    for(size_t base = 0; base < poolPageCount - pages; base++)
+    {
+        bool free = true;
+        for(size_t i = 0; i <= pages; i++)
+        {
+            if(!mmIsFreePage(pool,i+base))
+                free = false;
+        }
+
+        if(!free) continue; // continue if the threshold isn't free
+
+        void *baseptr = mmAllocatePagePoolIndex(pool,base); // allocate
+        for(size_t i = 1; i < pages; i++)
+            mmAllocatePagePoolIndex(pool,base + i); // reserve the pages
+
+        return baseptr; // return
+    }
+
+    return NULL; // if we don't find
 }
 
 void *mmAllocatePage()
