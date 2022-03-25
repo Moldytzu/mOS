@@ -61,7 +61,7 @@ void _start(struct stivale2_struct *stivale2_struct)
     struct mm_pool total = mmGetTotal();
 
     // display the memory available
-    printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved));
+    printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
 
     // hang
     while (1)

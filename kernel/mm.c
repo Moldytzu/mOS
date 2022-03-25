@@ -2,6 +2,8 @@
 #include <framebuffer.h>
 #include <panic.h>
 
+uint16_t poolCount = 0;
+
 struct mm_pool pools[0xFFFF]; // 16k pools should be enough
 
 struct stivale2_struct_tag_memmap *map;
@@ -174,12 +176,11 @@ void mmInit()
     for (int i = 0xFFFF - 1; i; i--)
         memset(&pools[i], 0xFF, sizeof(struct mm_pool));
 
-    uint16_t idx = 0;
     for (uint64_t i = 0; i < map->entries; i++)
     {
         if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length >= 4096) // if the pool of memory is usable take it
         {
-            uint16_t index = idx++;
+            uint16_t index = poolCount++;
             memset(&pools[index], 0, sizeof(struct mm_pool));
             pools[index].allocableBase = (void *)map->memmap[i].base; // set the base memory address
             pools[index].base = (void *)map->memmap[i].base;
@@ -223,5 +224,8 @@ struct mm_pool mmGetTotal()
         total.total += pools[i].total;
         total.bitmapReserved += pools[i].bitmapReserved;
     }
+
+    total.pageIndex = poolCount + 1; // use pageIndex to set the pool count
+
     return total; // and return the total
 }
