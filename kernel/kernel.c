@@ -65,17 +65,12 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // test mm allocate pages pool
 
-    for(int i = 0; i < 20; i++)
-        printk("%d ",mmIsFreePage(&mmGetPools()[0],i));
-    
-    printk("\n");
+    printk("Allocating 100 000 pages...");
 
-    mmAllocatePages(8);
+    for(int i = 0; i < 100000; i++)
+        mmAllocatePage();
 
-    for(int i = 0; i < 20; i++)
-        printk("%d ",mmIsFreePage(&mmGetPools()[0],i));
-
-    printk("\n");
+    printk("Done\n");
 
     // hang
     while (1)

@@ -77,25 +77,22 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
 
 void *mmAllocatePagePool(struct mm_pool *pool)
 {
-    uint8_t *bitmapBase = pool->base;
-    size_t bitmapByteIndex = 0, pageIndex = 0;
-
-    while (bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
+    while (pool->bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
     {
-        for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
+        for (int j = 0; j < 8; j++, pool->pageIndex++) // increase the page index on each shift of the mask
         {
             register uint8_t mask = 0b10000000 >> j;   // create the mask
-            if (!(mask & bitmapBase[bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
+            if (!(mask & pool->bitmapBase[pool->bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
             {
                 pool->available -= 4096;    // decrement the available bytes
                 pool->used += 4096;         // increase the usage
                 if (pool->available < 4096) // if there isn't room for any page it means it's full
                     pool->full = true;
-                bitmapBase[bitmapByteIndex] |= mask;                     // apply the mask
-                return (void *)(pool->allocableBase + pageIndex * 4096); // return the address
+                pool->bitmapBase[pool->bitmapByteIndex] |= mask;                     // apply the mask
+                return (void *)(pool->allocableBase + pool->pageIndex * 4096); // return the address
             }
         }
-        bitmapByteIndex++; // increase the byte index
+        pool->bitmapByteIndex++; // increase the byte index
     }
 
     pool->full = true; // we're full
@@ -133,9 +130,9 @@ void *mmAllocatePages(size_t pages)
     {
         if (!pools[i].full) // check if the pool isn't full
         {
-            void *page = mmAllocatePagesPool(&pools[i],pages);
-            if (page) // if we've got the pages
-                return page;
+            void *baseptr = mmAllocatePagesPool(&pools[i],pages);
+            if (baseptr) // if we've got the pages
+                return baseptr;
         }
     }
 
@@ -188,6 +185,7 @@ void mmInit()
             pools[index].total = map->memmap[i].length; // set the total memory and available memory to the length of the pool
             pools[index].available = map->memmap[i].length;
             pools[index].full = false; // it has available memory
+            pools[index].bitmapBase = pools[index].base;
         }
     }
 
