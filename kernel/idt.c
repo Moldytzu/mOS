@@ -1,5 +1,5 @@
 #include <idt.h>
-#include <mm.h>
+#include <pmm.h>
 
 struct idt_descriptor idtr;
 char *idtData;

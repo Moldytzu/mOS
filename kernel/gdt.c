@@ -1,5 +1,5 @@
 #include <gdt.h>
-#include <mm.h>
+#include <pmm.h>
 
 struct gdt_tss tss;
 struct gdt_descriptor gdtr;

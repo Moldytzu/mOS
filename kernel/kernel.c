@@ -5,7 +5,7 @@
 #include <serial.h>
 #include <framebuffer.h>
 #include <fpu.h>
-#include <mm.h>
+#include <pmm.h>
 #include <pic.h>
 #include <pit.h>
 
