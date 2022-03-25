@@ -63,15 +63,6 @@ void _start(struct stivale2_struct *stivale2_struct)
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved));
 
-    // test mm allocate pages pool
-
-    printk("Allocating 100 000 pages...");
-
-    for(int i = 0; i < 100000; i++)
-        mmAllocatePage();
-
-    printk("Done\n");
-
     // hang
     while (1)
         iasm("hlt");

@@ -79,9 +79,9 @@ void *mmAllocatePagePool(struct mm_pool *pool)
 {
     while (pool->bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
     {
-        for (int j = 0; j < 8; j++, pool->pageIndex++) // increase the page index on each shift of the mask
+        for (; pool->bitmapBitIndex < 8; pool->bitmapBitIndex++, pool->pageIndex++) // increase the page index on each shift of the mask
         {
-            register uint8_t mask = 0b10000000 >> j;   // create the mask
+            uint8_t mask = 0b10000000 >> pool->bitmapBitIndex;   // create the mask
             if (!(mask & pool->bitmapBase[pool->bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
             {
                 pool->available -= 4096;    // decrement the available bytes
@@ -92,6 +92,7 @@ void *mmAllocatePagePool(struct mm_pool *pool)
                 return (void *)(pool->allocableBase + pool->pageIndex * 4096); // return the address
             }
         }
+        if(pool->bitmapBitIndex == 8) pool->bitmapBitIndex = 0; // reset the bit index if it's 8 (over the limit)
         pool->bitmapByteIndex++; // increase the byte index
     }
 

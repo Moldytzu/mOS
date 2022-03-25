@@ -13,6 +13,7 @@ struct pack mm_pool
     size_t pageIndex;       // page index
     size_t bitmapReserved;  // bytes reserved for the bitmap
     size_t bitmapByteIndex; // byte in the bitmap
+    uint8_t bitmapBitIndex; // bit in the byte in the bitmap
     uint8_t *bitmapBase;    // base pointer of the bitmap
 };
 
