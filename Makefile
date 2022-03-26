@@ -15,7 +15,7 @@ run-debug: $(OUTPUT)
 
 limine:
 	mkdir -p out
-	git clone https://github.com/limine-bootloader/limine.git --branch=v2.0-branch-binary --depth=1
+	git clone https://github.com/limine-bootloader/limine.git --branch=latest-binary --depth=1
 	make -C limine
 
 .PHONY: kernel
@@ -32,7 +32,7 @@ $(OUTPUT): limine kernel
 		--efi-boot limine-eltorito-efi.bin \
 		-efi-boot-part --efi-boot-image -J \
 		iso_root -o $(OUTPUT)
-	limine/limine-install $(OUTPUT)
+	limine/limine-s2deploy $(OUTPUT)
 	rm -rf iso_root
 
 efi: limine kernel
