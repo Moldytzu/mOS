@@ -69,8 +69,6 @@ void _start(struct stivale2_struct *stivale2_struct)
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
 
-    vmmMap(vmmGetBaseTable(),(void*)0x90000,(void*)0x10000);
-
     // hang
     while (1)
         iasm("hlt");

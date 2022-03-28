@@ -24,6 +24,14 @@ void vmmInit()
     memcpy64(baseTable, bootloaderTable, 4096 / sizeof(uint64_t)); // copy bootloader's paging table over our base table
 
     iasm("mov %0, %%cr3" ::"r"(baseTable)); // set cr3 to our "new" table
+
+    // identity map all the memory pools
+    struct mm_pool * pools = mmGetPools();
+    for (size_t i = 0; pools[i].total != UINT64_MAX; i++)
+    {
+        for(size_t j = 0; j < pools[i].total; j += 4096)
+            vmmMap(baseTable, pools[i].base + j, pools[i].base + j);
+    }
 }
 
 bool vmmGetFlag(uint64_t entry, uint8_t flag)
