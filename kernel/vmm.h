@@ -15,3 +15,5 @@ struct pack mm_pagetable
     unsigned reserved2 : 11;
     unsigned noexecute : 1; // forbid executing code
 };
+
+void vmmInit();

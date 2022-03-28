@@ -23,6 +23,12 @@ void memset16(void *dest, uint16_t data, size_t count);
 void memset32(void *dest, uint32_t data, size_t count);
 void memset64(void *dest, uint64_t data, size_t count);
 
+// memcpys
+void memcpy(void *dest, void *src, size_t count);
+void memcpy16(void *dest, void *src, size_t count);
+void memcpy32(void *dest, void *src, size_t count);
+void memcpy64(void *dest, void *src, size_t count);
+
 // memcmp
 int memcmp(void *a, void *b, size_t len);
 

@@ -129,3 +129,27 @@ void printk(const char *fmt, ...)
 
     va_end(list); // clean up
 }
+
+void memcpy(void *dest, void *src, size_t count)
+{
+    for (size_t i = 0; i < count; i++)
+        ((uint8_t *)dest)[i] = ((uint8_t *)src)[i];
+}
+
+void memcpy16(void *dest, void *src, size_t count)
+{
+    for (size_t i = 0; i < count; i++)
+        ((uint16_t *)dest)[i] = ((uint16_t *)src)[i];
+}
+
+void memcpy32(void *dest, void *src, size_t count)
+{
+    for (size_t i = 0; i < count; i++)
+        ((uint32_t *)dest)[i] = ((uint32_t *)src)[i];
+}
+
+void memcpy64(void *dest, void *src, size_t count)
+{
+    for (size_t i = 0; i < count; i++)
+        ((uint64_t *)dest)[i] = ((uint64_t *)src)[i];
+}

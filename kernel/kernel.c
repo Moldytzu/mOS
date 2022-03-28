@@ -6,6 +6,7 @@
 #include <framebuffer.h>
 #include <fpu.h>
 #include <pmm.h>
+#include <vmm.h>
 #include <pic.h>
 #include <pit.h>
 
@@ -32,9 +33,14 @@ void _start(struct stivale2_struct *stivale2_struct)
     // display framebuffer information
     printk("Got framebuffer with the size %dx%d.\n", bootloaderGetFramebuf()->framebuffer_width, bootloaderGetFramebuf()->framebuffer_height);
 
-    // initialize the memory manager
-    printk("Initializing the Memory Manager...");
-    mmInit();
+    // initialize the physical memory manager
+    printk("Initializing the Physical Memory Manager...");
+    pmmInit();
+    printk("done\n");
+
+    // initialize the virtual memory manager
+    printk("Initializing the Virtual Memory Manager...");
+    vmmInit();
     printk("done\n");
 
     // initialize the gdt

@@ -11,7 +11,7 @@ run: $(OUTPUT)
 
 .PHONY: run-debug
 run-debug: $(OUTPUT)
-	qemu-system-x86_64 -M q35 -m 2G -cdrom $(OUTPUT) -boot d -no-reboot -no-shutdown -d int
+	qemu-system-x86_64 -M q35 -m 2G -cdrom $(OUTPUT) -boot d -no-reboot -no-shutdown -d int -M smm=off
 
 limine:
 	mkdir -p out

@@ -25,6 +25,6 @@ void *mmAllocatePages(size_t pages);
 void *mmAllocatePagePool(struct mm_pool *pool);
 void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page);
 void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages);
-void mmInit();
+void pmmInit();
 struct mm_pool *mmGetPools();
 struct mm_pool mmGetTotal();

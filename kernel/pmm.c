@@ -168,7 +168,7 @@ void mmDeallocatePage(void *address)
     }
 }
 
-void mmInit()
+void pmmInit()
 {
     map = bootloaderGetMemMap(); // get the map
 
