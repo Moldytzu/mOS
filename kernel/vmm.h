@@ -25,10 +25,10 @@ struct pack vmm_page_table
 };
 
 // operations on entries
-bool vmmGetFlag(uint64_t entry, uint8_t flag);
-void vmmSetFlag(uint64_t entry, uint8_t flag, bool value);
-uint64_t vmmGetAddress(uint64_t entry);
-void vmmSetAddress(uint64_t entry, uint64_t address);
+bool vmmGetFlag(uint64_t *entry, uint8_t flag);
+void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value);
+uint64_t vmmGetAddress(uint64_t *entry);
+void vmmSetAddress(uint64_t *entry, uint64_t address);
 
 // indexer
 struct vmm_index vmmIndex(uint64_t virtualAddress);
