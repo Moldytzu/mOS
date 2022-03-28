@@ -69,6 +69,10 @@ void _start(struct stivale2_struct *stivale2_struct)
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
 
+    // test indexing
+    struct vmm_index idx = vmmIndex(0xffffffff80000000);
+    printk(" P=%d PD=%d PT=%d PDP=%d ",idx.P,idx.PD, idx.PT, idx.PDP);
+
     // hang
     while (1)
         iasm("hlt");
