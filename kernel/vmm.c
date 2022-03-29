@@ -26,11 +26,11 @@ void vmmInit()
     iasm("mov %0, %%cr3" ::"r"(baseTable)); // set cr3 to our "new" table
 
     // identity map all the memory pools
-    struct mm_pool * pools = mmGetPools();
+    struct mm_pool *pools = mmGetPools();
     for (size_t i = 0; pools[i].total != UINT64_MAX; i++)
     {
-        for(size_t j = 0; j < pools[i].total; j += 4096)
-            vmmMap(baseTable, pools[i].base + j, pools[i].base + j);
+        for (size_t j = 0; j < pools[i].total; j += 4096)
+            vmmMap(baseTable, pools[i].base + j, pools[i].base + j, false, true); // map every page as read-write, kernel-only
     }
 }
 
@@ -44,7 +44,7 @@ void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
     if (value)
     {
         *entry |= (1 << flag); // set flag
-        return;               // return
+        return;                // return
     }
 
     *entry &= ~(1 << flag); // unset flag
@@ -61,55 +61,59 @@ void vmmSetAddress(uint64_t *entry, uint64_t address)
     *entry |= (address & 0xFFFFFFFFFF) << 12; // set the address field
 }
 
-void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress)
+void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     struct vmm_page_table *pdp, *pd, *pt;
 
     uint64_t currentEntry = table->entries[index.PDP]; // index pdp
-    if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT))  // if there isn't any page present there, we generate it
+    if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pdp = mmAllocatePage();                            // allocate table
-        memset64(pdp, 0, 4096 / sizeof(uint64_t));         // clear it
+        pdp = mmAllocatePage();                             // allocate table
+        memset64(pdp, 0, 4096 / sizeof(uint64_t));          // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, true);      // rewrite
-        table->entries[index.PDP] = currentEntry;          // write the entry in the table
+        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
+        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);    // user
+        table->entries[index.PDP] = currentEntry;           // write the entry in the table
     }
     else
         pdp = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pdp->entries[index.PD];            // index pd
+    currentEntry = pdp->entries[index.PD];             // index pd
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pd = mmAllocatePage();                             // allocate table
-        memset64(pd, 0, 4096 / sizeof(uint64_t));          // clear it
+        pd = mmAllocatePage();                              // allocate table
+        memset64(pd, 0, 4096 / sizeof(uint64_t));           // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, true);      // rewrite
-        pdp->entries[index.PD] = currentEntry;             // write the entry in the table
+        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
+        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);    // user
+        pdp->entries[index.PD] = currentEntry;              // write the entry in the table
     }
     else
         pd = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pd->entries[index.PT];             // index pt
+    currentEntry = pd->entries[index.PT];              // index pt
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pt = mmAllocatePage();                             // allocate table
-        memset64(pt, 0, 4096 / sizeof(uint64_t));          // clear it
+        pt = mmAllocatePage();                              // allocate table
+        memset64(pt, 0, 4096 / sizeof(uint64_t));           // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, true);      // rewrite
-        pd->entries[index.PT] = currentEntry;              // write the entry in the table
+        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
+        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);    // user
+        pd->entries[index.PT] = currentEntry;               // write the entry in the table
     }
     else
         pt = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pt->entries[index.P];                          // index p
+    currentEntry = pt->entries[index.P];                           // index p
     vmmSetAddress(&currentEntry, (uint64_t)physicalAddress >> 12); // set the address to the physical one
     vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true);            // present
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, true);                 // rewrite
-    pt->entries[index.P] = currentEntry;                          // write the entry in the table
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                   // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);               // user
+    pt->entries[index.P] = currentEntry;                           // write the entry in the table
 }
 
 void *vmmGetBaseTable()
