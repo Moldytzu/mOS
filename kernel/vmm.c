@@ -116,6 +116,25 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
     pt->entries[index.P] = currentEntry;                           // write the entry in the table
 }
 
+void vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
+{
+    struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
+    struct vmm_page_table *pdp, *pd, *pt;
+
+    uint64_t currentEntry = table->entries[index.PDP]; // index pdp
+    pdp = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12);
+
+    currentEntry = pdp->entries[index.PD]; // index pd
+    pd = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12);
+
+    currentEntry = pd->entries[index.PT]; // index pt
+    pt = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12);
+
+    currentEntry = pt->entries[index.P];                 // index p
+    vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, false); // unvalidate page
+    pt->entries[index.P] = currentEntry;                 // write the entry in the table
+}
+
 void *vmmGetBaseTable()
 {
     return baseTable;

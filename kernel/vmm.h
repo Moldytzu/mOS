@@ -36,4 +36,5 @@ struct vmm_index vmmIndex(uint64_t virtualAddress);
 // mapping
 void vmmInit();
 void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw);
+void vmmUnmap(struct vmm_page_table *table, void *virtualAddress);
 void *vmmGetBaseTable();
