@@ -9,6 +9,7 @@
 #include <vmm.h>
 #include <pic.h>
 #include <pit.h>
+#include <syscall.h>
 
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct)
@@ -63,12 +64,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     pitInit();
     printk("done\n");
 
+    // initialize system calls
+    syscallInit(0x51);
+
     // get the pool total values
     struct mm_pool total = mmGetTotal();
-
-    vmmMap(vmmGetBaseTable(),(void*)0xFFDEAD0000,(void*)0xFFDEAD0000, true, true);
-    vmmMap(vmmGetBaseTable(),(void*)0xFFDEAD0000,(void*)0xFFDEAD0000, false, false);
-    vmmMap(vmmGetBaseTable(),(void*)0xFFDEAD0000,(void*)0xFFDEAD0000, false, true);
 
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);

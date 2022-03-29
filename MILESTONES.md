@@ -1,13 +1,14 @@
 # Milestones to reach
-### virtual memory manager
-### scheduler with ring 3 support
 ### system calls using intrerrupt 0x51
+### virtual file system
+### initrd using a custom filesystem
+### scheduler with ring 3 support
 ### ELF binaries
 ### shell
 ### libc (maybe mlibc or something)
-### driver support
 ### custom gcc build
 ### basic gui infrastructure
+### driver support
 
 # Reached milestones
 ### IDT and GDT
@@ -18,3 +19,4 @@
 ### using the pit as the system-wide timer
 ### find a name
 ### TSS
+### virtual memory manager
