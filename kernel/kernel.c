@@ -11,6 +11,8 @@
 #include <pit.h>
 #include <syscall.h>
 
+extern uint64_t sys(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t rcx, uint64_t r8, uint64_t r9);
+
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct)
 {
@@ -72,6 +74,8 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
+
+    sys(654,0,0,0,0,0);
 
     // hang
     while (1)

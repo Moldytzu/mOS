@@ -1,5 +1,4 @@
 # Milestones to reach
-### system calls using intrerrupt 0x51
 ### virtual file system
 ### initrd using a custom filesystem
 ### scheduler with ring 3 support
@@ -20,3 +19,4 @@
 ### find a name
 ### TSS
 ### virtual memory manager
+### system calls using intrerrupt 0x51
