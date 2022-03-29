@@ -55,3 +55,8 @@ void gdtCreateSystemSegment(uint64_t base, uint8_t access)
 
     gdtr.size += sizeof(struct gdt_system_segment); // add the size of gdt_system_segment
 }
+
+struct gdt_tss *tssGet()
+{
+    return &tss;
+}

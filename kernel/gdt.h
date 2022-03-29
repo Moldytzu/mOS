@@ -44,3 +44,4 @@ struct pack gdt_tss
 void gdtCreateSegment(uint8_t access);
 void gdtCreateSystemSegment(uint64_t base, uint8_t access);
 void gdtInit();
+struct gdt_tss *tssGet();
