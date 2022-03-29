@@ -1,5 +1,7 @@
 #include <pit.h>
 #include <framebuffer.h>
+#include <idt.h>
+#include <scheduler.h>
 
 struct pit_packet packet;
 
@@ -7,11 +9,10 @@ uint32_t tickspersec = 0;
 uint64_t ticks = 0;
 
 extern void PITHandlerEntry();
-extern void PITHandler()
+extern void PITHandler(struct idt_intrerrupt_stack *stack)
 {
     ticks++;
-    if (ticks % tickspersec == 0) // display "second" every second
-        printk("second ");
+    schedulerSchedule(stack);
     picEOI();
 }
 

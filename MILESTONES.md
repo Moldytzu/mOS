@@ -1,7 +1,7 @@
 # Milestones to reach
+### scheduler with ring 3 support
 ### virtual file system
 ### initrd using a custom filesystem
-### scheduler with ring 3 support
 ### ELF binaries
 ### shell
 ### libc (maybe mlibc or something)

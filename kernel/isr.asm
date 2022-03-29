@@ -85,6 +85,7 @@ BaseHandlerEntry:
 
 PITHandlerEntry:
     PUSH_REG
+    mov rdi, rsp ; give the handler the stack frame
     call PITHandler
     POP_REG
     iretq

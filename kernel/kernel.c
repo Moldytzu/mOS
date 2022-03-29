@@ -10,6 +10,7 @@
 #include <pic.h>
 #include <pit.h>
 #include <syscall.h>
+#include <scheduler.h>
 
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct)
@@ -64,14 +65,16 @@ void _start(struct stivale2_struct *stivale2_struct)
     pitInit();
     printk("done\n");
 
+    // initialize the scheduler
+    printk("Initializing the Scheduler...");
+    schedulerInit();
+    printk("done\n");
+
     // initialize system calls
     syscallInit(0x51);
 
     // get the pool total values
     struct mm_pool total = mmGetTotal();
-
-    vmmMap(vmmGetBaseTable(),(void*)0xC00000000,(void*)0xC00000000,false,false);
-    vmmUnmap(vmmGetBaseTable(),(void*)0xC00000000);
 
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
