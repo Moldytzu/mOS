@@ -12,7 +12,11 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
+<<<<<<< HEAD
     vmmSwap(tasks[0].pageTable);                                                   // load the page table
+=======
+    //vmmSwap(tasks[0].pageTable);                                                   // load the page table
+>>>>>>> 743b3a32db237a800e7904eb0d24298a05310cb2
     memcpy(stack, &tasks[0].intrerruptStack, sizeof(struct idt_intrerrupt_stack)); // copy the registers
 
     printk("new: cs=%d ss=%d rip=%p", stack->cs, stack->ss, stack->rip);
@@ -42,7 +46,10 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     tasks[index].pageTable = newTable;                    // set the new page table
 
     void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
+<<<<<<< HEAD
 
+=======
+>>>>>>> 743b3a32db237a800e7904eb0d24298a05310cb2
     for (size_t i = 0; i < stackSize; i += 4096)     // map stack as user, read-write
         vmmMap(newTable, stack + i, stack + i, true, true);
 
@@ -58,4 +65,9 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;   // task stack
     tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernelspace is the 3rd
     tasks[index].intrerruptStack.ss = 8 * 2;                          // data segment for kernelspace is the 4th
+<<<<<<< HEAD
+=======
+
+    // todo: map the executable
+>>>>>>> 743b3a32db237a800e7904eb0d24298a05310cb2
 }
