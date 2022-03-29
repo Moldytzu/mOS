@@ -33,8 +33,11 @@ void vmmSetAddress(uint64_t *entry, uint64_t address);
 // indexer
 struct vmm_index vmmIndex(uint64_t virtualAddress);
 
-// mapping
+// misc
 void vmmInit();
+void vmmSwap(void *newTable);
+
+// mapping
 void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw);
 void vmmUnmap(struct vmm_page_table *table, void *virtualAddress);
 void *vmmGetBaseTable();

@@ -23,7 +23,7 @@ void vmmInit()
     baseTable = mmAllocatePage();                                  // allocate a page for the base table
     memcpy64(baseTable, bootloaderTable, 4096 / sizeof(uint64_t)); // copy bootloader's paging table over our base table
 
-    iasm("mov %0, %%cr3" ::"r"(baseTable)); // set cr3 to our "new" table
+    vmmSwap(baseTable); // swap the table
 
     // identity map all the memory pools
     struct mm_pool *pools = mmGetPools();
@@ -138,4 +138,9 @@ void vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
 void *vmmGetBaseTable()
 {
     return baseTable;
+}
+
+void vmmSwap(void *newTable)
+{
+    iasm("mov %0, %%cr3" ::"r"(newTable));
 }

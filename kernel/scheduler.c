@@ -11,6 +11,9 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 {
     if (!enabled)
         return; // don't do anything if it isn't enabled
+
+    vmmSwap(tasks[0].pageTable); // load the page table
+    memcpy(stack,&tasks[0].intrerruptStack,sizeof(struct idt_intrerrupt_stack)); // copy the registers
     // todo: swap the registers and the paging table
 }
 
@@ -28,7 +31,7 @@ void schedulerEnable()
 
 void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
 {
-    uint16_t index = ++lastTID;
+    uint16_t index = lastTID++;
     tasks[index].tid = index;                              // set the task ID
     memcpy(tasks[index].name, (char *)name, strlen(name)); // set the name
 
@@ -46,7 +49,7 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
-    tasks[index].intrerruptStack.rflags = 0x202;                      // rflags, enable intrerrupts
+    tasks[index].intrerruptStack.rflags = 0x002;                      // rflags, enable intrerrupts
     tasks[index].intrerruptStack.krsp = (uint64_t)kernelStack + 4096; // kernel stack
     tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;   // task stack
     tasks[index].intrerruptStack.cs = 8 * 3;                          // code segment for userspace is the 3rd

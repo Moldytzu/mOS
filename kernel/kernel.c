@@ -83,6 +83,8 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     schdulerAdd("Idle Task", (void*)idleTask, 4096, (void*)idleTask, 4096); // create the idle task
 
+    schedulerEnable(); // test the schduler
+
     // hang
     while (1)
         iasm("hlt");
