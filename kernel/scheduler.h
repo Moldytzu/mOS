@@ -18,4 +18,4 @@ struct pack sched_task
 void schedulerSchedule(struct idt_intrerrupt_stack *stack);
 void schedulerInit();
 void schedulerEnable();
-void schdulerAdd(const char *name, void *entry, uint64_t stackSize);
+void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize);

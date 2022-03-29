@@ -12,6 +12,8 @@
 #include <syscall.h>
 #include <scheduler.h>
 
+extern void idleTask();
+
 // entry point of the kernel
 void _start(struct stivale2_struct *stivale2_struct)
 {
@@ -78,6 +80,8 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
+
+    schdulerAdd("Idle Task", (void*)idleTask, 4096, (void*)idleTask, 4096); // create the idle task
 
     // hang
     while (1)
