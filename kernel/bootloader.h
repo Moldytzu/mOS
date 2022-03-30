@@ -11,5 +11,6 @@ struct stivale2_module bootloaderGetModule(const char *name);
 
 struct stivale2_struct_tag_framebuffer *bootloaderGetFramebuf();
 struct stivale2_struct_tag_memmap *bootloaderGetMemMap();
+struct stivale2_struct_tag_kernel_base_address *bootloaderGetKernelAddr();
 
 uint8_t bootloaderGetFirmwareType();

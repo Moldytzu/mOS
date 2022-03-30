@@ -1,5 +1,6 @@
 #include <bootloader.h>
 
+struct stivale2_struct_tag_kernel_base_address *baseAddrTag;
 struct stivale2_struct_tag_framebuffer *framebufTag;
 struct stivale2_struct_tag_terminal *termTag;
 struct stivale2_struct_tag_modules *modsTag;
@@ -67,10 +68,11 @@ void bootloaderInit(struct stivale2_struct *stivale2_struct)
     termTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID); // get terminal
     termWrite = (void *)termTag->term_write;                                      // set write function
 
-    framebufTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID); // get frame buffer info
-    modsTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_MODULES_ID);         // get modules info
-    memTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);           // get memory map
-    fwTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FIRMWARE_ID);          // get firmware information
+    framebufTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID);         // get frame buffer info
+    modsTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_MODULES_ID);                 // get modules info
+    memTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);                   // get memory map
+    fwTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FIRMWARE_ID);                  // get firmware information
+    baseAddrTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_KERNEL_BASE_ADDRESS_ID); // get kernel base address
 }
 
 // write to stivale2 terminal
@@ -109,4 +111,10 @@ struct stivale2_struct_tag_memmap *bootloaderGetMemMap()
 uint8_t bootloaderGetFirmwareType()
 {
     return fwTag->flags & 0b1; // 1 bios, 0 uefi
+}
+
+// get kernel address
+struct stivale2_struct_tag_kernel_base_address *bootloaderGetKernelAddr()
+{
+    return baseAddrTag;
 }
