@@ -43,13 +43,11 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
 
-    for (size_t i = 0; i < stackSize; i += 4096)     // map stack as user, read-write
+    for (size_t i = 0; i < stackSize; i += 4096) // map stack as user, read-write
         vmmMap(newTable, stack + i, stack + i, true, true);
 
     for (size_t i = 0; i < execSize; i += 4096) // map executable as user, read-write
         vmmMap(newTable, execBase + i, execBase + i, true, true);
-
-    vmmMap(newTable, kernelStack, kernelStack, false, true); // map kernel stack as read-write
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
