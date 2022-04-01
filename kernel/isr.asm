@@ -78,20 +78,29 @@ global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry
 extern BaseHandler, PITHandler, syscallHandler
 
 BaseHandlerEntry:
+    cli ; disable intrerrupts
+    cld ; because of the ABI
     PUSH_REG
     call BaseHandler
     POP_REG
+    sti ; enable intrerrupts
     iretq
 
 PITHandlerEntry:
+    cli ; disable intrerrupts
+    cld ; because of the ABI
     PUSH_REG
     mov rdi, rsp ; give the handler the stack frame
     call PITHandler
     POP_REG
+    sti ; enable intrerrupts
     iretq
 
 SyscallHandlerEntry:
+    cli ; disable intrerrupts
+    cld ; because of the ABI
     PUSH_REG_SYS ; don't preserve rax
     call syscallHandler ; call the syscall handler
     POP_REG_SYS
+    sti ; enable intrerrupts
     iretq
