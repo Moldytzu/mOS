@@ -13,7 +13,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
-    vmmSwap(tasks[0].pageTable);                                                   // load the page table
+    //vmmSwap(tasks[0].pageTable);                                                   // load the page table
     memcpy(stack, &tasks[0].intrerruptStack, sizeof(struct idt_intrerrupt_stack)); // copy the registers
 }
 
@@ -59,6 +59,6 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     tasks[index].intrerruptStack.rflags = 0x002;                      // rflags, disable intrerrupts
     tasks[index].intrerruptStack.krsp = (uint64_t)kernelStack; // kernel stack
     tasks[index].intrerruptStack.rsp = (uint64_t)stack;   // task stack
-    tasks[index].intrerruptStack.cs = 8 * 3;                          // code segment for kernelspace is the 3rd
-    tasks[index].intrerruptStack.ss = 8 * 4;                          // data segment for kernelspace is the 4th
+    tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernelspace is the first
+    tasks[index].intrerruptStack.ss = 8 * 2;                          // data segment for kernelspace is the second
 }
