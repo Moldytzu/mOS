@@ -41,3 +41,7 @@ void hang();
 
 // printk
 void printk(const char *fmt, ...);
+
+// intrerrupts control
+void cli();
+void sti();

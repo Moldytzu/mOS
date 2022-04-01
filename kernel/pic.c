@@ -2,6 +2,8 @@
 
 void picInit()
 {
+    cli(); // disable intrerrupts
+
     // start initialization sequence
     outb(PIC_MASTER_CMD, PIC_INIT_CMD);
     outb(PIC_SLAVE_CMD, PIC_INIT_CMD);
@@ -21,6 +23,8 @@ void picInit()
     // mask all the intrerrupts
     outb(PIC_MASTER_DAT, 0b11111111);
     outb(PIC_SLAVE_DAT, 0b11111111);
+
+    sti(); // enable intrerrupts
 }
 
 void picEOI()

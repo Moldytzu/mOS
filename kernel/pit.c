@@ -30,7 +30,7 @@ void pitSet(uint32_t hz)
 
 void pitInit()
 {
-    iasm("cli"); // disable intrerrupts
+    cli(); // disable intrerrupts
 
     // fill the packet
     packet.channel = 0b00;        // channel 0
@@ -46,7 +46,7 @@ void pitInit()
     // unmask IRQ 0 on PIC
     outb(PIC_MASTER_DAT, inb(PIC_MASTER_DAT) & ~0b00000001);
 
-    iasm("sti"); // enable intrerrupts
+    sti(); // enable intrerrupts
 }
 
 uint64_t pitGetTicks()

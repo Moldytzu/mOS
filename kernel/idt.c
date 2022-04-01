@@ -26,7 +26,7 @@ extern void BaseHandler(struct idt_intrerrupt_stack *stack)
 
 void idtInit()
 {
-    iasm("cli"); // disable intrerrupts
+    cli(); // disable intrerrupts
 
     // allocate the idt
     idtData = mmAllocatePage();
@@ -39,5 +39,5 @@ void idtInit()
 
     idtr.size--; // decrement to comply with the spec
     iasm("lidt %0" ::"m"(idtr));
-    iasm("sti"); // enable intrerrupts
+    sti(); // enable intrerrupts
 }
