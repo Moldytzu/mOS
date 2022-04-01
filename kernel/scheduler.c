@@ -15,13 +15,15 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     // vmmSwap(tasks[0].pageTable);                                                   // load the page table
     memcpy(stack, &tasks[0].intrerruptStack, sizeof(struct idt_intrerrupt_stack)); // copy the registers
+
+    // todo: load more than the first task
 }
 
 void schedulerInit()
 {
     memset64(tasks, 0, 0x1000 * sizeof(struct sched_task) / sizeof(uint64_t)); // clear the tasks
     kernelStack = mmAllocatePage();                                            // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack;                                  // set kernel stack in tss
+    tssGet()->rsp[0] = (uint64_t)kernelStack + 4096;                           // set kernel stack in tss
 }
 
 void schedulerEnable()
