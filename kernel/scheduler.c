@@ -15,9 +15,6 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     vmmSwap(tasks[0].pageTable);                                                   // load the page table
     memcpy(stack, &tasks[0].intrerruptStack, sizeof(struct idt_intrerrupt_stack)); // copy the registers
-
-    printk("new: cs=%d ss=%d rip=%p", stack->cs, stack->ss, stack->rip);
-    // todo: swap the registers and the paging table
 }
 
 void schedulerInit()
@@ -44,23 +41,24 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
 
-    struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr();
-    printk(" 0x%p -> 0x%p ",kaddr->physical_base_address,kaddr->virtual_base_address);
+    struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
 
-    for (size_t i = 0; i < stackSize; i += 4096) // map stack as user, read-write
+    for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
         vmmMap(newTable, stack + i, stack + i, true, true);
 
     for (size_t i = 0; i < execSize; i += 4096) // map executable as user, read-write
         vmmMap(newTable, execBase + i, execBase + i, true, true);
 
-    for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as user, read-write
-        vmmMap(newTable, (void*)kaddr->virtual_base_address + i, (void*)kaddr->physical_base_address + i, false, false);
+    vmmMap(newTable, kernelStack, kernelStack, false, true); // map kernel stack as read-write
+
+    for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
+        vmmMap(newTable, (void*)kaddr->virtual_base_address + i, (void*)kaddr->physical_base_address + i, false, true);
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
     tasks[index].intrerruptStack.rflags = 0x002;                      // rflags, disable intrerrupts
-    tasks[index].intrerruptStack.krsp = (uint64_t)kernelStack + 4096; // kernel stack
-    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;   // task stack
-    tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernelspace is the 3rd
-    tasks[index].intrerruptStack.ss = 8 * 2;                          // data segment for kernelspace is the 4th
+    tasks[index].intrerruptStack.krsp = (uint64_t)kernelStack; // kernel stack
+    tasks[index].intrerruptStack.rsp = (uint64_t)stack;   // task stack
+    tasks[index].intrerruptStack.cs = 8 * 3;                          // code segment for kernelspace is the 3rd
+    tasks[index].intrerruptStack.ss = 8 * 4;                          // data segment for kernelspace is the 4th
 }
