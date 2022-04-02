@@ -58,7 +58,8 @@ void schedulerInit()
 {
     memset64(tasks, 0, 0x1000 * (sizeof(struct sched_task) / sizeof(uint64_t))); // clear the tasks
     kernelStack = mmAllocatePage();                                              // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + 4096;                             // set kernel stack in tss
+    vmmMap(vmmGetBaseTable(),(void*)VMM_HHDM + 0x100000000000,kernelStack,false,true); // map it
+    tssGet()->rsp[0] = VMM_HHDM + 0x100000000000 + 4096;                             // set kernel stack in tss
 }
 
 void schedulerEnable()
@@ -89,8 +90,6 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
         vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
 
-    vmmMap(newTable, (void *)kernelStack, (void *)kernelStack, false, true); // map kernel stack as read-write
-
     for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
         vmmMap(newTable, (void *)VMM_HHDM + i, stack + i, true, true);
 
@@ -99,6 +98,8 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     for (size_t i = 0; i < framebuffer->framebuffer_pitch * framebuffer->framebuffer_height; i += 4096) // map framebuffer as read-write
         vmmMap(newTable, (void *)framebuffer->framebuffer_addr + i, (void *)framebuffer->framebuffer_addr + i, false, true);
+
+    vmmMap(newTable,(void*)VMM_HHDM + 0x100000000000,kernelStack,false,true); // map it
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;                // set the entry point a.k.a the instruction pointer
