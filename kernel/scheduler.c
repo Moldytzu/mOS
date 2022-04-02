@@ -76,9 +76,8 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
         vmmMap(newTable, stack + i, stack + i, true, true);
 
-    if(execBase < (void*)kaddr->virtual_base_address) // map task as user, read-write if it isn't in the kernel
-        for (size_t i = 0; i < execSize; i += 4096) 
-            vmmMap(newTable, execBase, execBase, true, true);
+    for (size_t i = 0; i < execSize; i += 4096) 
+        vmmMap(newTable, execBase, execBase, true, true);// map task as user, read-write
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
