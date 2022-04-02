@@ -1,5 +1,6 @@
 #include <vmm.h>
 #include <pmm.h>
+#include <serial.h>
 
 struct vmm_page_table *baseTable;
 
@@ -189,19 +190,25 @@ struct pack vmm_page_table *vmmCreateTable()
     memset64(newTable, 0, 4096 / sizeof(uint64_t)); // clear the paging table
 
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
+    struct stivale2_struct_tag_pmrs *pmrs = bootloaderGetPMRS(); // get pmrs
 
-    // identity map first 4 GB of the address space
-    for (size_t i = 0; i < 4294967296; i += 4096)
+    // map PMRs
+    for(size_t i = 0; i < pmrs->entries; i++)
     {
-        vmmMap(newTable, (void *)i, (void *)i, false, true);
-        vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+        for(size_t j = 0; j < pmrs->pmrs[i].length; j++)
+        {
+            vmmMap(newTable,(void*)pmrs->pmrs[i].base + j,(void*)kaddr->physical_base_address + (pmrs->pmrs[i].base - kaddr->virtual_base_address) + j,false,true);
+        }
     }
 
-    // map the kernel
-    for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
-        vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
+    // map first 4 GB of address space
+    for(size_t i = 0; i < 0x100000000; i+= 4096)
+    {
+        vmmMap(newTable, (void*)i, (void*)i, false, true);
+        vmmMap(newTable, (void*)i + VMM_HHDM, (void*)i, false, true);
+    }
 
-    vmmMapPhys(newTable, false, true, true); // map the physical memory pools
+    vmmMapPhys(newTable, false, true, false); // map the physical memory pools
 
     return newTable; // return the created table
 }

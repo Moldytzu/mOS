@@ -6,6 +6,7 @@ struct stivale2_struct_tag_terminal *termTag;
 struct stivale2_struct_tag_modules *modsTag;
 struct stivale2_struct_tag_memmap *memTag;
 struct stivale2_struct_tag_firmware *fwTag;
+struct stivale2_struct_tag_pmrs *pmrTag;
 
 void (*termWrite)(const char *string, size_t length);
 
@@ -73,6 +74,7 @@ void bootloaderInit(struct stivale2_struct *stivale2_struct)
     memTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);                   // get memory map
     fwTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FIRMWARE_ID);                  // get firmware information
     baseAddrTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_KERNEL_BASE_ADDRESS_ID); // get kernel base address
+    pmrTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_PMRS_ID);                     // get protected memory ranges
 }
 
 // write to stivale2 terminal
@@ -117,4 +119,10 @@ uint8_t bootloaderGetFirmwareType()
 struct stivale2_struct_tag_kernel_base_address *bootloaderGetKernelAddr()
 {
     return baseAddrTag;
+}
+
+// get protected memory ranges
+struct stivale2_struct_tag_pmrs *bootloaderGetPMRS()
+{
+    return pmrTag;
 }
