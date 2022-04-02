@@ -21,8 +21,6 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWritec('\n');
     serialWritec('\r');
 
-    printk("old: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
-
     // save the registers
     memcpy(&tasks[currentTID].intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
 
@@ -40,14 +38,12 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
     stack->krsp = krsp; // restore it
 
-    printk("new: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
-
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
 
 void schedulerInit()
 {
-    memset64(tasks, 0, 0x1000 * sizeof(struct sched_task) / sizeof(uint64_t)); // clear the tasks
+    memset64(tasks, 0, 0x1000 * (sizeof(struct sched_task) / sizeof(uint64_t))); // clear the tasks
     kernelStack = mmAllocatePage();                                            // allocate a page for the new kernel stack
     tssGet()->rsp[0] = (uint64_t)kernelStack + 4096;                           // set kernel stack in tss
 }
