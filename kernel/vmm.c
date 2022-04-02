@@ -179,16 +179,21 @@ struct pack vmm_page_table *vmmCreateTable(bool hhdm)
 
     // map PMRs
     for (size_t i = 0; i < pmrs->entries; i++)
-        for (size_t j = 0; j < pmrs->pmrs[i].length; j += 4096)
-            vmmMap(newTable, (void *)pmrs->pmrs[i].base + j, (void *)kaddr->physical_base_address + (pmrs->pmrs[i].base - kaddr->virtual_base_address) + j, false, true);
+    {
+        struct stivale2_pmr currentPMR = pmrs->pmrs[i];
+        for (size_t j = 0; j < currentPMR.length; j += 4096)
+            vmmMap(newTable, (void *)currentPMR.base + j, (void *)kaddr->physical_base_address + (currentPMR.base - kaddr->virtual_base_address) + j, false, true);
+    }
+
+    register uint64_t total = mmGetTotal().total + 0xFFFF0;
 
     // map physical memory
-    for (uint64_t i = 0; i < mmGetTotal().total + 0xFFFF0; i += 4096)
-    {
+    for (uint64_t i = 0; i < total; i += 4096)
         vmmMap(newTable, (void *)i, (void *)i, false, true);
-        if (hhdm)
+
+    if(hhdm)
+        for (uint64_t i = 0; i < total; i += 4096)
             vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
-    }
 
     // map framebuffer
     for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += 4096)
