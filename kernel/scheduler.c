@@ -5,7 +5,7 @@
 #include <serial.h>
 
 void *kernelStack;
-struct sched_task *tasks[0x1000];      // todo: replace this with a linked list
+struct sched_task *tasks[0x1000];     // todo: replace this with a linked list
 uint16_t lastTID = 0, currentTID = 0; // last task ID, current task ID
 bool enabled = false;                 // enabled
 
@@ -56,10 +56,9 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
 void schedulerInit()
 {
-    memset64(tasks, 0, 0x1000 * (sizeof(struct sched_task*) / sizeof(uint64_t))); // clear the tasks
-    kernelStack = mmAllocatePage();                                              // allocate a page for the new kernel stack
-    vmmMap(vmmGetBaseTable(),(void*)VMM_HHDM + 0x100000000000,kernelStack,false,true); // map it
-    tssGet()->rsp[0] = VMM_HHDM + 0x100000000000 + 4096;                             // set kernel stack in tss
+    memset64(tasks, 0, 0x1000 * (sizeof(struct sched_task *) / sizeof(uint64_t)));          // clear the tasks
+    kernelStack = mmAllocatePage();                                                         // allocate a page for the new kernel stack
+    tssGet()->rsp[0] = (uint64_t)kernelStack + 4096;                                    // set kernel stack in tss
 }
 
 void schedulerEnable()
@@ -71,7 +70,7 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 {
     uint16_t index = lastTID++;
     tasks[index] = mmAllocatePage();
-    memset(tasks[index],0,4096 / sizeof(uint64_t));
+    memset64(tasks[index], 0, 4096 / sizeof(uint64_t));
     tasks[index]->tid = index;                              // set the task ID
     memcpy(tasks[index]->name, (char *)name, strlen(name)); // set the name
 
@@ -92,7 +91,7 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
         vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
 
     for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
-        vmmMap(newTable, (void *)VMM_HHDM + i, stack + i, true, true);
+        vmmMap(newTable, (void *)stack + i, stack + i, true, true);
 
     for (size_t i = 0; i < execSize; i += 4096)
         vmmMap(newTable, (void *)execBase, (void *)execBase, true, true); // map task as user, read-write
@@ -100,16 +99,14 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     for (size_t i = 0; i < framebuffer->framebuffer_pitch * framebuffer->framebuffer_height; i += 4096) // map framebuffer as read-write
         vmmMap(newTable, (void *)framebuffer->framebuffer_addr + i, (void *)framebuffer->framebuffer_addr + i, false, true);
 
-    vmmMap(newTable,(void*)VMM_HHDM + 0x100000000000,kernelStack,false,true); // map it
-
     // initial registers
     tasks[index]->intrerruptStack = mmAllocatePage();
-    memset64(tasks[index]->intrerruptStack,0,4096 / sizeof(uint64_t));
-    tasks[index]->intrerruptStack->rip = (uint64_t)entry;                // set the entry point a.k.a the instruction pointer
-    tasks[index]->intrerruptStack->rflags = 0x202;                       // rflags, enable intrerrupts
-    tasks[index]->intrerruptStack->rsp = (uint64_t)VMM_HHDM + stackSize; // task stack
-    tasks[index]->intrerruptStack->cs = 8 * 3;                           // code segment for kernel is the first
-    tasks[index]->intrerruptStack->ss = 8 * 4;                           // data segment for kernel is the second
+    memset64(tasks[index]->intrerruptStack, 0, 4096 / sizeof(uint64_t));
+    tasks[index]->intrerruptStack->rip = (uint64_t)entry;             // set the entry point a.k.a the instruction pointer
+    tasks[index]->intrerruptStack->rflags = 0x202;                    // rflags, enable intrerrupts
+    tasks[index]->intrerruptStack->rsp = (uint64_t)stack + stackSize; // task stack
+    tasks[index]->intrerruptStack->cs = 8 * 3;                        // code segment for kernel is the first
+    tasks[index]->intrerruptStack->ss = 8 * 4;                        // data segment for kernel is the second
 
     printk("task add: 0x%p cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", tasks[index]->intrerruptStack, tasks[index]->intrerruptStack->cs, tasks[index]->intrerruptStack->ss, tasks[index]->intrerruptStack->rip, tasks[index]->intrerruptStack->rsp, tasks[index]->intrerruptStack->krsp);
     printk("new index: %d\n", index);
