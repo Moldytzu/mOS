@@ -20,24 +20,7 @@ void vmmInit()
     iasm("mov %%cr3, %%rax"
          : "=a"(bootloaderTable)); // get bootloader's paging table
 
-    baseTable = mmAllocatePage();                    // allocate a page for the base table
-    memset64(baseTable, 0, 4096 / sizeof(uint64_t)); // clear the paging table
-
-    struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
-
-    // identity map first 4 GB of the address space
-    for (size_t i = 0; i < 4294967296; i += 4096)
-    {
-        vmmMap(baseTable, (void *)i, (void *)i, false, true);
-        vmmMap(baseTable, (void *)i + VMM_HHDM, (void *)i, false, true);
-    }
-
-    // map the kernel
-    for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
-        vmmMap(baseTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
-
-    vmmMapPhys(baseTable, false, true, true); // map the physical memory pools
-
+    baseTable = vmmCreateTable(); // create the base table
     vmmSwap(baseTable); // swap the table
 }
 
@@ -197,4 +180,28 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 
     currentEntry = pt->entries[index.P];         // index p
     return (void *)vmmGetAddress(&currentEntry); // get the address
+}
+
+struct pack vmm_page_table *vmmCreateTable()
+{
+    // create a new table to use as a base for everything
+    void *newTable = mmAllocatePage();              // allocate a page for the new table
+    memset64(newTable, 0, 4096 / sizeof(uint64_t)); // clear the paging table
+
+    struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
+
+    // identity map first 4 GB of the address space
+    for (size_t i = 0; i < 4294967296; i += 4096)
+    {
+        vmmMap(newTable, (void *)i, (void *)i, false, true);
+        vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+    }
+
+    // map the kernel
+    for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
+        vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
+
+    vmmMapPhys(newTable, false, true, true); // map the physical memory pools
+
+    return newTable; // return the created table
 }

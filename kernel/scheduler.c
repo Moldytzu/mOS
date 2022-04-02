@@ -57,33 +57,16 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     memcpy(tasks[index].name, (char *)name, strlen(name)); // set the name
 
     // page table
-    struct vmm_page_table *newTable = mmAllocatePage();                      // allocate a new page table
-    memset64(newTable, 0, sizeof(struct vmm_page_table) / sizeof(uint64_t)); // clear the page table
-
-    tasks[index].pageTable = newTable; // set the new page table
+    struct vmm_page_table *newTable = vmmCreateTable(); // create a new page table
+    tasks[index].pageTable = newTable;                  // set the new page table
 
     void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
-
-    struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
-    struct stivale2_struct_tag_framebuffer *framebuffer = bootloaderGetFramebuf();
-
-    vmmMapPhys(newTable, false, true, false); // map physical memory pools
-
-    for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
-        vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
 
     for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
         vmmMap(newTable, (void *)stack + i, stack + i, true, true);
 
     for (size_t i = 0; i < execSize; i += 4096)
         vmmMap(newTable, (void *)execBase, (void *)execBase, true, true); // map task as user, read-write
-
-    // identity map first 4 GB of the address space
-    for (size_t i = 0; i < 4294967296; i += 4096)
-    {
-        vmmMap(newTable, (void *)i, (void *)i, false, true);
-        vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
-    }
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;             // set the entry point a.k.a the instruction pointer
