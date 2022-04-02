@@ -148,22 +148,6 @@ void vmmSwap(void *newTable)
     iasm("mov %0, %%cr3" ::"r"(newTable));
 }
 
-void vmmMapPhys(struct vmm_page_table *table, bool user, bool rw, bool hhdm)
-{
-    // identity map all the memory pools
-    struct mm_pool *pools = mmGetPools();
-    for (size_t i = 0; pools[i].total != UINT64_MAX; i++)
-    {
-        for (size_t j = 0; j < pools[i].total; j += 4096)
-        {
-            vmmMap(table, pools[i].base + j, pools[i].base + j, user, rw); // map every page as read-write, kernel-only
-            if (!hhdm)
-                continue;
-            vmmMap(table, pools[i].base + j + VMM_HHDM, pools[i].base + j, user, rw); // hhdm
-        }
-    }
-}
-
 void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 {
     // get physical memory address form virtual memory address
@@ -202,14 +186,19 @@ struct pack vmm_page_table *vmmCreateTable()
         }
     }
 
-    // map till framebuffer end
-    for (uint64_t i = 0; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += 4096)
+    // map physical memory
+    for (uint64_t i = 0; i < mmGetTotal().total + 0xFFFF0; i += 4096)
     {
         vmmMap(newTable, (void *)i, (void *)i, false, true);
         vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
     }
 
-    vmmMapPhys(newTable, false, true, false); // map the physical memory pools
+    // map framebuffer
+    for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += 4096)
+    {
+        vmmMap(newTable, (void *)i, (void *)i, false, true);
+        vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+    }
 
     return newTable; // return the created table
 }
