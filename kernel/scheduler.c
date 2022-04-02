@@ -14,6 +14,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
+    vmmSwap(vmmGetBaseTable()); // swap the page table with the base so we can access every piece of memory
+
 #ifdef K_SCHED_DEBUG
     serialWrite("sched: saving ");
     serialWrite(tasks[currentTID].name);
@@ -34,10 +36,11 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWrite("\n");
 #endif
 
-    vmmSwap(tasks[currentTID].pageTable); // swap the page table
     uint64_t krsp = stack->krsp;          // save the stack
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
     stack->krsp = krsp; // restore it
+
+    vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
 
 void schedulerInit()

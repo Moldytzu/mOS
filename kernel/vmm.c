@@ -167,7 +167,7 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
     return (void *)vmmGetAddress(&currentEntry); // get the address
 }
 
-struct pack vmm_page_table *vmmCreateTable(bool hhdm)
+struct pack vmm_page_table *vmmCreateTable(bool full)
 {
     // create a new table to use as a base for everything
     void *newTable = mmAllocatePage();                  // allocate a page for the new table
@@ -187,19 +187,28 @@ struct pack vmm_page_table *vmmCreateTable(bool hhdm)
 
     register uint64_t total = mmGetTotal().total + 0xFFFF0;
 
-    // map physical memory
-    for (uint64_t i = 0; i < total; i += VMM_PAGE)
-        vmmMap(newTable, (void *)i, (void *)i, false, true);
+#ifdef K_VMM_DEBUG
+    uint64_t a = mmGetTotal().available;
+#endif
 
-    if (hhdm)
+    if (full)
+        for (uint64_t i = 0; i < total; i += VMM_PAGE) // map entire physical memory range
+            vmmMap(newTable, (void *)i, (void *)i, false, true);
+    else
+        for (uint64_t i = 0; i < 16 * 1024 * 1024; i += VMM_PAGE) // map only 16 MB of RAM
+            vmmMap(newTable, (void *)i, (void *)i, false, true);
+
+    if (full) // map hhdm if we want a full table
         for (uint64_t i = 0; i < total; i += VMM_PAGE)
             vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
 
-    // map framebuffer
-    for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE)
-    {
-        vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
-    }
+    if (full) // map framebuffer if we want a full table
+        for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE)
+            vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+
+#ifdef K_VMM_DEBUG
+    printk("vmm: wasted %d KB on a page table\n", toKB((uint64_t)(a - mmGetTotal().available)));
+#endif
 
     return newTable; // return the created table
 }

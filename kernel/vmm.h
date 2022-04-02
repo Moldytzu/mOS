@@ -40,7 +40,7 @@ struct vmm_index vmmIndex(uint64_t virtualAddress);
 // misc
 void vmmInit();
 void vmmSwap(void *newTable);
-struct pack vmm_page_table *vmmCreateTable(bool hhdm);
+struct pack vmm_page_table *vmmCreateTable(bool full);
 
 // mapping
 void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw);
