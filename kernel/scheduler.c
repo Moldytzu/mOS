@@ -14,6 +14,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
+    vmmSwap(vmmGetBaseTable()); // load the base table
+
     serialWrite("saving ");
     serialWrite(tasks[currentTID].name);
     serialWritec('\n');
@@ -85,7 +87,7 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     for (size_t i = 0; i < execSize; i += 4096)
         vmmMap(newTable, (void *)execBase, (void *)execBase, true, true); // map task as user, read-write
 
-    for (size_t i = 0; i < framebuffer->framebuffer_pitch * framebuffer->framebuffer_height; i += 4096)
+    for (size_t i = 0; i < framebuffer->framebuffer_pitch * framebuffer->framebuffer_height; i += 4096) // map framebuffer as read-write
         vmmMap(newTable, (void *)framebuffer->framebuffer_addr + i, (void *)framebuffer->framebuffer_addr + i, false, true);
 
     // initial registers
