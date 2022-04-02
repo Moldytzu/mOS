@@ -82,10 +82,10 @@ void _start(struct stivale2_struct *stivale2_struct)
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
 
     void *task = mmAllocatePage(); // create an empty page just for the idle task
-    memcpy(task,(void*)idleTask,4096); // copy it
+    memcpy(task,(void*)idleTask,VMM_PAGE); // copy it
 
-    schedulerAdd("Idle Task", 0, 4096, task, 4096); // create the idle task
-    schedulerAdd("Idle Task 2", 0, 4096, task, 4096); // create the idle task
+    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
+    schedulerAdd("Idle Task 2", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
     schedulerEnable(); // enable the schduler
 
     ((void(*)())task)(); // run the idle task

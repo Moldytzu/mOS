@@ -1,5 +1,6 @@
 #include <idt.h>
 #include <pmm.h>
+#include <vmm.h>
 
 struct idt_descriptor idtr;
 char *idtData;
@@ -30,7 +31,7 @@ void idtInit()
 
     // allocate the idt
     idtData = mmAllocatePage();
-    memset64(idtData, 0, 4096);
+    memset64(idtData, 0, VMM_PAGE);
 
     idtr.offset = (uint64_t)idtData; // set the offset to the data
     idtr.size = 0;                   // reset the size

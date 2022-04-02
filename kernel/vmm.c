@@ -61,7 +61,7 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pdp = mmAllocatePage();                             // allocate table
-        memset64(pdp, 0, 4096 / sizeof(uint64_t));          // clear it
+        memset64(pdp, 0, VMM_PAGE / sizeof(uint64_t));          // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
         vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
@@ -79,7 +79,7 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pd = mmAllocatePage();                              // allocate table
-        memset64(pd, 0, 4096 / sizeof(uint64_t));           // clear it
+        memset64(pd, 0, VMM_PAGE / sizeof(uint64_t));           // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
         vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
@@ -97,7 +97,7 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pt = mmAllocatePage();                              // allocate table
-        memset64(pt, 0, 4096 / sizeof(uint64_t));           // clear it
+        memset64(pt, 0, VMM_PAGE / sizeof(uint64_t));           // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
         vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
@@ -171,7 +171,7 @@ struct pack vmm_page_table *vmmCreateTable(bool hhdm)
 {
     // create a new table to use as a base for everything
     void *newTable = mmAllocatePage();              // allocate a page for the new table
-    memset64(newTable, 0, 4096 / sizeof(uint64_t)); // clear the paging table
+    memset64(newTable, 0, VMM_PAGE / sizeof(uint64_t)); // clear the paging table
 
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
     struct stivale2_struct_tag_pmrs *pmrs = bootloaderGetPMRS();                       // get pmrs
@@ -181,22 +181,22 @@ struct pack vmm_page_table *vmmCreateTable(bool hhdm)
     for (size_t i = 0; i < pmrs->entries; i++)
     {
         struct stivale2_pmr currentPMR = pmrs->pmrs[i];
-        for (size_t j = 0; j < currentPMR.length; j += 4096)
+        for (size_t j = 0; j < currentPMR.length; j += VMM_PAGE)
             vmmMap(newTable, (void *)currentPMR.base + j, (void *)kaddr->physical_base_address + (currentPMR.base - kaddr->virtual_base_address) + j, false, true);
     }
 
     register uint64_t total = mmGetTotal().total + 0xFFFF0;
 
     // map physical memory
-    for (uint64_t i = 0; i < total; i += 4096)
+    for (uint64_t i = 0; i < total; i += VMM_PAGE)
         vmmMap(newTable, (void *)i, (void *)i, false, true);
 
     if(hhdm)
-        for (uint64_t i = 0; i < total; i += 4096)
+        for (uint64_t i = 0; i < total; i += VMM_PAGE)
             vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
 
     // map framebuffer
-    for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += 4096)
+    for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE)
     {
         vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
     }

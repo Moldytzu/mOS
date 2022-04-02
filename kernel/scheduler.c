@@ -42,7 +42,7 @@ void schedulerInit()
 {
     memset64(tasks, 0, 0x1000 * sizeof(struct sched_task) / sizeof(uint64_t)); // clear the tasks
     kernelStack = mmAllocatePage();                                            // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + 4096;                           // set kernel stack in tss
+    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;                           // set kernel stack in tss
 }
 
 void schedulerEnable()
@@ -60,12 +60,12 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     struct vmm_page_table *newTable = vmmCreateTable(false); // create a new page table
     tasks[index].pageTable = newTable;                       // set the new page table
 
-    void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
+    void *stack = mmAllocatePages(stackSize / VMM_PAGE); // allocate stack for the task
 
-    for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
+    for (size_t i = 0; i < stackSize; i += VMM_PAGE) // map task stack as user, read-write
         vmmMap(newTable, (void *)stack + i, stack + i, true, true);
 
-    for (size_t i = 0; i < execSize; i += 4096)
+    for (size_t i = 0; i < execSize; i += VMM_PAGE)
         vmmMap(newTable, (void *)0xA000000000 + i, (void *)execBase + i, true, true); // map task as user, read-write
 
     // initial registers

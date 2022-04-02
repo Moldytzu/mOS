@@ -1,6 +1,7 @@
 #include <pmm.h>
 #include <framebuffer.h>
 #include <panic.h>
+#include <vmm.h>
 
 uint16_t poolCount = 0;
 
@@ -41,12 +42,12 @@ void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
             if(pageIndex == page)
             {
                 register uint8_t mask = 0b10000000 >> j;   // create the mask
-                pool->available -= 4096;    // decrement the available bytes
-                pool->used += 4096;         // increase the usage
-                if (pool->available < 4096) // if there isn't room for any page it means it's full
+                pool->available -= VMM_PAGE;    // decrement the available bytes
+                pool->used += VMM_PAGE;         // increase the usage
+                if (pool->available < VMM_PAGE) // if there isn't room for any page it means it's full
                     pool->full = true;
                 bitmapBase[bitmapByteIndex] |= mask;                     // apply the mask
-                return (void *)(pool->allocableBase + pageIndex * 4096); // return the address
+                return (void *)(pool->allocableBase + pageIndex * VMM_PAGE); // return the address
             }
         }
         bitmapByteIndex++; // increase the byte index
@@ -64,11 +65,11 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
     {
         for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
         {
-            if ((void *)(pool->allocableBase + pageIndex * 4096) == address) // check if we indexed the address
+            if ((void *)(pool->allocableBase + pageIndex * VMM_PAGE) == address) // check if we indexed the address
             {
                 bitmapBase[bitmapByteIndex] &= ~(0b10000000 >> j); // unset that bit
-                pool->available += 4096;                           // increase available memory
-                pool->used -= 4096;                                // decrease the usage
+                pool->available += VMM_PAGE;                           // increase available memory
+                pool->used -= VMM_PAGE;                                // decrease the usage
                 pool->full = false;                                // since we deallocated some memory, we can be sure it's not full
                 return;                                            // return
             }
@@ -86,12 +87,12 @@ void *mmAllocatePagePool(struct mm_pool *pool)
             uint8_t mask = 0b10000000 >> pool->bitmapBitIndex;   // create the mask
             if (!(mask & pool->bitmapBase[pool->bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
             {
-                pool->available -= 4096;    // decrement the available bytes
-                pool->used += 4096;         // increase the usage
-                if (pool->available < 4096) // if there isn't room for any page it means it's full
+                pool->available -= VMM_PAGE;    // decrement the available bytes
+                pool->used += VMM_PAGE;         // increase the usage
+                if (pool->available < VMM_PAGE) // if there isn't room for any page it means it's full
                     pool->full = true;
                 pool->bitmapBase[pool->bitmapByteIndex] |= mask;                     // apply the mask
-                return (void *)(pool->allocableBase + pool->pageIndex * 4096); // return the address
+                return (void *)(pool->allocableBase + pool->pageIndex * VMM_PAGE); // return the address
             }
         }
         if(pool->bitmapBitIndex == 8) pool->bitmapBitIndex = 0; // reset the bit index if it's 8 (over the limit)
@@ -104,7 +105,7 @@ void *mmAllocatePagePool(struct mm_pool *pool)
 
 void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
 {
-    size_t poolPageCount = pool->total / 4096;
+    size_t poolPageCount = pool->total / VMM_PAGE;
 
     for(size_t base = 0; base < poolPageCount - pages; base++)
     {
@@ -178,7 +179,7 @@ void pmmInit()
 
     for (uint64_t i = 0; i < map->entries; i++)
     {
-        if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length >= 4096) // if the pool of memory is usable take it
+        if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length >= VMM_PAGE) // if the pool of memory is usable take it
         {
             uint16_t index = poolCount++;
             memset(&pools[index], 0, sizeof(struct mm_pool));
@@ -192,15 +193,15 @@ void pmmInit()
     }
 
     // we need to calculate how many bytes we need for the allocator's bitmap, storing information about 8 pages per byte (we need to calculate this for each pool)
-    // let x -> usable memory in bytes; bytes = x/(4096*8);
+    // let x -> usable memory in bytes; bytes = x/(VMM_PAGE*8);
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
-        pools[i].bitmapReserved = pools[i].available / 8 / 4096;
+        pools[i].bitmapReserved = pools[i].available / 8 / VMM_PAGE;
         pools[i].allocableBase += pools[i].bitmapReserved;
         pools[i].available -= pools[i].bitmapReserved;
 
-        // align the allocableBase to 4096
-        pools[i].allocableBase = (void *)align((uint64_t)pools[i].allocableBase, 4096);
+        // align the allocableBase to VMM_PAGE
+        pools[i].allocableBase = (void *)align((uint64_t)pools[i].allocableBase, VMM_PAGE);
 
         memset(pools[i].base, 0, pools[i].bitmapReserved); // clear all the bytes in the bitmap
     }

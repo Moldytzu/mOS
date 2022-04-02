@@ -1,5 +1,6 @@
 #include <gdt.h>
 #include <pmm.h>
+#include <vmm.h>
 
 struct gdt_tss tss;
 struct gdt_descriptor gdtr;
@@ -12,7 +13,7 @@ void gdtInit()
 {
     // allocate the gdt
     gdtData = mmAllocatePage();
-    memset(gdtData, 0, 4096);
+    memset(gdtData, 0, VMM_PAGE);
 
     gdtr.size = 0; // reset the size
     gdtr.offset = (uint64_t)gdtData;
