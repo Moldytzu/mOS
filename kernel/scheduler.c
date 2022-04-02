@@ -58,7 +58,7 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
 
     // page table
     struct vmm_page_table *newTable = vmmCreateTable(false); // create a new page table
-    tasks[index].pageTable = newTable;                      // set the new page table
+    tasks[index].pageTable = newTable;                       // set the new page table
 
     void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
 
@@ -66,14 +66,14 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
         vmmMap(newTable, (void *)stack + i, stack + i, true, true);
 
     for (size_t i = 0; i < execSize; i += 4096)
-        vmmMap(newTable, (void *)execBase, (void *)execBase, true, true); // map task as user, read-write
+        vmmMap(newTable, (void *)0xA000000000 + i, (void *)execBase + i, true, true); // map task as user, read-write
 
     // initial registers
-    tasks[index].intrerruptStack.rip = (uint64_t)entry;             // set the entry point a.k.a the instruction pointer
-    tasks[index].intrerruptStack.rflags = 0x202;                    // rflags, enable intrerrupts
-    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize; // task stack
-    tasks[index].intrerruptStack.cs = 8 * 1;                        // code segment for kernel is the first
-    tasks[index].intrerruptStack.ss = 8 * 2;                        // data segment for kernel is the second
+    tasks[index].intrerruptStack.rip = 0xA000000000 + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
+    tasks[index].intrerruptStack.rflags = 0x202;                       // rflags, enable intrerrupts
+    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;    // task stack
+    tasks[index].intrerruptStack.cs = 8 * 1;                           // code segment for kernel is the first
+    tasks[index].intrerruptStack.ss = 8 * 2;                           // data segment for kernel is the second
 }
 
 struct sched_task *schedulerGetCurrent()
