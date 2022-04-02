@@ -82,9 +82,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
 
     schdulerAdd("Idle Task", (void*)idleTask, 4096, (void*)idleTask, 4096); // create the idle task
+    schdulerAdd("Idle Task 2", (void*)idleTask, 4096, (void*)idleTask, 4096); // create the idle task
+    schedulerEnable(); // enable the schduler
 
-    schedulerEnable(); // test the schduler
-    idleTask(); // jump in the idle task
+    while(1)
+        iasm("hlt"); // hang
 }
 
 void panick(const char *msg)

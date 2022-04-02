@@ -2,25 +2,40 @@
 #include <pmm.h>
 #include <gdt.h>
 #include <bootloader.h>
+#include <serial.h>
 
 void *kernelStack;
-struct sched_task tasks[0x1000]; // todo: replace this with a linked list
-uint16_t lastTID = 0;            // last task ID
-bool enabled = false;            // enabled
+struct sched_task tasks[0x1000];      // todo: replace this with a linked list
+uint16_t lastTID = 0, currentTID = 0; // last task ID, current task ID
+bool enabled = false;                 // enabled
 
 void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 {
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
-    // vmmSwap(tasks[0].pageTable);                                                   // load the page table
-    
-    stack->cs = tasks[0].intrerruptStack.cs;
-    stack->ss = tasks[0].intrerruptStack.ss;
-    stack->rflags = tasks[0].intrerruptStack.rflags;
-    stack->rip = tasks[0].intrerruptStack.rip;
+    serialWrite("saving ");
+    serialWrite(tasks[currentTID].name);
+    serialWritec('\n');
+    serialWritec('\r');
 
-    // todo: load more than the first task
+    // save the registers
+    memcpy(&tasks[currentTID].intrerruptStack,stack,sizeof(struct idt_intrerrupt_stack));
+
+    // load the next task
+    currentTID++;
+    if(currentTID == lastTID)
+        currentTID = 0; // reset tid if we're overrunning
+
+    serialWrite("loading ");
+    serialWrite(tasks[currentTID].name);
+    serialWritec('\n');
+    serialWritec('\r');
+    
+    // todo: load the page table
+    uint64_t krsp = stack->krsp;
+    memcpy(stack,&tasks[currentTID].intrerruptStack,sizeof(struct idt_intrerrupt_stack));
+    stack->krsp = krsp;
 }
 
 void schedulerInit()
@@ -62,9 +77,9 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
-    tasks[index].intrerruptStack.rflags = 0x202;                      // rflags, disable intrerrupts
+    tasks[index].intrerruptStack.rflags = 0x202;                      // rflags, enable intrerrupts
     tasks[index].intrerruptStack.krsp = (uint64_t)kernelStack + 4096; // kernel stack
     tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;   // task stack
-    tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernelspace is the first
-    tasks[index].intrerruptStack.ss = 8 * 2;                          // data segment for kernelspace is the second
+    tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernel is the first
+    tasks[index].intrerruptStack.ss = 8 * 2;                          // data segment for kernel is the second
 }
