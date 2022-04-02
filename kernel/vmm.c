@@ -21,8 +21,8 @@ void vmmInit()
     iasm("mov %%cr3, %%rax"
          : "=a"(bootloaderTable)); // get bootloader's paging table
 
-    baseTable = vmmCreateTable(); // create the base table
-    vmmSwap(baseTable);           // swap the table
+    baseTable = vmmCreateTable(true); // create the base table with hhdm
+    vmmSwap(baseTable);               // swap the table
 }
 
 bool vmmGetFlag(uint64_t *entry, uint8_t flag)
@@ -167,7 +167,7 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
     return (void *)vmmGetAddress(&currentEntry); // get the address
 }
 
-struct pack vmm_page_table *vmmCreateTable()
+struct pack vmm_page_table *vmmCreateTable(bool hhdm)
 {
     // create a new table to use as a base for everything
     void *newTable = mmAllocatePage();              // allocate a page for the new table
@@ -186,13 +186,13 @@ struct pack vmm_page_table *vmmCreateTable()
     for (uint64_t i = 0; i < mmGetTotal().total + 0xFFFF0; i += 4096)
     {
         vmmMap(newTable, (void *)i, (void *)i, false, true);
-        vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+        if (hhdm)
+            vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
     }
 
     // map framebuffer
     for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += 4096)
     {
-        vmmMap(newTable, (void *)i, (void *)i, false, true);
         vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
     }
 
