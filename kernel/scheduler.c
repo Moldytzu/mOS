@@ -66,15 +66,19 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
 
-    vmmMapPhys(newTable, true, true); // map physical memory
+    vmmMapPhys(newTable, false, true); // map physical memory
 
     for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
-        vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, true, true);
+        vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
+
+    vmmMap(newTable, kernelStack, kernelStack, false, true); // map kernel stack as read-write
 
     for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
         vmmMap(newTable, stack + i, stack + i, true, true);
 
-    vmmMap(newTable, kernelStack, kernelStack, true, true); // map kernel stack as read-write
+    if(execBase < (void*)kaddr->virtual_base_address) // map task as user, read-write if it isn't in the kernel
+        for (size_t i = 0; i < execSize; i += 4096) 
+            vmmMap(newTable, execBase, execBase, true, true);
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
