@@ -14,7 +14,11 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
         return; // don't do anything if it isn't enabled
 
     // vmmSwap(tasks[0].pageTable);                                                   // load the page table
-    memcpy(stack, &tasks[0].intrerruptStack, sizeof(struct idt_intrerrupt_stack)); // copy the registers
+    
+    stack->cs = tasks[0].intrerruptStack.cs;
+    stack->ss = tasks[0].intrerruptStack.ss;
+    stack->rflags = tasks[0].intrerruptStack.rflags;
+    stack->rip = tasks[0].intrerruptStack.rip;
 
     // todo: load more than the first task
 }
@@ -58,7 +62,7 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
-    tasks[index].intrerruptStack.rflags = 0x002;                      // rflags, disable intrerrupts
+    tasks[index].intrerruptStack.rflags = 0x202;                      // rflags, disable intrerrupts
     tasks[index].intrerruptStack.krsp = (uint64_t)kernelStack + 4096; // kernel stack
     tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;   // task stack
     tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernelspace is the first
