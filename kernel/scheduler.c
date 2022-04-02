@@ -29,7 +29,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
         currentTID = 0; // reset tid if we're overrunning
 
 #ifdef K_SCHED_DEBUG
-    serialWrite("scheduler: loading ");
+    serialWrite("sched: loading ");
     serialWrite(tasks[currentTID].name);
     serialWrite("\n");
 #endif
