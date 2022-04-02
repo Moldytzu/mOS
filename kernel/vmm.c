@@ -20,11 +20,25 @@ void vmmInit()
     iasm("mov %%cr3, %%rax"
          : "=a"(bootloaderTable)); // get bootloader's paging table
 
-    baseTable = mmAllocatePage();                                  // allocate a page for the base table
-    memcpy64(baseTable, bootloaderTable, 4096 / sizeof(uint64_t)); // copy bootloader's paging table over our base table
+    baseTable = mmAllocatePage();                    // allocate a page for the base table
+    memset64(baseTable, 0, 4096 / sizeof(uint64_t)); // clear the paging table
+
+    struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
+
+    // identity map first 4 GB of the address space
+    for (size_t i = 0; i < 4294967296; i += 4096)
+    {
+        vmmMap(baseTable, (void *)i, (void *)i, false, true);
+        vmmMap(baseTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+    }
+
+    // map the kernel
+    for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
+        vmmMap(baseTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
+
+    vmmMapPhys(baseTable, false, true, true); // map the physical memory pools
 
     vmmSwap(baseTable); // swap the table
-    vmmMapPhys(baseTable, false, true, true);
 }
 
 bool vmmGetFlag(uint64_t *entry, uint8_t flag)
@@ -158,8 +172,9 @@ void vmmMapPhys(struct vmm_page_table *table, bool user, bool rw, bool hhdm)
     {
         for (size_t j = 0; j < pools[i].total; j += 4096)
         {
-            vmmMap(table, pools[i].base + j, pools[i].base + j, user, rw);            // map every page as read-write, kernel-only
-            if(!hhdm) continue;
+            vmmMap(table, pools[i].base + j, pools[i].base + j, user, rw); // map every page as read-write, kernel-only
+            if (!hhdm)
+                continue;
             vmmMap(table, pools[i].base + j + VMM_HHDM, pools[i].base + j, user, rw); // hhdm
         }
     }
@@ -180,6 +195,6 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
     currentEntry = pd->entries[index.PT];                               // index pt
     pt = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pt->entries[index.P]; // index p
-    return (void*)vmmGetAddress(&currentEntry);  // get the address
+    currentEntry = pt->entries[index.P];         // index p
+    return (void *)vmmGetAddress(&currentEntry); // get the address
 }

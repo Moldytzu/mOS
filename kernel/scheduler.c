@@ -33,7 +33,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWritec('\r');
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
-    uint64_t krsp = stack->krsp; // save the stack
+    uint64_t krsp = stack->krsp;          // save the stack
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
     stack->krsp = krsp; // restore it
 }
@@ -79,16 +79,16 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
         vmmMap(newTable, (void *)execBase, (void *)execBase, true, true); // map task as user, read-write
 
     // identity map first 4 GB of the address space
-    for (size_t i = 0; i < 4294967296  ; i += 4096)
+    for (size_t i = 0; i < 4294967296; i += 4096)
     {
-        vmmMap(newTable, (void*)i, (void*)i,false,true);
-        vmmMap(newTable, (void*)i + VMM_HHDM, (void*)i,false,true);
+        vmmMap(newTable, (void *)i, (void *)i, false, true);
+        vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
     }
-    
+
     // initial registers
-    tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
-    tasks[index].intrerruptStack.rflags = 0x202;                      // rflags, enable intrerrupts
-    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;   // task stack
-    tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernel is the first
-    tasks[index].intrerruptStack.ss = 8 * 2;                          // data segment for kernel is the second
+    tasks[index].intrerruptStack.rip = (uint64_t)entry;             // set the entry point a.k.a the instruction pointer
+    tasks[index].intrerruptStack.rflags = 0x202;                    // rflags, enable intrerrupts
+    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize; // task stack
+    tasks[index].intrerruptStack.cs = 8 * 1;                        // code segment for kernel is the first
+    tasks[index].intrerruptStack.ss = 8 * 2;                        // data segment for kernel is the second
 }
