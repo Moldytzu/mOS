@@ -67,7 +67,7 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
     struct stivale2_struct_tag_framebuffer *framebuffer = bootloaderGetFramebuf();
 
-    vmmMapPhys(newTable, false, true, false); // map physical memory
+    vmmMapPhys(newTable, false, true, false); // map physical memory pools
 
     for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
         vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
@@ -78,9 +78,13 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     for (size_t i = 0; i < execSize; i += 4096)
         vmmMap(newTable, (void *)execBase, (void *)execBase, true, true); // map task as user, read-write
 
-    for (size_t i = 0; i < framebuffer->framebuffer_pitch * framebuffer->framebuffer_height; i += 4096) // map framebuffer as read-write
-        vmmMap(newTable, (void *)framebuffer->framebuffer_addr + i, (void *)framebuffer->framebuffer_addr + i - VMM_HHDM, false, true);
-
+    // identity map first 4 GB of the address space
+    for (size_t i = 0; i < 4294967296  ; i += 4096)
+    {
+        vmmMap(newTable, (void*)i, (void*)i,false,true);
+        vmmMap(newTable, (void*)i + VMM_HHDM, (void*)i,false,true);
+    }
+    
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
     tasks[index].intrerruptStack.rflags = 0x202;                      // rflags, enable intrerrupts
