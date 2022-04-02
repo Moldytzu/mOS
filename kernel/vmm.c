@@ -179,12 +179,8 @@ struct pack vmm_page_table *vmmCreateTable()
 
     // map PMRs
     for (size_t i = 0; i < pmrs->entries; i++)
-    {
-        for (size_t j = 0; j < pmrs->pmrs[i].length; j++)
-        {
+        for (size_t j = 0; j < pmrs->pmrs[i].length; j += 4096)
             vmmMap(newTable, (void *)pmrs->pmrs[i].base + j, (void *)kaddr->physical_base_address + (pmrs->pmrs[i].base - kaddr->virtual_base_address) + j, false, true);
-        }
-    }
 
     // map physical memory
     for (uint64_t i = 0; i < mmGetTotal().total + 0xFFFF0; i += 4096)
