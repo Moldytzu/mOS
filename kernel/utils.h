@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <config.h>
 
 #define pack __attribute__((__packed__))
 #define toMB(x) (x / 1024 / 1024)

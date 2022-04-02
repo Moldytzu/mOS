@@ -14,10 +14,11 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
-    serialWrite("saving ");
+#ifdef K_SCHED_DEBUG
+    serialWrite("sched: saving ");
     serialWrite(tasks[currentTID].name);
-    serialWritec('\n');
-    serialWritec('\r');
+    serialWrite("\n");
+#endif
 
     // save the registers
     memcpy(&tasks[currentTID].intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
@@ -27,10 +28,11 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (currentTID == lastTID)
         currentTID = 0; // reset tid if we're overrunning
 
-    serialWrite("loading ");
+#ifdef K_SCHED_DEBUG
+    serialWrite("scheduler: loading ");
     serialWrite(tasks[currentTID].name);
-    serialWritec('\n');
-    serialWritec('\r');
+    serialWrite("\n");
+#endif
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
     uint64_t krsp = stack->krsp;          // save the stack
