@@ -85,8 +85,7 @@ void _start(struct stivale2_struct *stivale2_struct)
     schdulerAdd("Idle Task 2", (void*)idleTask, 4096, (void*)idleTask, 4096); // create the idle task
     schedulerEnable(); // enable the schduler
 
-    while(1)
-        iasm("hlt"); // hang
+    idleTask(); // run the idle task
 }
 
 void panick(const char *msg)
