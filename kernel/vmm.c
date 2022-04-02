@@ -24,7 +24,7 @@ void vmmInit()
     memcpy64(baseTable, bootloaderTable, 4096 / sizeof(uint64_t)); // copy bootloader's paging table over our base table
 
     vmmSwap(baseTable); // swap the table
-    vmmMapPhys(baseTable,false,true);
+    vmmMapPhys(baseTable, false, true);
 }
 
 bool vmmGetFlag(uint64_t *entry, uint8_t flag)
@@ -159,7 +159,26 @@ void vmmMapPhys(struct vmm_page_table *table, bool user, bool rw)
         for (size_t j = 0; j < pools[i].total; j += 4096)
         {
             vmmMap(table, pools[i].base + j + VMM_HHDM, pools[i].base + j, user, rw); // hhdm
-            vmmMap(table, pools[i].base + j, pools[i].base + j, user, rw); // map every page as read-write, kernel-only
+            vmmMap(table, pools[i].base + j, pools[i].base + j, user, rw);            // map every page as read-write, kernel-only
         }
     }
+}
+
+void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
+{
+    // get physical memory address form virtual memory address
+    struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
+    struct vmm_page_table *pdp, *pd, *pt;
+
+    uint64_t currentEntry = table->entries[index.PDP];                   // index pdp
+    pdp = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
+
+    currentEntry = pdp->entries[index.PD];                              // index pd
+    pd = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
+
+    currentEntry = pd->entries[index.PT];                               // index pt
+    pt = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
+
+    currentEntry = pt->entries[index.P]; // index p
+    return (void*)vmmGetAddress(&currentEntry);  // get the address
 }

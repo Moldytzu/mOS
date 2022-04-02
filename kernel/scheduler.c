@@ -32,7 +32,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWritec('\n');
     serialWritec('\r');
 
-    //vmmSwap(tasks[currentTID].pageTable); // swap the page table
+    vmmSwap(tasks[currentTID].pageTable); // swap the page table
     uint64_t krsp = stack->krsp;
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
     stack->krsp = krsp;
@@ -73,9 +73,6 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
         vmmMap(newTable, stack + i, stack + i, true, true);
-
-    for (size_t i = 0; i < execSize; i += 4096) // map executable as user, read-write
-        vmmMap(newTable, execBase + i, execBase + i, true, true);
 
     vmmMap(newTable, kernelStack, kernelStack, true, true); // map kernel stack as read-write
 
