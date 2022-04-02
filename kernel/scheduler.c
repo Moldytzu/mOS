@@ -58,6 +58,8 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     // page table
     struct vmm_page_table *newTable = mmAllocatePage(); // allocate a new page table
+    memset64(newTable,0,sizeof(struct vmm_page_table) / sizeof(uint64_t)); // clear the page table
+
     tasks[index].pageTable = newTable;                  // set the new page table
 
     void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
