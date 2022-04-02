@@ -19,6 +19,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWritec('\n');
     serialWritec('\r');
 
+    printk("old: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+
     // save the registers
     memcpy(&tasks[currentTID].intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
 
@@ -32,10 +34,13 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWritec('\n');
     serialWritec('\r');
 
-    vmmSwap(tasks[currentTID].pageTable); // swap the page table
     uint64_t krsp = stack->krsp; // save the stack
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
     stack->krsp = krsp; // restore it
+
+    printk("new: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+
+    vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
 
 void schedulerInit()
@@ -65,24 +70,28 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
 
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
+    struct stivale2_struct_tag_framebuffer *framebuffer = bootloaderGetFramebuf();
 
     vmmMapPhys(newTable, false, true, false); // map physical memory
 
     for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
         vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);
 
-    vmmMap(newTable, kernelStack, kernelStack, false, true); // map kernel stack as read-write
+    vmmMap(newTable, (void *)kernelStack, (void *)kernelStack, false, true); // map kernel stack as read-write
 
     for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
-        vmmMap(newTable, stack + i, stack + i, true, true);
+        vmmMap(newTable, (void *)VMM_HHDM + i, stack + i, true, true);
 
     for (size_t i = 0; i < execSize; i += 4096)
-        vmmMap(newTable, execBase, execBase, true, true); // map task as user, read-write
+        vmmMap(newTable, (void *)execBase, (void *)execBase, true, true); // map task as user, read-write
+
+    for (size_t i = 0; i < framebuffer->framebuffer_pitch * framebuffer->framebuffer_height; i += 4096)
+        vmmMap(newTable, (void *)framebuffer->framebuffer_addr + i, (void *)framebuffer->framebuffer_addr + i, false, true);
 
     // initial registers
-    tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
-    tasks[index].intrerruptStack.rflags = 0x202;                      // rflags, enable intrerrupts
-    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;   // task stack
-    tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernel is the first
-    tasks[index].intrerruptStack.ss = 8 * 2;                          // data segment for kernel is the second
+    tasks[index].intrerruptStack.rip = (uint64_t)entry;                // set the entry point a.k.a the instruction pointer
+    tasks[index].intrerruptStack.rflags = 0x202;                       // rflags, enable intrerrupts
+    tasks[index].intrerruptStack.rsp = (uint64_t)VMM_HHDM + stackSize; // task stack
+    tasks[index].intrerruptStack.cs = 8 * 3;                           // code segment for kernel is the first
+    tasks[index].intrerruptStack.ss = 8 * 4;                           // data segment for kernel is the second
 }
