@@ -33,9 +33,9 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWritec('\r');
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
-    uint64_t krsp = stack->krsp;
+    uint64_t krsp = stack->krsp; // save the stack
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
-    stack->krsp = krsp;
+    stack->krsp = krsp; // restore it
 }
 
 void schedulerInit()
@@ -57,10 +57,10 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     memcpy(tasks[index].name, (char *)name, strlen(name)); // set the name
 
     // page table
-    struct vmm_page_table *newTable = mmAllocatePage(); // allocate a new page table
-    memset64(newTable,0,sizeof(struct vmm_page_table) / sizeof(uint64_t)); // clear the page table
+    struct vmm_page_table *newTable = mmAllocatePage();                      // allocate a new page table
+    memset64(newTable, 0, sizeof(struct vmm_page_table) / sizeof(uint64_t)); // clear the page table
 
-    tasks[index].pageTable = newTable;                  // set the new page table
+    tasks[index].pageTable = newTable; // set the new page table
 
     void *stack = mmAllocatePages(stackSize / 4096); // allocate stack for the task
 
@@ -76,13 +76,12 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     for (size_t i = 0; i < stackSize; i += 4096) // map task stack as user, read-write
         vmmMap(newTable, stack + i, stack + i, true, true);
 
-    for (size_t i = 0; i < execSize; i += 4096) 
-        vmmMap(newTable, execBase, execBase, true, true);// map task as user, read-write
+    for (size_t i = 0; i < execSize; i += 4096)
+        vmmMap(newTable, execBase, execBase, true, true); // map task as user, read-write
 
     // initial registers
     tasks[index].intrerruptStack.rip = (uint64_t)entry;               // set the entry point a.k.a the instruction pointer
     tasks[index].intrerruptStack.rflags = 0x202;                      // rflags, enable intrerrupts
-    tasks[index].intrerruptStack.krsp = (uint64_t)kernelStack + 4096; // kernel stack
     tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;   // task stack
     tasks[index].intrerruptStack.cs = 8 * 1;                          // code segment for kernel is the first
     tasks[index].intrerruptStack.ss = 8 * 2;                          // data segment for kernel is the second
