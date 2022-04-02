@@ -12,7 +12,7 @@ struct pack sched_task
     uint8_t state;                               // current state
     uint16_t tid;                                // task ID
     struct vmm_page_table *pageTable;            // pointer to the page table
-    struct idt_intrerrupt_stack intrerruptStack; // the last intrerrupt stack
+    struct idt_intrerrupt_stack *intrerruptStack; // the last intrerrupt stack
 };
 
 void schedulerSchedule(struct idt_intrerrupt_stack *stack);
