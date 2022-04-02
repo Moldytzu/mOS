@@ -42,7 +42,7 @@ void schedulerInit()
 {
     memset64(tasks, 0, 0x1000 * sizeof(struct sched_task) / sizeof(uint64_t)); // clear the tasks
     kernelStack = mmAllocatePage();                                            // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;                           // set kernel stack in tss
+    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;                       // set kernel stack in tss
 }
 
 void schedulerEnable()

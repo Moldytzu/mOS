@@ -18,9 +18,9 @@ bool mmIsFreePage(struct mm_pool *pool, size_t page)
     {
         for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
         {
-            if(pageIndex == page)
+            if (pageIndex == page)
             {
-                register uint8_t mask = 0b10000000 >> j;  // create the mask
+                register uint8_t mask = 0b10000000 >> j;      // create the mask
                 return !(mask & bitmapBase[bitmapByteIndex]); // apply the mask if we are at the correct page
             }
         }
@@ -39,14 +39,14 @@ void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
     {
         for (int j = 0; j < 8; j++, pageIndex++) // increase the page index on each shift of the mask
         {
-            if(pageIndex == page)
+            if (pageIndex == page)
             {
-                register uint8_t mask = 0b10000000 >> j;   // create the mask
-                pool->available -= VMM_PAGE;    // decrement the available bytes
-                pool->used += VMM_PAGE;         // increase the usage
-                if (pool->available < VMM_PAGE) // if there isn't room for any page it means it's full
+                register uint8_t mask = 0b10000000 >> j; // create the mask
+                pool->available -= VMM_PAGE;             // decrement the available bytes
+                pool->used += VMM_PAGE;                  // increase the usage
+                if (pool->available < VMM_PAGE)          // if there isn't room for any page it means it's full
                     pool->full = true;
-                bitmapBase[bitmapByteIndex] |= mask;                     // apply the mask
+                bitmapBase[bitmapByteIndex] |= mask;                         // apply the mask
                 return (void *)(pool->allocableBase + pageIndex * VMM_PAGE); // return the address
             }
         }
@@ -68,8 +68,8 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
             if ((void *)(pool->allocableBase + pageIndex * VMM_PAGE) == address) // check if we indexed the address
             {
                 bitmapBase[bitmapByteIndex] &= ~(0b10000000 >> j); // unset that bit
-                pool->available += VMM_PAGE;                           // increase available memory
-                pool->used -= VMM_PAGE;                                // decrease the usage
+                pool->available += VMM_PAGE;                       // increase available memory
+                pool->used -= VMM_PAGE;                            // decrease the usage
                 pool->full = false;                                // since we deallocated some memory, we can be sure it's not full
                 return;                                            // return
             }
@@ -84,19 +84,20 @@ void *mmAllocatePagePool(struct mm_pool *pool)
     {
         for (; pool->bitmapBitIndex < 8; pool->bitmapBitIndex++, pool->pageIndex++) // increase the page index on each shift of the mask
         {
-            uint8_t mask = 0b10000000 >> pool->bitmapBitIndex;   // create the mask
+            uint8_t mask = 0b10000000 >> pool->bitmapBitIndex;     // create the mask
             if (!(mask & pool->bitmapBase[pool->bitmapByteIndex])) // and the mask, not the result. will return true if the page is not allocated
             {
                 pool->available -= VMM_PAGE;    // decrement the available bytes
                 pool->used += VMM_PAGE;         // increase the usage
                 if (pool->available < VMM_PAGE) // if there isn't room for any page it means it's full
                     pool->full = true;
-                pool->bitmapBase[pool->bitmapByteIndex] |= mask;                     // apply the mask
+                pool->bitmapBase[pool->bitmapByteIndex] |= mask;                   // apply the mask
                 return (void *)(pool->allocableBase + pool->pageIndex * VMM_PAGE); // return the address
             }
         }
-        if(pool->bitmapBitIndex == 8) pool->bitmapBitIndex = 0; // reset the bit index if it's 8 (over the limit)
-        pool->bitmapByteIndex++; // increase the byte index
+        if (pool->bitmapBitIndex == 8)
+            pool->bitmapBitIndex = 0; // reset the bit index if it's 8 (over the limit)
+        pool->bitmapByteIndex++;      // increase the byte index
     }
 
     pool->full = true; // we're full
@@ -107,20 +108,21 @@ void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
 {
     size_t poolPageCount = pool->total / VMM_PAGE;
 
-    for(size_t base = 0; base < poolPageCount - pages; base++)
+    for (size_t base = 0; base < poolPageCount - pages; base++)
     {
         bool free = true;
-        for(size_t i = 0; i <= pages; i++)
+        for (size_t i = 0; i <= pages; i++)
         {
-            if(!mmIsFreePage(pool,i+base))
+            if (!mmIsFreePage(pool, i + base))
                 free = false;
         }
 
-        if(!free) continue; // continue if the threshold isn't free
+        if (!free)
+            continue; // continue if the threshold isn't free
 
-        void *baseptr = mmAllocatePagePoolIndex(pool,base); // allocate
-        for(size_t i = 1; i < pages; i++)
-            mmAllocatePagePoolIndex(pool,base + i); // reserve the pages
+        void *baseptr = mmAllocatePagePoolIndex(pool, base); // allocate
+        for (size_t i = 1; i < pages; i++)
+            mmAllocatePagePoolIndex(pool, base + i); // reserve the pages
 
         return baseptr; // return
     }
@@ -134,14 +136,14 @@ void *mmAllocatePages(size_t pages)
     {
         if (!pools[i].full) // check if the pool isn't full
         {
-            void *baseptr = mmAllocatePagesPool(&pools[i],pages);
+            void *baseptr = mmAllocatePagesPool(&pools[i], pages);
             if (baseptr) // if we've got the pages
                 return baseptr;
         }
     }
 
     panick("Out of memory!"); // panic if we're out of memory
-    return NULL; // unreachable
+    return NULL;              // unreachable
 }
 
 void *mmAllocatePage()
@@ -157,7 +159,7 @@ void *mmAllocatePage()
     }
 
     panick("Out of memory!"); // panic if we're out of memory
-    return NULL; // unreachable
+    return NULL;              // unreachable
 }
 
 void mmDeallocatePage(void *address)
