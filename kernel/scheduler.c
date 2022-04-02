@@ -21,8 +21,13 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWritec('\n');
     serialWritec('\r');
 
+    printk("index: %d\n", currentTID);
+    printk("old: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+
     // save the registers
     memcpy(&tasks[currentTID].intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
+    tasks[currentTID].intrerruptStack.cs = 8 * 3;
+    tasks[currentTID].intrerruptStack.ss = 8 * 4;
 
     // load the next task
     currentTID++;
@@ -37,6 +42,11 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     uint64_t krsp = stack->krsp; // save the stack
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
     stack->krsp = krsp; // restore it
+    stack->cs = 8 * 3;
+    stack->ss = 8 * 4;
+
+    printk("index: %d\n", currentTID);
+    printk("new: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
@@ -44,8 +54,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 void schedulerInit()
 {
     memset64(tasks, 0, 0x1000 * (sizeof(struct sched_task) / sizeof(uint64_t))); // clear the tasks
-    kernelStack = mmAllocatePage();                                            // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + 4096;                           // set kernel stack in tss
+    kernelStack = mmAllocatePage();                                              // allocate a page for the new kernel stack
+    tssGet()->rsp[0] = (uint64_t)kernelStack + 4096;                             // set kernel stack in tss
 }
 
 void schedulerEnable()
@@ -92,4 +102,7 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
     tasks[index].intrerruptStack.rsp = (uint64_t)VMM_HHDM + stackSize; // task stack
     tasks[index].intrerruptStack.cs = 8 * 3;                           // code segment for kernel is the first
     tasks[index].intrerruptStack.ss = 8 * 4;                           // data segment for kernel is the second
+
+    printk("task add: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", tasks[index].intrerruptStack.cs, tasks[index].intrerruptStack.ss, tasks[index].intrerruptStack.rip, tasks[index].intrerruptStack.rsp, tasks[index].intrerruptStack.krsp);
+    printk("new index: %d\n", index);
 }
