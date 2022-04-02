@@ -8,6 +8,7 @@
 #define toMB(x) (x / 1024 / 1024)
 #define toKB(x) (x / 1024)
 #define align(val, alg) (val + (alg - val % alg))
+#define alignD(val, alg) (val - (alg - val % alg))
 #define unsafe_cast(val, type) (*(type *)&val)
 #define iasm asm volatile
 

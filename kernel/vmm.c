@@ -22,7 +22,7 @@ void vmmInit()
          : "=a"(bootloaderTable)); // get bootloader's paging table
 
     baseTable = vmmCreateTable(); // create the base table
-    vmmSwap(baseTable); // swap the table
+    vmmSwap(baseTable);           // swap the table
 }
 
 bool vmmGetFlag(uint64_t *entry, uint8_t flag)
@@ -190,22 +190,23 @@ struct pack vmm_page_table *vmmCreateTable()
     memset64(newTable, 0, 4096 / sizeof(uint64_t)); // clear the paging table
 
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
-    struct stivale2_struct_tag_pmrs *pmrs = bootloaderGetPMRS(); // get pmrs
+    struct stivale2_struct_tag_pmrs *pmrs = bootloaderGetPMRS();                       // get pmrs
+    struct stivale2_struct_tag_framebuffer *framebuffer = bootloaderGetFramebuf();     // get framebuffer address
 
     // map PMRs
-    for(size_t i = 0; i < pmrs->entries; i++)
+    for (size_t i = 0; i < pmrs->entries; i++)
     {
-        for(size_t j = 0; j < pmrs->pmrs[i].length; j++)
+        for (size_t j = 0; j < pmrs->pmrs[i].length; j++)
         {
-            vmmMap(newTable,(void*)pmrs->pmrs[i].base + j,(void*)kaddr->physical_base_address + (pmrs->pmrs[i].base - kaddr->virtual_base_address) + j,false,true);
+            vmmMap(newTable, (void *)pmrs->pmrs[i].base + j, (void *)kaddr->physical_base_address + (pmrs->pmrs[i].base - kaddr->virtual_base_address) + j, false, true);
         }
     }
 
-    // map first 4 GB of address space
-    for(size_t i = 0; i < 0x100000000; i+= 4096)
+    // map till framebuffer end
+    for (uint64_t i = 0; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += 4096)
     {
-        vmmMap(newTable, (void*)i, (void*)i, false, true);
-        vmmMap(newTable, (void*)i + VMM_HHDM, (void*)i, false, true);
+        vmmMap(newTable, (void *)i, (void *)i, false, true);
+        vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
     }
 
     vmmMapPhys(newTable, false, true, false); // map the physical memory pools
