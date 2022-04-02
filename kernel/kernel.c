@@ -84,8 +84,8 @@ void _start(struct stivale2_struct *stivale2_struct)
     void *task = mmAllocatePage(); // create an empty page just for the idle task
     memcpy(task,(void*)idleTask,4096); // copy it
 
-    schdulerAdd("Idle Task", task, 4096, task, 4096); // create the idle task
-    schdulerAdd("Idle Task 2", task, 4096, task, 4096); // create the idle task
+    schedulerAdd("Idle Task", task, 4096, task, 4096); // create the idle task
+    schedulerAdd("Idle Task 2", task, 4096, task, 4096); // create the idle task
     schedulerEnable(); // enable the schduler
 
     ((void(*)())task)(); // run the idle task
