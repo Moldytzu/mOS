@@ -14,39 +14,42 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
-    vmmSwap(vmmGetBaseTable()); // load the base table
+    printk("start\n");
+    printk("stack: 0x%p cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack, stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+    printk("stack: 0x%p cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack, stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
 
     serialWrite("saving ");
     serialWrite(tasks[currentTID].name);
     serialWritec('\n');
     serialWritec('\r');
 
-    printk("index: %d\n", currentTID);
-    printk("old: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+    printk("stack: 0x%p cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack, stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
 
     // save the registers
     memcpy(&tasks[currentTID].intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
-    tasks[currentTID].intrerruptStack.cs = 8 * 3;
-    tasks[currentTID].intrerruptStack.ss = 8 * 4;
+    printk("stack: 0x%p cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack, stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
 
     // load the next task
     currentTID++;
     if (currentTID == lastTID)
         currentTID = 0; // reset tid if we're overrunning
 
+    printk("stack: 0x%p cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack, stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+
     serialWrite("loading ");
     serialWrite(tasks[currentTID].name);
     serialWritec('\n');
     serialWritec('\r');
 
+    printk("stack: 0x%p cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack, stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+
+    printk("load start\n");
     uint64_t krsp = stack->krsp; // save the stack
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
     stack->krsp = krsp; // restore it
-    stack->cs = 8 * 3;
-    stack->ss = 8 * 4;
-
-    printk("index: %d\n", currentTID);
-    printk("new: cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+    printk("load end\n");
+    printk("stack: 0x%p cs=%d ss=%d rip=%p rsp=%p krsp=%p\n", stack, stack->cs, stack->ss, stack->rip, stack->rsp, stack->krsp);
+    printk("end\n");
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
@@ -66,6 +69,7 @@ void schedulerEnable()
 void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
 {
     uint16_t index = lastTID++;
+    memset(&tasks[index], 0, sizeof(struct sched_task));
     tasks[index].tid = index;                              // set the task ID
     memcpy(tasks[index].name, (char *)name, strlen(name)); // set the name
 
