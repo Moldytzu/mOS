@@ -66,7 +66,7 @@ void schdulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBa
 
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
 
-    vmmMapPhys(newTable, false, true); // map physical memory
+    vmmMapPhys(newTable, false, true, false); // map physical memory
 
     for (size_t i = 0; i < 0x10000000; i += 4096) // map kernel as read-write
         vmmMap(newTable, (void *)kaddr->virtual_base_address + i, (void *)kaddr->physical_base_address + i, false, true);

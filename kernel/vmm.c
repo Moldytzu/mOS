@@ -24,7 +24,7 @@ void vmmInit()
     memcpy64(baseTable, bootloaderTable, 4096 / sizeof(uint64_t)); // copy bootloader's paging table over our base table
 
     vmmSwap(baseTable); // swap the table
-    vmmMapPhys(baseTable, false, true);
+    vmmMapPhys(baseTable, false, true, true);
 }
 
 bool vmmGetFlag(uint64_t *entry, uint8_t flag)
@@ -150,7 +150,7 @@ void vmmSwap(void *newTable)
     iasm("mov %0, %%cr3" ::"r"(newTable));
 }
 
-void vmmMapPhys(struct vmm_page_table *table, bool user, bool rw)
+void vmmMapPhys(struct vmm_page_table *table, bool user, bool rw, bool hhdm)
 {
     // identity map all the memory pools
     struct mm_pool *pools = mmGetPools();
@@ -158,8 +158,9 @@ void vmmMapPhys(struct vmm_page_table *table, bool user, bool rw)
     {
         for (size_t j = 0; j < pools[i].total; j += 4096)
         {
-            vmmMap(table, pools[i].base + j + VMM_HHDM, pools[i].base + j, user, rw); // hhdm
             vmmMap(table, pools[i].base + j, pools[i].base + j, user, rw);            // map every page as read-write, kernel-only
+            if(!hhdm) continue;
+            vmmMap(table, pools[i].base + j + VMM_HHDM, pools[i].base + j, user, rw); // hhdm
         }
     }
 }
