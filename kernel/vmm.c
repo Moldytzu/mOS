@@ -206,6 +206,8 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
         for (uint64_t i = 0; i < 16 * 1024 * 1024; i += VMM_PAGE) // map only 16 MB of RAM
             vmmMap(newTable, (void *)i, (void *)i, false, true);
 
+    vmmMap(newTable, newTable, newTable, false, true); // map the table
+
 #ifdef K_VMM_DEBUG
     printk("vmm: wasted %d KB on a page table\n", toKB((uint64_t)(a - mmGetTotal().available)));
 #endif
