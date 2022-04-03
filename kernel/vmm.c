@@ -170,41 +170,41 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 struct pack vmm_page_table *vmmCreateTable(bool full)
 {
     // create a new table to use as a base for everything
-    void *newTable = mmAllocatePage();                  // allocate a page for the new table
+    register void *newTable = mmAllocatePage();         // allocate a page for the new table
     memset64(newTable, 0, VMM_PAGE / sizeof(uint64_t)); // clear the paging table
 
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
     struct stivale2_struct_tag_pmrs *pmrs = bootloaderGetPMRS();                       // get pmrs
     struct stivale2_struct_tag_framebuffer *framebuffer = bootloaderGetFramebuf();     // get framebuffer address
 
-    // map PMRs
-    for (size_t i = 0; i < pmrs->entries; i++)
-    {
-        struct stivale2_pmr currentPMR = pmrs->pmrs[i];
-        for (size_t j = 0; j < currentPMR.length; j += VMM_PAGE)
-            vmmMap(newTable, (void *)currentPMR.base + j, (void *)kaddr->physical_base_address + (currentPMR.base - kaddr->virtual_base_address) + j, false, true);
-    }
-
-    register uint64_t total = mmGetTotal().total + 0xFFFF0;
-
 #ifdef K_VMM_DEBUG
     uint64_t a = mmGetTotal().available;
 #endif
 
+    // map PMRs
+    for (size_t i = 0; i < pmrs->entries; i++)
+    {
+        register struct stivale2_pmr currentPMR = pmrs->pmrs[i];
+        for (size_t j = 0; j < currentPMR.length; j += VMM_PAGE)
+            vmmMap(newTable, (void *)currentPMR.base + j, (void *)kaddr->physical_base_address + (currentPMR.base - kaddr->virtual_base_address) + j, false, true);
+    }
+
     if (full)
+    {
+        register uint64_t total = mmGetTotal().total + 0xFFFF0;
+
         for (uint64_t i = 0; i < total; i += VMM_PAGE) // map entire physical memory range
             vmmMap(newTable, (void *)i, (void *)i, false, true);
+
+        for (uint64_t i = 0; i < total; i += VMM_PAGE) // map hhdm
+            vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+
+        for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE) // map framebuffer
+            vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+    }
     else
         for (uint64_t i = 0; i < 16 * 1024 * 1024; i += VMM_PAGE) // map only 16 MB of RAM
             vmmMap(newTable, (void *)i, (void *)i, false, true);
-
-    if (full) // map hhdm if we want a full table
-        for (uint64_t i = 0; i < total; i += VMM_PAGE)
-            vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
-
-    if (full) // map framebuffer if we want a full table
-        for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE)
-            vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
 
 #ifdef K_VMM_DEBUG
     printk("vmm: wasted %d KB on a page table\n", toKB((uint64_t)(a - mmGetTotal().available)));
