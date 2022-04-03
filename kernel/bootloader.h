@@ -13,5 +13,6 @@ struct stivale2_struct_tag_framebuffer *bootloaderGetFramebuf();
 struct stivale2_struct_tag_memmap *bootloaderGetMemMap();
 struct stivale2_struct_tag_kernel_base_address *bootloaderGetKernelAddr();
 struct stivale2_struct_tag_pmrs *bootloaderGetPMRS();
+void *bootloaderGetHHDM();
 
 uint8_t bootloaderGetFirmwareType();

@@ -11,8 +11,6 @@
 #define VMM_ENTRY_HUGE_PAGES 7
 #define VMM_ENTRY_NO_EXECUTE 63
 
-#define VMM_HHDM 0xFFFF800000000000
-
 #define VMM_PAGE 4096
 
 struct pack vmm_index

@@ -1,6 +1,7 @@
 #include <vmm.h>
 #include <pmm.h>
 #include <serial.h>
+#include <bootloader.h>
 
 struct vmm_page_table *baseTable;
 
@@ -197,10 +198,10 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
             vmmMap(newTable, (void *)i, (void *)i, false, true);
 
         for (uint64_t i = 0; i < total; i += VMM_PAGE) // map hhdm
-            vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+            vmmMap(newTable, (uint64_t)i + bootloaderGetHHDM(), (void *)i, false, true);
 
-        for (uint64_t i = (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM; i < (uint64_t)framebuffer->framebuffer_addr - VMM_HHDM + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE) // map framebuffer
-            vmmMap(newTable, (void *)i + VMM_HHDM, (void *)i, false, true);
+        for (uint64_t i = framebuffer->framebuffer_addr - (uint64_t)bootloaderGetHHDM(); i < framebuffer->framebuffer_addr - (uint64_t)bootloaderGetHHDM() + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE) // map framebuffer
+            vmmMap(newTable, (uint64_t)i + bootloaderGetHHDM(), (void *)i, false, true);
     }
     else
         for (uint64_t i = 0; i < 16 * 1024 * 1024; i += VMM_PAGE) // map only 16 MB of RAM

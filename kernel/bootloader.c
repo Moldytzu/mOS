@@ -7,6 +7,7 @@ struct stivale2_struct_tag_modules *modsTag;
 struct stivale2_struct_tag_memmap *memTag;
 struct stivale2_struct_tag_firmware *fwTag;
 struct stivale2_struct_tag_pmrs *pmrTag;
+struct stivale2_struct_tag_hhdm *hhdmTag;
 
 void (*termWrite)(const char *string, size_t length);
 
@@ -75,6 +76,7 @@ void bootloaderInit(struct stivale2_struct *stivale2_struct)
     fwTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FIRMWARE_ID);                  // get firmware information
     baseAddrTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_KERNEL_BASE_ADDRESS_ID); // get kernel base address
     pmrTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_PMRS_ID);                     // get protected memory ranges
+    hhdmTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_HHDM_ID);                    // get higher half direct mapping base
 }
 
 // write to stivale2 terminal
@@ -125,4 +127,10 @@ struct stivale2_struct_tag_kernel_base_address *bootloaderGetKernelAddr()
 struct stivale2_struct_tag_pmrs *bootloaderGetPMRS()
 {
     return pmrTag;
+}
+
+// get hhdm
+void *bootloaderGetHHDM()
+{
+    return (void*)hhdmTag->addr;
 }
