@@ -10,7 +10,7 @@ LD := ld
 ASM := nasm
 
 # User controllable CFLAGS.
-CFLAGS ?= -O2 -g -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable
+CFLAGS ?= -O2 -g
 
 # User controllable LDFLAGS
 LDFLAGS ?=
@@ -28,6 +28,7 @@ INTERNALCFLAGS :=   \
 	-mabi=sysv           \
 	-mno-red-zone        \
 	-mcmodel=kernel      \
+	-Werror 			 \
 	-MMD
 
 # Internal linker flags that should not be changed by the user.
