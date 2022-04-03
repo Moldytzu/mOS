@@ -43,6 +43,7 @@ efi: limine kernel
 	cp out/kernel.elf limine.cfg font-8x16.psf iso_root/
 	cp limine/BOOTX64.EFI iso_root/EFI/BOOT/
 	xorrisofs -r -J -o $(OUTPUTEFI) iso_root
+	limine/limine-s2deploy $(OUTPUT)
 	rm -rf iso_root
 
 .PHONY: clean
