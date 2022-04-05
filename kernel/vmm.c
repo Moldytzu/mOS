@@ -220,7 +220,9 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
     vmmMap(newTable, newTable, newTable, false, true); // map the table
 
 #ifdef K_VMM_DEBUG
-    printk("vmm: wasted %d KB on a page table\n", toKB((uint64_t)(a - mmGetTotal().available)));
+    serialWrite("vmm: wasted ");
+    serialWrite(to_string(toKB((uint64_t)(a - mmGetTotal().available))));
+    serialWrite(" KB on a page table\n");
 #endif
 
     return newTable; // return the created table
