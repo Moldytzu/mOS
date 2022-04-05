@@ -9,6 +9,8 @@ struct sched_task tasks[0x1000];      // todo: replace this with a linked list
 uint16_t lastTID = 0, currentTID = 0; // last task ID, current task ID
 bool enabled = false;                 // enabled
 
+extern void userspaceJump(uint64_t rip, uint64_t stack);
+
 void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 {
     if (!enabled)
@@ -38,8 +40,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     uint64_t krsp = stack->krsp; // save the stack
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
-    stack->krsp = krsp;                                                 // restore it
-    tssGet()->rsp[0] = (uint64_t)stack->krsp;                           // set kernel stack in tss
+    stack->krsp = krsp;                       // restore it
+    tssGet()->rsp[0] = (uint64_t)stack->krsp; // set kernel stack in tss
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
@@ -53,7 +55,9 @@ void schedulerInit()
 
 void schedulerEnable()
 {
-    enabled = true; // enable
+    vmmSwap(tasks[currentTID].pageTable); // swap the page table
+    enabled = true; // enable the scheduler
+    userspaceJump(0xA000000000,tasks[currentTID].intrerruptStack.rsp); // jump in userspace
 }
 
 void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)

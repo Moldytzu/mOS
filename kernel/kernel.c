@@ -86,9 +86,7 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE);   // create the idle task
     schedulerAdd("Idle Task 2", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
-    schedulerEnable();                                        // enable the schduler
-
-    ((void (*)())task)(); // run the idle task
+    schedulerEnable();                                        // enable the schduler and jump in userspace
 }
 
 void panick(const char *msg)
