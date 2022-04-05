@@ -41,6 +41,7 @@ void vmmSwap(void *newTable);
 struct pack vmm_page_table *vmmCreateTable(bool full);
 
 // mapping
+void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw);
 void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw);
 void vmmUnmap(struct vmm_page_table *table, void *virtualAddress);
 void *vmmGetBaseTable();

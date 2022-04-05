@@ -53,6 +53,34 @@ void vmmSetAddress(uint64_t *entry, uint64_t address)
     *entry |= (address & 0xFFFFFFFFFF) << 12; // set the address field
 }
 
+void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw)
+{
+    struct vmm_page_table *pdp, *pd, *pt;
+
+    uint64_t currentEntry = table->entries[index.PDP]; // index pdp
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);       // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);   // userspace
+    table->entries[index.PDP] = currentEntry;          // write the entry in the table
+
+    pdp = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
+    currentEntry = pdp->entries[index.PD];                               // index further
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                         // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                     // userspace
+    pdp->entries[index.PD] = currentEntry;                               // write the entry in the table
+
+    pd = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
+    currentEntry = pd->entries[index.PT];                               // index further
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                        // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                    // userspace
+    pd->entries[index.PT] = currentEntry;                               // write the entry in the table
+
+    pt = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
+    currentEntry = pt->entries[index.P];                                // index further
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                        // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                    // userspace
+    pt->entries[index.P] = currentEntry;                                // write the entry in the table
+}
+
 void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
@@ -65,16 +93,10 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
         memset64(pdp, 0, VMM_PAGE / sizeof(uint64_t));      // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
-        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);    // user
         table->entries[index.PDP] = currentEntry;           // write the entry in the table
     }
     else
-    {
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                         // read-write
-        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                     // user
         pdp = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
-    }
 
     currentEntry = pdp->entries[index.PD];             // index pd
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
@@ -83,16 +105,10 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
         memset64(pd, 0, VMM_PAGE / sizeof(uint64_t));       // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
-        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);    // user
         pdp->entries[index.PD] = currentEntry;              // write the entry in the table
     }
     else
-    {
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                        // read-write
-        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                    // user
         pd = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
-    }
 
     currentEntry = pd->entries[index.PT];              // index pt
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
@@ -101,23 +117,17 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
         memset64(pt, 0, VMM_PAGE / sizeof(uint64_t));       // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);        // read-write
-        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);    // user
         pd->entries[index.PT] = currentEntry;               // write the entry in the table
     }
     else
-    {
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                        // read-write
-        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                    // user
         pt = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
-    }
 
     currentEntry = pt->entries[index.P];                           // index p
     vmmSetAddress(&currentEntry, (uint64_t)physicalAddress >> 12); // set the address to the physical one
     vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true);            // present
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                   // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);               // user
     pt->entries[index.P] = currentEntry;                           // write the entry in the table
+
+    vmmSetFlags(table, index, user, rw); // set the flags
 }
 
 void vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
