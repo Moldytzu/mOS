@@ -1,8 +1,10 @@
 # Milestones to reach
 ### scheduler with ring 3 support
-### virtual file system
-### initrd using a custom filesystem
+### initrd (maybe tar or a custom format?)
 ### ELF binaries
+### kernel heap
+### lai (lightweight aml interpreter)
+### virtual file system
 ### shell
 ### libc (maybe mlibc or something)
 ### custom gcc build

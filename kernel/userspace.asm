@@ -16,5 +16,5 @@ sysretInit:
 userspaceJump:
     mov rcx, rdi ; set the new rip
     mov rsp, rsi ; set the new stack
-    mov r11, 0x002 ; rflags, enable intrerrupts
+    mov r11, 0x202 ; rflags, enable intrerrupts
     o64 sysret ; to userspace and beyond

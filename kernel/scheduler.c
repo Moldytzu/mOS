@@ -82,8 +82,8 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     tasks[index].intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
     tasks[index].intrerruptStack.rflags = 0x202;                       // rflags, enable intrerrupts
     tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;    // task stack
-    tasks[index].intrerruptStack.cs = 8 * 3;                           // code segment for kernel is the first
-    tasks[index].intrerruptStack.ss = 8 * 4;                           // data segment for kernel is the second
+    tasks[index].intrerruptStack.cs = 8 * 3;                           // code segment for user is the first
+    tasks[index].intrerruptStack.ss = 8 * 4;                           // data segment for user is the second
 }
 
 struct sched_task *schedulerGetCurrent()
