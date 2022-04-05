@@ -57,7 +57,7 @@ void schedulerEnable()
 {
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
     enabled = true; // enable the scheduler
-    userspaceJump(0xA000000000,tasks[currentTID].intrerruptStack.rsp); // jump in userspace
+    userspaceJump(TASK_BASE_ADDRESS,tasks[currentTID].intrerruptStack.rsp); // jump in userspace
 }
 
 void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
@@ -76,14 +76,14 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
         vmmMap(newTable, (void *)stack + i, stack + i, true, true);
 
     for (size_t i = 0; i < execSize; i += VMM_PAGE)
-        vmmMap(newTable, (void *)0xA000000000 + i, (void *)execBase + i, true, true); // map task as user, read-write
+        vmmMap(newTable, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, true, true); // map task as user, read-write
 
     // initial registers
-    tasks[index].intrerruptStack.rip = 0xA000000000 + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
+    tasks[index].intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
     tasks[index].intrerruptStack.rflags = 0x202;                       // rflags, enable intrerrupts
     tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;    // task stack
-    tasks[index].intrerruptStack.cs = 8 * 1;                           // code segment for kernel is the first
-    tasks[index].intrerruptStack.ss = 8 * 2;                           // data segment for kernel is the second
+    tasks[index].intrerruptStack.cs = 8 * 3;                           // code segment for kernel is the first
+    tasks[index].intrerruptStack.ss = 8 * 4;                           // data segment for kernel is the second
 }
 
 struct sched_task *schedulerGetCurrent()

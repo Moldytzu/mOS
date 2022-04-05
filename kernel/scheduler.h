@@ -6,6 +6,8 @@
 #define TASK_STATE_RUNNING 0
 #define TASK_STATE_PAUSED 1
 
+#define TASK_BASE_ADDRESS 0xA000000000
+
 struct pack sched_task
 {
     char name[128];                              // 127 characters should be enough
