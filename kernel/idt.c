@@ -1,11 +1,14 @@
 #include <idt.h>
 #include <pmm.h>
 #include <vmm.h>
+#include <gdt.h>
+#include <serial.h>
 
 struct idt_descriptor idtr;
 char *idtData;
+void *userist;
 
-void idtSetGate(void *handler, uint8_t entry, uint8_t attributes)
+void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 {
     struct idt_gate_descriptor *gate = (struct idt_gate_descriptor *)(idtr.offset + entry * sizeof(struct idt_gate_descriptor)); // select the gate
     if (gate->segmentselector == 0)                                                                                              // detect if we didn't touch the gate
@@ -16,6 +19,8 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes)
     gate->offset = (uint16_t)((uint64_t)handler) & 0xFFFF; // offsets
     gate->offset2 = (uint16_t)(((uint64_t)handler >> 16)) & 0xFFFF;
     gate->offset3 = (uint32_t)(((uint64_t)handler >> 32));
+    if (user)
+        gate->ist = 1; // set ist if we want user intrerrupt
 }
 
 extern void BaseHandlerEntry();
@@ -29,6 +34,11 @@ void idtInit()
 {
     cli(); // disable intrerrupts
 
+    // setup ist for userspace
+    userist = mmAllocatePage();
+    tssGet()->ist[0] = (uint64_t)userist + VMM_PAGE;
+    serialWrite(to_string((uint64_t)userist));
+
     // allocate the idt
     idtData = mmAllocatePage();
     memset64(idtData, 0, VMM_PAGE);
@@ -36,9 +46,14 @@ void idtInit()
     idtr.offset = (uint64_t)idtData; // set the offset to the data
     idtr.size = 0;                   // reset the size
     for (int i = 0; i < 0xFF; i++)   // set all 255 irqs to the base handler
-        idtSetGate((void *)BaseHandlerEntry, i, IDT_InterruptGate);
+        idtSetGate((void *)BaseHandlerEntry, i, IDT_InterruptGate, false);
 
     idtr.size--; // decrement to comply with the spec
     iasm("lidt %0" ::"m"(idtr));
     sti(); // enable intrerrupts
+}
+
+void *idtGetIST()
+{
+    return userist;
 }

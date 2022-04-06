@@ -41,7 +41,7 @@ void pitInit()
     pitSet(128); // 128 hz is enough
 
     // set idt gate
-    idtSetGate((void *)PITHandlerEntry, PIC_IRQ_0, IDT_InterruptGateU);
+    idtSetGate((void *)PITHandlerEntry, PIC_IRQ_0, IDT_InterruptGateU, true);
 
     // unmask IRQ 0 on PIC
     outb(PIC_MASTER_DAT, inb(PIC_MASTER_DAT) & ~0b00000001);

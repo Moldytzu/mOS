@@ -42,11 +42,6 @@ void _start(struct stivale2_struct *stivale2_struct)
     pmmInit();
     printk("done\n");
 
-    // initialize the virtual memory manager
-    printk("Initializing the Virtual Memory Manager...");
-    vmmInit();
-    printk("done\n");
-
     // initialize the gdt
     printk("Initializing the GDT...");
     gdtInit();
@@ -55,6 +50,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     // initialize the idt
     printk("Initializing the IDT...");
     idtInit();
+    printk("done\n");
+
+    // initialize the virtual memory manager
+    printk("Initializing the Virtual Memory Manager...");
+    vmmInit();
     printk("done\n");
 
     // initialize the pic chips
@@ -80,6 +80,8 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
+
+    printk("Starting phase ended. Jumping in userspace.\n");
 
     void *task = mmAllocatePage();            // create an empty page just for the idle task
     memcpy(task, (void *)idleTask, VMM_PAGE); // copy it
