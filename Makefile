@@ -13,6 +13,7 @@ run: $(OUTPUT)
 run-debug: $(OUTPUT)
 	qemu-system-x86_64 -M q35 -m 2G -cdrom $(OUTPUT) -boot d -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 	gdb -q -ex "target remote localhost:1234" -ex "b _start" -ex "continue" out/kernel.elf
+	pkill -f qemu-system-x86_64
 
 limine:
 	mkdir -p out
