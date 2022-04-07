@@ -2,7 +2,7 @@
 #include <pmm.h>
 #include <vmm.h>
 
-struct gdt_tss tss;
+struct gdt_tss *tss;
 struct gdt_descriptor gdtr;
 char *gdtData;
 
@@ -24,9 +24,10 @@ void gdtInit()
     gdtCreateSegment(0b11111010); // user code
     gdtCreateSegment(0b11110010); // user data
 
-    memset(&tss, 0, sizeof(struct gdt_tss)); // clear tss
+    tss = mmAllocatePage(); // allocate tss
+    memset(tss, 0, sizeof(struct gdt_tss)); // clear tss
 
-    gdtInstallTSS((uint64_t)&tss, 0b10001001); // install tss
+    gdtInstallTSS((uint64_t)tss, 0b10001001); // install tss
 
     gdtr.size--;    // decrement size
     gdtLoad(&gdtr); // load gdt and flush segemts
@@ -60,5 +61,5 @@ void gdtInstallTSS(uint64_t base, uint8_t access)
 
 struct gdt_tss *tssGet()
 {
-    return &tss;
+    return tss;
 }
