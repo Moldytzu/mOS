@@ -40,6 +40,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
     stack->krsp = krsp;                       // restore it
     tssGet()->rsp[0] = (uint64_t)stack->krsp; // set kernel stack in tss
+    tssGet()->rsp[2] = (uint64_t)stack->rsp;  // set user stack in tss
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
@@ -53,9 +54,9 @@ void schedulerInit()
 
 void schedulerEnable()
 {
-    vmmSwap(tasks[currentTID].pageTable); // swap the page table
-    enabled = true; // enable the scheduler
-    userspaceJump(TASK_BASE_ADDRESS,tasks[currentTID].intrerruptStack.rsp); // jump in userspace
+    vmmSwap(tasks[currentTID].pageTable);                                    // swap the page table
+    enabled = true;                                                          // enable the scheduler
+    userspaceJump(TASK_BASE_ADDRESS, tasks[currentTID].intrerruptStack.rsp); // jump in userspace
 }
 
 void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
@@ -78,10 +79,10 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
 
     // initial registers
     tasks[index].intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
-    tasks[index].intrerruptStack.rflags = 0x202;                       // rflags, enable intrerrupts
-    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;    // task stack
-    tasks[index].intrerruptStack.cs = 8 * 3;                           // code segment for user is the first
-    tasks[index].intrerruptStack.ss = 8 * 4;                           // data segment for user is the second
+    tasks[index].intrerruptStack.rflags = 0x202;                            // rflags, enable intrerrupts
+    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;         // task stack
+    tasks[index].intrerruptStack.cs = 8 * 3;                                // code segment for user is the first
+    tasks[index].intrerruptStack.ss = 8 * 4;                                // data segment for user is the second
 }
 
 struct sched_task *schedulerGetCurrent()
