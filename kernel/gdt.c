@@ -26,7 +26,7 @@ void gdtInit()
 
     memset(&tss, 0, sizeof(struct gdt_tss)); // clear tss
 
-    gdtCreateSystemSegment((uint64_t)&tss, 0b10001001); // tss
+    gdtInstallTSS((uint64_t)&tss, 0b10001001); // install tss
 
     gdtr.size--;    // decrement size
     gdtLoad(&gdtr); // load gdt and flush segemts
@@ -43,7 +43,7 @@ void gdtCreateSegment(uint8_t access)
     gdtr.size += sizeof(struct gdt_segment); // add the size of gdt_segment
 }
 
-void gdtCreateSystemSegment(uint64_t base, uint8_t access)
+void gdtInstallTSS(uint64_t base, uint8_t access)
 {
     struct gdt_system_segment *segment = (struct gdt_system_segment *)(gdtr.offset + +gdtr.size);
     memset((void *)segment, 0, sizeof(struct gdt_system_segment));
@@ -52,7 +52,8 @@ void gdtCreateSystemSegment(uint64_t base, uint8_t access)
     segment->base2 = (base & 0x0000000000FF0000) >> 16;
     segment->base3 = (base & 0x00000000FF000000) >> 24;
     segment->base3 = (base & 0xFFFFFFFF00000000) >> 32;
-    segment->limit = sizeof(struct gdt_tss);
+    segment->limit = sizeof(struct gdt_tss) & 0xFFFF;
+    segment->limit2 = (sizeof(struct gdt_tss) & 0xF000) >> 16;
 
     gdtr.size += sizeof(struct gdt_system_segment); // add the size of gdt_system_segment
 }

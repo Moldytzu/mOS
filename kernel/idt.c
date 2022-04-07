@@ -21,7 +21,7 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
     gate->offset3 = (uint32_t)(((uint64_t)handler >> 32));
 
 #ifdef K_IDT_IST
-    if (user)
+    //if (user)
         gate->ist = 1; // set ist if we want user intrerrupt
 #endif
 }
