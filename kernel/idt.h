@@ -57,4 +57,3 @@ struct pack idt_intrerrupt_stack
 
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user);
 void idtInit();
-void *idtGetIST();

@@ -24,10 +24,9 @@ void gdtInit()
     gdtCreateSegment(0b11111010); // user code
     gdtCreateSegment(0b11110010); // user data
 
-    tss = mmAllocatePage(); // allocate tss
-    memset(tss, 0, sizeof(struct gdt_tss)); // clear tss
-
-    gdtInstallTSS((uint64_t)tss, 0b10001001); // install tss
+    tss = mmAllocatePage();                   // allocate tss
+    memset(tss, 0, sizeof(struct gdt_tss));   // clear it
+    gdtInstallTSS((uint64_t)tss, 0b10001001); // install it
 
     gdtr.size--;    // decrement size
     gdtLoad(&gdtr); // load gdt and flush segemts

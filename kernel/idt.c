@@ -6,7 +6,6 @@
 
 struct idt_descriptor idtr;
 char *idtData;
-void *userist;
 
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 {
@@ -21,8 +20,10 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
     gate->offset3 = (uint32_t)(((uint64_t)handler >> 32));
 
 #ifdef K_IDT_IST
-    //if (user)
-        gate->ist = 1; // set ist if we want user intrerrupt
+    if (user)
+        gate->ist = 2; // set ist if we want user intrerrupt
+    else
+        gate->ist = 1;
 #endif
 }
 
@@ -37,10 +38,11 @@ void idtInit()
 {
     cli(); // disable intrerrupts
 
-    // setup ist for userspace
-    userist = mmAllocatePage();
-    tssGet()->ist[0] = (uint64_t)userist + VMM_PAGE;
-    serialWrite(to_string((uint64_t)userist));
+#ifdef K_IDT_IST
+    // setup ist
+    tssGet()->ist[0] = (uint64_t)mmAllocatePage() + VMM_PAGE;
+    tssGet()->ist[1] = (uint64_t)mmAllocatePage() + VMM_PAGE;
+#endif
 
     // allocate the idt
     idtData = mmAllocatePage();
@@ -54,9 +56,4 @@ void idtInit()
     idtr.size--; // decrement to comply with the spec
     iasm("lidt %0" ::"m"(idtr));
     sti(); // enable intrerrupts
-}
-
-void *idtGetIST()
-{
-    return userist;
 }

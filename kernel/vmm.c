@@ -3,6 +3,7 @@
 #include <serial.h>
 #include <bootloader.h>
 #include <idt.h>
+#include <gdt.h>
 
 struct vmm_page_table *baseTable;
 
@@ -219,7 +220,11 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
             vmmMap(newTable, (void *)i, (void *)i, false, true);
 
     vmmMap(newTable, newTable, newTable, false, true); // map the table
-    vmmMap(newTable, idtGetIST(), idtGetIST(), true, true); // map ist
+
+#ifdef K_IDT_IST
+    vmmMap(newTable, (void*)tssGet()->ist[0], (void*)tssGet()->ist[0], true, true); // map ists
+    vmmMap(newTable, (void*)tssGet()->ist[1], (void*)tssGet()->ist[1], true, true); // map ist
+#endif
 
 #ifdef K_VMM_DEBUG
     serialWrite("vmm: wasted ");
