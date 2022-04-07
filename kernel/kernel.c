@@ -17,11 +17,13 @@ extern void idleTask();
 // kernel main, called after init
 void kmain()
 {
+#ifdef K_PMM_DEBUG
     // get the pool total values
     struct mm_pool total = mmGetTotal();
 
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
+#endif
 
     void *task = mmAllocatePage();            // create an empty page just for the idle task
     memcpy(task, (void *)idleTask, VMM_PAGE); // copy it
