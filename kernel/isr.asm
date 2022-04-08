@@ -60,8 +60,10 @@ PITHandlerEntry:
     iretq
 
 SyscallHandlerEntry:
+    cli ; disable intrerrupts
     cld ; because of the ABI
     PUSH_REG
     call syscallHandler ; call the syscall handler
     POP_REG
+    sti ; disable intrerrupts
     iretq
