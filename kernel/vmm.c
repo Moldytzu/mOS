@@ -210,17 +210,19 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
         for (uint64_t i = 0; i < total; i += VMM_PAGE) // identity map entire physical memory range
         {
             vmmMap(newTable, (void *)i, (void *)i, false, true);
-            vmmMap(newTable, (void*)i + hhdm, (void *)i, false, true); // map in hhdm
+            vmmMap(newTable, (void *)i + hhdm, (void *)i, false, true); // map in hhdm
         }
 
         for (uint64_t i = framebuffer->framebuffer_addr - hhdm; i < framebuffer->framebuffer_addr - hhdm + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE) // map framebuffer
-            vmmMap(newTable, (void*)i + hhdm, (void *)i, false, true);
+            vmmMap(newTable, (void *)i + hhdm, (void *)i, false, true);
     }
     else
         for (uint64_t i = 0; i < 16 * 1024 * 1024; i += VMM_PAGE) // map only 16 MB of RAM
             vmmMap(newTable, (void *)i, (void *)i, false, true);
 
-    vmmMap(newTable, newTable, newTable, false, true); // map the table
+    vmmMap(newTable, newTable, newTable, false, true);                 // map the table
+    vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), false, true); // map the tss
+    vmmMap(newTable, (void *)gdtGet(), (void *)gdtGet(), false, true); // map the gdt
 
 #ifdef K_IDT_IST
     vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], false, true); // kernel ist

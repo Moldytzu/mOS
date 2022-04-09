@@ -14,7 +14,6 @@ extern void PITHandler(struct idt_intrerrupt_stack *stack)
     vmmSwap(vmmGetBaseTable()); // swap to the base table
     ticks++;
     schedulerSchedule(stack);
-    printk("tick ");
     picEOI();
 }
 

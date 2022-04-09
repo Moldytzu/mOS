@@ -4,7 +4,7 @@
 
 struct gdt_tss *tss;
 struct gdt_descriptor gdtr;
-char *gdtData;
+uint8_t *gdtData;
 
 extern void gdtLoad(struct gdt_descriptor *);
 extern void tssLoad();
@@ -61,4 +61,9 @@ void gdtInstallTSS(uint64_t base, uint8_t access)
 struct gdt_tss *tssGet()
 {
     return tss;
+}
+
+uint8_t *gdtGet()
+{
+    return gdtData;
 }
