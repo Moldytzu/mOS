@@ -37,7 +37,7 @@ ovmf:
 
 .PHONY: kernel
 kernel:
-	mkdir -p out
+	mkdir -p out kernel/obj
 	$(MAKE) -C kernel -j$(CORES)
 
 $(OUTPUT): limine kernel
@@ -65,3 +65,7 @@ efi: limine kernel
 clean:
 	rm -rf iso_root $(OUTPUT) limine ovmf
 	$(MAKE) -C kernel clean
+
+.PHONY: deps
+deps:
+	sudo apt install build-essential nasm xorriso qemu-system-x86 -y
