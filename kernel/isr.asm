@@ -48,12 +48,10 @@ PITHandlerEntry:
     mov rdi, rsp ; give the handler the stack frame
     call PITHandler
     POP_REG
-    add rsp, 16
     iretq
 
 SyscallHandlerEntry:
     PUSH_REG
     call syscallHandler ; call the syscall handler
     POP_REG
-    add rsp, 16
     iretq
