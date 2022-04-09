@@ -28,11 +28,6 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 }
 
 extern void BaseHandlerEntry();
-extern void BaseHandler(struct idt_intrerrupt_stack *stack)
-{
-    printk("Intrerrupt!\n");
-    hang();
-}
 
 void idtInit()
 {

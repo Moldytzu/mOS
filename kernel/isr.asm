@@ -36,15 +36,11 @@ bits 64
 %endmacro
 
 global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry
-extern BaseHandler, PITHandler, syscallHandler
+extern PITHandler, syscallHandler
 
 BaseHandlerEntry:
     cli ; disable intrerrupts
-    cld ; because of the ABI
-    PUSH_REG
-    call BaseHandler
-    POP_REG
-    sti ; enable intrerrupts
+    jmp $ ; don't do anything
     iretq
 
 PITHandlerEntry:
