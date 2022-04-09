@@ -15,13 +15,29 @@ run-debug: $(OUTPUT)
 	gdb -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "b _start" -ex "continue" out/kernel.elf
 	pkill -f qemu-system-x86_64
 
+.PHONY: run-efi
+run-efi: efi ovmf
+	qemu-system-x86_64 -bios ovmf/ovmf.fd -M q35 -m 2G -cdrom $(OUTPUTEFI)
+
+.PHONY: run-efi
+run-efi-debug: efi ovmf
+	qemu-system-x86_64 -bios ovmf/ovmf.fd -M q35 -m 2G -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
+	gdb -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "b _start" -ex "continue" out/kernel.elf
+	pkill -f qemu-system-x86_64
+
+.PHONY: limine
 limine:
-	mkdir -p out
-	git clone https://github.com/limine-bootloader/limine.git --branch=v3.0-branch-binary --depth=1
+	-git clone https://github.com/limine-bootloader/limine.git --branch=v3.0-branch-binary --depth=1
 	make -C limine
+
+.PHONY: ovmf
+ovmf:
+	mkdir -p ovmf
+	-wget -nc https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd -O ovmf/ovmf.fd
 
 .PHONY: kernel
 kernel:
+	mkdir -p out
 	$(MAKE) -C kernel -j$(CORES)
 
 $(OUTPUT): limine kernel
@@ -37,18 +53,15 @@ $(OUTPUT): limine kernel
 	limine/limine-deploy $(OUTPUT)
 	rm -rf iso_root
 
+.PHONY: efi
 efi: limine kernel
 	rm -rf iso_root
 	mkdir -p iso_root
-	mkdir -p iso_root/EFI
-	mkdir -p iso_root/EFI/BOOT
-	cp out/kernel.elf limine.cfg font-8x16.psf iso_root/
-	cp limine/BOOTX64.EFI iso_root/EFI/BOOT/
-	xorrisofs -r -J -o $(OUTPUTEFI) iso_root
-	limine/limine-deploy $(OUTPUT)
+	cp out/kernel.elf limine.cfg font-8x16.psf limine/limine-cd-efi.bin iso_root/
+	xorriso -as mkisofs --efi-boot limine-cd-efi.bin -efi-boot-part --efi-boot-image -J -o $(OUTPUTEFI) iso_root
 	rm -rf iso_root
 
 .PHONY: clean
 clean:
-	rm -rf iso_root $(OUTPUT) limine
+	rm -rf iso_root $(OUTPUT) limine ovmf
 	$(MAKE) -C kernel clean
