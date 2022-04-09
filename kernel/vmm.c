@@ -222,8 +222,8 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
     vmmMap(newTable, newTable, newTable, false, true); // map the table
 
 #ifdef K_IDT_IST
-    vmmMap(newTable, (void*)tssGet()->ist[0], (void*)tssGet()->ist[0], true, true); // map ists
-    vmmMap(newTable, (void*)tssGet()->ist[1], (void*)tssGet()->ist[1], true, true); // map ist
+    vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], false, true); // kernel ist
+    vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], true, true);  // user ist
 #endif
 
 #ifdef K_VMM_DEBUG
