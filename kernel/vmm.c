@@ -204,16 +204,17 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
 
     if (full)
     {
+        uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
         register uint64_t total = mmGetTotal().total + 0xFFFF0;
 
-        for (uint64_t i = 0; i < total; i += VMM_PAGE) // map entire physical memory range
+        for (uint64_t i = 0; i < total; i += VMM_PAGE) // identity map entire physical memory range
+        {
             vmmMap(newTable, (void *)i, (void *)i, false, true);
+            vmmMap(newTable, (void*)i + hhdm, (void *)i, false, true); // map in hhdm
+        }
 
-        for (uint64_t i = 0; i < total; i += VMM_PAGE) // map hhdm
-            vmmMap(newTable, (uint64_t)i + bootloaderGetHHDM(), (void *)i, false, true);
-
-        for (uint64_t i = framebuffer->framebuffer_addr - (uint64_t)bootloaderGetHHDM(); i < framebuffer->framebuffer_addr - (uint64_t)bootloaderGetHHDM() + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE) // map framebuffer
-            vmmMap(newTable, (uint64_t)i + bootloaderGetHHDM(), (void *)i, false, true);
+        for (uint64_t i = framebuffer->framebuffer_addr - hhdm; i < framebuffer->framebuffer_addr - hhdm + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE) // map framebuffer
+            vmmMap(newTable, (void*)i + hhdm, (void *)i, false, true);
     }
     else
         for (uint64_t i = 0; i < 16 * 1024 * 1024; i += VMM_PAGE) // map only 16 MB of RAM
