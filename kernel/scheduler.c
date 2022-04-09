@@ -36,10 +36,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWrite("\n");
 #endif
 
-    uint64_t krsp = stack->krsp; // save the stack
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
-    stack->krsp = krsp;                       // restore it
-    tssGet()->rsp[0] = (uint64_t)stack->krsp; // set kernel stack in tss
     tssGet()->rsp[2] = (uint64_t)stack->rsp;  // set user stack in tss
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
