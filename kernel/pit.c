@@ -8,6 +8,7 @@ struct pit_packet packet;
 uint32_t tickspersec = 0;
 uint64_t ticks = 0;
 
+// timer intrerrupt handler
 extern void PITHandlerEntry();
 extern void PITHandler(struct idt_intrerrupt_stack *stack)
 {
@@ -17,6 +18,7 @@ extern void PITHandler(struct idt_intrerrupt_stack *stack)
     picEOI();
 }
 
+// send packet and set the divisor
 void pitSet(uint32_t hz)
 {
     // send packet
@@ -29,6 +31,7 @@ void pitSet(uint32_t hz)
     outb(PIT_CH_0, (div & 0xFF00) >> 8); // high
 }
 
+// initialize the legacy programable interval timer
 void pitInit()
 {
     cli(); // disable intrerrupts
@@ -52,11 +55,13 @@ void pitInit()
 #endif
 }
 
+// get ticks since startup
 uint64_t pitGetTicks()
 {
     return ticks;
 }
 
+// get scale
 uint32_t pitGetScale()
 {
     return tickspersec;

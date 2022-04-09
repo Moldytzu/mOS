@@ -20,7 +20,7 @@ static struct stivale2_header_tag_terminal terminal_hdr_tag = {
         .identifier = STIVALE2_HEADER_TAG_TERMINAL_ID, // id
         .next = 0                                      // end
     },
-    .flags = 0 // unusded
+    .flags = 0 // unused
 };
 
 // framebuffer
@@ -132,5 +132,5 @@ struct stivale2_struct_tag_pmrs *bootloaderGetPMRS()
 // get hhdm
 void *bootloaderGetHHDM()
 {
-    return (void*)hhdmTag->addr;
+    return (void *)hhdmTag->addr;
 }

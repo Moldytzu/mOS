@@ -1,10 +1,12 @@
 #include <serial.h>
 
+// write character on the serial console
 void serialWritec(char c)
 {
     outb(COM1, c); // output the character on the serial console
 }
 
+// write string on the serial console
 void serialWrite(const char *str)
 {
     while (*str) // loop thru every character

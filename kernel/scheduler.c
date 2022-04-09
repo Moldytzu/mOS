@@ -11,6 +11,7 @@ bool enabled = false;                 // enabled
 
 extern void userspaceJump(uint64_t rip, uint64_t stack);
 
+// schedule the next task
 void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 {
     if (!enabled)
@@ -42,6 +43,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
 
+// initialize the scheduler
 void schedulerInit()
 {
     memset64(tasks, 0, 0x1000 * sizeof(struct sched_task) / sizeof(uint64_t)); // clear the tasks
@@ -49,6 +51,7 @@ void schedulerInit()
     tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;                       // set kernel stack in tss
 }
 
+// enable the scheduler and then jump in the first task
 void schedulerEnable()
 {
     vmmSwap(tasks[currentTID].pageTable);                                    // swap the page table
@@ -56,6 +59,7 @@ void schedulerEnable()
     userspaceJump(TASK_BASE_ADDRESS, tasks[currentTID].intrerruptStack.rsp); // jump in userspace
 }
 
+// add new task in the queue
 void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
 {
     uint16_t index = lastTID++;
@@ -82,6 +86,7 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     tasks[index].intrerruptStack.ss = 8 * 4;                                // data segment for user is the second
 }
 
+// get current task
 struct sched_task *schedulerGetCurrent()
 {
     return &tasks[currentTID];

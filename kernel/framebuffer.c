@@ -6,6 +6,7 @@ struct stivale2_struct_tag_framebuffer *framebufTag;
 
 struct framebuffer_cursor_info cursor; // info
 
+// init the framebuffer
 void framebufferInit()
 {
     framebufTag = bootloaderGetFramebuf(); // get the tag
@@ -24,12 +25,14 @@ void framebufferInit()
     cursor.X = cursor.Y = 0;  // upper left corner
 }
 
+// clear the framebuffer with a colour
 inline void framebufferClear(uint32_t colour)
 {
     cursor.X = cursor.Y = 0;                                                                                                                                // reset cursor position
     memset64((void *)framebufTag->framebuffer_addr, (uint64_t)colour << 32 | colour, framebufTag->framebuffer_pitch * framebufTag->framebuffer_height / 2); // clear the screen
 }
 
+// load a font
 void framebufferLoadFont(const char *module)
 {
     fontMod = bootloaderGetModule(module);                // get the module
@@ -50,11 +53,13 @@ error: // show an error message
     hang();
 }
 
+// plot pixel on the framebuffer
 inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {
     *(uint32_t *)((uint64_t)framebufTag->framebuffer_addr + x * framebufTag->framebuffer_bpp / 8 + y * framebufTag->framebuffer_pitch) = colour; // set the pixel to colour
 }
 
+// plot character on the framebuffer
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
     uint8_t *character = (uint8_t *)font + sizeof(struct psf1_header) + c * font->charsize; // get the offset by skipping the header and indexing the character
@@ -69,12 +74,14 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
     }
 }
 
+// create a new line
 inline static void newline()
 {
     cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
     cursor.X = 0;                   // reset cursor X
 }
 
+// write a character
 void framebufferWritec(char c)
 {
     if (c == '\n') // new line
@@ -90,17 +97,20 @@ void framebufferWritec(char c)
     cursor.X += 8 + 1; // add character's width and a 1 px padding
 }
 
+// write a string
 void framebufferWrite(const char *str)
 {
     for (int i = 0; str[i]; i++)
         framebufferWritec(str[i]); // write characters
 }
 
+// get cursor information
 struct framebuffer_cursor_info framebufferGetCursor()
 {
     return cursor;
 }
 
+// overwrite cursor information
 void framebufferSetCursor(struct framebuffer_cursor_info info)
 {
     cursor = info;

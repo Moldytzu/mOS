@@ -1,5 +1,6 @@
 #include <pic.h>
 
+// initialize the legacy programable intrerrupt controller
 void picInit()
 {
     cli(); // disable intrerrupts
@@ -29,9 +30,9 @@ void picInit()
 #endif
 }
 
+// send end of intrerrupt command to both chips
 void picEOI()
 {
-    // send end of intrerrupt command to both chips
     outb(PIC_SLAVE_CMD, PIC_EOI_CMD);
     outb(PIC_MASTER_CMD, PIC_EOI_CMD);
 }

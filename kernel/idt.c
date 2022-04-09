@@ -7,6 +7,7 @@
 struct idt_descriptor idtr;
 char *idtData;
 
+// change gate information
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 {
     struct idt_gate_descriptor *gate = (struct idt_gate_descriptor *)(idtr.offset + entry * sizeof(struct idt_gate_descriptor)); // select the gate
@@ -29,6 +30,7 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 
 extern void BaseHandlerEntry();
 
+// initialize the intrerupt descriptor table
 void idtInit()
 {
     cli(); // disable intrerrupts

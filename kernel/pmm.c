@@ -9,6 +9,7 @@ struct mm_pool pools[0xFFFF]; // 16k pools should be enough
 
 struct stivale2_struct_tag_memmap *map;
 
+// check if a page is free
 bool mmIsFreePage(struct mm_pool *pool, size_t page)
 {
     uint8_t *bitmapBase = pool->base;
@@ -30,6 +31,7 @@ bool mmIsFreePage(struct mm_pool *pool, size_t page)
     return false; // return false if we're not finding the page
 }
 
+// allocate a page index on a pool
 void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
 {
     uint8_t *bitmapBase = pool->base;
@@ -56,6 +58,7 @@ void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
     return NULL; // return null if it isn't free
 }
 
+// deallocate a page address on a pool
 void mmDeallocatePagePool(struct mm_pool *pool, void *address)
 {
     uint8_t *bitmapBase = pool->base;
@@ -78,6 +81,7 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
     }
 }
 
+// allocate a page on a pool
 void *mmAllocatePagePool(struct mm_pool *pool)
 {
     while (pool->bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
@@ -104,6 +108,7 @@ void *mmAllocatePagePool(struct mm_pool *pool)
     return NULL;       // return null
 }
 
+// allocate `pages` pages on a pool
 void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
 {
     size_t poolPageCount = pool->total / VMM_PAGE;
@@ -130,6 +135,7 @@ void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
     return NULL; // if we don't find
 }
 
+// allocate more pages
 void *mmAllocatePages(size_t pages)
 {
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
@@ -146,6 +152,7 @@ void *mmAllocatePages(size_t pages)
     return NULL;              // unreachable
 }
 
+// allocate a page
 void *mmAllocatePage()
 {
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
@@ -162,6 +169,7 @@ void *mmAllocatePage()
     return NULL;              // unreachable
 }
 
+// deallocate page
 void mmDeallocatePage(void *address)
 {
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
@@ -171,6 +179,7 @@ void mmDeallocatePage(void *address)
     }
 }
 
+// initialize the physical memory manager
 void pmmInit()
 {
     map = bootloaderGetMemMap(); // get the map
@@ -209,11 +218,13 @@ void pmmInit()
     }
 }
 
+// return the pools
 struct mm_pool *mmGetPools()
 {
     return pools;
 }
 
+// calculate a total of the values from the pools
 struct mm_pool mmGetTotal()
 {
     struct mm_pool total;

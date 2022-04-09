@@ -6,6 +6,7 @@
 extern void sysretInit();
 extern void SyscallHandlerEntry();
 
+// handler called on syscall
 void syscallHandler(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t rcx, uint64_t r8, uint64_t r9)
 {
     void *taskTable = schedulerGetCurrent()->pageTable;
@@ -15,6 +16,7 @@ void syscallHandler(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t rcx, uint
     vmmSwap(taskTable); // swap the page table back
 }
 
+// init syscall handling
 void syscallInit(uint16_t vector)
 {
     printk("Installing system call handler on vector 0x%x...", vector);

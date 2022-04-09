@@ -7,6 +7,7 @@
 
 struct vmm_page_table *baseTable;
 
+// get indices in the page table of a virtual address
 struct vmm_index vmmIndex(uint64_t virtualAddress)
 {
     struct vmm_index index;
@@ -18,21 +19,20 @@ struct vmm_index vmmIndex(uint64_t virtualAddress)
     return index;
 }
 
+// initialize the virtual memory manager
 void vmmInit()
 {
-    void *bootloaderTable = NULL;
-    iasm("mov %%cr3, %%rax"
-         : "=a"(bootloaderTable)); // get bootloader's paging table
-
     baseTable = vmmCreateTable(true); // create the base table with hhdm
     vmmSwap(baseTable);               // swap the table
 }
 
+// get flag of an entry
 bool vmmGetFlag(uint64_t *entry, uint8_t flag)
 {
     return *entry & (1 << flag); // get flag
 }
 
+// set flag of an entry
 void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
 {
     if (value)
@@ -44,17 +44,20 @@ void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
     *entry &= ~(1 << flag); // unset flag
 }
 
+// get address of an entry
 uint64_t vmmGetAddress(uint64_t *entry)
 {
     return (*entry & 0x000FFFFFFFFFF000) >> 12; // get the address from entry
 }
 
+// set address of an entry
 void vmmSetAddress(uint64_t *entry, uint64_t address)
 {
     *entry &= 0xfff0000000000fff;             // clear address field
     *entry |= (address & 0xFFFFFFFFFF) << 12; // set the address field
 }
 
+// set flags of some entries given by the indices
 void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw)
 {
     struct vmm_page_table *pdp, *pd, *pt;
@@ -83,6 +86,7 @@ void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user
     pt->entries[index.P] = currentEntry;                                // write the entry in the table
 }
 
+// map a virtual address to a physical address in a page table 
 void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
@@ -132,6 +136,7 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
     vmmSetFlags(table, index, user, rw); // set the flags
 }
 
+// unmap a virtual address
 void vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
@@ -151,16 +156,19 @@ void vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
     pt->entries[index.P] = currentEntry;                 // write the entry in the table
 }
 
+// get the base table aka kernel table
 void *vmmGetBaseTable()
 {
     return baseTable;
 }
 
+// swap the current page table with a new one
 void vmmSwap(void *newTable)
 {
     iasm("mov %0, %%cr3" ::"r"(newTable));
 }
 
+// get physical address of a virtual address
 void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 {
     // get physical memory address form virtual memory address
@@ -180,6 +188,7 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
     return (void *)vmmGetAddress(&currentEntry); // get the address
 }
 
+// create a new table
 struct pack vmm_page_table *vmmCreateTable(bool full)
 {
     // create a new table to use as a base for everything

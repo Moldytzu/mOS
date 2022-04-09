@@ -9,6 +9,7 @@ uint8_t *gdtData;
 extern void gdtLoad(struct gdt_descriptor *);
 extern void tssLoad();
 
+// initialize the global descriptor table
 void gdtInit()
 {
     // allocate the gdt
@@ -33,6 +34,7 @@ void gdtInit()
     tssLoad();      // load tss
 }
 
+// create a new segment in the table
 void gdtCreateSegment(uint8_t access)
 {
     struct gdt_segment *segment = (struct gdt_segment *)(gdtr.offset + gdtr.size);
@@ -43,6 +45,7 @@ void gdtCreateSegment(uint8_t access)
     gdtr.size += sizeof(struct gdt_segment); // add the size of gdt_segment
 }
 
+// create a new segment and install the tss on it
 void gdtInstallTSS(uint64_t base, uint8_t access)
 {
     struct gdt_system_segment *segment = (struct gdt_system_segment *)(gdtr.offset + gdtr.size);
@@ -58,11 +61,13 @@ void gdtInstallTSS(uint64_t base, uint8_t access)
     gdtr.size += sizeof(struct gdt_system_segment); // add the size of gdt_system_segment
 }
 
+// get the tss address
 struct gdt_tss *tssGet()
 {
     return tss;
 }
 
+// get the gdt address
 uint8_t *gdtGet()
 {
     return gdtData;
