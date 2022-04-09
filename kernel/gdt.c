@@ -29,7 +29,7 @@ void gdtInit()
     gdtInstallTSS((uint64_t)tss, 0b10001001); // install it
 
     gdtr.size--;    // decrement size
-    gdtLoad(&gdtr); // load gdt and flush segemts
+    gdtLoad(&gdtr); // load gdt and flush segments
     tssLoad();      // load tss
 }
 
@@ -45,7 +45,7 @@ void gdtCreateSegment(uint8_t access)
 
 void gdtInstallTSS(uint64_t base, uint8_t access)
 {
-    struct gdt_system_segment *segment = (struct gdt_system_segment *)(gdtr.offset + +gdtr.size);
+    struct gdt_system_segment *segment = (struct gdt_system_segment *)(gdtr.offset + gdtr.size);
     memset((void *)segment, 0, sizeof(struct gdt_system_segment));
     segment->access = access;
     segment->base = base & 0x000000000000FFFF;
