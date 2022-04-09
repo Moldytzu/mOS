@@ -44,20 +44,16 @@ BaseHandlerEntry:
     iretq
 
 PITHandlerEntry:
-    cli ; disable intrerrupts
-    cld ; because of the ABI
     PUSH_REG
     mov rdi, rsp ; give the handler the stack frame
     call PITHandler
     POP_REG
-    sti ; enable intrerrupts
+    add rsp, 16
     iretq
 
 SyscallHandlerEntry:
-    cli ; disable intrerrupts
-    cld ; because of the ABI
     PUSH_REG
     call syscallHandler ; call the syscall handler
     POP_REG
-    sti ; disable intrerrupts
+    add rsp, 16
     iretq
