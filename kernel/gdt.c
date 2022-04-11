@@ -4,7 +4,7 @@
 
 struct gdt_tss *tss;
 struct gdt_descriptor gdtr;
-uint8_t *gdtData;
+struct gdt_segment *gdtData;
 
 extern void gdtLoad(struct gdt_descriptor *);
 extern void tssLoad();
@@ -37,10 +37,10 @@ void gdtInit()
 // create a new segment in the table
 void gdtCreateSegment(uint8_t access)
 {
-    struct gdt_segment *segment = (struct gdt_segment *)(gdtr.offset + gdtr.size);
-    memset((void *)segment, 0, sizeof(struct gdt_segment));
-    segment->access = access;
-    segment->flags = 0b1010; // 4k pages, long mode
+    struct gdt_segment *segment = &gdtData[gdtr.size / sizeof(struct gdt_segment)]; // get address of the next segment
+    memset((void *)segment, 0, sizeof(struct gdt_segment));                         // clear it
+    segment->access = access;                                                       // set the access byte
+    segment->flags = 0b1010;                                                        // 4k pages, long mode
 
     gdtr.size += sizeof(struct gdt_segment); // add the size of gdt_segment
 }
@@ -48,14 +48,14 @@ void gdtCreateSegment(uint8_t access)
 // create a new segment and install the tss on it
 void gdtInstallTSS(uint64_t base, uint8_t access)
 {
-    struct gdt_system_segment *segment = (struct gdt_system_segment *)(gdtr.offset + gdtr.size);
-    memset((void *)segment, 0, sizeof(struct gdt_system_segment));
-    segment->access = access;
-    segment->base = base & 0x000000000000FFFF;
+    struct gdt_system_segment *segment = (struct gdt_system_segment *)&gdtData[gdtr.size / sizeof(struct gdt_segment)]; // get address of the next segment
+    memset((void *)segment, 0, sizeof(struct gdt_system_segment));                                                      // clear it
+    segment->access = access;                                                                                           // set the access byte
+    segment->base = base & 0x000000000000FFFF;                                                                          // set the base address of the tss
     segment->base2 = (base & 0x0000000000FF0000) >> 16;
     segment->base3 = (base & 0x00000000FF000000) >> 24;
     segment->base3 = (base & 0xFFFFFFFF00000000) >> 32;
-    segment->limit = sizeof(struct gdt_tss) & 0xFFFF;
+    segment->limit = sizeof(struct gdt_tss) & 0xFFFF; // set the limit of the tss
     segment->limit2 = (sizeof(struct gdt_tss) & 0xF000) >> 16;
 
     gdtr.size += sizeof(struct gdt_system_segment); // add the size of gdt_system_segment
@@ -67,8 +67,8 @@ struct gdt_tss *tssGet()
     return tss;
 }
 
-// get the gdt address
-uint8_t *gdtGet()
+// get the gdt segments
+struct gdt_segment *gdtGet()
 {
     return gdtData;
 }
