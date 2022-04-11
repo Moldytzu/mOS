@@ -4,7 +4,7 @@
 
 struct gdt_tss *tss;
 struct gdt_descriptor gdtr;
-struct gdt_segment *gdtData;
+struct gdt_segment *entries;
 
 extern void gdtLoad(struct gdt_descriptor *);
 extern void tssLoad();
@@ -12,12 +12,12 @@ extern void tssLoad();
 // initialize the global descriptor table
 void gdtInit()
 {
-    // allocate the gdt
-    gdtData = mmAllocatePage();
-    memset(gdtData, 0, VMM_PAGE);
+    // allocate the entries
+    entries = mmAllocatePage();
+    memset64(entries, 0, VMM_PAGE / sizeof(uint64_t));
 
     gdtr.size = 0; // reset the size
-    gdtr.offset = (uint64_t)gdtData;
+    gdtr.offset = (uint64_t)entries;
 
     gdtCreateSegment(0);          // null
     gdtCreateSegment(0b10011010); // kernel code
@@ -37,7 +37,7 @@ void gdtInit()
 // create a new segment in the table
 void gdtCreateSegment(uint8_t access)
 {
-    struct gdt_segment *segment = &gdtData[gdtr.size / sizeof(struct gdt_segment)]; // get address of the next segment
+    struct gdt_segment *segment = &entries[gdtr.size / sizeof(struct gdt_segment)]; // get address of the next segment
     memset((void *)segment, 0, sizeof(struct gdt_segment));                         // clear it
     segment->access = access;                                                       // set the access byte
     segment->flags = 0b1010;                                                        // 4k pages, long mode
@@ -48,7 +48,7 @@ void gdtCreateSegment(uint8_t access)
 // create a new segment and install the tss on it
 void gdtInstallTSS(uint64_t base, uint8_t access)
 {
-    struct gdt_system_segment *segment = (struct gdt_system_segment *)&gdtData[gdtr.size / sizeof(struct gdt_segment)]; // get address of the next segment
+    struct gdt_system_segment *segment = (struct gdt_system_segment *)&entries[gdtr.size / sizeof(struct gdt_segment)]; // get address of the next segment
     memset((void *)segment, 0, sizeof(struct gdt_system_segment));                                                      // clear it
     segment->access = access;                                                                                           // set the access byte
     segment->base = base & 0x000000000000FFFF;                                                                          // set the base address of the tss
@@ -70,5 +70,5 @@ struct gdt_tss *tssGet()
 // get the gdt segments
 struct gdt_segment *gdtGet()
 {
-    return gdtData;
+    return entries;
 }
