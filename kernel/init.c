@@ -11,6 +11,7 @@
 #include <pit.h>
 #include <syscall.h>
 #include <scheduler.h>
+#include <control.h>
 
 void kmain();
 
@@ -19,6 +20,9 @@ void _start(struct stivale2_struct *stivale2_struct)
 {
     // initialize the fpu
     fpuInit();
+
+    // load a custom cr4
+    controlLoadCR4(0b0000000000000001000100000); // enable PAE and OSFXSR
 
     // initialize the bootloader interface
     bootloaderInit(stivale2_struct);
