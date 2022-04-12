@@ -12,7 +12,7 @@ run: $(OUTPUT)
 .PHONY: run-debug
 run-debug: $(OUTPUT)
 	qemu-system-x86_64 -M q35 -m 2G -cdrom $(OUTPUT) -boot d -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
-	gdb -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "b _start" -ex "continue" out/kernel.elf
+	gdb -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue" out/kernel.elf
 	pkill -f qemu-system-x86_64
 
 .PHONY: run-efi
@@ -22,7 +22,7 @@ run-efi: efi ovmf
 .PHONY: run-efi
 run-efi-debug: efi ovmf
 	qemu-system-x86_64 -bios ovmf/ovmf.fd -M q35 -m 2G -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
-	gdb -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "b _start" -ex "continue" out/kernel.elf
+	gdb -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue" out/kernel.elf
 	pkill -f qemu-system-x86_64
 
 .PHONY: limine

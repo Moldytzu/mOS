@@ -14,11 +14,11 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
     if (gate->segmentselector == 0)                      // detect if we didn't touch the gate
         idtr.size += sizeof(struct idt_gate_descriptor); // if we didn't we can safely increase the size
 
-    gate->attributes = attributes;                         // set the attributes
-    gate->segmentselector = 8;                             // set the selector from gdt
-    gate->offset = (uint16_t)((uint64_t)handler) & 0xFFFF; // offset to the entry
-    gate->offset2 = (uint16_t)(((uint64_t)handler >> 16)) & 0xFFFF;
-    gate->offset3 = (uint32_t)(((uint64_t)handler >> 32));
+    gate->attributes = attributes;                                     // set the attributes
+    gate->segmentselector = (8 * 1);                                   // set the kernel code selector from gdt
+    gate->offset = (uint16_t)((uint64_t)handler & 0x000000000000ffff); // offset to the entry
+    gate->offset2 = (uint16_t)(((uint64_t)handler & 0x00000000ffff0000) >> 16);
+    gate->offset3 = (uint32_t)(((uint64_t)handler & 0xffffffff00000000) >> 32);
 
 #ifdef K_IDT_IST
     // enable ists
