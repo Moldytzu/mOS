@@ -22,8 +22,8 @@ void gdtInit()
     gdtCreateSegment(0);          // null
     gdtCreateSegment(0b10011010); // kernel code
     gdtCreateSegment(0b10010010); // kernel data
-    gdtCreateSegment(0b11111010); // user code
     gdtCreateSegment(0b11110010); // user data
+    gdtCreateSegment(0b11111010); // user code
 
     tss = mmAllocatePage();                   // allocate tss
     memset(tss, 0, sizeof(struct gdt_tss));   // clear it

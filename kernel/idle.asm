@@ -4,4 +4,4 @@ align 4096
 global idleTask
 
 idleTask:
-    jmp $ ; don't do anything
+    jmp $ ; stay there
