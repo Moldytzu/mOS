@@ -17,6 +17,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
+    vmmSwap(vmmGetBaseTable()); // swap the page table
+
 #ifdef K_SCHED_DEBUG
     serialWrite("sched: saving ");
     serialWrite(tasks[currentTID].name);
@@ -37,8 +39,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWrite("\n");
 #endif
 
+    // copy the new registers
     memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
-    tssGet()->rsp[2] = (uint64_t)stack->rsp;  // set user stack in tss
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
@@ -54,8 +56,9 @@ void schedulerInit()
 // enable the scheduler and then jump in the first task
 void schedulerEnable()
 {
-    vmmSwap(tasks[currentTID].pageTable);                                    // swap the page table
+    cli();                                                                   // disable intrerrupts, those will be enabled using the rflags
     enabled = true;                                                          // enable the scheduler
+    vmmSwap(tasks[currentTID].pageTable);                                    // swap the page table
     userspaceJump(TASK_BASE_ADDRESS, tasks[currentTID].intrerruptStack.rsp); // jump in userspace
 }
 
@@ -82,8 +85,8 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     tasks[index].intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
     tasks[index].intrerruptStack.rflags = 0x202;                            // rflags, enable intrerrupts
     tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;         // task stack
-    tasks[index].intrerruptStack.cs = 8 * 3;                                // code segment for user is the first
-    tasks[index].intrerruptStack.ss = 8 * 4;                                // data segment for user is the second
+    tasks[index].intrerruptStack.cs = 8 * 4;                                // code segment for user is the first
+    tasks[index].intrerruptStack.ss = 8 * 3;                                // data segment for user is the second
 }
 
 // get current task

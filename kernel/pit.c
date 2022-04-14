@@ -13,7 +13,7 @@ extern void PITHandlerEntry();
 extern void PITHandler(struct idt_intrerrupt_stack *stack)
 {
     ticks++;
-    //schedulerSchedule(stack);
+    schedulerSchedule(stack);
     picEOI();
 }
 
