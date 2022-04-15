@@ -153,13 +153,3 @@ void memcpy64(void *dest, void *src, size_t count)
     for (size_t i = 0; i < count; i++)
         ((uint64_t *)dest)[i] = ((uint64_t *)src)[i];
 }
-
-void cli()
-{
-    iasm("cli");
-}
-
-void sti()
-{
-    iasm("sti");
-}

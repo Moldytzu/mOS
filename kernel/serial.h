@@ -11,5 +11,10 @@
 #define COM7 0x5E8
 #define COM8 0x4E8
 
-void serialWritec(char c);
+// write character on the serial console
+ifunc void serialWritec(char c)
+{
+    outb(COM1, c); // output the character on the serial console
+}
+
 void serialWrite(const char *str);

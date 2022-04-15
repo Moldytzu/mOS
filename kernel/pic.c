@@ -29,10 +29,3 @@ void picInit()
     sti(); // enable intrerrupts
 #endif
 }
-
-// send end of intrerrupt command to both chips
-void picEOI()
-{
-    outb(PIC_SLAVE_CMD, PIC_EOI_CMD);
-    outb(PIC_MASTER_CMD, PIC_EOI_CMD);
-}

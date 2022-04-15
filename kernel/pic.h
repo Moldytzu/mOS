@@ -24,4 +24,10 @@
 #define PIC_IRQ_7 (PIC_IRQ_BASE + 7)
 
 void picInit();
-void picEOI();
+
+// send end of intrerrupt command to both chips
+ifunc void picEOI()
+{
+    outb(PIC_SLAVE_CMD, PIC_EOI_CMD);
+    outb(PIC_MASTER_CMD, PIC_EOI_CMD);
+}

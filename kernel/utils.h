@@ -12,6 +12,7 @@
 #define alignD(val, alg) (val - (alg - val % alg))
 #define unsafe_cast(val, type) (*(type *)&val)
 #define iasm asm volatile
+#define ifunc static inline __attribute__((always_inline))
 
 // strlen
 uint32_t strlen(const char *str);
@@ -45,5 +46,12 @@ void hang();
 void printk(const char *fmt, ...);
 
 // intrerrupts control
-void cli();
-void sti();
+ifunc void cli()
+{
+    iasm("cli");
+}
+
+ifunc void sti()
+{
+    iasm("sti");
+}
