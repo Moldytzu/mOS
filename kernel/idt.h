@@ -47,7 +47,6 @@ struct pack idt_intrerrupt_stack
     uint64_t r13;
     uint64_t r14;
     uint64_t r15;
-    uint64_t error;
     uint64_t rip;
     uint64_t cs;
     uint64_t rflags;
