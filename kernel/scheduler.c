@@ -39,8 +39,12 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     serialWrite("\n");
 #endif
 
-    // copy the new registers
-    memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
+    // copy the new registers, uncommenting anything will make the OS crash
+    //memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
+    //stack->cs = tasks[currentTID].intrerruptStack.cs;
+    //stack->ss = tasks[currentTID].intrerruptStack.ss;
+    //stack->rip = tasks[currentTID].intrerruptStack.rip;
+    //stack->rsp = tasks[currentTID].intrerruptStack.rsp;
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }

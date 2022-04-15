@@ -1,8 +1,8 @@
 # Milestones to reach
 ### scheduler with ring 3 support
+### kernel heap
 ### initrd (maybe tar or a custom format?)
 ### ELF binaries
-### kernel heap
 ### lai (lightweight aml interpreter)
 ### virtual file system
 ### shell
