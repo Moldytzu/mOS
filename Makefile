@@ -1,25 +1,29 @@
 OUTPUT = out/dvd.iso
 OUTPUTEFI = out/efi.iso
 CORES = $(shell nproc)
+GDBFLAGS ?= -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue"
+QEMUFLAGS ?= -M q35 -m 2G 
+QEMUDEBUG = -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
+DEBUG ?= 0
 
 .PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps
 
 all: $(OUTPUT)
 
 run: $(OUTPUT)
-	qemu-system-x86_64 -M q35 -m 2G -cdrom $(OUTPUT) -boot d
+	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) 
 
 run-debug: $(OUTPUT)
-	qemu-system-x86_64 -M q35 -m 2G -cdrom $(OUTPUT) -boot d -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
-	gdb -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue" out/kernel.elf
+	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) $(QEMUDEBUG)
+	gdb $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 
 run-efi: efi ovmf
-	qemu-system-x86_64 -bios ovmf/ovmf.fd -M q35 -m 2G -cdrom $(OUTPUTEFI)
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI)
 
 run-efi-debug: efi ovmf
-	qemu-system-x86_64 -bios ovmf/ovmf.fd -M q35 -m 2G -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
-	gdb -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue" out/kernel.elf
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
+	gdb $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 
 limine:
