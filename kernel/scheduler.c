@@ -19,6 +19,20 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
+    if (tasks[currentTID].priorityCounter--) // check if the priority counter is over
+    {
+#ifdef K_SCHED_DEBUG
+        serialWrite("sched: ");
+        serialWrite(tasks[currentTID].name);
+        serialWrite(" still has ");
+        serialWrite(to_string(tasks[currentTID].priorityCounter + 1));
+        serialWrite(" ticks left. doing nothing.\n");
+#endif
+        vmmSwap(tasks[currentTID].pageTable); // swap the page table
+        return;
+    }
+    tasks[currentTID].priorityCounter = tasks[currentTID].priority; // reset counter
+
 #ifdef K_SCHED_DEBUG
     serialWrite("sched: saving ");
     serialWrite(tasks[currentTID].name);
@@ -66,7 +80,11 @@ void schedulerEnable()
 void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
 {
     uint16_t index = lastTID++;
-    tasks[index].tid = index;                              // set the task ID
+
+    // metadata
+    tasks[index].priorityCounter = 0;                      // reset counter
+    tasks[index].id = index;                               // set the task ID
+    tasks[index].priority = 0;                             // switch imediately
     memcpy(tasks[index].name, (char *)name, strlen(name)); // set the name
 
     // page table
@@ -93,4 +111,17 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
 struct sched_task *schedulerGetCurrent()
 {
     return &tasks[currentTID];
+}
+
+// set priority to a task
+void schedulerPrioritize(uint16_t tid, uint8_t priority)
+{
+    if (lastTID - 1 < tid) // out of bounds
+        return;
+
+    if (priority == 0) // minimum ticks until switching is 1
+        priority = 1;
+
+    tasks[tid].priority = priority; // set new priority level
+    tasks[tid].priorityCounter = tasks[tid].priority; // reset counter
 }
