@@ -25,9 +25,9 @@ void gdtInit()
     gdtCreateSegment(0b11110010); // user data
     gdtCreateSegment(0b11111010); // user code
 
-    tss = mmAllocatePage();                   // allocate tss
-    memset(tss, 0, sizeof(struct gdt_tss));   // clear it
-    gdtInstallTSS((uint64_t)tss, 0b10001001); // install it
+    tss = mmAllocatePage();                                      // allocate tss
+    memset64(tss, 0, sizeof(struct gdt_tss) / sizeof(uint64_t)); // clear it
+    gdtInstallTSS((uint64_t)tss, 0b10001001);                    // install it
 
     gdtr.size--;    // decrement size
     gdtLoad(&gdtr); // load gdt and flush segments
@@ -38,7 +38,7 @@ void gdtInit()
 void gdtCreateSegment(uint8_t access)
 {
     struct gdt_segment *segment = &entries[gdtr.size / sizeof(struct gdt_segment)]; // get address of the next segment
-    memset((void *)segment, 0, sizeof(struct gdt_segment));                         // clear it
+    memset64((void *)segment, 0, sizeof(struct gdt_segment) / sizeof(uint64_t));    // clear it
     segment->access = access;                                                       // set the access byte
     segment->flags = 0b1010;                                                        // 4k pages, long mode
 
@@ -49,7 +49,7 @@ void gdtCreateSegment(uint8_t access)
 void gdtInstallTSS(uint64_t base, uint8_t access)
 {
     struct gdt_system_segment *segment = (struct gdt_system_segment *)&entries[gdtr.size / sizeof(struct gdt_segment)]; // get address of the next segment
-    memset((void *)segment, 0, sizeof(struct gdt_system_segment));                                                      // clear it
+    memset64((void *)segment, 0, sizeof(struct gdt_system_segment) / sizeof(uint64_t));                                 // clear it
     segment->access = access;                                                                                           // set the access byte
     segment->base = base & 0x000000000000FFFF;                                                                          // set the base address of the tss
     segment->base2 = (base & 0x0000000000FF0000) >> 16;

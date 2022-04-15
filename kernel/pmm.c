@@ -185,15 +185,14 @@ void pmmInit()
     map = bootloaderGetMemMap(); // get the map
 
     // clear the pools
-    for (int i = 0xFFFF - 1; i; i--)
-        memset(&pools[i], 0xFF, sizeof(struct mm_pool));
+    memset64(&pools[0], UINT64_MAX, sizeof(pools) / sizeof(uint64_t));
 
     for (uint64_t i = 0; i < map->entries; i++)
     {
         if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length >= VMM_PAGE) // if the pool of memory is usable take it
         {
             uint16_t index = poolCount++;
-            memset(&pools[index], 0, sizeof(struct mm_pool));
+            memset64(&pools[index], 0, sizeof(struct mm_pool) / sizeof(uint64_t));
             pools[index].allocableBase = (void *)map->memmap[i].base; // set the base memory address
             pools[index].base = (void *)map->memmap[i].base;
             pools[index].total = map->memmap[i].length; // set the total memory and available memory to the length of the pool
@@ -214,7 +213,7 @@ void pmmInit()
         // align the allocableBase to VMM_PAGE
         pools[i].allocableBase = (void *)align((uint64_t)pools[i].allocableBase, VMM_PAGE);
 
-        memset(pools[i].base, 0, pools[i].bitmapReserved); // clear all the bytes in the bitmap
+        memset64(pools[i].base, 0, pools[i].bitmapReserved / sizeof(uint64_t)); // clear all the bytes in the bitmap
     }
 }
 
@@ -229,7 +228,7 @@ struct mm_pool mmGetTotal()
 {
     struct mm_pool total;
 
-    memset(&total, 0, sizeof(struct mm_pool));
+    memset64(&total, 0, sizeof(struct mm_pool) / sizeof(uint64_t));
 
     for (int i = 0; pools[i].total != UINT64_MAX; i++) // loop thru each pool
     {

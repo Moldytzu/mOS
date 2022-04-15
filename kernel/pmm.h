@@ -2,7 +2,7 @@
 #include <utils.h>
 #include <bootloader.h>
 
-struct pack mm_pool
+struct mm_pool
 {
     uint64_t total;         // total memory
     uint64_t available;     // available memory

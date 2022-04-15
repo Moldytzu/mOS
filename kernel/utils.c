@@ -67,7 +67,7 @@ const char *to_string(uint64_t val)
     if (!val)
         return "0"; // if the value is 0 then return a constant string "0"
 
-    memset64(to_stringout, 0, 4); // clear output, (64/8)*4 = 32 bytes
+    memset64(to_stringout, 0, sizeof(to_stringout) / sizeof(uint64_t)); // clear output
     for (int i = 0; val; i++, val /= 10)
         to_stringout[i] = (val % 10) + '0';
 
@@ -83,7 +83,7 @@ const char *to_hstring(uint64_t val)
     if (!val)
         return "0"; // if the value is 0 then return a constant string "0"
 
-    memset64(to_stringout, 0, 4); // clear output, (64/8)*4 = 32 bytes
+    memset64(to_stringout, 0, sizeof(to_hstringout) / sizeof(uint64_t)); // clear output
 
     uint8_t nibbles = 0;
     if (val > UINT32_MAX)
