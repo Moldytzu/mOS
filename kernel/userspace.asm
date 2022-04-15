@@ -9,7 +9,7 @@ sysretInit:
 	wrmsr
 	mov	rcx, 0xc0000081 ; STAR
 	rdmsr
-	mov	rdx, 0x00100008 ; kbase is 0x00, ubase is 0x10
+	mov	rdx, 0x00130008 ; syscall base is 0x08, sysret base is 0x13
 	wrmsr
 	ret
 
