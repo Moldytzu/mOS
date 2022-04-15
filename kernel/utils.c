@@ -1,5 +1,6 @@
 #include <utils.h>
 #include <framebuffer.h>
+#include <serial.h>
 
 uint32_t strlen(const char *str)
 {
@@ -124,6 +125,33 @@ void printk(const char *fmt, ...)
         }
         else
             framebufferWritec(*fmt);
+        fmt++;
+    }
+
+    va_end(list); // clean up
+}
+
+void printkc(const char *fmt, ...)
+{
+    va_list list;
+    va_start(list, fmt); // start a variable arguments list
+
+    while (*fmt)
+    {
+        if (*fmt == '%')
+        {
+            fmt++;
+            if (*fmt == 'd')
+                serialWrite(to_string(va_arg(list, uint64_t))); // decimal
+            else if (*fmt == 'p')
+                serialWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
+            else if (*fmt == 'x')
+                serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
+            else if (*fmt == 's')
+                serialWrite(va_arg(list, const char *)); // string
+        }
+        else
+            serialWritec(*fmt);
         fmt++;
     }
 

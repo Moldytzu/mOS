@@ -22,11 +22,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (tasks[currentTID].priorityCounter--) // check if the priority counter is over
     {
 #ifdef K_SCHED_DEBUG
-        serialWrite("sched: ");
-        serialWrite(tasks[currentTID].name);
-        serialWrite(" still has ");
-        serialWrite(to_string(tasks[currentTID].priorityCounter + 1));
-        serialWrite(" ticks left. doing nothing.\n");
+        printkc("sched: %s still has %d ticks left. doing nothing\n\r", tasks[currentTID].name, tasks[currentTID].priorityCounter + 1);
 #endif
         vmmSwap(tasks[currentTID].pageTable); // swap the page table
         return;
@@ -34,9 +30,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     tasks[currentTID].priorityCounter = tasks[currentTID].priority; // reset counter
 
 #ifdef K_SCHED_DEBUG
-    serialWrite("sched: saving ");
-    serialWrite(tasks[currentTID].name);
-    serialWrite("\n");
+    printkc("sched: saving %s\n\r", tasks[currentTID].name);
 #endif
 
     // save the registers
@@ -48,9 +42,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
         currentTID = 0; // reset tid if we're overrunning
 
 #ifdef K_SCHED_DEBUG
-    serialWrite("sched: loading ");
-    serialWrite(tasks[currentTID].name);
-    serialWrite("\n");
+    printkc("sched: loading %s\n\r", tasks[currentTID].name);
 #endif
 
     // copy the new registers
