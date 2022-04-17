@@ -15,7 +15,7 @@ run: $(OUTPUT)
 
 run-debug: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) $(QEMUDEBUG)
-	gdb $(GDBFLAGS) out/kernel.elf
+	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 
 run-efi: efi ovmf
@@ -67,7 +67,7 @@ apt:
 	sudo apt upgrade -y
 
 deps: apt
-	sudo apt install build-essential nasm xorriso qemu-system-x86 -y
+	sudo apt install gdb gdb-multiarch build-essential nasm xorriso qemu-system-x86 -y
 
 toolchain:
 	git clone https://github.com/Moldytzu/cross-compiler-builder.git
