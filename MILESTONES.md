@@ -1,9 +1,8 @@
 # Milestones to reach
-### scheduler with ring 3 support
 ### kernel heap
+### lai (lightweight aml interpreter)
 ### initrd (maybe tar or a custom format?)
 ### ELF binaries
-### lai (lightweight aml interpreter)
 ### virtual file system
 ### shell
 ### libc (maybe mlibc or something)
@@ -22,3 +21,4 @@
 ### TSS
 ### virtual memory manager
 ### system calls using intrerrupt 0x51
+### scheduler with ring 3 support

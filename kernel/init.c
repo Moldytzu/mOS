@@ -12,6 +12,7 @@
 #include <syscall.h>
 #include <scheduler.h>
 #include <control.h>
+#include <heap.h>
 
 void kmain();
 
@@ -61,6 +62,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     vmmInit();
     printk("done\n");
 
+    // initialize the heap
+    printk("Initializing the Heap...");
+    heapInit();
+    printk("done\n");
+
     // initialize the pic chips
     printk("Initializing the PICs...");
     picInit();
@@ -82,6 +88,6 @@ void _start(struct stivale2_struct *stivale2_struct)
     printk("Starting phase ended. Jumping in userspace.\n");
 
     kmain(); // call main
-    
+
     printk("Jump out of kmain.");
 }
