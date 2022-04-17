@@ -109,7 +109,17 @@ void split(struct heap_segment *segment, size_t size)
 
 void *realloc(void *ptr, size_t size)
 {
-    return NULL;
+    void *buffer = malloc(size);
+    
+    size_t s = ((struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment)))->size;
+    
+    if (size < s)
+        memcpy(buffer, ptr, size);
+    else
+        memcpy(buffer, ptr, s);
+    
+    free(ptr);
+    return buffer;
 }
 
 void free(void *ptr)
