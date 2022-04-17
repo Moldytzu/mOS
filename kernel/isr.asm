@@ -35,7 +35,7 @@ bits 64
     pop    r15
 %endmacro
 
-global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry
+global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, SyscallIntHandlerEntry
 extern PITHandler, syscallHandler
 
 BaseHandlerEntry:
@@ -54,4 +54,10 @@ SyscallHandlerEntry:
     PUSH_REG
     call syscallHandler ; call the syscall handler
     POP_REG
-    iretq
+    o64 sysret ; return to userspace
+
+SyscallIntHandlerEntry:
+    PUSH_REG
+    call syscallHandler ; call the syscall handler
+    POP_REG
+    iretq ; terminate intrerrupt and return to userspace

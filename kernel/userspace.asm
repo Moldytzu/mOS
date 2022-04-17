@@ -1,11 +1,17 @@
 bits 64
 
 global sysretInit, userspaceJump
+extern SyscallHandlerEntry
 
 sysretInit:
+	mov rax, SyscallHandlerEntry ; syscall handler entry
+	mov	rdx, rax
+	shr	rdx, 0x20
+	mov rcx, 0xC0000082 ; LSTAR
+	wrmsr
 	mov	rcx, 0xc0000080 ; IA32_EFER
 	rdmsr
-	or rax, 1 ; set SCE (syscall extensions)
+	or eax, 1 ; set SCE (syscall extensions)
 	wrmsr
 	mov	rcx, 0xc0000081 ; STAR
 	rdmsr
