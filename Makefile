@@ -2,7 +2,7 @@ OUTPUT = out/dvd.iso
 OUTPUTEFI = out/efi.iso
 CORES = $(shell nproc)
 GDBFLAGS ?= -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue"
-QEMUFLAGS ?= -M q35 -m 2G 
+QEMUFLAGS ?= -M q35 -m 2G
 QEMUDEBUG = -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 DEBUG ?= 0
 
@@ -11,7 +11,7 @@ DEBUG ?= 0
 all: $(OUTPUT)
 
 run: $(OUTPUT)
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) 
+	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT)
 
 run-debug: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) $(QEMUDEBUG)
@@ -62,5 +62,13 @@ clean:
 	rm -rf iso_root $(OUTPUT) limine ovmf
 	$(MAKE) -C kernel clean
 
-deps:
+apt:
+	sudo apt update
+	sudo apt upgrade -y
+
+deps: apt
 	sudo apt install build-essential nasm xorriso qemu-system-x86 -y
+
+toolchain:
+	git clone https://github.com/Moldytzu/cross-compiler-builder.git
+	/bin/bash cross-compiler-builder/buildcrosscompiler.sh

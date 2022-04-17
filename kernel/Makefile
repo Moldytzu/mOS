@@ -1,10 +1,10 @@
 KERNEL := ../../out/kernel.elf
 
-# use host c compiler
-CC := cc
+# use cross c compiler
+CC := ~/cross_compiler/bin/x86_64-elf-gcc
 
-# use host linker
-LD := ld
+# use cross linker
+LD := ~/cross_compiler/bin/x86_64-elf-ld
 
 # use nasm
 ASM := nasm

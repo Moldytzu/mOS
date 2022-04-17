@@ -2,16 +2,16 @@
 
 struct psf1_header *font;
 struct stivale2_module fontMod;
-struct stivale2_struct_tag_framebuffer *framebufTag;
+struct stivale2_struct_tag_framebuffer *framebuffer;
 
 struct framebuffer_cursor_info cursor; // info
 
 // init the framebuffer
 void framebufferInit()
 {
-    framebufTag = bootloaderGetFramebuf(); // get the tag
+    framebuffer = bootloaderGetFramebuf(); // get the tag
 
-    if (framebufTag->memory_model != 1) // check if we use RGB memory model
+    if (framebuffer->memory_model != 1) // check if we use RGB memory model
     {
         bootloaderTermWrite("Unsupported framebuffer memory model.\n");
         hang();
@@ -29,7 +29,7 @@ void framebufferInit()
 inline void framebufferClear(uint32_t colour)
 {
     cursor.X = cursor.Y = 0;                                                                                                                                // reset cursor position
-    memset64((void *)framebufTag->framebuffer_addr, (uint64_t)colour << 32 | colour, framebufTag->framebuffer_pitch * framebufTag->framebuffer_height / 2); // clear the screen
+    memset64((void *)framebuffer->framebuffer_addr, (uint64_t)colour << 32 | colour, framebuffer->framebuffer_pitch * framebuffer->framebuffer_height / 2); // clear the screen
 }
 
 // load a font
@@ -56,7 +56,7 @@ error: // show an error message
 // plot pixel on the framebuffer
 inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {
-    *(uint32_t *)((uint64_t)framebufTag->framebuffer_addr + x * framebufTag->framebuffer_bpp / 8 + y * framebufTag->framebuffer_pitch) = colour; // set the pixel to colour
+    *(uint32_t *)((uint64_t)framebuffer->framebuffer_addr + x * framebuffer->framebuffer_bpp / 8 + y * framebuffer->framebuffer_pitch) = colour; // set the pixel to colour
 }
 
 // plot character on the framebuffer
@@ -90,7 +90,7 @@ void framebufferWritec(char c)
         return;
     }
 
-    if (cursor.X > framebufTag->framebuffer_width)
+    if (cursor.X > framebuffer->framebuffer_width)
         newline();
 
     framebufferPlotc(c, cursor.X, cursor.Y);
