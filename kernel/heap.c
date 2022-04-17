@@ -114,4 +114,5 @@ void *realloc(void *ptr, size_t size)
 
 void free(void *ptr)
 {
+    ((struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment)))->free = true; // mark the block as free
 }
