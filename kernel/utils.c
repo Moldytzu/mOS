@@ -17,6 +17,23 @@ void hang()
         iasm("hlt"); // halt
 }
 
+int memcmp(const void *a, const void *b, size_t len)
+{
+    return memcmp8((void*)a,(void*)b,len);
+}
+
+void *memcpy(void *dest, const void *src, size_t num)
+{
+    memcpy8(dest,(void*)src,num);
+    return dest;
+}
+
+void *memset(void *dstpp, int c, size_t len)
+{
+    memset8(dstpp,c,len);
+    return dstpp;
+}
+
 void memset8(void *dest, uint8_t data, size_t count)
 {
     for (; count; count--, dest++)

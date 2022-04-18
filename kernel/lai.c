@@ -114,8 +114,3 @@ void laihost_handle_amldebug(lai_variable_t *var)
 {
 
 }
-
-void lai_set_acpi_revision(int revision)
-{
-    
-}

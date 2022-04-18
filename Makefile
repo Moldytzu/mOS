@@ -42,7 +42,8 @@ kernel:
 $(OUTPUT): limine kernel
 	rm -rf iso_root
 	mkdir -p iso_root
-	cp out/kernel.elf roots/img limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
+	cp out/kernel.elf limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
+	cd roots/img && cp -r . ../../iso_root
 	xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-cd-efi.bin \
@@ -54,7 +55,8 @@ $(OUTPUT): limine kernel
 efi: limine kernel
 	rm -rf iso_root
 	mkdir -p iso_root
-	cp out/kernel.elf roots/img limine/limine.sys limine/limine-cd-efi.bin iso_root/
+	cp out/kernel.elf limine/limine.sys limine/limine-cd-efi.bin iso_root/
+	cd roots/img && cp -r . ../../iso_root
 	xorriso -as mkisofs --efi-boot limine-cd-efi.bin -efi-boot-part --efi-boot-image -J -o $(OUTPUTEFI) iso_root
 	rm -rf iso_root
 
