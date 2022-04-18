@@ -1,5 +1,4 @@
 # Milestones to reach
-### kernel heap
 ### lai (lightweight aml interpreter)
 ### initrd (maybe tar or a custom format?)
 ### ELF binaries
@@ -22,3 +21,4 @@
 ### virtual memory manager
 ### system calls using intrerrupt 0x51
 ### scheduler with ring 3 support
+### kernel heap

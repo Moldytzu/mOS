@@ -54,6 +54,10 @@ HEADER_DEPS += $(ASMFILES:.asm=.o)
 .PHONY: all
 all: $(KERNEL)
 
+# Lightweight AML interpreter
+lai:
+	-git clone https://github.com/managarm/lai
+
 stivale2.h:
 	curl https://raw.githubusercontent.com/stivale/stivale/master/stivale2.h -o $@
 
@@ -63,7 +67,7 @@ $(KERNEL): $(OBJ)
 
 # Compilation rules for *.c files.
 -include $(HEADER_DEPS)
-%.o: %.c stivale2.h
+%.o: %.c stivale2.h lai
 	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o obj/$@
 
 # Compilation rules for *.asm files.
@@ -74,4 +78,4 @@ $(KERNEL): $(OBJ)
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) stivale2.h
+	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) lai stivale2.h
