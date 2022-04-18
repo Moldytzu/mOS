@@ -13,6 +13,7 @@
 #include <scheduler.h>
 #include <control.h>
 #include <heap.h>
+#include <lai.h>
 
 void kmain();
 
@@ -75,6 +76,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     // initialize the timer
     printk("Initializing the PIT...");
     pitInit();
+    printk("done\n");
+
+    // initialize lai
+    printk("Initializing Lightweight AML Interptreter...");
+    lai_set_acpi_revision(2); // set acpi revision 2
     printk("done\n");
 
     // initialize the scheduler
