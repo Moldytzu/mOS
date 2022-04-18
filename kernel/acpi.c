@@ -1,6 +1,7 @@
-#include <lai.h>
+#include <acpi.h>
 #include <heap.h>
 #include <vmm.h>
+#include <bootloader.h>
 
 void laihost_log(int level, const char *msg)
 {
@@ -125,4 +126,16 @@ uint64_t laihost_timer(void)
 void laihost_handle_amldebug(lai_variable_t *var)
 {
 
+}
+
+struct acpi_rsdp *rsdp;
+
+void acpiInit()
+{
+    // parse rsdp
+    rsdp = (struct acpi_rsdp *)bootloaderGetRSDP()->rsdp;
+
+    printk("acpi %d ",rsdp->version);
+
+    lai_set_acpi_revision(rsdp->version); // set acpi revision
 }

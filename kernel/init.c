@@ -13,7 +13,7 @@
 #include <scheduler.h>
 #include <control.h>
 #include <heap.h>
-#include <lai.h>
+#include <acpi.h>
 
 void kmain();
 
@@ -80,7 +80,7 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // initialize lai
     printk("Initializing Lightweight AML Interptreter...");
-    lai_set_acpi_revision(2); // set acpi revision 2
+    acpiInit();
     printk("done\n");
 
     // initialize the scheduler

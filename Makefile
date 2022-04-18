@@ -23,7 +23,7 @@ run-efi: efi ovmf
 
 run-efi-debug: efi ovmf
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
-	gdb $(GDBFLAGS) out/kernel.elf
+	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 
 limine:
