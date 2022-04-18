@@ -34,7 +34,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 #endif
 
     // save the registers
-    memcpy(&tasks[currentTID].intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
+    memcpy8(&tasks[currentTID].intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
 
     // load the next task
     currentTID++;
@@ -46,7 +46,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 #endif
 
     // copy the new registers
-    memcpy(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
+    memcpy8(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
 
     vmmSwap(tasks[currentTID].pageTable); // swap the page table
 }
@@ -77,7 +77,7 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     tasks[index].priorityCounter = 0;                      // reset counter
     tasks[index].id = index;                               // set the task ID
     tasks[index].priority = 0;                             // switch imediately
-    memcpy(tasks[index].name, (char *)name, strlen(name)); // set the name
+    memcpy8(tasks[index].name, (char *)name, strlen(name)); // set the name
 
     // page table
     struct vmm_page_table *newTable = vmmCreateTable(false); // create a new page table

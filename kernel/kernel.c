@@ -26,7 +26,7 @@ void kmain()
 #endif
 
     void *task = mmAllocatePage();            // create an empty page just for the idle task
-    memcpy(task, (void *)idleTask, VMM_PAGE); // copy it
+    memcpy8(task, (void *)idleTask, VMM_PAGE); // copy it
 
     schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE);   // create the idle task
     schedulerAdd("Idle Task 2", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task

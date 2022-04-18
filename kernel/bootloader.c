@@ -98,7 +98,7 @@ struct stivale2_module bootloaderGetModule(const char *name)
     {
         if (strlen(modsTag->modules[i].string) != strlen(name))
             continue;                                                                    // if the lenghts differ we don't have to check the name byte by byte
-        if (memcmp((void *)modsTag->modules[i].string, (void *)name, strlen(name)) == 0) // if the check is successful we return the module
+        if (memcmp8((void *)modsTag->modules[i].string, (void *)name, strlen(name)) == 0) // if the check is successful we return the module
             return modsTag->modules[i];
     }
 

@@ -17,7 +17,7 @@ void hang()
         iasm("hlt"); // halt
 }
 
-void memset(void *dest, uint8_t data, size_t count)
+void memset8(void *dest, uint8_t data, size_t count)
 {
     for (; count; count--, dest++)
         *(uint8_t *)dest = data;
@@ -41,7 +41,7 @@ void memset64(void *dest, uint64_t data, size_t count)
         *(uint64_t *)dest = data;
 }
 
-int memcmp(void *a, void *b, size_t len)
+int memcmp8(void *a, void *b, size_t len)
 {
     for (size_t i = 0; i < len; i++, a++, b++)
     {
@@ -158,7 +158,7 @@ void printkc(const char *fmt, ...)
     va_end(list); // clean up
 }
 
-void memcpy(void *dest, void *src, size_t count)
+void memcpy8(void *dest, void *src, size_t count)
 {
     for (size_t i = 0; i < count; i++)
         ((uint8_t *)dest)[i] = ((uint8_t *)src)[i];

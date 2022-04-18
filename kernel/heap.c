@@ -114,9 +114,9 @@ void *realloc(void *ptr, size_t size)
     size_t s = ((struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment)))->size;
     
     if (size < s)
-        memcpy(buffer, ptr, size);
+        memcpy8(buffer, ptr, size);
     else
-        memcpy(buffer, ptr, s);
+        memcpy8(buffer, ptr, s);
     
     free(ptr);
     return buffer;
