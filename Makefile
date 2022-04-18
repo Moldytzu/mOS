@@ -35,14 +35,14 @@ ovmf:
 	-wget -nc https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd -O ovmf/ovmf.fd
 
 kernel:
+	mkdir -p out
 	$(MAKE) -C kernel setup
 	$(MAKE) -C kernel -j$(CORES)
 
 $(OUTPUT): limine kernel
 	rm -rf iso_root
 	mkdir -p iso_root
-	cp out/kernel.elf \
-		limine.cfg limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin font-8x16.psf iso_root/
+	cp out/kernel.elf roots/img limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
 	xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-cd-efi.bin \
@@ -54,12 +54,12 @@ $(OUTPUT): limine kernel
 efi: limine kernel
 	rm -rf iso_root
 	mkdir -p iso_root
-	cp out/kernel.elf limine.cfg font-8x16.psf limine/limine-cd-efi.bin iso_root/
+	cp out/kernel.elf roots/img limine/limine.sys limine/limine-cd-efi.bin iso_root/
 	xorriso -as mkisofs --efi-boot limine-cd-efi.bin -efi-boot-part --efi-boot-image -J -o $(OUTPUTEFI) iso_root
 	rm -rf iso_root
 
 clean:
-	rm -rf iso_root $(OUTPUT) limine ovmf
+	rm -rf iso_root $(OUTPUT) cross-compiler-builder limine ovmf out
 	$(MAKE) -C kernel clean
 
 apt:
@@ -70,5 +70,5 @@ deps: apt
 	sudo apt install gdb gdb-multiarch build-essential nasm xorriso qemu-system-x86 -y
 
 toolchain:
-	git clone https://github.com/Moldytzu/cross-compiler-builder.git
+	-git clone https://github.com/Moldytzu/cross-compiler-builder.git
 	/bin/bash cross-compiler-builder/buildcrosscompiler.sh
