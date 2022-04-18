@@ -49,7 +49,7 @@ ASMFILES := $(shell find . -type f -name '*.asm')
 OBJ := $(CFILES:.c=.o)
 OBJ += $(ASMFILES:.asm=.o)
 HEADER_DEPS := $(CFILES:.c=.d)
-HEADER_DEPS += $(ASMFILES:.asm=.o)
+HEADER_DEPS += $(ASMFILES:.asm=.d)
 
 # Default target.
 .PHONY: all
@@ -68,7 +68,8 @@ $(KERNEL): $(OBJ)
 
 # Compilation rules for *.c files.
 -include $(HEADER_DEPS)
-%.o: %.c stivale2.h lai
+%.o: %.c
+	@ mkdir -p $(dir obj/$@)
 	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o obj/$@
 
 # Compilation rules for *.asm files.
@@ -80,3 +81,6 @@ $(KERNEL): $(OBJ)
 .PHONY: clean
 clean:
 	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) lai stivale2.h
+
+.PHONY: setup
+setup: stivale2.h lai

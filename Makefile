@@ -35,7 +35,7 @@ ovmf:
 	-wget -nc https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd -O ovmf/ovmf.fd
 
 kernel:
-	mkdir -p out kernel/obj
+	$(MAKE) -C kernel setup
 	$(MAKE) -C kernel -j$(CORES)
 
 $(OUTPUT): limine kernel
