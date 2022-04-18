@@ -21,6 +21,7 @@ ASMFLAGS ?=
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS :=   \
 	-I.                  \
+	-Ilai/include        \
 	-std=gnu11           \
 	-ffreestanding       \
 	-fno-stack-protector \
