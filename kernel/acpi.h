@@ -8,7 +8,7 @@
 #include <lai/helpers/resource.h>
 #include <lai/helpers/pc-bios.h>
 
-struct acpi_rsdp
+struct pack acpi_rsdp
 {
     uint8_t signature[8];
     uint8_t checksum;

@@ -135,6 +135,7 @@ void acpiInit()
     // parse rsdp
     rsdp = (struct acpi_rsdp *)bootloaderGetRSDP()->rsdp;
 
+    printk(" %p ",rsdp);
     printk("acpi %d ",rsdp->version);
 
     lai_set_acpi_revision(rsdp->version); // set acpi revision

@@ -19,18 +19,18 @@ void hang()
 
 int memcmp(const void *a, const void *b, size_t len)
 {
-    return memcmp8((void*)a,(void*)b,len);
+    return memcmp8((void *)a, (void *)b, len);
 }
 
 void *memcpy(void *dest, const void *src, size_t num)
 {
-    memcpy8(dest,(void*)src,num);
+    memcpy8(dest, (void *)src, num);
     return dest;
 }
 
 void *memset(void *dstpp, int c, size_t len)
 {
-    memset8(dstpp,c,len);
+    memset8(dstpp, c, len);
     return dstpp;
 }
 
@@ -113,8 +113,8 @@ const char *to_hstring(uint64_t val)
     else
         nibbles = 2;
 
-    for (int i = 0; i < nibbles; i++, val = val >> 4) // shift the value by 4 to get each nibble
-        to_hstringout[i] = digits[val & 0xF];         // get each nibble
+    for (int i = 0; i<nibbles; i++, val = val >> 4) // shift the value by 4 to get each nibble
+        to_hstringout[i] = digits[val & 0xF];       // get each nibble
 
     strrev(to_hstringout); // reverse string
 
@@ -126,23 +126,21 @@ void printk(const char *fmt, ...)
     va_list list;
     va_start(list, fmt); // start a variable arguments list
 
-    while (*fmt)
+    for (size_t i = 0; fmt[i]; i++)
     {
-        if (*fmt == '%')
+        if (fmt[i] != '%')
         {
-            fmt++;
-            if (*fmt == 'd')
-                framebufferWrite(to_string(va_arg(list, uint64_t))); // decimal
-            else if (*fmt == 'p')
-                framebufferWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
-            else if (*fmt == 'x')
-                framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
-            else if (*fmt == 's')
-                framebufferWrite(va_arg(list, const char *)); // string
+            framebufferWritec(fmt[i]);
+            continue;
         }
-        else
-            framebufferWritec(*fmt);
-        fmt++;
+        if (fmt[i + 1] == 'd')
+            framebufferWrite(to_string(va_arg(list, uint64_t))); // decimal
+        else if (fmt[i + 1] == 'p')
+            framebufferWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
+        else if (fmt[i + 1] == 'x')
+            framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
+        else if (fmt[i + 1] == 's')
+            framebufferWrite(va_arg(list, const char *)); // string
     }
 
     va_end(list); // clean up
@@ -153,23 +151,22 @@ void printkc(const char *fmt, ...)
     va_list list;
     va_start(list, fmt); // start a variable arguments list
 
-    while (*fmt)
+    for (size_t i = 0; fmt[i]; i++)
     {
-        if (*fmt == '%')
+        if (fmt[i] != '%')
         {
-            fmt++;
-            if (*fmt == 'd')
-                serialWrite(to_string(va_arg(list, uint64_t))); // decimal
-            else if (*fmt == 'p')
-                serialWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
-            else if (*fmt == 'x')
-                serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
-            else if (*fmt == 's')
-                serialWrite(va_arg(list, const char *)); // string
+            serialWritec(fmt[i]);
+            continue;
         }
-        else
-            serialWritec(*fmt);
-        fmt++;
+
+        if (fmt[i] == 'd')
+            serialWrite(to_string(va_arg(list, uint64_t))); // decimal
+        else if (fmt[i] == 'p')
+            serialWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
+        else if (fmt[i] == 'x')
+            serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
+        else if (fmt[i] == 's')
+            serialWrite(va_arg(list, const char *)); // string
     }
 
     va_end(list); // clean up
