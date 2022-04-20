@@ -48,7 +48,7 @@ void hang();
 
 // printk
 void printk(const char *fmt, ...);
-void printkc(const char *fmt, ...);
+void printks(const char *fmt, ...);
 
 // intrerrupts control
 ifunc void cli()

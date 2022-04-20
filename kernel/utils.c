@@ -147,7 +147,7 @@ void printk(const char *fmt, ...)
     va_end(list); // clean up
 }
 
-void printkc(const char *fmt, ...)
+void printks(const char *fmt, ...)
 {
     va_list list;
     va_start(list, fmt); // start a variable arguments list
@@ -160,14 +160,15 @@ void printkc(const char *fmt, ...)
             continue;
         }
 
-        if (fmt[i] == 'd')
+        if (fmt[i + 1] == 'd')
             serialWrite(to_string(va_arg(list, uint64_t))); // decimal
-        else if (fmt[i] == 'p')
+        else if (fmt[i + 1] == 'p')
             serialWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
-        else if (fmt[i] == 'x')
+        else if (fmt[i + 1] == 'x')
             serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
-        else if (fmt[i] == 's')
+        else if (fmt[i + 1] == 's')
             serialWrite(va_arg(list, const char *)); // string
+        i++;
     }
 
     va_end(list); // clean up

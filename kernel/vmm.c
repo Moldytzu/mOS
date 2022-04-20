@@ -239,7 +239,7 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
 #endif
 
 #ifdef K_VMM_DEBUG
-    printkc("vmm: wasted %d KB on a page table\n\r", toKB(a - mmGetTotal().available));
+    printks("vmm: wasted %d KB on a page table\n\r", toKB(a - mmGetTotal().available));
 #endif
 
     return newTable; // return the created table
