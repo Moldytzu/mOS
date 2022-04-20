@@ -228,18 +228,6 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
             }
         }
     }
-    else
-    {
-        // map the non-usable memory map entries (stivale tags)
-        for (uint64_t i = 0; i < map->entries; i++)
-        {
-            if(map->memmap[i].type == STIVALE2_MMAP_USABLE)
-                continue;
-                
-            for (uint64_t j = 0; j < map->memmap[i].length; j += 4096)
-                vmmMap(newTable, (void *)map->memmap[i].base + j, (void *)map->memmap[i].base + j, false, true);
-        }
-    }
 
     vmmMap(newTable, newTable, newTable, false, true);                 // map the table
     vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), false, true); // map the tss
