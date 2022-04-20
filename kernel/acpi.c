@@ -128,14 +128,16 @@ void laihost_handle_amldebug(lai_variable_t *var)
 
 }
 
+uint8_t revision;
 struct acpi_rsdp *rsdp;
 
 void acpiInit()
 {
-    // parse rsdp
+    // get rsdp
     rsdp = (struct acpi_rsdp *)(void*)bootloaderGetRSDP()->rsdp;
 
-    printk(" rsdp version %d ",rsdp->version);
+    // parse the version field
+    revision = rsdp->version;
 
-    lai_set_acpi_revision(rsdp->version); // set acpi revision
+    lai_set_acpi_revision(revision); // set acpi revision
 }
