@@ -52,12 +52,28 @@ void *laihost_scan(const char *sig, size_t index)
 
     if (xsdt)
     { // xsdt parsing
+        struct acpi_xsdt *root = (struct acpi_xsdt *)sdt;
+        size_t entries = (sdt->length - sizeof(struct acpi_sdt)) / sizeof(uint64_t);
+        printk("xsdt %d entries", entries);
+        for (size_t i = 0; i < entries; i++)
+        {
+            struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
+            printk(" %p ", table);
+        }
     }
     else
     { // rsdp parsing
+        struct acpi_rsdt *root = (struct acpi_rsdt *)sdt;
+        size_t entries = (sdt->length - sizeof(struct acpi_sdt)) / sizeof(uint32_t);
+        printk("rsdt %d entries", entries);
+        for (size_t i = 0; i < entries; i++)
+        {
+            struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
+            printk(" %p ", table);
+        }
     }
 
-    return NULL;
+    return NULL; // return nothing
 }
 
 void laihost_outb(uint16_t port, uint8_t val)
@@ -154,9 +170,12 @@ void acpiInit()
 
     // set the system descriptor table root based on the revision
     if (revision == 0)
-        sdt = (void *)rsdp->rsdt;
+        sdt = (void *)(uint64_t)rsdp->rsdt;
     else if (revision == 2)
         sdt = (void *)rsdp->xsdt;
 
     lai_set_acpi_revision(revision); // set acpi revision
+    struct acpi_sdt *fadt = laihost_scan("FADT", 0);
+    if (fadt)
+        printk("%c%c%c%c fadt", fadt->signature[0], fadt->signature[1], fadt->signature[2], fadt->signature[3]);
 }

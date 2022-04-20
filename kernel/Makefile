@@ -19,17 +19,18 @@ LDFLAGS ?=
 ASMFLAGS ?=
 
 # Internal C flags that should not be changed by the user.
-INTERNALCFLAGS :=   \
-	-I.                  \
-	-Ilai/include        \
-	-std=gnu11           \
-	-ffreestanding       \
-	-fno-stack-protector \
-	-fno-pic             \
-	-mabi=sysv           \
-	-mno-red-zone        \
-	-mcmodel=kernel      \
-	-Werror 			 \
+INTERNALCFLAGS :=   		 \
+	-I.                  	 \
+	-Ilai/include        	 \
+	-std=gnu11           	 \
+	-ffreestanding       	 \
+	-fno-stack-protector 	 \
+	-fno-pic             	 \
+	-mabi=sysv           	 \
+	-mno-red-zone        	 \
+	-mcmodel=kernel      	 \
+	-Werror 			     \
+	-Wno-int-to-pointer-cast \
 	-MMD
 
 # Internal linker flags that should not be changed by the user.

@@ -26,11 +26,24 @@ struct pack acpi_sdt
     uint8_t signature[4];
     uint32_t length;
     uint8_t revision;
-    uint8_t oem;
-    uint64_t oemTableID;
+    uint8_t checksum;
+    uint8_t oemID[6];
+    uint8_t oemTableID[8];
     uint32_t oemRevision;
     uint32_t creatorID;
     uint32_t creatorRevision;
+};
+
+struct pack acpi_rsdt
+{
+    struct acpi_sdt header;
+    uint32_t *entries;
+};
+
+struct pack acpi_xsdt
+{
+    struct acpi_sdt header;
+    uint64_t *entries;
 };
 
 void acpiInit();
