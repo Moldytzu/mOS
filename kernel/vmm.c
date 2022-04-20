@@ -215,16 +215,17 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
     if (full)
     {
         uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
-        register uint64_t total = mmGetTotal().total + 0xFFFF0;
 
-        for (uint64_t i = 0; i < total; i += VMM_PAGE) // identity map entire physical memory range
+        // map all memory map entries
+        struct stivale2_struct_tag_memmap *map = bootloaderGetMemMap(); // get the map
+        for (uint64_t i = 0; i < map->entries; i++)
         {
-            vmmMap(newTable, (void *)i, (void *)i, false, true);
-            vmmMap(newTable, (void *)i + hhdm, (void *)i, false, true); // map in hhdm
+            for (uint64_t j = 0; j < map->memmap[i].length; j += 4096)
+            {
+                vmmMap(newTable, (void *)map->memmap[i].base + j, (void *)map->memmap[i].base + j, false, true);
+                vmmMap(newTable, (void *)map->memmap[i].base + j + hhdm, (void *)map->memmap[i].base + j, false, true);
+            }
         }
-
-        for (uint64_t i = framebuffer->framebuffer_addr - hhdm; i < framebuffer->framebuffer_addr - hhdm + (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height); i += VMM_PAGE) // map framebuffer
-            vmmMap(newTable, (void *)i + hhdm, (void *)i, false, true);
     }
     else
         for (uint64_t i = 0; i < 16 * 1024 * 1024; i += VMM_PAGE) // map only 16 MB of RAM
