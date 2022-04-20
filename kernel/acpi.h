@@ -21,4 +21,16 @@ struct pack acpi_rsdp
     uint8_t reserved[3];
 };
 
+struct pack acpi_sdt
+{
+    uint8_t signature[4];
+    uint32_t length;
+    uint8_t revision;
+    uint8_t oem;
+    uint64_t oemTableID;
+    uint32_t oemRevision;
+    uint32_t creatorID;
+    uint32_t creatorRevision;
+};
+
 void acpiInit();
