@@ -204,6 +204,8 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
     uint64_t a = mmGetTotal().available;
 #endif
 
+           struct stivale2_struct_tag_memmap *map = bootloaderGetMemMap(); // get the memory map
+
     // map PMRs
     for (size_t i = 0; i < pmrs->entries; i++)
     {
@@ -217,7 +219,6 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
         uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
 
         // map all memory map entries
-        struct stivale2_struct_tag_memmap *map = bootloaderGetMemMap(); // get the map
         for (uint64_t i = 0; i < map->entries; i++)
         {
             for (uint64_t j = 0; j < map->memmap[i].length; j += 4096)
@@ -228,8 +229,17 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
         }
     }
     else
-        for (uint64_t i = 0; i < 16 * 1024 * 1024; i += VMM_PAGE) // map only 16 MB of RAM
-            vmmMap(newTable, (void *)i, (void *)i, false, true);
+    {
+        // map the non-usable memory map entries (stivale tags)
+        for (uint64_t i = 0; i < map->entries; i++)
+        {
+            if(map->memmap[i].type == STIVALE2_MMAP_USABLE)
+                continue;
+                
+            for (uint64_t j = 0; j < map->memmap[i].length; j += 4096)
+                vmmMap(newTable, (void *)map->memmap[i].base + j, (void *)map->memmap[i].base + j, false, true);
+        }
+    }
 
     vmmMap(newTable, newTable, newTable, false, true);                 // map the table
     vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), false, true); // map the tss
