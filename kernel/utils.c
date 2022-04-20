@@ -141,6 +141,7 @@ void printk(const char *fmt, ...)
             framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
         else if (fmt[i + 1] == 's')
             framebufferWrite(va_arg(list, const char *)); // string
+        i++;
     }
 
     va_end(list); // clean up

@@ -133,10 +133,9 @@ struct acpi_rsdp *rsdp;
 void acpiInit()
 {
     // parse rsdp
-    rsdp = (struct acpi_rsdp *)bootloaderGetRSDP()->rsdp;
+    rsdp = (struct acpi_rsdp *)(void*)bootloaderGetRSDP()->rsdp;
 
-    printk(" %p ",rsdp);
-    printk("acpi %d ",rsdp->version);
+    printk(" rsdp version %d ",rsdp->version);
 
     lai_set_acpi_revision(rsdp->version); // set acpi revision
 }
