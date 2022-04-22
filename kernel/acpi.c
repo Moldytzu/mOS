@@ -7,46 +7,7 @@ uint8_t revision;
 struct acpi_rsdp *rsdp;
 struct acpi_sdt *sdt;
 
-void laihost_log(int level, const char *msg)
-{
-    printk("lai msg %d: %s\n", level, msg);
-}
-
-__attribute__((noreturn)) void laihost_panic(const char *msg)
-{
-    printk("lai panic: %s\n", msg);
-    __builtin_unreachable();
-}
-
-void *laihost_malloc(size_t size)
-{
-    return malloc(size);
-}
-
-void *laihost_realloc(void *oldptr, size_t newsize, size_t oldsize)
-{
-    return malloc(newsize); // dirty hack, need to fix the realloc function
-}
-
-void laihost_free(void *ptr, size_t size)
-{
-    return free(ptr);
-}
-
-void *laihost_map(size_t address, size_t count)
-{
-    for (int i = 0; i < count / VMM_PAGE + 1; i++)
-        vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, false, true);
-    return NULL;
-}
-
-void laihost_unmap(void *pointer, size_t count)
-{
-    for (int i = 0; i < count / VMM_PAGE + 1; i++)
-        vmmUnmap(vmmGetBaseTable(), pointer);
-}
-
-void *laihost_scan(const char *sig, size_t index)
+struct acpi_sdt *acpiGet(const char *sig)
 {
     bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
 
@@ -58,9 +19,9 @@ void *laihost_scan(const char *sig, size_t index)
         {
             struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
-            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r",table,table->signature[0],table->signature[1],table->signature[2],table->signature[3],sig[0],sig[1],sig[2],sig[3]);
+            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
 #endif
-            if (memcmp8((void*)sig, table->signature, 4) == 0)                   // compare the signatures
+            if (memcmp8((void *)sig, table->signature, 4) == 0) // compare the signatures
                 return table;
         }
     }
@@ -72,98 +33,14 @@ void *laihost_scan(const char *sig, size_t index)
         {
             struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
-            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r",table,table->signature[0],table->signature[1],table->signature[2],table->signature[3],sig[0],sig[1],sig[2],sig[3]);
+            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
 #endif
-            if (memcmp8((void*)sig, table->signature, 4) == 0)                   // compare the signatures
+            if (memcmp8((void *)sig, table->signature, 4) == 0) // compare the signatures
                 return table;
         }
     }
 
     return NULL; // return nothing
-}
-
-void laihost_outb(uint16_t port, uint8_t val)
-{
-    iasm("outb %%al,%%dx"
-         :
-         : "d"(port), "a"(val));
-}
-
-void laihost_outw(uint16_t port, uint16_t val)
-{
-    iasm("outw %%ax, %%dx"
-         :
-         : "d"(port), "a"(val));
-}
-
-void laihost_outd(uint16_t port, uint32_t val)
-{
-    iasm("outl %%eax, %%dx"
-         :
-         : "d"(port), "a"(val));
-}
-
-uint8_t laihost_inb(uint16_t port)
-{
-    uint8_t ret;
-    iasm("inb %%dx,%%al"
-         : "=a"(ret)
-         : "d"(port));
-    return ret;
-}
-
-uint16_t laihost_inw(uint16_t port)
-{
-    uint16_t ret;
-    iasm("inw %%dx,%%ax"
-         : "=a"(ret)
-         : "d"(port));
-    return ret;
-}
-
-uint32_t laihost_ind(uint16_t port)
-{
-    uint32_t ret;
-    iasm("inl %%dx,%%eax"
-         : "=a"(ret)
-         : "d"(port));
-    return ret;
-}
-
-void laihost_pci_writeb(uint16_t seg, uint8_t bus, uint8_t slot, uint8_t fun, uint16_t offset, uint8_t val)
-{
-}
-
-void laihost_pci_writew(uint16_t seg, uint8_t bus, uint8_t slot, uint8_t fun, uint16_t offset, uint16_t val)
-{
-}
-
-void laihost_pci_writed(uint16_t seg, uint8_t bus, uint8_t slot, uint8_t fun, uint16_t offset, uint32_t val)
-{
-}
-
-uint8_t laihost_pci_readb(uint16_t seg, uint8_t bus, uint8_t slot, uint8_t fun, uint16_t offset)
-{
-}
-
-uint16_t laihost_pci_readw(uint16_t seg, uint8_t bus, uint8_t slot, uint8_t fun, uint16_t offset)
-{
-}
-
-uint32_t laihost_pci_readd(uint16_t seg, uint8_t bus, uint8_t slot, uint8_t fun, uint16_t offset)
-{
-}
-
-void laihost_sleep(uint64_t ms)
-{
-}
-
-uint64_t laihost_timer(void)
-{
-}
-
-void laihost_handle_amldebug(lai_variable_t *var)
-{
 }
 
 void acpiInit()
@@ -180,6 +57,26 @@ void acpiInit()
     else if (revision == 2)
         sdt = (void *)rsdp->xsdt;
 
-    lai_set_acpi_revision(revision); // set acpi revision
-    lai_create_namespace();
+#ifdef K_ACPI_DEBUG
+    if (revision == 0)
+    {
+        struct acpi_rsdt *root = (struct acpi_rsdt *)sdt;
+        size_t entries = (sdt->length - sizeof(struct acpi_sdt)) / sizeof(uint32_t);
+        for (size_t i = 0; i < entries; i++)
+        {
+            struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
+            printks("acpi: found %c%c%c%c\n\r", table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
+        }
+    }
+    else
+    {
+        struct acpi_xsdt *root = (struct acpi_xsdt *)sdt;
+        size_t entries = (root->header.length - sizeof(struct acpi_sdt)) / sizeof(uint64_t);
+        for (size_t i = 0; i < entries; i++)
+        {
+            struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
+            printks("acpi: found %c%c%c%c\n\r", table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
+        }
+    }
+#endif
 }

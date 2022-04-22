@@ -79,7 +79,7 @@ void _start(struct stivale2_struct *stivale2_struct)
     printk("done\n");
 
     // initialize lai
-    printk("Initializing Lightweight AML Interptreter...");
+    printk("Initializing the ACPI interface...");
     acpiInit();
     printk("done\n");
 

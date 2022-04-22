@@ -21,7 +21,6 @@ ASMFLAGS ?=
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS :=   		 \
 	-I.                  	 \
-	-Ilai/include        	 \
 	-std=gnu11           	 \
 	-ffreestanding       	 \
 	-fno-stack-protector 	 \
@@ -56,10 +55,6 @@ HEADER_DEPS += $(ASMFILES:.asm=.d)
 .PHONY: all
 all: $(KERNEL)
 
-# Lightweight AML interpreter
-lai:
-	-git clone https://github.com/managarm/lai
-
 stivale2.h:
 	curl https://raw.githubusercontent.com/stivale/stivale/master/stivale2.h -o $@
 
@@ -81,7 +76,7 @@ $(KERNEL): $(OBJ)
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) lai stivale2.h
+	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) stivale2.h
 
 .PHONY: setup
-setup: stivale2.h lai
+setup: stivale2.h
