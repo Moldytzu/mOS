@@ -78,7 +78,7 @@ void _start(struct stivale2_struct *stivale2_struct)
     pitInit();
     printk("done\n");
 
-    // initialize lai
+    // initialize the acpi interface
     printk("Initializing the ACPI interface...");
     acpiInit();
     printk("done\n");

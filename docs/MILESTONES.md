@@ -1,5 +1,5 @@
 # Milestones to reach
-### lai (lightweight aml interpreter)
+### acpi support
 ### initrd (maybe tar or a custom format?)
 ### ELF binaries
 ### virtual file system
