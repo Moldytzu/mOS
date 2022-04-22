@@ -72,7 +72,11 @@ void *laihost_scan(const char *sig, size_t index)
         for (size_t i = 0; i < entries; i++)
         {
             struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
-            printk(" %p ", table);
+#ifdef K_ACPI_DEBUG
+            printks("comparing: %c%c%c%c and %c%c%c%c\n\r",table->signature[0],table->signature[1],table->signature[2],table->signature[3],sig[0],sig[1],sig[2],sig[3]);
+#endif
+            if (memcmp8((void*)sig, table->signature, 4) == 0)                   // compare the signatures
+                return table;
         }
     }
 
