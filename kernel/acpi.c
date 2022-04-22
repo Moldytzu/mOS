@@ -2,10 +2,12 @@
 #include <heap.h>
 #include <vmm.h>
 #include <bootloader.h>
+#include <io.h>
 
 uint8_t revision;
 struct acpi_rsdp *rsdp;
 struct acpi_sdt *sdt;
+struct acpi_fadt *fadt;
 
 struct acpi_sdt *acpiGet(const char *sig)
 {
@@ -78,4 +80,10 @@ void acpiInit()
         }
     }
 #endif
+
+    // get fadt
+    fadt = (struct acpi_fadt *)acpiGet("FACP");
+
+    // enable ACPI mode
+    outb(fadt->smiCommand, fadt->acpiEnable);
 }

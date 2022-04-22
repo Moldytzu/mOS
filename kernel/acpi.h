@@ -39,5 +39,70 @@ struct pack acpi_xsdt
     uint64_t entries[];
 };
 
+struct pack acpi_gas
+{
+    uint8_t addressSpace;
+    uint8_t bitWidth;
+    uint8_t bitOffset;
+    uint8_t accessSize;
+    uint64_t address;
+};
+
+struct pack acpi_fadt
+{
+    struct acpi_sdt header;
+    uint32_t FACS;
+    uint32_t DSDT;
+    uint8_t reserved;
+    uint8_t prefferedPowerMode;
+    uint16_t sciIntrerrupt;
+    uint32_t smiCommand;
+    uint8_t acpiEnable;
+    uint8_t acpiDisable;
+    uint8_t s4bios;
+    uint8_t pstate;
+    uint32_t PM1aEvent;
+    uint32_t PM1bEvent;
+    uint32_t PM1aControl;
+    uint32_t PM1BControl;
+    uint32_t PM2Control;
+    uint32_t PMTimer;
+    uint32_t GPE0;
+    uint32_t GPE1;
+    uint8_t PM1EventLen;
+    uint8_t PM1ControlLen;
+    uint8_t PM2ControlLen;
+    uint8_t PMTimerLen;
+    uint8_t GPE0Len;
+    uint8_t GPE1Len;
+    uint8_t GPE1Base;
+    uint8_t cStateControl;
+    uint16_t worstC2;
+    uint16_t worstC3;
+    uint16_t flushSize;
+    uint16_t flushPitch;
+    uint8_t dutyOffset;
+    uint8_t dutyWidth;
+    uint8_t dayAlarm;
+    uint8_t monthAlarm;
+    uint8_t century;
+    uint16_t bootFlags;
+    uint8_t reserved2;
+    uint32_t flags;
+    struct acpi_gas reset;
+    uint8_t resetValue;
+    uint8_t reserved3[3];
+    uint64_t FACS64;
+    uint64_t DSDT64;
+    struct acpi_gas PM1aEvent64;
+    struct acpi_gas PM1bEvent64;
+    struct acpi_gas PM1aControl64;
+    struct acpi_gas PM1BControl64;
+    struct acpi_gas PM2Control64;
+    struct acpi_gas PMTimer64;
+    struct acpi_gas GPE064;
+    struct acpi_gas GPE164;
+};
+
 struct acpi_sdt *acpiGet(const char *sig);
 void acpiInit();
