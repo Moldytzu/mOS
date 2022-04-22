@@ -8,6 +8,7 @@ uint8_t revision;
 struct acpi_rsdp *rsdp;
 struct acpi_sdt *sdt;
 struct acpi_fadt *fadt;
+struct acpi_mcfg *mcfg;
 
 struct acpi_sdt *acpiGet(const char *sig)
 {
@@ -42,6 +43,25 @@ struct acpi_sdt *acpiGet(const char *sig)
     }
 
     return NULL; // return nothing
+}
+
+void enumerateFunction()
+{}
+
+void enumerateDevice()
+{}
+
+void enumerateBus()
+{}
+
+void acpiEnumeratePCI()
+{
+    size_t entries = (mcfg->header.length - sizeof(struct acpi_mcfg)) / sizeof(struct acpi_pci_config);
+    for(int i = 0; i < entries; i++)
+    {
+        struct acpi_pci_config config = mcfg->buses[i];
+        printk(" %d %d \n",config.startBus,config.endBus);
+    }
 }
 
 void acpiInit()
@@ -81,9 +101,15 @@ void acpiInit()
     }
 #endif
 
-    // get fadt
+    // get fadt & mcfg
     fadt = (struct acpi_fadt *)acpiGet("FACP");
+    mcfg = (struct acpi_mcfg *)acpiGet("MCFG");
 
-    // enable ACPI mode
-    outb(fadt->smiCommand, fadt->acpiEnable);
+    // enable ACPI mode if FADT is present
+    if(fadt)
+        outb(fadt->smiCommand, fadt->acpiEnable);
+
+    // enumerate PCI bus if MCFG is present
+    if(mcfg)
+        acpiEnumeratePCI();
 }

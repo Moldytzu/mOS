@@ -104,5 +104,37 @@ struct pack acpi_fadt
     struct acpi_gas GPE164;
 };
 
+struct pack acpi_pci_config
+{
+    uint64_t base;
+    uint16_t pciSegment;
+    uint8_t startBus;
+    uint8_t endBus;
+    uint32_t reserved;
+};
+
+struct pack acpi_mcfg
+{
+    struct acpi_sdt header;
+    struct acpi_pci_config buses[];
+};
+
+struct pack acpi_pci_header
+{
+    uint16_t vendor;
+    uint16_t device;
+    uint16_t command;
+    uint16_t status;
+    uint8_t revision;
+    uint8_t programInterface;
+    uint8_t subclass;
+    uint8_t class;
+    uint8_t cacheLineSize;
+    uint8_t latencyTimer;
+    uint8_t headerType;
+    uint8_t BIST;
+};
+
 struct acpi_sdt *acpiGet(const char *sig);
+void acpiEnumeratePCI();
 void acpiInit();
