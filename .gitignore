@@ -2,7 +2,6 @@ kernel/lai
 kernel/stivale2.h
 kernel/obj
 limine
-ovmf
 cross-compiler-builder
 iso_root
 out

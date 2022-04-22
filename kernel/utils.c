@@ -141,6 +141,8 @@ void printk(const char *fmt, ...)
             framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
         else if (fmt[i + 1] == 's')
             framebufferWrite(va_arg(list, const char *)); // string
+        else if (fmt [i + 1] == 'c')
+            framebufferWritec(va_arg(list, int)); // char
         i++;
     }
 
@@ -168,6 +170,8 @@ void printks(const char *fmt, ...)
             serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
         else if (fmt[i + 1] == 's')
             serialWrite(va_arg(list, const char *)); // string
+        else if (fmt [i + 1] == 'c')
+            serialWritec(va_arg(list, int)); // char
         i++;
     }
 

@@ -53,12 +53,12 @@ void *laihost_scan(const char *sig, size_t index)
     if (xsdt)
     { // xsdt parsing
         struct acpi_xsdt *root = (struct acpi_xsdt *)sdt;
-        size_t entries = (sdt->length - sizeof(struct acpi_sdt)) / sizeof(uint64_t);
-        printk("xsdt %d entries", entries);
+        size_t entries = (root->header.length - sizeof(struct acpi_sdt)) / sizeof(uint64_t);
+        printk("xsdt %p %d entries ", root, entries);
         for (size_t i = 0; i < entries; i++)
         {
             struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
-            printk(" %p ", table);
+            printk(" %p %c%c%c%c", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
         }
     }
     else

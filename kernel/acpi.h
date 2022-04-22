@@ -37,13 +37,13 @@ struct pack acpi_sdt
 struct pack acpi_rsdt
 {
     struct acpi_sdt header;
-    uint32_t *entries;
+    uint32_t entries[];
 };
 
 struct pack acpi_xsdt
 {
     struct acpi_sdt header;
-    uint64_t *entries;
+    uint64_t entries[];
 };
 
 void acpiInit();

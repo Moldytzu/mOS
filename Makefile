@@ -18,10 +18,10 @@ run-debug: $(OUTPUT)
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 
-run-efi: efi ovmf
+run-efi: efi
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI)
 
-run-efi-debug: efi ovmf
+run-efi-debug: efi
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
@@ -29,10 +29,6 @@ run-efi-debug: efi ovmf
 limine:
 	-git clone https://github.com/limine-bootloader/limine.git --branch=v3.0-branch-binary --depth=1
 	make -C limine
-
-ovmf:
-	mkdir -p ovmf
-	-wget -nc https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd -O ovmf/ovmf.fd
 
 kernel:
 	mkdir -p out
@@ -61,7 +57,7 @@ efi: limine kernel
 	rm -rf iso_root
 
 clean:
-	rm -rf iso_root $(OUTPUT) cross-compiler-builder limine ovmf out
+	rm -rf iso_root $(OUTPUT) cross-compiler-builder limine out
 	$(MAKE) -C kernel clean
 
 apt:
