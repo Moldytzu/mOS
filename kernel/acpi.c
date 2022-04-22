@@ -10,12 +10,12 @@ struct acpi_sdt *sdt;
 struct acpi_sdt *acpiGet(const char *sig)
 {
     bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
+    size_t entries = sdt->length - sizeof(struct acpi_sdt);
 
     if (xsdt)
     { // xsdt parsing
         struct acpi_xsdt *root = (struct acpi_xsdt *)sdt;
-        size_t entries = (root->header.length - sizeof(struct acpi_sdt)) / sizeof(uint64_t);
-        for (size_t i = 0; i < entries; i++)
+        for (size_t i = 0; i < entries / sizeof(uint64_t); i++)
         {
             struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
@@ -28,8 +28,7 @@ struct acpi_sdt *acpiGet(const char *sig)
     else
     { // rsdp parsing
         struct acpi_rsdt *root = (struct acpi_rsdt *)sdt;
-        size_t entries = (sdt->length - sizeof(struct acpi_sdt)) / sizeof(uint32_t);
-        for (size_t i = 0; i < entries; i++)
+        for (size_t i = 0; i < entries / sizeof(uint32_t); i++)
         {
             struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
