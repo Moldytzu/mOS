@@ -45,23 +45,59 @@ struct acpi_sdt *acpiGet(const char *sig)
     return NULL; // return nothing
 }
 
-void enumerateFunction()
-{}
+void enumerateFunction(uint64_t base, uint8_t function)
+{
+    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + function << 12);
 
-void enumerateDevice()
-{}
+    vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
 
-void enumerateBus()
-{}
+    if (header->device == UINT16_MAX || header->device == 0) // invalid device
+    {
+        vmmUnmap(vmmGetBaseTable(), header); // unmap and return
+        return;
+    }
+
+    printk("\n%x:%x\n", header->vendor, header->device);
+}
+
+void enumerateDevice(uint64_t base, uint8_t device)
+{
+    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + device << 15);
+
+    vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
+
+    if (header->device == UINT16_MAX || header->device == 0) // invalid device
+    {
+        vmmUnmap(vmmGetBaseTable(), header); // unmap and return
+        return;
+    }
+
+    for (int i = 0; i < 8; i++) // max 8 functions/device
+        enumerateFunction((uint64_t)header, i);
+}
+
+void enumerateBus(uint64_t base, uint8_t bus)
+{
+    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + bus << 20);
+
+    vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
+
+    if (header->device == UINT16_MAX || header->device == 0) // invalid device
+    {
+        vmmUnmap(vmmGetBaseTable(), header); // unmap and return
+        return;
+    }
+
+    for (int i = 0; i < 32; i++) // max 32 devices/bus
+        enumerateDevice((uint64_t)header, i);
+}
 
 void acpiEnumeratePCI()
 {
     size_t entries = (mcfg->header.length - sizeof(struct acpi_mcfg)) / sizeof(struct acpi_pci_config);
-    for(int i = 0; i < entries; i++)
-    {
-        struct acpi_pci_config config = mcfg->buses[i];
-        printk(" %d %d \n",config.startBus,config.endBus);
-    }
+    for (int i = 0; i < entries; i++)
+        for (int j = mcfg->buses[i].startBus; j < mcfg->buses[i].endBus; j++)
+            enumerateBus(mcfg->buses[i].base, j); // enumerate every bus
 }
 
 void acpiInit()
@@ -106,10 +142,10 @@ void acpiInit()
     mcfg = (struct acpi_mcfg *)acpiGet("MCFG");
 
     // enable ACPI mode if FADT is present
-    if(fadt)
+    if (fadt)
         outb(fadt->smiCommand, fadt->acpiEnable);
 
-    // enumerate PCI bus if MCFG is present
-    if(mcfg)
+    // enumerate PCI bus if MCFG is present and ACPI is 2.0 or later
+    if (mcfg)
         acpiEnumeratePCI();
 }
