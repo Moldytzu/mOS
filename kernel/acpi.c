@@ -25,7 +25,7 @@ void *laihost_malloc(size_t size)
 
 void *laihost_realloc(void *oldptr, size_t newsize, size_t oldsize)
 {
-    return realloc(oldptr, newsize);
+    return malloc(newsize); // dirty hack, need to fix the realloc function
 }
 
 void laihost_free(void *ptr, size_t size)
@@ -58,7 +58,7 @@ void *laihost_scan(const char *sig, size_t index)
         {
             struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
-            printks("comparing: %c%c%c%c and %c%c%c%c\n\r",table->signature[0],table->signature[1],table->signature[2],table->signature[3],sig[0],sig[1],sig[2],sig[3]);
+            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r",table,table->signature[0],table->signature[1],table->signature[2],table->signature[3],sig[0],sig[1],sig[2],sig[3]);
 #endif
             if (memcmp8((void*)sig, table->signature, 4) == 0)                   // compare the signatures
                 return table;
@@ -68,12 +68,11 @@ void *laihost_scan(const char *sig, size_t index)
     { // rsdp parsing
         struct acpi_rsdt *root = (struct acpi_rsdt *)sdt;
         size_t entries = (sdt->length - sizeof(struct acpi_sdt)) / sizeof(uint32_t);
-        printk("rsdt %d entries", entries);
         for (size_t i = 0; i < entries; i++)
         {
             struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
-            printks("comparing: %c%c%c%c and %c%c%c%c\n\r",table->signature[0],table->signature[1],table->signature[2],table->signature[3],sig[0],sig[1],sig[2],sig[3]);
+            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r",table,table->signature[0],table->signature[1],table->signature[2],table->signature[3],sig[0],sig[1],sig[2],sig[3]);
 #endif
             if (memcmp8((void*)sig, table->signature, 4) == 0)                   // compare the signatures
                 return table;
@@ -182,4 +181,5 @@ void acpiInit()
         sdt = (void *)rsdp->xsdt;
 
     lai_set_acpi_revision(revision); // set acpi revision
+    lai_create_namespace();
 }
