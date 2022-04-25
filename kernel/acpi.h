@@ -116,6 +116,7 @@ struct pack acpi_pci_config
 struct pack acpi_mcfg
 {
     struct acpi_sdt header;
+    uint64_t reserved;
     struct acpi_pci_config buses[];
 };
 

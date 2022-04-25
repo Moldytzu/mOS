@@ -47,7 +47,7 @@ struct acpi_sdt *acpiGet(const char *sig)
 
 void enumerateFunction(uint64_t base, uint8_t function)
 {
-    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + function << 12);
+    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (function << 12));
 
     vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
 
@@ -57,12 +57,14 @@ void enumerateFunction(uint64_t base, uint8_t function)
         return;
     }
 
-    printk("\n%x:%x\n", header->vendor, header->device);
+#ifdef K_ACPI_DEBUG
+    printks("acpi: found pci device at %x:%x\n\r", header->vendor, header->device);
+#endif
 }
 
 void enumerateDevice(uint64_t base, uint8_t device)
 {
-    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + device << 15);
+    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (device << 15));
 
     vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
 
@@ -78,7 +80,7 @@ void enumerateDevice(uint64_t base, uint8_t device)
 
 void enumerateBus(uint64_t base, uint8_t bus)
 {
-    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + bus << 20);
+    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (bus << 20));
 
     vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
 
