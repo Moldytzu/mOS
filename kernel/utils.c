@@ -103,22 +103,16 @@ const char *to_hstring(uint64_t val)
 
     memset64(to_stringout, 0, sizeof(to_hstringout) / sizeof(uint64_t)); // clear output
 
-    uint8_t nibbles = 0;
-    if (val > UINT32_MAX)
-        nibbles = 16; // it's 64 bit
-    else if (val > UINT16_MAX)
-        nibbles = 8; // it's 32 bit
-    else if (val > UINT8_MAX)
-        nibbles = 4; // it's 16 bit
-    else
-        nibbles = 2;
-
-    for (int i = 0; i<nibbles; i++, val = val >> 4) // shift the value by 4 to get each nibble
-        to_hstringout[i] = digits[val & 0xF];       // get each nibble
+    for (int i = 0; i<16; i++, val = val >> 4) // shift the value by 4 to get each nibble
+        to_hstringout[i] = digits[val & 0xF];  // get each nibble
 
     strrev(to_hstringout); // reverse string
 
-    return to_hstringout;
+    // move the pointer until the first valid digit
+    uint8_t offset = 0;
+    for(;to_hstringout[offset] == '0'; offset++);
+
+    return to_hstringout + offset; // return the string
 }
 
 void printk(const char *fmt, ...)
@@ -141,7 +135,7 @@ void printk(const char *fmt, ...)
             framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
         else if (fmt[i + 1] == 's')
             framebufferWrite(va_arg(list, const char *)); // string
-        else if (fmt [i + 1] == 'c')
+        else if (fmt[i + 1] == 'c')
             framebufferWritec(va_arg(list, int)); // char
         i++;
     }
@@ -170,7 +164,7 @@ void printks(const char *fmt, ...)
             serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
         else if (fmt[i + 1] == 's')
             serialWrite(va_arg(list, const char *)); // string
-        else if (fmt [i + 1] == 'c')
+        else if (fmt[i + 1] == 'c')
             serialWritec(va_arg(list, int)); // char
         i++;
     }

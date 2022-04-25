@@ -14,6 +14,7 @@
 #define unsafe_cast(val, type) (*(type *)&val)
 #define iasm asm volatile
 #define ifunc static inline __attribute__((always_inline))
+#define doptimize __attribute__((optimize("O0")))
 
 // strlen
 uint32_t strlen(const char *str);
