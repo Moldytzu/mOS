@@ -136,6 +136,14 @@ struct pack acpi_pci_header
     uint8_t BIST;
 };
 
+struct pack acpi_pci_descriptor
+{
+    struct acpi_pci_header *header;
+    uint8_t bus;
+    uint8_t device;
+    uint8_t function;
+};
+
 struct acpi_sdt *acpiGet(const char *sig);
 void acpiEnumeratePCI();
 void acpiInit();

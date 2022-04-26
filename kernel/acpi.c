@@ -10,6 +10,9 @@ struct acpi_sdt *sdt;
 struct acpi_fadt *fadt;
 struct acpi_mcfg *mcfg;
 
+struct acpi_pci_descriptor pciFuncs[8 * 32 * 255]; // 8 functions / device, 32 devices / bus, 255 buses
+uint16_t pciIndex = 0;
+
 struct acpi_sdt *acpiGet(const char *sig)
 {
     bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
@@ -45,19 +48,19 @@ struct acpi_sdt *acpiGet(const char *sig)
     return NULL; // return nothing
 }
 
-void enumerateFunction(uint64_t base, uint8_t function)
+void enumerateFunction(uint64_t base, uint8_t function, uint8_t device, uint8_t bus)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (function << 12));
 
-    if (header->device == UINT16_MAX || header->device == 0) // invalid device
+    if (header->device == UINT16_MAX || header->device == 0) // invalid function
         return;
 
 #ifdef K_ACPI_DEBUG
-    printks("acpi: found pci device at %x:%x\n\r", header->vendor, header->device);
+    printks("acpi: found pci device %x:%x at %d.%d.%d\n\r", header->vendor, header->device, bus, device, function);
 #endif
 }
 
-void enumerateDevice(uint64_t base, uint8_t device)
+void enumerateDevice(uint64_t base, uint8_t device, uint8_t bus)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (device << 15));
 
@@ -65,18 +68,18 @@ void enumerateDevice(uint64_t base, uint8_t device)
         return;
 
     for (int i = 0; i < 8; i++) // max 8 functions/device
-        enumerateFunction((uint64_t)header, i);
+        enumerateFunction((uint64_t)header, i, device, bus);
 }
 
 void enumerateBus(uint64_t base, uint8_t bus)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (bus << 20));
 
-    if (header->device == UINT16_MAX || header->device == 0) // invalid device
+    if (header->device == UINT16_MAX || header->device == 0) // invalid bus
         return;
 
     for (int i = 0; i < 32; i++) // max 32 devices/bus
-        enumerateDevice((uint64_t)header, i);
+        enumerateDevice((uint64_t)header, i, bus);
 }
 
 void acpiEnumeratePCI()
