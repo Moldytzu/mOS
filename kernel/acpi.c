@@ -97,6 +97,33 @@ void acpiEnumeratePCI()
             enumerateBus(mcfg->buses[i].base, j); // enumerate every bus
 }
 
+void acpiReboot()
+{
+    if (revision == 0 || !fadt) // acpi 1.0 doesn't support reboot, fadt must be present for acpi 2.0+ reboot
+        goto triplefault;
+
+#ifdef K_ACPI_DEBUG
+    printks("acpi: performing acpi reboot...\n\r");
+#endif
+
+    switch (fadt->reset.addressSpace)
+    {
+    case ACPI_GAS_SYSIO: // if the reset register is i/o mapped
+        outb(fadt->reset.address, fadt->resetValue);
+        break;
+    case ACPI_GAS_SYSMEM: // if the reset register is in the system memory
+        *(uint8_t *)fadt->reset.address = fadt->resetValue;
+    default:
+        break;
+    }
+
+triplefault:
+#ifdef K_ACPI_DEBUG
+    printks("acpi: reboot unsupported. triple faulting.\n\r");
+#endif
+    iasm("lidt %0" ::"m"(pciFuncs)); // load an invalid IDT => triple fault / reboot
+}
+
 void acpiInit()
 {
     // get rsdp

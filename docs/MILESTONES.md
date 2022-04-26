@@ -1,5 +1,4 @@
 # Milestones to reach
-### acpi support
 ### initrd (maybe tar or a custom format?)
 ### ELF binaries
 ### virtual file system
@@ -22,3 +21,4 @@
 ### system calls using intrerrupt 0x51
 ### scheduler with ring 3 support
 ### kernel heap
+### acpi support

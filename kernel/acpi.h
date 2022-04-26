@@ -1,6 +1,9 @@
 #pragma once
 #include <utils.h>
 
+#define ACPI_GAS_SYSMEM 0
+#define ACPI_GAS_SYSIO 1
+
 struct pack acpi_rsdp
 {
     uint8_t signature[8];
@@ -147,3 +150,4 @@ struct pack acpi_pci_descriptor
 struct acpi_sdt *acpiGet(const char *sig);
 void acpiEnumeratePCI();
 void acpiInit();
+void acpiReboot();
