@@ -56,8 +56,15 @@ void enumerateFunction(uint64_t base, uint8_t function, uint8_t device, uint8_t 
         return;
 
 #ifdef K_ACPI_DEBUG
-    printks("acpi: found pci device %x:%x at %d.%d.%d\n\r", header->vendor, header->device, bus, device, function);
+    printks("acpi: found pci function %x:%x at %d.%d.%d\n\r", header->vendor, header->device, bus, device, function);
 #endif
+
+    // build the descriptor
+    struct acpi_pci_descriptor d;
+    d.bus = bus, d.device = device, d.function = function, d.header = header;
+
+    // put it in our list of pci functions
+    pciFuncs[pciIndex++] = d;
 }
 
 void enumerateDevice(uint64_t base, uint8_t device, uint8_t bus)
@@ -135,7 +142,11 @@ void acpiInit()
     if (fadt)
         outb(fadt->smiCommand, fadt->acpiEnable);
 
-    // enumerate PCI bus if MCFG is present and ACPI is 2.0 or later
+    // enumerate PCI bus if MCFG is present
     if (mcfg)
         acpiEnumeratePCI();
+
+#ifdef K_ACPI_DEBUG
+    printks("acpi: found %d pci functions in total\n\r", pciIndex);
+#endif
 }
