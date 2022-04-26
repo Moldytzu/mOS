@@ -49,13 +49,8 @@ void enumerateFunction(uint64_t base, uint8_t function)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (function << 12));
 
-    vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
-
     if (header->device == UINT16_MAX || header->device == 0) // invalid device
-    {
-        vmmUnmap(vmmGetBaseTable(), header); // unmap and return
         return;
-    }
 
 #ifdef K_ACPI_DEBUG
     printks("acpi: found pci device at %x:%x\n\r", header->vendor, header->device);
@@ -66,13 +61,8 @@ void enumerateDevice(uint64_t base, uint8_t device)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (device << 15));
 
-    vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
-
     if (header->device == UINT16_MAX || header->device == 0) // invalid device
-    {
-        vmmUnmap(vmmGetBaseTable(), header); // unmap and return
         return;
-    }
 
     for (int i = 0; i < 8; i++) // max 8 functions/device
         enumerateFunction((uint64_t)header, i);
@@ -82,13 +72,8 @@ void enumerateBus(uint64_t base, uint8_t bus)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (bus << 20));
 
-    vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
-
     if (header->device == UINT16_MAX || header->device == 0) // invalid device
-    {
-        vmmUnmap(vmmGetBaseTable(), header); // unmap and return
         return;
-    }
 
     for (int i = 0; i < 32; i++) // max 32 devices/bus
         enumerateDevice((uint64_t)header, i);
