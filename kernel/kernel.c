@@ -14,6 +14,7 @@
 #include <elf.h>
 
 extern void idleTask();
+void panick(const char *);
 
 // kernel main, called after init
 void kmain()
@@ -30,12 +31,15 @@ void kmain()
     memcpy8(task, (void *)idleTask, VMM_PAGE); // copy it
 
     schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
-    elfLoad("init.mx");                                     // load the init executable
-    schedulerEnable();                                      // enable the schduler and jump in userspace
+
+    if (!elfLoad("init.mx")) // load the init executable
+        panick("Failed to load \"init.mx\" from the initrd.");
+
+    schedulerEnable(); // enable the schduler and jump in userspace
 }
 
 void panick(const char *msg)
 {
-    printk("\n\nA kernel exception happened.\n%s\n", msg);
+    printk("\n\nA kernel exception has happened.\n%s\n", msg);
     hang();
 }
