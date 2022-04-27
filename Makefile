@@ -6,7 +6,7 @@ QEMUFLAGS ?= -M q35 -m 2G
 QEMUDEBUG = -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 APPS = $(wildcard ./apps/*/.)
 
-.PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps initrd
+.PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps initrd libc
 
 all: $(OUTPUT)
 
@@ -39,13 +39,16 @@ FORCE:
 $(APPS): FORCE
 	$(MAKE) -C $@ 
 
+# make the libc
+libc:
+	$(MAKE) -C libc
+
 kernel:
 	mkdir -p out
 	$(MAKE) -C kernel setup
 	$(MAKE) -C kernel -j$(CORES)
 
-$(OUTPUT): limine kernel initrd $(APPS)
-	echo $(APPS)
+$(OUTPUT): limine kernel libc $(APPS) initrd 
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/

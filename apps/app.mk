@@ -21,7 +21,8 @@ INTERNALLDFLAGS :=         \
 	-T../../app.ld         \
 	-nostdlib              \
 	-zmax-page-size=0x1000 \
-	-static
+	-static                \
+	../../../libc/libc.a
 
 # default output path of the app
 OUTFOLDER := ../../../roots/initrd/
