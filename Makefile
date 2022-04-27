@@ -4,7 +4,7 @@ CORES = $(shell nproc)
 GDBFLAGS ?= -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue"
 QEMUFLAGS ?= -M q35 -m 2G
 QEMUDEBUG = -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
-DEBUG ?= 0
+APPS = $(wildcard ./apps/*/.)
 
 .PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps initrd
 
@@ -26,19 +26,26 @@ run-efi-debug: efi
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 
-initrd:
-	python3 ./scripts/dsfs.py roots/initrd/ roots/img/initrd.dsfs
-
 limine:
 	-git clone https://github.com/limine-bootloader/limine.git --branch=v3.0-branch-binary --depth=1
 	make -C limine
+
+initrd:
+	python3 ./scripts/dsfs.py roots/initrd/ roots/img/initrd.dsfs
+
+FORCE:
+
+# run make in every folder from apps
+$(APPS): FORCE
+	$(MAKE) -C $@ 
 
 kernel:
 	mkdir -p out
 	$(MAKE) -C kernel setup
 	$(MAKE) -C kernel -j$(CORES)
 
-$(OUTPUT): limine kernel initrd
+$(OUTPUT): limine kernel initrd $(APPS)
+	echo $(APPS)
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
@@ -51,7 +58,7 @@ $(OUTPUT): limine kernel initrd
 	limine/limine-deploy $(OUTPUT)
 	rm -rf iso_root
 
-efi: limine kernel initrd
+efi: limine kernel initrd $(APPS)
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf limine/limine.sys limine/limine-cd-efi.bin iso_root/

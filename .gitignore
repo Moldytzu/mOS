@@ -1,5 +1,5 @@
 kernel/stivale2.h
-kernel/obj
+obj
 limine
 cross-compiler-builder
 iso_root
@@ -11,3 +11,4 @@ out
 *.o
 *.d
 *.dsfs
+*.mx
