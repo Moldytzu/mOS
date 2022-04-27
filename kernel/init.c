@@ -14,6 +14,7 @@
 #include <control.h>
 #include <heap.h>
 #include <acpi.h>
+#include <initrd.h>
 
 void kmain();
 
@@ -28,6 +29,9 @@ void _start(struct stivale2_struct *stivale2_struct)
 
     // initialize the bootloader interface
     bootloaderInit(stivale2_struct);
+
+    // initialize the initrd
+    initrdInit();
 
     // initialize framebuffer
     framebufferInit();
