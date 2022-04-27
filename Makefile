@@ -6,7 +6,7 @@ QEMUFLAGS ?= -M q35 -m 2G
 QEMUDEBUG = -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 DEBUG ?= 0
 
-.PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps
+.PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps initrd
 
 all: $(OUTPUT)
 
@@ -26,6 +26,9 @@ run-efi-debug: efi
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 
+initrd:
+	python3 ./scripts/dsfs.py roots/initrd/ roots/img/initrd.dsfs
+
 limine:
 	-git clone https://github.com/limine-bootloader/limine.git --branch=v3.0-branch-binary --depth=1
 	make -C limine
@@ -35,7 +38,7 @@ kernel:
 	$(MAKE) -C kernel setup
 	$(MAKE) -C kernel -j$(CORES)
 
-$(OUTPUT): limine kernel
+$(OUTPUT): limine kernel initrd
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
@@ -48,7 +51,7 @@ $(OUTPUT): limine kernel
 	limine/limine-deploy $(OUTPUT)
 	rm -rf iso_root
 
-efi: limine kernel
+efi: limine kernel initrd
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf limine/limine.sys limine/limine-cd-efi.bin iso_root/
