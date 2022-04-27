@@ -45,6 +45,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     // load the next task
     currentTID++;
+    if (tasks[currentTID].state != 0) // get next task if it is stopped
+        currentTID++;
     if (currentTID == lastTID)
         currentTID = 0; // reset tid if we're overrunning
 
