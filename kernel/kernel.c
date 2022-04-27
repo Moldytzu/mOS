@@ -11,6 +11,7 @@
 #include <pit.h>
 #include <syscall.h>
 #include <scheduler.h>
+#include <elf.h>
 
 extern void idleTask();
 
@@ -25,12 +26,12 @@ void kmain()
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
 #endif
 
-    void *task = mmAllocatePage();            // create an empty page just for the idle task
+    void *task = mmAllocatePage();             // create an empty page just for the idle task
     memcpy8(task, (void *)idleTask, VMM_PAGE); // copy it
 
-    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE);   // create the idle task
-    schedulerAdd("Idle Task 2", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
-    schedulerEnable();                                        // enable the schduler and jump in userspace
+    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
+    elfLoad("init.mx");                                     // load the init executable
+    schedulerEnable();                                      // enable the schduler and jump in userspace
 }
 
 void panick(const char *msg)

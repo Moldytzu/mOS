@@ -20,14 +20,14 @@ void initrdInit()
     }
 }
 
-struct dsfs_entry *initrdGet(const char *name)
+void *initrdGet(const char *name)
 {
     struct dsfs_entry *entry = &dsfs->firstEntry; // point to the first entry
 
     for (uint32_t i = 0; i < dsfs->header.entries; i++)
     {
         if (memcmp(entry->name, name, strlen(name)) == 0) // compare the names
-            return (struct dsfs_entry *)((uint64_t)entry + sizeof(struct dsfs_entry)); // point to the contents
+            return (void *)((uint64_t)entry + sizeof(struct dsfs_entry)); // point to the contents
 
         entry = (struct dsfs_entry *)((uint64_t)entry + sizeof(struct dsfs_entry) + entry->size); // point to the next entry
     }

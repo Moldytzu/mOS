@@ -21,4 +21,4 @@ struct pack dsfs_fs
 };
 
 void initrdInit();
-struct dsfs_entry *initrdGet(const char *name);
+void *initrdGet(const char *name);
