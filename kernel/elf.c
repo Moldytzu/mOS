@@ -17,7 +17,7 @@ bool elfLoad(const char *path)
         return false;
 
 #ifdef K_ELF_DEBUG
-    printks("elf: found %s at 0x%p\n\r", path, elf);
+    printks("elf: found %s at 0x%p with the entry offset at 0x%p\n\r", path, elf, elf->e_entry - TASK_BASE_ADDRESS);
 #endif
 
     struct dsfs_entry *entry = (struct dsfs_entry *)((uint64_t)elf - sizeof(struct dsfs_entry)); // get the entry header
@@ -35,6 +35,9 @@ bool elfLoad(const char *path)
             memcpy64((void *)((uint64_t)buffer + phdr->p_vaddr - TASK_BASE_ADDRESS), (void *)((uint64_t)elf + phdr->p_offset), phdr->p_memsz / sizeof(uint64_t));
         }
     }
-    
+
+    // add the task
+    schedulerAdd(path,(void*)elf->e_entry - TASK_BASE_ADDRESS,VMM_PAGE,buffer,entry->size);
+
     return true;
 }
