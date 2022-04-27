@@ -6,6 +6,5 @@
 > 4 byte (little-endian) unsigned integer - entries count
 ## Entry
 #### It is an ordered packed structure that holds the following data:
-> 52 byte string - name
-> 4 byte (little-endian) unsigned integer - parent's entry index
+> 56 byte null-terminated string - name
 > 8 byte (little-endian) unsigned integer - size of the contents in bytes
