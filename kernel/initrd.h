@@ -3,15 +3,22 @@
 
 struct pack dsfs_header
 {
-    const char signature[2];
+    uint8_t signature[2];
     uint16_t version;
     uint32_t entries;
 };
 
 struct pack dsfs_entry
 {
-    const char name[56];
+    uint8_t name[56];
     uint64_t size;
 };
 
+struct pack dsfs_fs
+{
+    struct dsfs_header header;
+    struct dsfs_entry firstEntry;
+};
+
 void initrdInit();
+struct dsfs_entry *initrdGet(const char *name);
