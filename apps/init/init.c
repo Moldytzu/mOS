@@ -1,9 +1,4 @@
-#include <stdint.h>
-#include <stddef.h>
-
-#define SYS_EXIT 0
-
-extern void _syscall(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t rcx, uint64_t r8, uint64_t r9);
+#include <sys.h>
 
 void sys_exit(uint64_t status)
 {
@@ -11,7 +6,7 @@ void sys_exit(uint64_t status)
     while(1); // endless loop 
 }
 
-void _mmain()
+int main()
 {
-    sys_exit(1024); // exit
+    return 1024;
 }

@@ -7,6 +7,7 @@ LD := ~/cross_compiler/bin/x86_64-elf-ld
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS :=   		 \
 	-I.                  	 \
+	-I../../libc/            \
 	-std=gnu11           	 \
 	-ffreestanding       	 \
 	-fno-stack-protector 	 \
