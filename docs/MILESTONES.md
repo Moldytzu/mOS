@@ -1,5 +1,4 @@
 # Milestones to reach
-### ELF binaries
 ### virtual file system
 ### shell
 ### libc (maybe mlibc or something)
