@@ -13,7 +13,6 @@
 #include <scheduler.h>
 #include <elf.h>
 
-extern void idleTask();
 void panick(const char *);
 
 // kernel main, called after init
@@ -26,11 +25,6 @@ void kmain()
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
 #endif
-
-    void *task = mmAllocatePage();             // create an empty page just for the idle task
-    memcpy8(task, (void *)idleTask, VMM_PAGE); // copy it
-
-    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
 
     if (!elfLoad("init.mx")) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");

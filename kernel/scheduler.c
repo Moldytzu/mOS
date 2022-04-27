@@ -11,6 +11,13 @@ bool enabled = false;                 // enabled
 
 extern void userspaceJump(uint64_t rip, uint64_t stack);
 
+// idle task
+void idleTask()
+{
+    while (1)
+        ;
+}
+
 // schedule the next task
 void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 {
@@ -57,6 +64,10 @@ void schedulerInit()
     memset64(tasks, 0, 0x1000 * sizeof(struct sched_task) / sizeof(uint64_t)); // clear the tasks
     kernelStack = mmAllocatePage();                                            // allocate a page for the new kernel stack
     tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;                       // set kernel stack in tss
+
+    void *task = mmAllocatePage();                          // create an empty page just for the idle task
+    memcpy8(task, (void *)idleTask, VMM_PAGE);              // copy the executable part
+    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
 }
 
 // enable the scheduler and then jump in the first task
@@ -74,9 +85,9 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     uint16_t index = lastTID++;
 
     // metadata
-    tasks[index].priorityCounter = 0;                      // reset counter
-    tasks[index].id = index;                               // set the task ID
-    tasks[index].priority = 0;                             // switch imediately
+    tasks[index].priorityCounter = 0;                       // reset counter
+    tasks[index].id = index;                                // set the task ID
+    tasks[index].priority = 0;                              // switch imediately
     memcpy8(tasks[index].name, (char *)name, strlen(name)); // set the name
 
     // page table
@@ -114,6 +125,6 @@ void schedulerPrioritize(uint16_t tid, uint8_t priority)
     if (priority == 0) // minimum ticks until switching is 1
         priority = 1;
 
-    tasks[tid].priority = priority; // set new priority level
+    tasks[tid].priority = priority;                   // set new priority level
     tasks[tid].priorityCounter = tasks[tid].priority; // reset counter
 }
