@@ -1,6 +1,5 @@
 #pragma once
 #include <utils.h>
-#include <bootloader.h>
 
 #define PSF1_MAGIC0 0x36
 #define PSF1_MAGIC1 0x04
@@ -27,7 +26,7 @@ struct framebuffer_cursor_info
 
 void framebufferInit();
 void framebufferClear(uint32_t colour);
-void framebufferLoadFont(const char *module);
+void framebufferLoadFont(const char *name);
 void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour);
 void framebufferPlotc(char c, uint32_t x, uint32_t y);
 void framebufferWrite(const char *str);

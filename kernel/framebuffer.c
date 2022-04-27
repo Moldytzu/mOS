@@ -1,4 +1,6 @@
 #include <framebuffer.h>
+#include <initrd.h>
+#include <bootloader.h>
 
 struct psf1_header *font;
 struct stivale2_module fontMod;
@@ -33,12 +35,11 @@ inline void framebufferClear(uint32_t colour)
 }
 
 // load a font
-void framebufferLoadFont(const char *module)
+void framebufferLoadFont(const char *name)
 {
-    fontMod = bootloaderGetModule(module);                // get the module
-    font = (struct psf1_header *)((void *)fontMod.begin); // cast the begining
+    font = (struct psf1_header *)initrdGet(name);
 
-    if (strlen(fontMod.string) != strlen(module)) // if the modules' string len doesn't match, just fail
+    if(!font)
         goto error;
 
     if (font->magic[0] != PSF1_MAGIC0 && font->magic[0] != PSF1_MAGIC1) // if the psf1's magic isn't the one we expect, just fail
@@ -48,8 +49,8 @@ void framebufferLoadFont(const char *module)
 
 error: // show an error message
     bootloaderTermWrite("Failed to load font \"");
-    bootloaderTermWrite(module);
-    bootloaderTermWrite("\".\n");
+    bootloaderTermWrite(name);
+    bootloaderTermWrite("\" from the initrd.\n");
     hang();
 }
 

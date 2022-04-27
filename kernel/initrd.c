@@ -9,7 +9,13 @@ void initrdInit()
 
     if (!dsfs)
     {
-        bootloaderTermWrite("Failed to load the initrd from \"initrd.dsfs\".\nMake sure the file is in the root of the boot device.");
+        bootloaderTermWrite("Failed to load the initrd from \"initrd.dsfs\".\nMake sure the file is in the root of the boot device.\n");
+        hang();
+    }
+
+    if (dsfs->header.signature[0] != 'D' && dsfs->header.signature[1] != 'D')
+    {
+        bootloaderTermWrite("Failed to verify the signature of the initrd.\n");
         hang();
     }
 }
@@ -21,7 +27,7 @@ struct dsfs_entry *initrdGet(const char *name)
     for (uint32_t i = 0; i < dsfs->header.entries; i++)
     {
         if (memcmp(entry->name, name, strlen(name)) == 0) // compare the names
-            return entry;
+            return (struct dsfs_entry *)((uint64_t)entry + sizeof(struct dsfs_entry)); // point to the contents
 
         entry = (struct dsfs_entry *)((uint64_t)entry + sizeof(struct dsfs_entry) + entry->size); // point to the next entry
     }

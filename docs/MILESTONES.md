@@ -1,5 +1,4 @@
 # Milestones to reach
-### initrd (maybe tar or a custom format?)
 ### ELF binaries
 ### virtual file system
 ### shell
@@ -22,3 +21,4 @@
 ### scheduler with ring 3 support
 ### kernel heap
 ### acpi support
+### initrd (custom format)
