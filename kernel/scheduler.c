@@ -3,11 +3,13 @@
 #include <gdt.h>
 #include <bootloader.h>
 #include <serial.h>
+#include <heap.h>
 
 void *kernelStack;
-struct sched_task tasks[0x1000];      // todo: replace this with a linked list
-uint16_t lastTID = 0, currentTID = 0; // last task ID, current task ID
-bool enabled = false;                 // enabled
+struct sched_task root;         // root of the tasks list
+struct sched_task *currentTask; // current task in the tasks list
+uint16_t lastTID = 0;           // last task ID
+bool enabled = false;           // enabled
 
 extern void userspaceJump(uint64_t rip, uint64_t stack);
 
@@ -26,46 +28,49 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
-    if (tasks[currentTID].priorityCounter--) // check if the priority counter is over
+    if (currentTask->priorityCounter--) // check if the priority counter is over
     {
 #ifdef K_SCHED_DEBUG
-        printks("sched: %s still has %d ticks left. doing nothing\n\r", tasks[currentTID].name, tasks[currentTID].priorityCounter + 1);
+        printks("sched: %s still has %d ticks left. doing nothing\n\r", currentTask->name, currentTask->priorityCounter + 1);
 #endif
-        vmmSwap(tasks[currentTID].pageTable); // swap the page table
+        vmmSwap(currentTask->pageTable); // swap the page table
         return;
     }
-    tasks[currentTID].priorityCounter = tasks[currentTID].priority; // reset counter
+    currentTask->priorityCounter = currentTask->priority; // reset counter
 
 #ifdef K_SCHED_DEBUG
-    printks("sched: saving %s\n\r", tasks[currentTID].name);
+    printks("sched: saving %s\n\r", currentTask->name);
 #endif
 
     // save the registers
-    memcpy8(&tasks[currentTID].intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
+    memcpy8(&currentTask->intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
 
     // load the next task
-    currentTID++;
-    if (tasks[currentTID].state != 0) // get next task if it is stopped
-        currentTID++;
-    if (currentTID == lastTID)
-        currentTID = 0; // reset tid if we're overrunning
+    do
+    {
+        if (currentTask->next == NULL)
+            currentTask = &root;
+        else
+            currentTask = currentTask->next;
+    } while (currentTask->state != 0);
 
 #ifdef K_SCHED_DEBUG
-    printks("sched: loading %s\n\r", tasks[currentTID].name);
+    printks("sched: loading %s\n\r", currentTask->name);
 #endif
 
     // copy the new registers
-    memcpy8(stack, &tasks[currentTID].intrerruptStack, sizeof(struct idt_intrerrupt_stack));
+    memcpy8(stack, &currentTask->intrerruptStack, sizeof(struct idt_intrerrupt_stack));
 
-    vmmSwap(tasks[currentTID].pageTable); // swap the page table
+    vmmSwap(currentTask->pageTable); // swap the page table
 }
 
 // initialize the scheduler
 void schedulerInit()
 {
-    memset64(tasks, 0, 0x1000 * sizeof(struct sched_task) / sizeof(uint64_t)); // clear the tasks
-    kernelStack = mmAllocatePage();                                            // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;                       // set kernel stack in tss
+    kernelStack = mmAllocatePage();                                   // allocate a page for the new kernel stack
+    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;              // set kernel stack in tss
+    memset64(&root, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the root task
+    currentTask = &root;                                              // set the current task
 
     void *task = mmAllocatePage();                          // create an empty page just for the idle task
     memcpy8(task, (void *)idleTask, VMM_PAGE);              // copy the executable part
@@ -75,26 +80,42 @@ void schedulerInit()
 // enable the scheduler and then jump in the first task
 void schedulerEnable()
 {
-    cli();                                                                   // disable intrerrupts, those will be enabled using the rflags
-    enabled = true;                                                          // enable the scheduler
-    vmmSwap(tasks[currentTID].pageTable);                                    // swap the page table
-    userspaceJump(TASK_BASE_ADDRESS, tasks[currentTID].intrerruptStack.rsp); // jump in userspace
+    cli();                                                      // disable intrerrupts, those will be enabled using the rflags
+    enabled = true;                                             // enable the scheduler
+    vmmSwap(root.pageTable);                                    // swap the page table
+    userspaceJump(TASK_BASE_ADDRESS, root.intrerruptStack.rsp); // jump in userspace
 }
 
 // add new task in the queue
 void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
 {
+    struct sched_task *task = &root; // first task
+
+    if (task->pageTable) // check if the root task is valid
+    {
+        while (task->next) // get last task
+            task = task->next;
+
+        if (task->pageTable)
+        {
+            task->next = malloc(sizeof(struct sched_task)); // allocate next task if the current task is valid
+            task = task->next;                              // set current task to the newly allocated task
+        }
+    }
+
+    memset64(task, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the task
+
     uint16_t index = lastTID++;
 
     // metadata
-    tasks[index].priorityCounter = 0;                       // reset counter
-    tasks[index].id = index;                                // set the task ID
-    tasks[index].priority = 0;                              // switch imediately
-    memcpy8(tasks[index].name, (char *)name, strlen(name)); // set the name
+    task->priorityCounter = 0;                       // reset counter
+    task->id = index;                                // set the task ID
+    task->priority = 0;                              // switch imediately
+    memcpy8(task->name, (char *)name, strlen(name)); // set the name
 
     // page table
     struct vmm_page_table *newTable = vmmCreateTable(false); // create a new page table
-    tasks[index].pageTable = newTable;                       // set the new page table
+    task->pageTable = newTable;                              // set the new page table
 
     void *stack = mmAllocatePages(stackSize / VMM_PAGE); // allocate stack for the task
 
@@ -105,18 +126,18 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
         vmmMap(newTable, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, true, true); // map task as user, read-write
 
     // initial registers
-    tasks[index].intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
-    tasks[index].intrerruptStack.rflags = 0x202;                            // rflags, enable intrerrupts
-    tasks[index].intrerruptStack.rsp = (uint64_t)stack + stackSize;         // task stack pointer
-    tasks[index].intrerruptStack.rbp = tasks[index].intrerruptStack.rsp;    // stack frame pointer
-    tasks[index].intrerruptStack.cs = 0x23;                                 // code segment for user
-    tasks[index].intrerruptStack.ss = 0x1B;                                 // data segment for user
+    task->intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
+    task->intrerruptStack.rflags = 0x202;                            // rflags, enable intrerrupts
+    task->intrerruptStack.rsp = (uint64_t)stack + stackSize;         // task stack pointer
+    task->intrerruptStack.rbp = task->intrerruptStack.rsp;           // stack frame pointer
+    task->intrerruptStack.cs = 0x23;                                 // code segment for user
+    task->intrerruptStack.ss = 0x1B;                                 // data segment for user
 }
 
 // get current task
 struct sched_task *schedulerGetCurrent()
 {
-    return &tasks[currentTID];
+    return currentTask;
 }
 
 // set priority to a task
@@ -128,6 +149,10 @@ void schedulerPrioritize(uint16_t tid, uint8_t priority)
     if (priority == 0) // minimum ticks until switching is 1
         priority = 1;
 
-    tasks[tid].priority = priority;                   // set new priority level
-    tasks[tid].priorityCounter = tasks[tid].priority; // reset counter
+    struct sched_task *task = &root; // first task
+    while (task->id != tid)          // get the task with the respective task ID
+        task = task->next;
+
+    task->priority = priority;              // set new priority level
+    task->priorityCounter = task->priority; // reset counter
 }

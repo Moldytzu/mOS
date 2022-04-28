@@ -9,8 +9,8 @@ extern void SyscallIntHandlerEntry();
 // handler called on syscall
 void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t returnAddress, uint64_t r8, uint64_t r9)
 {
-    void *taskTable = schedulerGetCurrent()->pageTable;
     vmmSwap(vmmGetBaseTable()); // swap the page table with the base so we can access every piece of memory
+    void *taskTable = schedulerGetCurrent()->pageTable;
 
 #ifdef K_SYSCALL_DEBUG
     printks("syscall: number %d, argument 1 is %d, argument 2 is %d, return address is %p, argument 3 is %d, argument 4 is %d\n\r", syscallNumber, rsi, rdx, returnAddress, r8, r9);

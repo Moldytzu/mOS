@@ -8,7 +8,7 @@
 
 #define TASK_BASE_ADDRESS 0xA000000000
 
-struct pack sched_task
+struct sched_task
 {
     char name[128];                              // 128 characters should be enough
     uint8_t priority;                            // higher priority means more ticks allocated to the task
@@ -16,8 +16,9 @@ struct pack sched_task
     uint16_t id;                                 // task ID (TID)
     struct vmm_page_table *pageTable;            // pointer to the page table
     struct idt_intrerrupt_stack intrerruptStack; // the last intrerrupt stack
+    uint8_t priorityCounter;                     // counter used for priority calculation
 
-    uint8_t priorityCounter; // counter used for priority calculation
+    struct sched_task *next;     // next task
 };
 
 void schedulerSchedule(struct idt_intrerrupt_stack *stack);
