@@ -3,7 +3,7 @@
 struct vfs_node nodes[0xFF]; // todo: replace with linked nodes
 uint16_t lastNode = 0;
 
-struct vfs_fs root;
+struct vfs_fs rootFS;
 
 uint8_t rootOpen(struct vfs_node *fd)
 {
@@ -12,17 +12,17 @@ uint8_t rootOpen(struct vfs_node *fd)
 
 void vfsInit()
 {
-    memset64(nodes, 0, sizeof(nodes) / sizeof(uint64_t)); // clear the nodes
-    memset64(&root, 0, sizeof(root) / sizeof(uint64_t));  // clear the root filesystem
+    memset64(nodes, 0, sizeof(nodes) / sizeof(uint64_t));    // clear the nodes
+    memset64(&rootFS, 0, sizeof(rootFS) / sizeof(uint64_t)); // clear the root filesystem
 
     // metadata of the rootfs
-    root.name = "rootfs";
-    root.mountName = "/";
-    root.open = rootOpen;
+    rootFS.name = "rootfs";
+    rootFS.mountName = "/";
+    rootFS.open = rootOpen;
 
     struct vfs_node node;                                           // the default node
     memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
-    node.filesystem = &root;                                        // rootfs
+    node.filesystem = &rootFS;                                      // rootfs
     memcpy(node.path, ".root", 5);                                  // copy the path ("/.root")
     vfsAdd(node);
 }
@@ -52,7 +52,7 @@ uint64_t vfsOpen(const char *name)
             {
                 if (memcmp(name + strlen(nodes[i].filesystem->mountName), nodes[i].path, strlen(nodes[i].path)) == 0) // compare the path
                 {
-                    if(nodes[i].filesystem->open(&nodes[i])) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
+                    if (nodes[i].filesystem->open(&nodes[i])) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
                         return (uint64_t)&nodes[i];
                 }
             }

@@ -3,7 +3,7 @@
 #include <vfs.h>
 
 struct dsfs_fs *dsfs;
-struct vfs_fs dsfsfs;
+struct vfs_fs dsfsFS;
 
 void initrdInit()
 {
@@ -22,16 +22,16 @@ void initrdInit()
     }
 }
 
-uint8_t dsfsfsOpen(struct vfs_node *node)
+uint8_t dsfsFSOpen(struct vfs_node *node)
 {
     return 1; // status ok
 }
 
 void initrdMount()
 {
-    dsfsfs.name = "dsfs";
-    dsfsfs.mountName = "/init/";
-    dsfsfs.open = dsfsfsOpen; // set the handler
+    dsfsFS.name = "dsfs";
+    dsfsFS.mountName = "/init/";
+    dsfsFS.open = dsfsFSOpen; // set the handler
 
     struct dsfs_entry *entry = &dsfs->firstEntry; // point to the first entry
 
@@ -39,7 +39,7 @@ void initrdMount()
     {
         struct vfs_node node;
         memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
-        node.filesystem = &dsfsfs;                                      // set the ram filesystem
+        node.filesystem = &dsfsFS;                                      // set the ram filesystem
         memcpy64(node.path, entry->name, 56 / sizeof(uint64_t));        // copy the file path
         vfsAdd(node);
 
