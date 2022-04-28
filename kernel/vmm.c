@@ -186,7 +186,7 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
     pt = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
 
     currentEntry = pt->entries[index.P];         // index p
-    return (void *)vmmGetAddress(&currentEntry); // get the address
+    return (void *)(vmmGetAddress(&currentEntry) * VMM_PAGE + ((uint64_t)virtualAddress % VMM_PAGE)); // get the address
 }
 
 // create a new table

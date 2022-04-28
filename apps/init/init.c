@@ -1,8 +1,10 @@
 #include <sys.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 int main()
 {
-    const char msg[] = "m Init System for mOS\n";
-    sys_write((void*)msg, sizeof(msg) - 1, 1); // write the message on stdout
-    return 1024;
+    puts("m Init System\n");
+
+    while(1); // the init system never returns
 }

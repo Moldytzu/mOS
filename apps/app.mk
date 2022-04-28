@@ -15,6 +15,7 @@ INTERNALCFLAGS :=   		 \
 	-mabi=sysv           	 \
 	-mno-red-zone        	 \
 	-Werror 			     \
+	-mcmodel=large           \
 	-O2
 
 # Internal linker flags that should not be changed by the user.

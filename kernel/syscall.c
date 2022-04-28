@@ -27,9 +27,9 @@ void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t
         break;
     case 1: // write (rsi = buffer, rdx = count, r8 = fd)
         // todo: check the fd and then print, if it's 1 then write to the terminal's buffer
-        const char *buffer = (const char *)rsi;
-        for(size_t i = 0; i < rdx; i++)
-            printk("%c",buffer[i]);
+        const char *buffer = vmmGetPhys(taskTable, (void *)rsi); // get physical address of the buffer
+        for (size_t i = 0; i < rdx; i++)
+            printk("%c", buffer[i]);
         break;
     default:
         break;
