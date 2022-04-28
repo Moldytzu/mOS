@@ -29,12 +29,13 @@ void kmain()
 
 #ifdef K_VFS_DEBUG
     // get all the nodes
-    struct vfs_node *nodes = vfsNodes();
-    for(int i = 0; i < 0xFF; i++) // iterate over each node
+    struct vfs_node *currentNode = vfsNodes();
+    do
     {
-        if(nodes[i].filesystem)
-            printk("path %s%s on %s \n",nodes[i].filesystem->mountName,nodes[i].path,nodes[i].filesystem->name);
-    }
+        if (currentNode->filesystem)
+            printk("path %s%s on %s \n", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
+        currentNode = currentNode->next; // next node
+    } while (currentNode);
 #endif
 
     if (!elfLoad("/init/init.mx")) // load the init executable

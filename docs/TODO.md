@@ -1,2 +1,7 @@
 # Current todo list that's based on the current milestone
-### transition to linear arrays to linked lists everywhere
+### writing to the screen
+### reading from keyboard
+### terminal keyboard buffer
+### terminal for every task
+### executing new tasks
+### basic utils like ls, cat etc.

@@ -1,5 +1,4 @@
 # Milestones to reach
-### virtual file system
 ### shell
 ### libc (maybe mlibc or something)
 ### custom gcc build
@@ -21,3 +20,4 @@
 ### kernel heap
 ### acpi support
 ### initrd (custom format)
+### virtual file system

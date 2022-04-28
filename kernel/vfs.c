@@ -1,7 +1,8 @@
 #include <vfs.h>
+#include <heap.h>
 
-struct vfs_node nodes[0xFF]; // todo: replace with linked nodes
-uint16_t lastNode = 0;
+struct vfs_node rootNode; // root of the linked list
+uint64_t lastNode = 0;
 
 struct vfs_fs rootFS;
 
@@ -27,7 +28,6 @@ void rootWrite(struct vfs_node *fd, void *buffer, uint64_t size, uint64_t offset
 
 void vfsInit()
 {
-    memset64(nodes, 0, sizeof(nodes) / sizeof(uint64_t));    // clear the nodes
     memset64(&rootFS, 0, sizeof(rootFS) / sizeof(uint64_t)); // clear the root filesystem
 
     // metadata of the rootfs
@@ -47,7 +47,23 @@ void vfsInit()
 
 void vfsAdd(struct vfs_node node)
 {
-    nodes[lastNode++] = node; // add the node
+    uint64_t id = lastNode++;
+    node.id = id;
+
+    struct vfs_node *currentNode = &rootNode; // first node
+
+    if (currentNode->filesystem) // check if the root node is valid
+    {
+        while (currentNode->next) // get last node
+            currentNode = currentNode->next;
+
+        if (currentNode->filesystem)
+        {
+            currentNode->next = malloc(sizeof(struct vfs_node)); // allocate next node if the current node is valid
+            currentNode = currentNode->next;                     // set current node to the newly allocated node
+        }
+    }
+    memcpy64(currentNode, &node, sizeof(struct vfs_node) / sizeof(uint64_t)); // copy the node information
 }
 
 void vfsRemove(struct vfs_node *node)
@@ -57,26 +73,28 @@ void vfsRemove(struct vfs_node *node)
 
 struct vfs_node *vfsNodes()
 {
-    return nodes;
+    return &rootNode;
 }
 
 uint64_t vfsOpen(const char *name)
 {
-    for (int i = 0; i < 0xFF; i++) // iterate over each node
+    struct vfs_node *currentNode = &rootNode;
+    do
     {
-        if (nodes[i].filesystem)
+        if (currentNode->filesystem)
         {
-            if (memcmp(name, nodes[i].filesystem->mountName, strlen(nodes[i].filesystem->mountName)) == 0) // compare the mount name with the prefix
+            if (memcmp(name, currentNode->filesystem->mountName, strlen(currentNode->filesystem->mountName)) == 0) // compare the mount name with the prefix
             {
-                if (memcmp(name + strlen(nodes[i].filesystem->mountName), nodes[i].path, strlen(nodes[i].path)) == 0) // compare the path
+                if (memcmp(name + strlen(currentNode->filesystem->mountName), currentNode->path, strlen(currentNode->path)) == 0) // compare the path
                 {
-                    if (nodes[i].filesystem->open)                // check if the handler exists
-                        if (nodes[i].filesystem->open(&nodes[i])) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
-                            return (uint64_t)&nodes[i];
+                    if (currentNode->filesystem->open)                  // check if the handler exists
+                        if (currentNode->filesystem->open(currentNode)) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
+                            return (uint64_t)currentNode;
                 }
             }
         }
-    }
+        currentNode = currentNode->next; // next node
+    } while (currentNode);
     return 0; // return nothing
 }
 

@@ -6,7 +6,7 @@
 #include <heap.h>
 
 void *kernelStack;
-struct sched_task root;         // root of the tasks list
+struct sched_task rootTask; // root of the tasks list
 struct sched_task *currentTask; // current task in the tasks list
 uint16_t lastTID = 0;           // last task ID
 bool enabled = false;           // enabled
@@ -49,7 +49,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     do
     {
         if (currentTask->next == NULL)
-            currentTask = &root;
+            currentTask = &rootTask;
         else
             currentTask = currentTask->next;
     } while (currentTask->state != 0);
@@ -67,10 +67,10 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 // initialize the scheduler
 void schedulerInit()
 {
-    kernelStack = mmAllocatePage();                                   // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;              // set kernel stack in tss
-    memset64(&root, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the root task
-    currentTask = &root;                                              // set the current task
+    kernelStack = mmAllocatePage();                                       // allocate a page for the new kernel stack
+    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;                  // set kernel stack in tss
+    memset64(&rootTask, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the root task
+    currentTask = &rootTask;                                              // set the current task
 
     void *task = mmAllocatePage();                          // create an empty page just for the idle task
     memcpy8(task, (void *)idleTask, VMM_PAGE);              // copy the executable part
@@ -80,16 +80,16 @@ void schedulerInit()
 // enable the scheduler and then jump in the first task
 void schedulerEnable()
 {
-    cli();                                                      // disable intrerrupts, those will be enabled using the rflags
-    enabled = true;                                             // enable the scheduler
-    vmmSwap(root.pageTable);                                    // swap the page table
-    userspaceJump(TASK_BASE_ADDRESS, root.intrerruptStack.rsp); // jump in userspace
+    cli();                                                          // disable intrerrupts, those will be enabled using the rflags
+    enabled = true;                                                 // enable the scheduler
+    vmmSwap(rootTask.pageTable);                                    // swap the page table
+    userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp); // jump in userspace
 }
 
 // add new task in the queue
 void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
 {
-    struct sched_task *task = &root; // first task
+    struct sched_task *task = &rootTask; // first task
 
     if (task->pageTable) // check if the root task is valid
     {
@@ -149,8 +149,8 @@ void schedulerPrioritize(uint16_t tid, uint8_t priority)
     if (priority == 0) // minimum ticks until switching is 1
         priority = 1;
 
-    struct sched_task *task = &root; // first task
-    while (task->id != tid)          // get the task with the respective task ID
+    struct sched_task *task = &rootTask; // first task
+    while (task->id != tid)              // get the task with the respective task ID
         task = task->next;
 
     task->priority = priority;              // set new priority level
