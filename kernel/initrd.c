@@ -27,11 +27,18 @@ uint8_t dsfsFSOpen(struct vfs_node *node)
     return 1; // status ok
 }
 
+void dsfsFSClose(struct vfs_node *node)
+{
+    printk("closed");
+    // don't do anything
+}
+
 void initrdMount()
 {
     dsfsFS.name = "dsfs";
     dsfsFS.mountName = "/init/";
-    dsfsFS.open = dsfsFSOpen; // set the handler
+    dsfsFS.open = dsfsFSOpen; // set the handlers
+    dsfsFS.close = dsfsFSClose; 
 
     struct dsfs_entry *entry = &dsfs->firstEntry; // point to the first entry
 

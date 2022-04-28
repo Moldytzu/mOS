@@ -10,6 +10,11 @@ uint8_t rootOpen(struct vfs_node *fd)
     return 1; // status ok
 }
 
+void rootClose(struct vfs_node *fd)
+{
+    // do nothing
+}
+
 void vfsInit()
 {
     memset64(nodes, 0, sizeof(nodes) / sizeof(uint64_t));    // clear the nodes
@@ -19,6 +24,7 @@ void vfsInit()
     rootFS.name = "rootfs";
     rootFS.mountName = "/";
     rootFS.open = rootOpen;
+    rootFS.close = rootClose;
 
     struct vfs_node node;                                           // the default node
     memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
@@ -52,8 +58,9 @@ uint64_t vfsOpen(const char *name)
             {
                 if (memcmp(name + strlen(nodes[i].filesystem->mountName), nodes[i].path, strlen(nodes[i].path)) == 0) // compare the path
                 {
-                    if (nodes[i].filesystem->open(&nodes[i])) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
-                        return (uint64_t)&nodes[i];
+                    if(nodes[i].filesystem->open) // check if the handler exists
+                        if (nodes[i].filesystem->open(&nodes[i])) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
+                            return (uint64_t)&nodes[i];
                 }
             }
         }
@@ -63,12 +70,18 @@ uint64_t vfsOpen(const char *name)
 
 void vfsClose(uint64_t fd)
 {
+    if (!fd) // don't handle empty/non-existent file descriptors
+        return;
+
+    struct vfs_node *node = (struct vfs_node *)fd;
+    if(node->filesystem->close) // check if the handler exists
+        node->filesystem->close(node); // inform the filesystem that we closed the node
 }
 
-void vfsRead(uint64_t fd, void *buffer, uint64_t size)
+void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
 }
 
-void vfsWrite(uint64_t fd, void *buffer, uint64_t size)
+void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
 }
