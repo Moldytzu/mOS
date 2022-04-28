@@ -13,7 +13,7 @@ void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t
     void *taskTable = schedulerGetCurrent()->pageTable;
 
 #ifdef K_SYSCALL_DEBUG
-    printks("syscall: number %d, argument 1 is %d, argument 2 is %d, return address is %p, argument 3 is %d, argument 4 is %d\n\r", syscallNumber, rsi, rdx, returnAddress, r8, r9);
+    printks("syscall: number 0x%x, argument 1 is 0x%x, argument 2 is 0x%x, return address is 0x%p, argument 3 is 0x%x, argument 4 is 0x%x\n\r", syscallNumber, rsi, rdx, returnAddress, r8, r9);
 #endif
 
     // todo: use a lookup table

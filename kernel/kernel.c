@@ -24,7 +24,7 @@ void kmain()
     struct mm_pool total = mmGetTotal();
 
     // display the memory available
-    printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
+    printks("memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n\r", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
 #endif
 
 #ifdef K_VFS_DEBUG
@@ -33,7 +33,7 @@ void kmain()
     do
     {
         if (currentNode->filesystem)
-            printk("path %s%s on %s \n", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
+            printks("vfs: found %s%s on %s\n\r", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
         currentNode = currentNode->next; // next node
     } while (currentNode);
 #endif
