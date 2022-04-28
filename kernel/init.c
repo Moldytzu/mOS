@@ -16,6 +16,7 @@
 #include <acpi.h>
 #include <initrd.h>
 #include <vfs.h>
+#include <ps2.h>
 
 void kmain();
 
@@ -88,6 +89,13 @@ void _start(struct stivale2_struct *stivale2_struct)
     printk("Initializing the PIT...");
     pitInit();
     printk("done\n");
+
+    // initialize the ps2 controller and devices if enabled
+#ifdef K_PS2
+    printk("Initializing the PS/2 devices...");
+    ps2Init();
+    printk("done\n");
+#endif
 
     // initialize the acpi interface
     printk("Initializing the ACPI interface...");

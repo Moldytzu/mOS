@@ -35,8 +35,8 @@ bits 64
     pop    r15
 %endmacro
 
-global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, SyscallIntHandlerEntry
-extern PITHandler, syscallHandler
+global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, SyscallIntHandlerEntry, PS2Port1HandlerEntry, PS2Port2HandlerEntry
+extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler
 
 BaseHandlerEntry:
     cli ; disable intrerrupts
@@ -61,3 +61,15 @@ SyscallIntHandlerEntry:
     call syscallHandler ; call the syscall handler
     POP_REG
     iretq ; terminate intrerrupt and return to userspace
+
+PS2Port1HandlerEntry:
+    PUSH_REG
+    call ps2Port1Handler
+    POP_REG
+    iretq
+
+PS2Port2HandlerEntry:
+    PUSH_REG
+    call ps2Port2Handler
+    POP_REG
+    iretq

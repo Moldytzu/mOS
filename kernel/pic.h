@@ -22,6 +22,12 @@
 #define PIC_IRQ_5 (PIC_IRQ_BASE + 5)
 #define PIC_IRQ_6 (PIC_IRQ_BASE + 6)
 #define PIC_IRQ_7 (PIC_IRQ_BASE + 7)
+#define PIC_IRQ_8 (PIC_IRQ_BASE + 8)
+#define PIC_IRQ_9 (PIC_IRQ_BASE + 9)
+#define PIC_IRQ_10 (PIC_IRQ_BASE + 10)
+#define PIC_IRQ_11 (PIC_IRQ_BASE + 11)
+#define PIC_IRQ_12 (PIC_IRQ_BASE + 12)
+#define PIC_IRQ_13 (PIC_IRQ_BASE + 13)
 
 void picInit();
 
