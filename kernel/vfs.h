@@ -23,6 +23,7 @@ struct vfs_node
 
 void vfsInit();
 uint64_t vfsOpen(const char *name);
+uint64_t vfsSize(uint64_t fd);
 void vfsClose(uint64_t fd);
 void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset);
 void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset);

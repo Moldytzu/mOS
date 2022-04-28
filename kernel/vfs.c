@@ -109,3 +109,12 @@ void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
     if (node->filesystem->write)                             // check if the handler exists
         node->filesystem->write(node, buffer, size, offset); // inform the filesystem that we want to write
 }
+
+uint64_t vfsSize(uint64_t fd)
+{
+    if (!fd) // don't handle empty/non-existent file descriptors
+        return;
+
+    struct vfs_node *node = (struct vfs_node *)fd;
+    return node->size; // return the size
+}
