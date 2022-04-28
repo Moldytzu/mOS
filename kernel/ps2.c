@@ -14,38 +14,6 @@ uint8_t port1Type = PS2_TYPE_INVALID;
 bool port2Present = false;
 uint8_t port2Type = PS2_TYPE_INVALID;
 
-// intrerrupt handlers
-extern void PS2Port1HandlerEntry();
-extern void PS2Port2HandlerEntry();
-
-void ps2Port1Handler()
-{
-    if (schedulerEnabled()) // swap the page table
-        vmmSwap(vmmGetBaseTable());
-
-    uint8_t data = inb(PS2_DATA);
-    if(data <= sizeof(scanCodeSet1))
-        printk("%c", scanCodeSet1[data-1]);
-
-    if (schedulerEnabled()) // swap the page table back
-        vmmSwap(schedulerGetCurrent()->pageTable);
-
-    picEOI();
-}
-
-void ps2Port2Handler()
-{
-    if (schedulerEnabled()) // swap the page table
-        vmmSwap(vmmGetBaseTable());
-
-    uint8_t data = inb(PS2_DATA);
-    printk("%c", data);
-
-    if (schedulerEnabled()) // swap the page table back
-        vmmSwap(schedulerGetCurrent()->pageTable);
-    picEOI();
-}
-
 // get status register of the controller
 ifunc uint8_t status()
 {
@@ -119,6 +87,46 @@ void kbInit()
         waitResponse(); // wait for the reply
         output(); // flush the buffer
     }
+}
+
+// keyboard scancode handler
+void kbHandle(uint8_t scancode)
+{
+    if(scancode <= sizeof(scanCodeSet1))
+        printk("%c", scanCodeSet1[scancode-1]);
+}
+
+// intrerrupt handlers
+extern void PS2Port1HandlerEntry();
+extern void PS2Port2HandlerEntry();
+
+void ps2Port1Handler()
+{
+    if (schedulerEnabled()) // swap the page table
+        vmmSwap(vmmGetBaseTable());
+
+    uint8_t data = inb(PS2_DATA);
+    if(port1Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
+        kbHandle(data);
+
+    if (schedulerEnabled()) // swap the page table back
+        vmmSwap(schedulerGetCurrent()->pageTable);
+
+    picEOI();
+}
+
+void ps2Port2Handler()
+{
+    if (schedulerEnabled()) // swap the page table
+        vmmSwap(vmmGetBaseTable());
+
+    uint8_t data = inb(PS2_DATA);
+    if(port2Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
+        kbHandle(data);
+
+    if (schedulerEnabled()) // swap the page table back
+        vmmSwap(schedulerGetCurrent()->pageTable);
+    picEOI();
 }
 
 // initialize the controller
