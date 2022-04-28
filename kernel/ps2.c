@@ -4,6 +4,9 @@
 #include <pic.h>
 #include <scheduler.h>
 
+char kbBuffer[4096]; // buffer for key presses
+int kbIndex = 0;
+
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
 bool controllerPresent = false;
@@ -72,28 +75,41 @@ ifunc void port2Write(uint8_t data)
     write(data);
 }
 
+char ps2GetLastKey()
+{
+    char last = kbBuffer[kbIndex--];
+
+    if (kbIndex < 0) // prevent buffer underflow
+        kbIndex = 0;
+
+    return last;
+}
+
 // initialize the keyboard
 void kbInit()
 {
     if (port1Type == PS2_TYPE_KEYBOARD)
     {
         port1Write(0xF6); // set default parameters
-        waitResponse(); // wait for the reply
-        output(); // flush the buffer
+        waitResponse();   // wait for the reply
+        output();         // flush the buffer
     }
     else if (port2Type == PS2_TYPE_KEYBOARD)
     {
         port2Write(0xF6); // set default parameters
-        waitResponse(); // wait for the reply
-        output(); // flush the buffer
+        waitResponse();   // wait for the reply
+        output();         // flush the buffer
     }
 }
 
 // keyboard scancode handler
 void kbHandle(uint8_t scancode)
 {
-    if(scancode <= sizeof(scanCodeSet1))
-        printk("%c", scanCodeSet1[scancode-1]);
+    if (scancode <= sizeof(scanCodeSet1))
+        kbBuffer[kbIndex++] = scanCodeSet1[scancode - 1]; // append the character
+
+    if (kbIndex == 4096) // prevent buffer overflow
+        kbIndex = 0;     // wrap around
 }
 
 // intrerrupt handlers
@@ -106,8 +122,12 @@ void ps2Port1Handler()
         vmmSwap(vmmGetBaseTable());
 
     uint8_t data = inb(PS2_DATA);
-    if(port1Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
+    if (port1Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
         kbHandle(data);
+
+#ifdef K_PS2_DEBUG
+    printks("\n\r%s\n\r",kbBuffer);
+#endif
 
     if (schedulerEnabled()) // swap the page table back
         vmmSwap(schedulerGetCurrent()->pageTable);
@@ -121,7 +141,7 @@ void ps2Port2Handler()
         vmmSwap(vmmGetBaseTable());
 
     uint8_t data = inb(PS2_DATA);
-    if(port2Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
+    if (port2Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
         kbHandle(data);
 
     if (schedulerEnabled()) // swap the page table back
