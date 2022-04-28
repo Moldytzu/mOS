@@ -4,6 +4,8 @@
 #include <pic.h>
 #include <scheduler.h>
 
+// translation table for the scan code set 1
+char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
 bool controllerPresent = false;
 
 bool port1Present = false;
@@ -22,7 +24,8 @@ void ps2Port1Handler()
         vmmSwap(vmmGetBaseTable());
 
     uint8_t data = inb(PS2_DATA);
-    printk("%c", data);
+    if(data <= sizeof(scanCodeSet1))
+        printk("%c", scanCodeSet1[data-1]);
 
     if (schedulerEnabled()) // swap the page table back
         vmmSwap(schedulerGetCurrent()->pageTable);
@@ -109,28 +112,12 @@ void kbInit()
         port1Write(0xF6); // set default parameters
         waitResponse(); // wait for the reply
         output(); // flush the buffer
-
-        port1Write(0xF0); // set scan code set command
-        waitInput();
-        port1Write(1);  // scan code set 1
-        waitResponse(); // wait for the reply
-        output();       // flush the buffer
-        waitResponse(); // wait for the reply
-        output();       // flush the buffer
     }
     else if (port2Type == PS2_TYPE_KEYBOARD)
     {
         port2Write(0xF6); // set default parameters
         waitResponse(); // wait for the reply
         output(); // flush the buffer
-
-        port2Write(0xF0); // set scan code set command
-        waitInput();
-        port2Write(1);  // scan code set 1
-        waitResponse(); // wait for the reply
-        output();       // flush the buffer
-        waitResponse(); // wait for the reply
-        output();       // flush the buffer
     }
 }
 
