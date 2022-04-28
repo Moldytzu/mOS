@@ -101,6 +101,40 @@ ifunc void port2Write(uint8_t data)
     write(data);
 }
 
+// initialize the keyboard
+void kbInit()
+{
+    if (port1Type == PS2_TYPE_KEYBOARD)
+    {
+        port1Write(0xF6); // set default parameters
+        waitResponse(); // wait for the reply
+        output(); // flush the buffer
+
+        port1Write(0xF0); // set scan code set command
+        waitInput();
+        port1Write(1);  // scan code set 1
+        waitResponse(); // wait for the reply
+        output();       // flush the buffer
+        waitResponse(); // wait for the reply
+        output();       // flush the buffer
+    }
+    else if (port2Type == PS2_TYPE_KEYBOARD)
+    {
+        port2Write(0xF6); // set default parameters
+        waitResponse(); // wait for the reply
+        output(); // flush the buffer
+
+        port2Write(0xF0); // set scan code set command
+        waitInput();
+        port2Write(1);  // scan code set 1
+        waitResponse(); // wait for the reply
+        output();       // flush the buffer
+        waitResponse(); // wait for the reply
+        output();       // flush the buffer
+    }
+}
+
+// initialize the controller
 void ps2Init()
 {
     // disable intrerrupts
@@ -241,6 +275,9 @@ void ps2Init()
 
     // enable intrerrupts
     sti();
+
+    // initialize the keyboard
+    kbInit();
 
 #ifdef K_PS2_DEBUG
     printks("ps2: initialized controller and detected %d port(s).\n\r", (uint8_t)(port1Present + port2Present));
