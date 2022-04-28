@@ -38,7 +38,7 @@ ifunc uint8_t output()
 // wait for response
 ifunc void waitResponse()
 {
-    for (uint32_t timeout = 0; timeout < 0xFFFFF; timeout++) // wait for the output bit to be set in the status register
+    for (uint32_t timeout = 0; timeout < 0xFFFFFF; timeout++) // wait for the output bit to be set in the status register
         if (status() & 1)
             break;
 }
@@ -46,7 +46,7 @@ ifunc void waitResponse()
 // wait for input ready
 ifunc void waitInput()
 {
-    for (uint32_t timeout = 0; timeout < 0xFFFFF; timeout++) // wait for the input bit to not be set in the status register
+    for (uint32_t timeout = 0; timeout < 0xFFFFFF; timeout++) // wait for the input bit to not be set in the status register
         if (!(status() & 2))
             break;
 }
@@ -174,6 +174,6 @@ void ps2Init()
     sti();
 
 #ifdef K_PS2_DEBUG
-    printks("ps2: initialized controller and detected %d ports. using 0x%x as the configuration byte\n\r", (uint8_t)(port1Present + port2Present), configByte);
+    printks("ps2: initialized controller and detected %d port(s). using 0x%x as the configuration byte\n\r", (uint8_t)(port1Present + port2Present), configByte);
 #endif
 }
