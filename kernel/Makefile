@@ -71,6 +71,7 @@ $(KERNEL): $(OBJ)
 # Compilation rules for *.asm files.
 -include $(HEADER_DEPS)
 %.o: %.asm
+	@ mkdir -p $(dir obj/$@)
 	$(ASM) $(ASMFLAGS) $(INTERNALASMFLAGS) $< -o obj/$@
 
 # Remove object files and the final executable.
