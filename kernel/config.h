@@ -5,6 +5,7 @@
 // Uncomment to enable, comment do disable
 // ==========================================
 
+#define K_VFS_DEBUG     // vfs debug messages; If unsure: comment
 #define K_SYSCALL_DEBUG // syscall debug messages; If unsure: comment
 #define K_ELF_DEBUG     // elf debug messages; If unsure: comment
 #define K_ACPI_DEBUG    // acpi debug messages; If unsure: comment

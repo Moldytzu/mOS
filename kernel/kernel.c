@@ -12,6 +12,7 @@
 #include <syscall.h>
 #include <scheduler.h>
 #include <elf.h>
+#include <vfs.h>
 
 void panick(const char *);
 
@@ -24,6 +25,16 @@ void kmain()
 
     // display the memory available
     printk("Memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
+#endif
+
+#ifdef K_VFS_DEBUG
+    // get all the nodes
+    struct vfs_node *nodes = vfsNodes();
+    for(int i = 0; i < 0xFF; i++) // iterate over each node
+    {
+        if(nodes[i].filesystem)
+            printk("path %s%s on %s \n",nodes[i].filesystem->mountName,nodes[i].path,nodes[i].filesystem->name);
+    }
 #endif
 
     if (!elfLoad("init.mx")) // load the init executable

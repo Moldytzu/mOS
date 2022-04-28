@@ -14,10 +14,10 @@ void vfsInit()
     root.name = "rootfs";
     root.mountName = "/";
 
-    struct vfs_node node;          // the default node
-    node.filesystem = &root;       // rootfs
-    node.parent = NULL;            // no parent
-    memcpy(node.path, ".root", 5); // copy the path ("/.root")
+    struct vfs_node node;                                           // the default node
+    memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
+    node.filesystem = &root;                                        // rootfs
+    memcpy(node.path, ".root", 5);                                  // copy the path ("/.root")
     vfsAdd(node);
 }
 
