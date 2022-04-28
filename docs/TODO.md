@@ -1,5 +1,4 @@
 # Current todo list that's based on the current milestone
-### writing to the screen
 ### reading from keyboard
 ### terminal keyboard buffer
 ### terminal for every task
