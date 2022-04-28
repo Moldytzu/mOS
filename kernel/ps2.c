@@ -5,8 +5,12 @@
 #include <scheduler.h>
 
 bool controllerPresent = false;
+
 bool port1Present = false;
+uint8_t port1Type = PS2_TYPE_INVALID;
+
 bool port2Present = false;
+uint8_t port2Type = PS2_TYPE_INVALID;
 
 // intrerrupt handlers
 extern void PS2Port1HandlerEntry();
@@ -152,6 +156,75 @@ void ps2Init()
         port2Write(0xFF); // reset device
         waitResponse();
         port2Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
+    }
+
+    // detect the device types
+    if (port1Present)
+    {
+        port1Write(0xF5); // send disable scanning
+        waitResponse();   // wait for acknoledgement
+        output();         // flush the buffer
+        port1Write(0xF2); // send identify
+        waitResponse();   // wait for acknoledgement
+        output();         // flush the buffer
+
+        uint8_t reply[2] = {0, 0};
+        waitResponse();      // wait for the reply
+        reply[0] = output(); // flush the buffer
+        waitResponse();      // wait for the reply
+        reply[1] = output(); // flush the buffer
+
+        port1Write(0xF4); // send enable scanning
+        waitResponse();   // wait for acknoledgement
+
+        // decode the reply bytes
+        if (reply[0] == 0x00 && reply[1] == 0x00)
+            port1Type = PS2_TYPE_MOUSE;
+        else if (reply[0] == 0x03 && reply[1] == 0x00)
+            port1Type = PS2_TYPE_MOUSE_SCROLL;
+        else if (reply[0] == 0x04 && reply[1] == 0x00)
+            port1Type = PS2_TYPE_MOUSE_5BTN;
+        else
+            port1Type = PS2_TYPE_KEYBOARD;
+
+#ifdef K_PS2_DEBUG
+        const char *lookup[] = {"mouse", "mouse w/ scroll", "5 button mouse", "keyboard"};
+        printks("ps2: detected %s in port 1\n\r", lookup[port1Type]);
+#endif
+    }
+
+    if (port2Present)
+    {
+        port2Write(0xF5); // send disable scanning
+        waitResponse();   // wait for acknoledgement
+        output();         // flush the buffer
+        port2Write(0xF2); // send identify
+        waitResponse();   // wait for acknoledgement
+        output();         // flush the buffer
+
+        uint8_t reply[2] = {0, 0};
+        waitResponse();      // wait for the reply
+        reply[0] = output(); // flush the buffer
+        waitResponse();      // wait for the reply
+        reply[1] = output(); // flush the buffer
+
+        port2Write(0xF4); // send enable scanning
+        waitResponse();   // wait for acknoledgement
+
+        // decode the reply bytes
+        if (reply[0] == 0x00 && reply[1] == 0x00)
+            port2Type = PS2_TYPE_MOUSE;
+        else if (reply[0] == 0x03 && reply[1] == 0x00)
+            port2Type = PS2_TYPE_MOUSE_SCROLL;
+        else if (reply[0] == 0x04 && reply[1] == 0x00)
+            port2Type = PS2_TYPE_MOUSE_5BTN;
+        else
+            port2Type = PS2_TYPE_KEYBOARD;
+
+#ifdef K_PS2_DEBUG
+        const char *lookup[] = {"mouse", "mouse w/ scroll", "5 button mouse", "keyboard"};
+        printks("ps2: detected %s in port 2\n\r", lookup[port2Type]);
+#endif
     }
 
     // set the intrerrupt handlers
