@@ -22,10 +22,16 @@ void initrdInit()
     }
 }
 
+uint8_t dsfsfsOpen(struct vfs_node *node)
+{
+    return 1; // status ok
+}
+
 void initrdMount()
 {
     dsfsfs.name = "dsfs";
     dsfsfs.mountName = "/init/";
+    dsfsfs.open = dsfsfsOpen; // set the handler
 
     struct dsfs_entry *entry = &dsfs->firstEntry; // point to the first entry
 

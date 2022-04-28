@@ -1,11 +1,16 @@
 #pragma once
 #include <utils.h>
 
+struct vfs_node;
+
 struct vfs_fs
 {
     const char *name;
     const char *mountName;
-    void *handlers[4]; // open, close, read, write
+    uint8_t (*open)(struct vfs_node *);
+    uint8_t (*close)(struct vfs_node *);
+    uint8_t (*read)(struct vfs_node *, void *, uint64_t);
+    uint8_t (*write)(struct vfs_node *, void *, uint64_t);
 };
 
 struct vfs_node
