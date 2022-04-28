@@ -17,6 +17,7 @@ struct vfs_node
 {
     struct vfs_node *parent;
     struct vfs_fs *filesystem;
+    uint64_t size;
     uint8_t path[128];
 };
 

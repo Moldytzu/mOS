@@ -15,6 +15,16 @@ void rootClose(struct vfs_node *fd)
     // do nothing
 }
 
+void rootRead(struct vfs_node *fd, void *buffer, uint64_t size, uint64_t offset)
+{
+    // do nothing
+}
+
+void rootWrite(struct vfs_node *fd, void *buffer, uint64_t size, uint64_t offset)
+{
+    // do nothing
+}
+
 void vfsInit()
 {
     memset64(nodes, 0, sizeof(nodes) / sizeof(uint64_t));    // clear the nodes
@@ -25,6 +35,8 @@ void vfsInit()
     rootFS.mountName = "/";
     rootFS.open = rootOpen;
     rootFS.close = rootClose;
+    rootFS.read = rootRead;
+    rootFS.write = rootWrite;
 
     struct vfs_node node;                                           // the default node
     memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
@@ -58,7 +70,7 @@ uint64_t vfsOpen(const char *name)
             {
                 if (memcmp(name + strlen(nodes[i].filesystem->mountName), nodes[i].path, strlen(nodes[i].path)) == 0) // compare the path
                 {
-                    if(nodes[i].filesystem->open) // check if the handler exists
+                    if (nodes[i].filesystem->open)                // check if the handler exists
                         if (nodes[i].filesystem->open(&nodes[i])) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
                             return (uint64_t)&nodes[i];
                 }
@@ -74,14 +86,26 @@ void vfsClose(uint64_t fd)
         return;
 
     struct vfs_node *node = (struct vfs_node *)fd;
-    if(node->filesystem->close) // check if the handler exists
+    if (node->filesystem->close)       // check if the handler exists
         node->filesystem->close(node); // inform the filesystem that we closed the node
 }
 
 void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
+    if (!fd) // don't handle empty/non-existent file descriptors
+        return;
+
+    struct vfs_node *node = (struct vfs_node *)fd;
+    if (node->filesystem->read)                             // check if the handler exists
+        node->filesystem->read(node, buffer, size, offset); // inform the filesystem that we want to read
 }
 
 void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
+    if (!fd) // don't handle empty/non-existent file descriptors
+        return;
+
+    struct vfs_node *node = (struct vfs_node *)fd;
+    if (node->filesystem->write)                             // check if the handler exists
+        node->filesystem->write(node, buffer, size, offset); // inform the filesystem that we want to write
 }
