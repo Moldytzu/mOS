@@ -2,6 +2,7 @@
 #include <io.h>
 #include <idt.h>
 #include <pic.h>
+#include <scheduler.h>
 
 bool controllerPresent = false;
 bool port1Present = false;
@@ -13,17 +14,28 @@ extern void PS2Port2HandlerEntry();
 
 void ps2Port1Handler()
 {
+    if (schedulerEnabled()) // swap the page table
+        vmmSwap(vmmGetBaseTable());
+
     uint8_t data = inb(PS2_DATA);
     printk("%c", data);
+
+    if (schedulerEnabled()) // swap the page table back
+        vmmSwap(schedulerGetCurrent()->pageTable);
 
     picEOI();
 }
 
 void ps2Port2Handler()
 {
-    uint8_t data = inb(PS2_DATA);
-    printk(" asd %c", data);
+    if (schedulerEnabled()) // swap the page table
+        vmmSwap(vmmGetBaseTable());
 
+    uint8_t data = inb(PS2_DATA);
+    printk("%c", data);
+
+    if (schedulerEnabled()) // swap the page table back
+        vmmSwap(schedulerGetCurrent()->pageTable);
     picEOI();
 }
 
@@ -42,7 +54,7 @@ ifunc uint8_t output()
 // wait for response
 ifunc void waitResponse()
 {
-    for (uint32_t timeout = 0; timeout < 0xFFFFFF; timeout++) // wait for the output bit to be set in the status register
+    for (uint32_t timeout = 0; timeout < 0xFFFFF; timeout++) // wait for the output bit to be set in the status register
         if (status() & 1)
             break;
 }
@@ -50,7 +62,7 @@ ifunc void waitResponse()
 // wait for input ready
 ifunc void waitInput()
 {
-    for (uint32_t timeout = 0; timeout < 0xFFFFFF; timeout++) // wait for the input bit to not be set in the status register
+    for (uint32_t timeout = 0; timeout < 0xFFFFF; timeout++) // wait for the input bit to not be set in the status register
         if (!(status() & 2))
             break;
 }
@@ -65,15 +77,6 @@ ifunc void write(uint8_t data)
 ifunc void command(uint8_t cmd)
 {
     outb(PS2_COMMAND, cmd);
-}
-
-// send configuration byte to the controller
-ifunc uint8_t config(uint8_t data)
-{
-    waitInput();
-    command(0x60); // write next byte to controller configuration byte
-    waitInput();
-    write(data); // write the configuration byte
 }
 
 // send data to the first port
@@ -108,9 +111,6 @@ void ps2Init()
 
     // flush the output buffer
     output();
-
-    // send configuration byte
-    config(0b00110100); // irqs and translation disabled
 
     // perform self-test
     command(0xAA);
@@ -160,15 +160,7 @@ void ps2Init()
     if (port2Present)
         idtSetGate((void *)PS2Port2HandlerEntry, PIC_IRQ_12, IDT_InterruptGateU, true);
 
-    // set new configuration byte
-    uint8_t configByte = 0b00000100;
-    if (port1Present)
-        configByte |= 0b00010001; // set irq and clock for first port
-    if (port2Present)
-        configByte |= 0b00100010; // set irq and clock for second port
-    config(configByte);           // send the configuration byte
-
-    // unmask the irq pins
+    // unmask the irqs
     if (port1Present)
         outb(PIC_MASTER_DAT, 0b11111100); // IRQ 1 and IRQ 0 (timer and PS/2 port 1)
     if (port2Present)
@@ -178,6 +170,6 @@ void ps2Init()
     sti();
 
 #ifdef K_PS2_DEBUG
-    printks("ps2: initialized controller and detected %d port(s). using 0x%x as the configuration byte\n\r", (uint8_t)(port1Present + port2Present), configByte);
+    printks("ps2: initialized controller and detected %d port(s).\n\r", (uint8_t)(port1Present + port2Present));
 #endif
 }

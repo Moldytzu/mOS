@@ -140,6 +140,12 @@ struct sched_task *schedulerGetCurrent()
     return currentTask;
 }
 
+// return enabled status
+bool schedulerEnabled()
+{
+    return enabled;
+}
+
 // set priority to a task
 void schedulerPrioritize(uint16_t tid, uint8_t priority)
 {
