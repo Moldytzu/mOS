@@ -14,13 +14,17 @@ extern void PS2Port2HandlerEntry();
 void ps2Port1Handler()
 {
     uint8_t data = inb(PS2_DATA);
-    printk("%c",data);
+    printk("%c", data);
+
+    picEOI();
 }
 
 void ps2Port2Handler()
 {
     uint8_t data = inb(PS2_DATA);
-    printk("%c",data);
+    printk(" asd %c", data);
+
+    picEOI();
 }
 
 // get status register of the controller
@@ -158,16 +162,16 @@ void ps2Init()
 
     // set new configuration byte
     uint8_t configByte = 0b00000100;
-    if(port1Present)
+    if (port1Present)
         configByte |= 0b00010001; // set irq and clock for first port
-    if(port2Present)
+    if (port2Present)
         configByte |= 0b00100010; // set irq and clock for second port
-    config(configByte); // send the configuration byte
+    config(configByte);           // send the configuration byte
 
     // unmask the irq pins
-    if(port1Present)
+    if (port1Present)
         outb(PIC_MASTER_DAT, 0b11111100); // IRQ 1 and IRQ 0 (timer and PS/2 port 1)
-    if(port2Present)
+    if (port2Present)
         outb(PIC_SLAVE_DAT, 0b11101111); // IRQ 12 (PS/2 port 2)
 
     // enable intrerrupts
