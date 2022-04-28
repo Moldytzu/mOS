@@ -37,7 +37,7 @@ void kmain()
     }
 #endif
 
-    if (!elfLoad("init.mx")) // load the init executable
+    if (!elfLoad("/init/init.mx")) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
 
     schedulerEnable(); // enable the schduler and jump in userspace

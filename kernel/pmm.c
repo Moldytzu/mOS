@@ -179,6 +179,13 @@ void mmDeallocatePage(void *address)
     }
 }
 
+// deallocate pages
+void mmDeallocatePages(void *address, size_t pages)
+{
+    for(size_t i = 0; i < pages; i++)
+        mmDeallocatePage((void*)((uint64_t)address + VMM_PAGE * i));
+}
+
 // initialize the physical memory manager
 void pmmInit()
 {

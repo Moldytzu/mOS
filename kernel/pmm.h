@@ -18,6 +18,7 @@ struct mm_pool
 };
 
 bool mmIsFreePage(struct mm_pool *pool, size_t page);
+void mmDeallocatePages(void *address, size_t pages);
 void mmDeallocatePage(void *address);
 void mmDeallocatePagePool(struct mm_pool *pool, void *address);
 void *mmAllocatePage();

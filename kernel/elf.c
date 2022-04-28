@@ -1,18 +1,20 @@
 #include <elf.h>
 #include <elfabi.h>
-#include <initrd.h>
+#include <vfs.h>
 #include <pmm.h>
 #include <vmm.h>
 #include <scheduler.h>
 
 bool elfLoad(const char *path)
 {
-    Elf64_Ehdr *elf = initrdGet(path); // get the elf header from the initrd
-
-    if (!elf) // return if we didn't get the header
+    uint64_t fd = vfsOpen(path);                                   // open the file
+    Elf64_Ehdr *elf = mmAllocatePages(vfsSize(fd) / VMM_PAGE + 1); // allocate the raw elf
+    if (!elf)                                                      // return if we didn't get the header
         return false;
 
-    // check the compatibility
+    vfsRead(fd, elf, vfsSize(fd), 0); // read the elf
+
+    // check compatibility
     if (elf->e_ident[EI_CLASS] != ELFCLASS64 || elf->e_ident[EI_DATA] != ELFDATA2LSB || elf->e_type != ET_EXEC || elf->e_machine != EM_X86_64 || elf->e_version != EV_CURRENT)
         return false;
 
@@ -20,8 +22,7 @@ bool elfLoad(const char *path)
     printks("elf: found %s at 0x%p with the entry offset at 0x%p\n\r", path, elf, elf->e_entry - TASK_BASE_ADDRESS);
 #endif
 
-    struct dsfs_entry *entry = (struct dsfs_entry *)((uint64_t)elf - sizeof(struct dsfs_entry)); // get the entry header
-    void *buffer = mmAllocatePages(entry->size / VMM_PAGE + 1);                                  // allocate the buffer
+    void *buffer = mmAllocatePages(vfsSize(fd) / VMM_PAGE + 1); // allocate the buffer for the sections
 
     Elf64_Phdr *phdr = (Elf64_Phdr *)((uint64_t)elf + elf->e_phoff); // get the program headers from the offset
 
@@ -36,8 +37,9 @@ bool elfLoad(const char *path)
         }
     }
 
-    // add the task
-    schedulerAdd(path,(void*)elf->e_entry - TASK_BASE_ADDRESS,VMM_PAGE,buffer,entry->size);
+    mmDeallocatePages(elf, vfsSize(fd) / VMM_PAGE + 1); // deallocate the elf
+
+    schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd)); // add the task
 
     return true;
 }
