@@ -17,7 +17,7 @@ struct vt_terminal *vtCreate()
 
         if (currentTerminal->buffer)
         {
-            currentTerminal->next = malloc(sizeof(struct vfs_terminal)); // allocate next terminal if the current terminal is valid
+            currentTerminal->next = malloc(sizeof(struct vt_terminal)); // allocate next terminal if the current terminal is valid
             currentTerminal = currentTerminal->next;                     // set current terminal to the newly allocated terminal
         }
     }
