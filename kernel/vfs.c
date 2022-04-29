@@ -6,26 +6,6 @@ uint64_t lastNode = 0;
 
 struct vfs_fs rootFS;
 
-uint8_t rootOpen(struct vfs_node *fd)
-{
-    return 1; // status ok
-}
-
-void rootClose(struct vfs_node *fd)
-{
-    // do nothing
-}
-
-void rootRead(struct vfs_node *fd, void *buffer, uint64_t size, uint64_t offset)
-{
-    // do nothing
-}
-
-void rootWrite(struct vfs_node *fd, void *buffer, uint64_t size, uint64_t offset)
-{
-    // do nothing
-}
-
 void vfsInit()
 {
     memset64(&rootFS, 0, sizeof(rootFS) / sizeof(uint64_t)); // clear the root filesystem
@@ -33,11 +13,7 @@ void vfsInit()
     // metadata of the rootfs
     rootFS.name = "rootfs";
     rootFS.mountName = "/";
-    rootFS.open = rootOpen;
-    rootFS.close = rootClose;
-    rootFS.read = rootRead;
-    rootFS.write = rootWrite;
-
+    
     struct vfs_node node;                                           // the default node
     memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
     node.filesystem = &rootFS;                                      // rootfs
