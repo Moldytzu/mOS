@@ -11,5 +11,4 @@
 #define PS2_TYPE_MOUSE_5BTN 0x2
 #define PS2_TYPE_KEYBOARD 0x3
 
-char ps2GetLastKey();
 void ps2Init();

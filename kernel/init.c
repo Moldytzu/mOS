@@ -17,6 +17,7 @@
 #include <initrd.h>
 #include <vfs.h>
 #include <ps2.h>
+#include <input.h>
 
 void kmain();
 
@@ -90,17 +91,22 @@ void _start(struct stivale2_struct *stivale2_struct)
     pitInit();
     printk("done\n");
 
+    // initialize the acpi interface
+    printk("Initializing the ACPI interface...");
+    acpiInit();
+    printk("done\n");
+
+    // initialize the input subsystem
+    printk("Initializing the Input subystem...");
+    inputInit();
+    printk("done\n");
+
     // initialize the ps2 controller and devices if enabled
 #ifdef K_PS2
     printk("Initializing the PS/2 devices...");
     ps2Init();
     printk("done\n");
 #endif
-
-    // initialize the acpi interface
-    printk("Initializing the ACPI interface...");
-    acpiInit();
-    printk("done\n");
 
     // initialize the scheduler
     printk("Initializing the Scheduler...");

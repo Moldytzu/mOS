@@ -10,6 +10,7 @@
 #define K_ELF_DEBUG     // elf debug messages; If unsure: comment
 #define K_ACPI_DEBUG    // acpi debug messages; If unsure: comment
 #define K_SCHED_DEBUG   // scheduler debug messages; If unsure: comment
+#define K_INPUT_DEBUG   // input subsystem debug messages; If unsure: comment
 #define K_VMM_DEBUG     // virtual memory manager debug messages; If unsure: comment
 #define K_PMM_DEBUG     // physical memory manager debug messages; If unsure: comment
 #define K_PS2_DEBUG     // enable ps/2 debug messages; If unsure: comment
