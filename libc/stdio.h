@@ -8,3 +8,4 @@
 #include <stdnoreturn.h>
 
 void puts(const char *str);
+void putchar(int c);

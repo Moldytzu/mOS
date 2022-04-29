@@ -13,7 +13,8 @@ void kbAppendChar(char c)
 
 char kbGetLastKey()
 {
-    char last = kbBuffer[kbIndex--];
+    char last = kbBuffer[kbIndex];
+    kbBuffer[kbIndex--] = '\0'; // clear the character
 
     if (kbIndex < 0) // prevent buffer underflow
         kbIndex = 0;
