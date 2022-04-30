@@ -44,14 +44,15 @@ BaseHandlerEntry:
     mov rdi, rsp ; give the handler the stack frame
     call exceptionHandler
     POP_REG
-    jmp $
     iretq
 
 PITHandlerEntry:
+    push rax ; simulate error push
     PUSH_REG
     mov rdi, rsp ; give the handler the stack frame
     call PITHandler
     POP_REG
+    add rsp, 8 ; hide that push
     iretq
 
 SyscallHandlerEntry:

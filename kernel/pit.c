@@ -12,6 +12,7 @@ uint64_t ticks = 0;
 extern void PITHandlerEntry();
 extern void PITHandler(struct idt_intrerrupt_stack *stack)
 {
+    vmmSwap(vmmGetBaseTable()); // swap the base table
     ticks++;
     schedulerSchedule(stack);
     picEOI();

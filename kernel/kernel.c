@@ -44,12 +44,20 @@ void kmain()
     schedulerEnable(); // enable the schduler and jump in userspace
 }
 
-void exceptionHandler(struct idt_exception_stack *stack)
+void exceptionHandler(struct idt_intrerrupt_stack *stack)
 {
     vmmSwap(vmmGetBaseTable()); // swap to the base table
-    printk("\nINFORMATION:\n");
-    printk("ERR=0x%x RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p",stack->error,stack->rip,stack->cs,stack->rflags,stack->rsp,stack->ss);
-    panick("x86_64 exception catched.");
+    if (stack->cs == 0x23)      // userspace
+    {
+        printk("\nTASK EXCEPTION OCCURED. STOPPING TASK\n");
+        schedulerGetCurrent()->state = 1; // terminate the task
+        schedulerSchedule(stack);         // schedule next task
+        return;
+    }
+
+    printk("\nCATCHED EXCEPTION. INFORMATION:\n");
+    printk("RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p", stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss);
+    panick("Generic x86_64 exception catched.");
 }
 
 void panick(const char *msg)
