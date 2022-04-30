@@ -44,6 +44,7 @@ BaseHandlerEntry:
     mov rdi, rsp ; give the handler the stack frame
     call exceptionHandler
     POP_REG
+    add rsp, 8 ; cancel the error code
     iretq
 
 PITHandlerEntry:
