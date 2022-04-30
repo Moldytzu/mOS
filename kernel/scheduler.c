@@ -160,8 +160,11 @@ void schedulerPrioritize(uint32_t tid, uint8_t priority)
         priority = 1;
 
     struct sched_task *task = &rootTask; // first task
-    while (task->id != tid)              // get the task with the respective task ID
+    while (task->id != tid && task)      // get the task with the respective task ID
         task = task->next;
+
+    if (!task)
+        return; // didn't find it
 
     task->priority = priority;              // set new priority level
     task->priorityCounter = task->priority; // reset counter
@@ -174,8 +177,11 @@ void schedulerSetTerminal(uint32_t tid, uint32_t terminal)
         return;
 
     struct sched_task *task = &rootTask; // first task
-    while (task->id != tid)              // get the task with the respective task ID
+    while (task->id != tid && task)      // get the task with the respective task ID
         task = task->next;
+
+    if (!task)
+        return; // didn't find it
 
     task->terminal = terminal; // set new terminal
 }

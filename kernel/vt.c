@@ -40,8 +40,8 @@ struct vt_terminal *vtGet(uint32_t id)
     if (id > lastID) // out of bounds
         return NULL;
 
-    struct vt_terminal *terminal = &rootTerminal; // first terminal
-    while (terminal->id != id || terminal)        // get the terminal with the respective terminal ID
+    struct vt_terminal *terminal = &rootTerminal;              // first terminal
+    while ((terminal->id != id || terminal) && terminal->next) // get the terminal with the respective terminal ID
         terminal = terminal->next;
 
     return terminal;
