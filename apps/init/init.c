@@ -4,14 +4,16 @@
 
 int main()
 {
-    puts("m Init System\n");
+    puts("m Init System\n"); // display a basic message
+
+    asm volatile("rdmsr");
 
     while(1)
     {
         char chr;
-        sys_input(SYS_INPUT_KEYBOARD,&chr);
+        sys_input(SYS_INPUT_KEYBOARD,&chr); // read a character off the keyboard buffer
         
-        if(chr)
+        if(chr) // if one exists then print it
             putchar(chr);
     }
 

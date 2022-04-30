@@ -36,11 +36,15 @@ bits 64
 %endmacro
 
 global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, SyscallIntHandlerEntry, PS2Port1HandlerEntry, PS2Port2HandlerEntry
-extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler
+extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler, exceptionHandler
 
 BaseHandlerEntry:
     cli ; disable intrerrupts
-    jmp $ ; don't do anything
+    PUSH_REG
+    mov rdi, rsp ; give the handler the stack frame
+    call exceptionHandler
+    POP_REG
+    jmp $
     iretq
 
 PITHandlerEntry:

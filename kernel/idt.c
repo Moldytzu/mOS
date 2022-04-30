@@ -52,7 +52,7 @@ void idtInit()
     idtr.offset = (uint64_t)gates; // set the offset to the data
     idtr.size = 0;                 // reset the size
     for (int i = 0; i < 0xFF; i++) // set all exception irqs to the base handler
-        idtSetGate((void *)BaseHandlerEntry, i, IDT_InterruptGate, false);
+        idtSetGate((void *)BaseHandlerEntry, i, IDT_InterruptGateU, true);
 
     idtr.size--;                 // decrement to comply with the spec
     iasm("lidt %0" ::"m"(idtr)); // load the idtr

@@ -44,6 +44,14 @@ void kmain()
     schedulerEnable(); // enable the schduler and jump in userspace
 }
 
+void exceptionHandler(struct idt_exception_stack *stack)
+{
+    vmmSwap(vmmGetBaseTable()); // swap to the base table
+    printk("\nINFORMATION:\n");
+    printk("ERR=0x%x RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p",stack->error,stack->rip,stack->cs,stack->rflags,stack->rsp,stack->ss);
+    panick("x86_64 exception catched.");
+}
+
 void panick(const char *msg)
 {
     printk("\n\nA kernel exception has happened.\n%s\n", msg);
