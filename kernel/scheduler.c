@@ -73,11 +73,11 @@ void schedulerInit()
     memset64(&rootTask, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the root task
     currentTask = &rootTask;                                              // set the current task
 
+    firstTerminal = vtCreate(); // create the first terminal
+
     void *task = mmAllocatePage();                          // create an empty page just for the idle task
     memcpy8(task, (void *)idleTask, VMM_PAGE);              // copy the executable part
     schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
-
-    vtCreate(); // create the root terminal
 }
 
 // enable the scheduler and then jump in the first task
