@@ -6,9 +6,6 @@ int main()
 {
     puts("m Init System\n"); // display a basic message
 
-    int *a = (int *)0x1FF;
-    *a = 1; // page fault
-
     while(1)
     {
         char chr;
