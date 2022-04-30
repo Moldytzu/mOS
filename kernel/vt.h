@@ -11,5 +11,6 @@ struct vt_terminal
     struct vt_terminal *next; // next terminal
 };
 
+struct vt_terminal *vtGet(uint32_t id);
 struct vt_terminal *vtRoot();
 struct vt_terminal *vtCreate();

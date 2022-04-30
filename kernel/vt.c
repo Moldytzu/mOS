@@ -18,7 +18,7 @@ struct vt_terminal *vtCreate()
         if (currentTerminal->buffer)
         {
             currentTerminal->next = malloc(sizeof(struct vt_terminal)); // allocate next terminal if the current terminal is valid
-            currentTerminal = currentTerminal->next;                     // set current terminal to the newly allocated terminal
+            currentTerminal = currentTerminal->next;                    // set current terminal to the newly allocated terminal
         }
     }
 
@@ -33,4 +33,16 @@ struct vt_terminal *vtCreate()
 struct vt_terminal *vtRoot()
 {
     return &rootTerminal;
+}
+
+struct vt_terminal *vtGet(uint32_t id)
+{
+    if (id > lastID) // out of bounds
+        return NULL;
+
+    struct vt_terminal *terminal = &rootTerminal; // first terminal
+    while (terminal->id != id || terminal)        // get the terminal with the respective terminal ID
+        terminal = terminal->next;
+
+    return terminal;
 }

@@ -6,10 +6,11 @@
 #include <heap.h>
 
 void *kernelStack;
-struct sched_task rootTask;     // root of the tasks list
-struct sched_task *currentTask; // current task in the tasks list
-uint32_t lastTID = 0;           // last task ID
-bool enabled = false;           // enabled
+struct vt_terminal *firstTerminal; // first usable terminal
+struct sched_task rootTask;        // root of the tasks list
+struct sched_task *currentTask;    // current task in the tasks list
+uint32_t lastTID = 0;              // last task ID
+bool enabled = false;              // enabled
 
 extern void userspaceJump(uint64_t rip, uint64_t stack);
 
@@ -75,6 +76,8 @@ void schedulerInit()
     void *task = mmAllocatePage();                          // create an empty page just for the idle task
     memcpy8(task, (void *)idleTask, VMM_PAGE);              // copy the executable part
     schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
+
+    vtCreate(); // create the root terminal
 }
 
 // enable the scheduler and then jump in the first task
@@ -111,7 +114,7 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     task->priorityCounter = 0;                       // reset counter
     task->id = index;                                // set the task ID
     task->priority = 0;                              // switch imediately
-    task->terminal = 0;                              // default terminal
+    task->terminal = firstTerminal->id;              // default/first terminal
     memcpy8(task->name, (char *)name, strlen(name)); // set the name
 
     // page table
