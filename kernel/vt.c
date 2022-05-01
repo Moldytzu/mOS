@@ -30,7 +30,7 @@ struct vt_terminal *vtCreate()
     return currentTerminal;
 }
 
-void vtAppend(struct vt_terminal *vt, const char *str, size_t count);
+void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
 {
 
 }
