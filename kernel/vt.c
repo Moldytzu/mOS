@@ -27,12 +27,29 @@ struct vt_terminal *vtCreate()
     currentTerminal->bufferLen = VMM_PAGE;                                       // set the lenght of the buffer
     currentTerminal->id = lastID++;                                              // set the ID
 
+#ifdef K_VT_DEBUG
+    printks("vt: creating new terminal with ID %d\n\r",currentTerminal->id);
+#endif
+
     return currentTerminal;
 }
 
 void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
 {
+    const char *input = str;                    // input buffer
+    if (vt->bufferIdx + count >= vt->bufferLen) // check if we could overflow
+    {
+        input += (vt->bufferIdx + count) - vt->bufferLen;          // move the pointer until where it overflows
+        count -= (vt->bufferIdx + count) - vt->bufferLen;          // decrease the count by the number of bytes where it overflows
+        memset64((void *)vt->buffer, 0, vt->bufferLen / sizeof(uint64_t)); // clear the buffer
+        vt->bufferIdx = 0;                                         // reset the index
+    }
 
+    memcpy8((void*)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer
+
+#ifdef K_VT_DEBUG
+    printks("vt: appended %d bytes to terminal %d\n\r",count,vt->id);
+#endif
 }
 
 struct vt_terminal *vtRoot()
