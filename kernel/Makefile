@@ -30,6 +30,7 @@ INTERNALCFLAGS :=   		 \
 	-mcmodel=kernel      	 \
 	-Werror 			     \
 	-Wno-int-to-pointer-cast \
+	-march=nocona            \
 	-MMD
 
 # Internal linker flags that should not be changed by the user.
