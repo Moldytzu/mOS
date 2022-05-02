@@ -2,7 +2,7 @@
 ### shell
 ### libc (maybe mlibc or something)
 ### custom gcc build
-### basic gui infrastructure
+### gui infrastructure
 ### driver support
 
 # Reached milestones

@@ -10,9 +10,10 @@ void pid(uint64_t syscallNumber, uint64_t pid, uint64_t info, uint64_t returnAdd
     {
     case 0: // get pid state
         struct sched_task *task = schedulerGet(pid);
-        if(!task) // couldn't find the task
-            *retAddr = 0xFF; 
-        *retAddr = task->state; // give the state in which that pid is in
+        if(!task) // check if the task exists
+            *retAddr = 0xFF;
+        else
+            *retAddr = task->state; // give the state in which that pid is in
         break;
     default:
         break;

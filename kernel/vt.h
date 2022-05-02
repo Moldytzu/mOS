@@ -12,7 +12,8 @@ struct vt_terminal
     uint32_t bufferIdx; // current index in the buffer
     uint32_t id;        // ttyID
 
-    struct vt_terminal *next; // next terminal
+    struct vt_terminal *previous; // previous terminal
+    struct vt_terminal *next;     // next terminal
 };
 
 void vtSetMode(uint16_t displayMode);

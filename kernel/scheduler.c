@@ -11,6 +11,7 @@ struct sched_task rootTask;        // root of the tasks list
 struct sched_task *currentTask;    // current task in the tasks list
 uint32_t lastTID = 0;              // last task ID
 bool enabled = false;              // enabled
+bool taskKilled = false;
 
 extern void userspaceJump(uint64_t rip, uint64_t stack);
 
@@ -29,22 +30,30 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
-    if (currentTask->priorityCounter--) // check if the priority counter is over
+    if (taskKilled)
     {
-#ifdef K_SCHED_DEBUG
-        printks("sched: %s still has %d ticks left. doing nothing\n\r", currentTask->name, currentTask->priorityCounter + 1);
-#endif
-        vmmSwap(currentTask->pageTable); // swap the page table
-        return;
+        taskKilled = false;
+        currentTask = &rootTask;
     }
-    currentTask->priorityCounter = currentTask->priority; // reset counter
+    else
+    {
+        if (currentTask->priorityCounter--) // check if the priority counter is over
+        {
+#ifdef K_SCHED_DEBUG
+            printks("sched: %s still has %d ticks left. doing nothing\n\r", currentTask->name, currentTask->priorityCounter + 1);
+#endif
+            vmmSwap(currentTask->pageTable); // swap the page table
+            return;
+        }
+        currentTask->priorityCounter = currentTask->priority; // reset counter
 
 #ifdef K_SCHED_DEBUG
-    printks("sched: saving %s\n\r", currentTask->name);
+        printks("sched: saving %s\n\r", currentTask->name);
 #endif
 
-    // save the registers
-    memcpy8(&currentTask->intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
+        // save the registers
+        memcpy8(&currentTask->intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
+    }
 
     // load the next task
     do
@@ -102,11 +111,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
         if (task->pageTable)
         {
             task->next = malloc(sizeof(struct sched_task)); // allocate next task if the current task is valid
+            task->next->previous = task;                    // set the previous task
             task = task->next;                              // set current task to the newly allocated task
         }
     }
-
-    memset64(task, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the task
 
     uint16_t index = lastTID++;
 
@@ -161,13 +169,7 @@ void schedulerPrioritize(uint32_t tid, uint8_t priority)
     if (priority == 0) // minimum ticks until switching is 1
         priority = 1;
 
-    struct sched_task *task = &rootTask; // first task
-    while (task->id != tid && task)      // get the task with the respective task ID
-        task = task->next;
-
-    if (!task)
-        return; // didn't find it
-
+    struct sched_task *task = schedulerGet(tid);
     task->priority = priority;              // set new priority level
     task->priorityCounter = task->priority; // reset counter
 }
@@ -178,9 +180,7 @@ void schedulerSetTerminal(uint32_t tid, uint32_t terminal)
     if (lastTID - 1 < tid) // out of bounds
         return;
 
-    struct sched_task *task = &rootTask; // first task
-    while (task->id != tid && task)      // get the task with the respective task ID
-        task = task->next;
+    struct sched_task *task = schedulerGet(tid);
 
     if (!task)
         return; // didn't find it
@@ -191,8 +191,46 @@ void schedulerSetTerminal(uint32_t tid, uint32_t terminal)
 struct sched_task *schedulerGet(uint32_t tid)
 {
     struct sched_task *task = &rootTask; // first task
-    while (task->id != tid && task)      // get the task with the respective task ID
+    while (task)
+    {
+        if(task->id == tid)
+            break;
         task = task->next;
+    }
 
     return task; // return the task
+}
+
+void schedulerKill(uint32_t tid)
+{
+    struct sched_task *task = schedulerGet(tid);
+
+    if (!task)
+        return;
+
+    // deallocate the terminal if it's not used by another task
+    uint64_t found = 0;
+    struct sched_task *temp = &rootTask; // first task
+    while (temp->next)                   // iterate thru every task
+    {
+        if (temp->terminal == task->terminal)
+            found++;
+        temp = temp->next;
+    }
+
+    if (found == 1) // if only one task is using that task (the task we're killing) then we deallocate the terminal
+    {
+        struct vt_terminal *terminal = vtGet(task->terminal);
+        terminal->previous->next = terminal->next;  // bypass this node
+        mmDeallocatePage((void *)terminal->buffer); // deallocate the buffer
+        free(terminal);                             // free the terminal
+    }
+
+    // deallocate the task
+    struct sched_task *prev = task->previous;
+    prev->next = task->next; // bypass this node
+    free(task->pageTable);   // free the page table
+    free(task);              // free the task
+
+    taskKilled = true;
 }

@@ -7,8 +7,7 @@ int main()
     puts("m Shell\n");
 
     // main loop
-    while (1)
-    {
+
         char chr;
 
         puts("m$ ");
@@ -20,5 +19,5 @@ int main()
             if(chr)
                 putchar(chr);
         } while (chr != '\n');
-    }
+    
 }

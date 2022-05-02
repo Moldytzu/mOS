@@ -8,5 +8,5 @@ void exit(uint64_t syscallNumber, uint64_t status, uint64_t rdx, uint64_t return
 #ifdef K_SYSCALL_DEBUG
     printks("syscall: exit status %d\n\r", status);
 #endif
-    schedulerGetCurrent()->state = 1; // stop
+    schedulerKill(schedulerGetCurrent()->id); // kill the task
 }
