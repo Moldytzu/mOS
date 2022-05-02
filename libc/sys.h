@@ -12,6 +12,7 @@
 #define SYS_READ 2
 #define SYS_INPUT 3
 #define SYS_DISPLAY 4
+#define SYS_EXEC 5
 
 extern void _syscall(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t rcx, uint64_t r8, uint64_t r9);
 void sys_exit(uint64_t status);
@@ -19,3 +20,4 @@ void sys_write(void *buffer, uint64_t count, uint64_t fd);
 void sys_read(void *buffer, uint64_t count, uint64_t fd);
 void sys_input(uint8_t deviceType, char *returnPtr);
 void sys_display(uint8_t call, uint64_t arg1, uint64_t arg2);
+void sys_exec(const char *path, uint8_t newTerminal);

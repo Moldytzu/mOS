@@ -9,6 +9,8 @@ int main()
 
     puts("m Init System\n"); // display a basic message
 
+    sys_exec("/init/hello.mx",0); // exec hello world on the same terminal
+
     while(1)
     {
         char chr;
