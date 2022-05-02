@@ -1,7 +1,7 @@
 include ../app.mk
 
 # append the output filename
-OUTFILE = $(OUTFOLDER)hello.mx
+OUTFILE = $(OUTFOLDER)msh.mx
 
 # the C sources
 CFILES := $(shell find . -type f -name '*.c')
