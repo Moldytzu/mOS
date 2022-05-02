@@ -20,3 +20,8 @@ void sys_input(uint8_t deviceType, char *returnPtr)
 {
     _syscall(SYS_INPUT,deviceType,(uint64_t)returnPtr,0,0,0);
 }
+
+void sys_display(uint8_t call, uint64_t arg1, uint64_t arg2)
+{
+    _syscall(SYS_DISPLAY,call,arg1,arg2,0,0);
+}

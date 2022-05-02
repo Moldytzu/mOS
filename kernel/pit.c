@@ -2,6 +2,7 @@
 #include <framebuffer.h>
 #include <idt.h>
 #include <scheduler.h>
+#include <vt.h>
 
 struct pit_packet packet;
 
@@ -14,6 +15,23 @@ extern void PITHandler(struct idt_intrerrupt_stack *stack)
 {
     vmmSwap(vmmGetBaseTable()); // swap the base table
     ticks++;
+
+    switch (vtGetMode())
+    {
+    case VT_DISPLAY_KERNEL:
+        // do nothing
+        break;
+    case VT_DISPLAY_FB:
+        // todo: copy the user display framebuffer to the global framebuffer
+        break;
+    case VT_DISPLAY_TTY0:
+        framebufferClear(0);
+        framebufferWrite(vtGet(0)->buffer);
+        break;
+    default:
+        break;
+    }
+
     schedulerSchedule(stack);
     picEOI();
 }

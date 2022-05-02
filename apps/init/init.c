@@ -4,6 +4,9 @@
 
 int main()
 {
+    // set tty display mode
+    sys_display(SYS_DISPLAY_CALL_SET,SYS_DISPLAY_TTY,0);
+
     puts("m Init System\n"); // display a basic message
 
     while(1)

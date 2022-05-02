@@ -31,7 +31,7 @@ void framebufferInit()
 inline void framebufferClear(uint32_t colour)
 {
     cursor.X = cursor.Y = 0;                                                                                                                                // reset cursor position
-    memset64((void *)framebuffer->framebuffer_addr, (uint64_t)colour << 32 | colour, framebuffer->framebuffer_pitch * framebuffer->framebuffer_height / 2); // clear the screen
+    memset64((void *)framebuffer->framebuffer_addr, (uint64_t)colour << 32 | colour, (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height / 2) / sizeof(uint64_t)); // clear the screen
 }
 
 // load a font

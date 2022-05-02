@@ -68,3 +68,15 @@ struct vt_terminal *vtGet(uint32_t id)
 
     return terminal;
 }
+
+uint16_t mode;
+
+void vtSetMode(uint16_t displayMode)
+{
+    mode = displayMode;
+}
+
+uint16_t vtGetMode()
+{
+    return mode;
+}
