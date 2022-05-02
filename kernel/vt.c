@@ -50,6 +50,7 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
     }
 
     memcpy8((void *)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer
+    vt->bufferIdx += count;                                                        // increment the index
 
 #ifdef K_VT_DEBUG
     printks("vt: appended %d bytes to terminal %d\n\r", count, vt->id);
@@ -82,10 +83,10 @@ void vtSetMode(uint16_t displayMode)
 
 uint16_t vtGetMode()
 {
-    if(mode != VT_DISPLAY_TTY0)
+    if (mode != VT_DISPLAY_TTY0)
         return mode;
 
-    if(refresh) // if the refresh flag is set then we have to refresh the tty
+    if (refresh) // if the refresh flag is set then we have to refresh the tty
     {
         refresh = false;
         return mode; // return the mode
