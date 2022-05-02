@@ -87,7 +87,7 @@ void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user
     pt->entries[index.P] = currentEntry;                                // write the entry in the table
 }
 
-// map a virtual address to a physical address in a page table 
+// map a virtual address to a physical address in a page table
 void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
@@ -185,7 +185,7 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
     currentEntry = pd->entries[index.PT];                               // index pt
     pt = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pt->entries[index.P];         // index p
+    currentEntry = pt->entries[index.P];                                                              // index p
     return (void *)(vmmGetAddress(&currentEntry) * VMM_PAGE + ((uint64_t)virtualAddress % VMM_PAGE)); // get the address
 }
 
@@ -204,14 +204,14 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
     uint64_t a = mmGetTotal().available;
 #endif
 
-           struct stivale2_struct_tag_memmap *map = bootloaderGetMemMap(); // get the memory map
+    struct stivale2_struct_tag_memmap *map = bootloaderGetMemMap(); // get the memory map
 
     // map PMRs
     for (size_t i = 0; i < pmrs->entries; i++)
     {
         register struct stivale2_pmr currentPMR = pmrs->pmrs[i];
         for (size_t j = 0; j < currentPMR.length; j += VMM_PAGE)
-            vmmMap(newTable, (void *)currentPMR.base + j, (void *)kaddr->physical_base_address + (currentPMR.base - kaddr->virtual_base_address) + j, false, true);
+            vmmMap(newTable, (void *)currentPMR.base + j, (void *)kaddr->physical_base_address + (currentPMR.base - kaddr->virtual_base_address) + j, false, (bool)(currentPMR.permissions & STIVALE2_PMR_WRITABLE));
     }
 
     if (full)
@@ -235,7 +235,7 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
 
 #ifdef K_IDT_IST
     vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], false, true); // kernel ist
-    vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], true, true);  // user ist
+    vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], false, true); // user ist
 #endif
 
 #ifdef K_VMM_DEBUG
