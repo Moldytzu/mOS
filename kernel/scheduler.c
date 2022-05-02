@@ -33,28 +33,28 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     if (taskKilled)
     {
         taskKilled = false;
-        currentTask = &rootTask;
+        currentTask = &rootTask; // jump back to the first task
+        goto loadnext;           // bypass the saving algorithm and directly load the next task
     }
-    else
+
+    if (currentTask->priorityCounter--) // check if the priority counter is over
     {
-        if (currentTask->priorityCounter--) // check if the priority counter is over
-        {
 #ifdef K_SCHED_DEBUG
-            printks("sched: %s still has %d ticks left. doing nothing\n\r", currentTask->name, currentTask->priorityCounter + 1);
+        printks("sched: %s still has %d ticks left. doing nothing\n\r", currentTask->name, currentTask->priorityCounter + 1);
 #endif
-            vmmSwap(currentTask->pageTable); // swap the page table
-            return;
-        }
-        currentTask->priorityCounter = currentTask->priority; // reset counter
-
-#ifdef K_SCHED_DEBUG
-        printks("sched: saving %s\n\r", currentTask->name);
-#endif
-
-        // save the registers
-        memcpy8(&currentTask->intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
+        vmmSwap(currentTask->pageTable); // swap the page table
+        return;
     }
+    currentTask->priorityCounter = currentTask->priority; // reset counter
 
+#ifdef K_SCHED_DEBUG
+    printks("sched: saving %s\n\r", currentTask->name);
+#endif
+
+    // save the registers
+    memcpy8(&currentTask->intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
+
+loadnext:
     // load the next task
     do
     {
@@ -193,7 +193,7 @@ struct sched_task *schedulerGet(uint32_t tid)
     struct sched_task *task = &rootTask; // first task
     while (task)
     {
-        if(task->id == tid)
+        if (task->id == tid)
             break;
         task = task->next;
     }
