@@ -5,6 +5,7 @@
 
 struct vt_terminal rootTerminal;
 uint32_t lastID = 0;
+bool refresh = false;
 
 struct vt_terminal *vtCreate()
 {
@@ -28,7 +29,7 @@ struct vt_terminal *vtCreate()
     currentTerminal->id = lastID++;                                              // set the ID
 
 #ifdef K_VT_DEBUG
-    printks("vt: creating new terminal with ID %d\n\r",currentTerminal->id);
+    printks("vt: creating new terminal with ID %d\n\r", currentTerminal->id);
 #endif
 
     return currentTerminal;
@@ -36,19 +37,22 @@ struct vt_terminal *vtCreate()
 
 void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
 {
+    if (vt == &rootTerminal)
+        refresh = true; // set refresh flag
+
     const char *input = str;                    // input buffer
     if (vt->bufferIdx + count >= vt->bufferLen) // check if we could overflow
     {
-        input += (vt->bufferIdx + count) - vt->bufferLen;          // move the pointer until where it overflows
-        count -= (vt->bufferIdx + count) - vt->bufferLen;          // decrease the count by the number of bytes where it overflows
+        input += (vt->bufferIdx + count) - vt->bufferLen;                  // move the pointer until where it overflows
+        count -= (vt->bufferIdx + count) - vt->bufferLen;                  // decrease the count by the number of bytes where it overflows
         memset64((void *)vt->buffer, 0, vt->bufferLen / sizeof(uint64_t)); // clear the buffer
-        vt->bufferIdx = 0;                                         // reset the index
+        vt->bufferIdx = 0;                                                 // reset the index
     }
 
-    memcpy8((void*)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer
+    memcpy8((void *)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer
 
 #ifdef K_VT_DEBUG
-    printks("vt: appended %d bytes to terminal %d\n\r",count,vt->id);
+    printks("vt: appended %d bytes to terminal %d\n\r", count, vt->id);
 #endif
 }
 
@@ -78,5 +82,14 @@ void vtSetMode(uint16_t displayMode)
 
 uint16_t vtGetMode()
 {
-    return mode;
+    if(mode != VT_DISPLAY_TTY0)
+        return mode;
+
+    if(refresh) // if the refresh flag is set then we have to refresh the tty
+    {
+        refresh = false;
+        return mode; // return the mode
+    }
+
+    return 0; // return the null mode (kernel mode)
 }
