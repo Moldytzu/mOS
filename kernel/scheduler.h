@@ -27,7 +27,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack);
 void schedulerInit();
 bool schedulerEnabled();
 void schedulerEnable();
-void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize);
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal);
 void schedulerPrioritize(uint32_t tid, uint8_t priority);
 void schedulerSetTerminal(uint32_t tid, uint32_t terminal);
 struct sched_task *schedulerGetCurrent();

@@ -5,7 +5,7 @@
 #include <vmm.h>
 #include <scheduler.h>
 
-bool elfLoad(const char *path)
+struct sched_task *elfLoad(const char *path)
 {
     uint64_t fd = vfsOpen(path);                                   // open the file
     Elf64_Ehdr *elf = mmAllocatePages(vfsSize(fd) / VMM_PAGE + 1); // allocate the raw elf
@@ -39,7 +39,5 @@ bool elfLoad(const char *path)
 
     mmDeallocatePages(elf, vfsSize(fd) / VMM_PAGE + 1); // deallocate the elf
 
-    schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd)); // add the task
-
-    return true;
+    return schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd),0); // add the task
 }

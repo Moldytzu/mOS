@@ -9,7 +9,8 @@ int main()
 
     puts("m Init System\n"); // display a basic message
 
-    sys_exec("/init/hello.mx",0); // exec hello world on the same terminal
+    uint64_t pid;
+    sys_exec("/init/hello.mx",1,&pid); // exec hello world on another terminal
 
     while(1)
     {

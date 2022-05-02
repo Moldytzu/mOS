@@ -20,4 +20,4 @@ void sys_write(void *buffer, uint64_t count, uint64_t fd);
 void sys_read(void *buffer, uint64_t count, uint64_t fd);
 void sys_input(uint8_t deviceType, char *returnPtr);
 void sys_display(uint8_t call, uint64_t arg1, uint64_t arg2);
-void sys_exec(const char *path, uint8_t newTerminal);
+void sys_exec(const char *path, uint8_t newTerminal, uint64_t *pid);

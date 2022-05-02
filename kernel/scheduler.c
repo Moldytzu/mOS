@@ -75,9 +75,9 @@ void schedulerInit()
 
     firstTerminal = vtCreate(); // create the first terminal
 
-    void *task = mmAllocatePage();                          // create an empty page just for the idle task
-    memcpy8(task, (void *)idleTask, VMM_PAGE);              // copy the executable part
-    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE); // create the idle task
+    void *task = mmAllocatePage();                             // create an empty page just for the idle task
+    memcpy8(task, (void *)idleTask, VMM_PAGE);                 // copy the executable part
+    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0); // create the idle task
 }
 
 // enable the scheduler and then jump in the first task
@@ -90,7 +90,7 @@ void schedulerEnable()
 }
 
 // add new task in the queue
-void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize)
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal)
 {
     struct sched_task *task = &rootTask; // first task
 
@@ -114,7 +114,7 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     task->priorityCounter = 0;                       // reset counter
     task->id = index;                                // set the task ID
     task->priority = 0;                              // switch imediately
-    task->terminal = firstTerminal->id;              // default/first terminal
+    task->terminal = terminal;                       // terminal
     memcpy8(task->name, (char *)name, strlen(name)); // set the name
 
     // page table
@@ -136,6 +136,8 @@ void schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execB
     task->intrerruptStack.rbp = task->intrerruptStack.rsp;           // stack frame pointer
     task->intrerruptStack.cs = 0x23;                                 // code segment for user
     task->intrerruptStack.ss = 0x1B;                                 // data segment for user
+
+    return task;
 }
 
 // get current task

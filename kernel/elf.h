@@ -1,4 +1,5 @@
 #pragma once
 #include <utils.h>
+#include <scheduler.h>
 
-bool elfLoad(const char *path);
+struct sched_task *elfLoad(const char *path);
