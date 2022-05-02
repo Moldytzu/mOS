@@ -187,3 +187,12 @@ void schedulerSetTerminal(uint32_t tid, uint32_t terminal)
 
     task->terminal = terminal; // set new terminal
 }
+
+struct sched_task *schedulerGet(uint32_t tid)
+{
+    struct sched_task *task = &rootTask; // first task
+    while (task->id != tid && task)      // get the task with the respective task ID
+        task = task->next;
+
+    return task; // return the task
+}

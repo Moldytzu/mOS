@@ -11,3 +11,4 @@
 #include <sys/input.h>
 #include <sys/display.h>
 #include <sys/exec.h>
+#include <sys/pid.h>

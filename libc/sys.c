@@ -30,3 +30,8 @@ void sys_exec(const char *path, uint8_t newTerminal, uint64_t *pid)
 {
     _syscall(SYS_EXEC,(uint64_t)path,newTerminal,(uint64_t)pid,0,0);
 }
+
+void sys_pid(uint32_t pid, uint16_t info, uint64_t *retVal)
+{
+    _syscall(SYS_PID,pid,info,(uint64_t)retVal,0,0);
+}
