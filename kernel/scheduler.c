@@ -232,6 +232,13 @@ void schedulerKill(uint32_t tid)
         free(terminal);                             // free the terminal
     }
 
+    // deallocate the memory allocations
+    for(int i = 0; i < (128 * 4096) / 8; i++)
+        if(task->allocated[i] != NULL)
+            mmDeallocatePage(task->allocated[i]);
+
+    mmDeallocatePages(task->allocated, 128); 
+
     // deallocate the task
     struct sched_task *prev = task->previous;
     prev->next = task->next; // bypass this node
