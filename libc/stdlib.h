@@ -7,4 +7,11 @@
 #include <stdfix.h>
 #include <stdnoreturn.h>
 
-size_t strlen(const char *str);
+#define EXIT_FAILURE 1
+#define EXIT_SUCCESS 0
+#define RAND_MAX 32768
+
+void abort();
+void exit(int status);
+int abs(int x);
+long int labs(long int x);
