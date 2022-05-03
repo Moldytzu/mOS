@@ -4,6 +4,20 @@
 #include <assert.h>
 #include <string.h>
 
+void handleInput(const char *buffer)
+{
+    if (strcmp(buffer, "exit") == 0) // exit command
+        exit(EXIT_SUCCESS);
+
+    uint64_t pid, status;
+    sys_exec(buffer, 0, &pid);
+
+    do
+    {
+        sys_pid(pid, SYS_PID_STATUS, &status); // get the status of the pid
+    } while (status == 0);                     // wait for the pid to be stopped
+}
+
 int main()
 {
     puts("m Shell\n");
@@ -35,7 +49,6 @@ int main()
         kBuffer[--kIdx] = 0; // terminate the string
         kIdx = 0;
 
-        if (strcmp(kBuffer, "exit") == 0) // exit command
-            exit(EXIT_SUCCESS);
+        handleInput(kBuffer); // handle the input
     }
 }

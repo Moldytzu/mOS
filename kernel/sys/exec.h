@@ -10,6 +10,12 @@ void exec(uint64_t syscallNumber, uint64_t path, uint64_t newTerminal, uint64_t 
     struct sched_task *newTask = elfLoad(PHYSICAL(path));
     uint64_t *ret = PHYSICAL(pid);
 
+    if(newTask == NULL) // failed to load the task
+    {
+        *ret = UINT64_MAX;
+        return;
+    }
+
     if (newTerminal)
         newTask->terminal = vtCreate()->id; // create new tty and set the id to it's id
     else
