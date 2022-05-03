@@ -1,6 +1,7 @@
 #include <sys.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 int main()
 {
@@ -9,6 +10,7 @@ int main()
     char *kBuffer;
     uint16_t kIdx;
     sys_mem(SYS_MEM_ALLOCATE,(uint64_t)&kBuffer,0);
+    assert(kBuffer != NULL); // assert that the buffer is valid
 
     // main loop
     while (1)

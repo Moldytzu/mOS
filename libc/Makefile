@@ -19,6 +19,7 @@ INTERNALCFLAGS :=   		 \
 	-mabi=sysv           	 \
 	-mno-red-zone        	 \
 	-Werror 			     \
+	-mcmodel=large           \
 	-O2
 
 # Internal ASM flags that should not be changed by the user.
