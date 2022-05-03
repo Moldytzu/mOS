@@ -110,9 +110,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 
         if (task->pageTable)
         {
-            task->next = malloc(sizeof(struct sched_task)); // allocate next task if the current task is valid
-            task->next->previous = task;                    // set the previous task
-            task = task->next;                              // set current task to the newly allocated task
+            task->next = malloc(sizeof(struct sched_task));                        // allocate next task if the current task is valid
+            memset64(task->next, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the thread
+            task->next->previous = task;                                           // set the previous task
+            task = task->next;                                                     // set current task to the newly allocated task
         }
     }
 
@@ -233,11 +234,11 @@ void schedulerKill(uint32_t tid)
     }
 
     // deallocate the memory allocations
-    for(int i = 0; i < (128 * 4096) / 8; i++)
-        if(task->allocated[i] != NULL)
+    for (int i = 0; i < (128 * 4096) / 8; i++)
+        if (task->allocated[i] != NULL)
             mmDeallocatePage(task->allocated[i]);
 
-    mmDeallocatePages(task->allocated, 128); 
+    mmDeallocatePages(task->allocated, 128);
 
     // deallocate the task
     struct sched_task *prev = task->previous;

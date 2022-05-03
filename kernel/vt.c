@@ -26,6 +26,7 @@ struct vt_terminal *vtCreate()
 
     memset64(currentTerminal, 0, sizeof(struct vt_terminal) / sizeof(uint64_t)); // clear the terminal
     currentTerminal->buffer = mmAllocatePage();                                  // allocate the buffer
+    memset64((void *)currentTerminal->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the buffer
     currentTerminal->bufferLen = VMM_PAGE;                                       // set the lenght of the buffer
     currentTerminal->id = lastID++;                                              // set the ID
 
