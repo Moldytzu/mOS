@@ -35,3 +35,8 @@ void sys_pid(uint32_t pid, uint16_t info, uint64_t *retVal)
 {
     _syscall(SYS_PID,pid,info,(uint64_t)retVal,0,0);
 }
+
+void sys_mem(uint8_t call, uint64_t arg1, uint64_t arg2)
+{
+    _syscall(SYS_MEM,call,arg1,arg2,0,0);
+}

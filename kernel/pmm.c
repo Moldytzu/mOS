@@ -115,21 +115,18 @@ void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
 
     for (size_t base = 0; base < poolPageCount - pages; base++)
     {
-        bool free = true;
         for (size_t i = 0; i <= pages; i++)
         {
-            if (!mmIsFreePage(pool, i + base))
-                free = false;
+            if (!mmIsFreePage(pool, i + base)) // the page isn't free
+                goto continueFor;
         }
-
-        if (!free)
-            continue; // continue if the threshold isn't free
 
         void *baseptr = mmAllocatePagePoolIndex(pool, base); // allocate
         for (size_t i = 1; i < pages; i++)
             mmAllocatePagePoolIndex(pool, base + i); // reserve the pages
 
         return baseptr; // return
+continueFor:
     }
 
     return NULL; // if we don't find

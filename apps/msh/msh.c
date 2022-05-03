@@ -6,8 +6,13 @@ int main()
 {
     puts("m Shell\n");
 
-    // main loop
+    uint64_t *ptr;
+    sys_mem(SYS_MEM_ALLOCATE,(uint64_t)&ptr,0);
+    *ptr = 0xFFFF; // set data
 
+    // main loop
+    while (1)
+    {
         char chr;
 
         puts("m$ ");
@@ -19,5 +24,5 @@ int main()
             if(chr)
                 putchar(chr);
         } while (chr != '\n');
-    
+    }
 }

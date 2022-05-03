@@ -145,6 +145,12 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->intrerruptStack.cs = 0x23;                                 // code segment for user
     task->intrerruptStack.ss = 0x1B;                                 // data segment for user
 
+    // memory fields
+    task->allocated = mmAllocatePages(128);                          // the array to store the allocated addresses (holds (128 * 4096)/8 page-alligned pages or max 256 MB allocated / task)
+    task->allocatedIndex = 0;                                        // the current index in the array
+    memset64(task->allocated, 0, 128 * VMM_PAGE / sizeof(uint64_t)); // null the addresses
+    task->lastVirtualAddress = (void *)TASK_BASE_ALLOC;              // set the last address
+
     return task;
 }
 

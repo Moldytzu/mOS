@@ -8,6 +8,7 @@
 #define TASK_STATE_PAUSED 1
 
 #define TASK_BASE_ADDRESS 0xA000000000
+#define TASK_BASE_ALLOC 0xB000000000
 
 struct sched_task
 {
@@ -19,6 +20,9 @@ struct sched_task
     struct vmm_page_table *pageTable;            // pointer to the page table
     struct idt_intrerrupt_stack intrerruptStack; // the last intrerrupt stack
     uint32_t terminal;                           // task terminal
+    void **allocated;                            // allocated pages
+    uint32_t allocatedIndex;                     // current index
+    void *lastVirtualAddress;                    // last virtual address of the allocation
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task

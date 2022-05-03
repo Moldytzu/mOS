@@ -8,7 +8,7 @@ extern void sysretInit();
 extern void SyscallIntHandlerEntry();
 
 // lookup table of syscall handlers
-void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t) = {exit, write, read, input, display, exec, pid};
+void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t) = {exit, write, read, input, display, exec, pid, mem};
 
 // handler called on syscall
 void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t returnAddress, uint64_t r8, uint64_t r9)
