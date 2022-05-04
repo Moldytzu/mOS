@@ -19,7 +19,7 @@ int main()
 
     puts("m Init System is setting up your enviroment\n"); // display a welcome screen
 
-    const char *enviroment = "PATH=/init;"; // the basic enviroment
+    const char *enviroment = "PATH=/init/;|"; // the basic enviroment
 
     // create temp files
     // etc.

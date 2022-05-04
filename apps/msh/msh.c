@@ -8,6 +8,9 @@
 const char *path;
 bool pathAvailable;
 
+char *pFragment[64];
+uint8_t fragments = 0;
+
 void handleInput(const char *buffer)
 {
     if (strcmp(buffer, "exit") == 0) // exit command
@@ -36,12 +39,28 @@ int main()
     assert(enviroment != NULL); // assert that the enviroment is valid
 
     uint64_t PID;
-    sys_pid(0,SYS_PID_GET,&PID); // get the pid
+    sys_pid(0, SYS_PID_GET, &PID); // get the pid
 
-    sys_pid(PID,SYS_PID_GET_ENVIROMENT,(uint64_t *)enviroment);
+    sys_pid(PID, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment);
+
+    path = enviroment;
 
     // parse the path
-    puts(enviroment);
+    while (memcmp(path, "PATH=", 5) != 0) // find the path in enviroment
+        path++;
+
+    path += 5; // skip the PATH= part
+
+    // split the path in fragments
+    while (*path++ != '|')
+    {
+        int len = 0;
+        while (*path++ != ';')
+            len++;
+        pFragment[fragments++] = (char *)(path - len - 2);
+        pFragment[fragments] = len + 2; // set the len
+    }
+
     // main loop
     while (1)
     {
