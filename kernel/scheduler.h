@@ -23,6 +23,7 @@ struct sched_task
     void **allocated;                            // allocated pages
     uint32_t allocatedIndex;                     // current index
     void *lastVirtualAddress;                    // last virtual address of the allocation
+    char *enviroment;                            // enviroment variables
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task

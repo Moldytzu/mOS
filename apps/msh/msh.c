@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
+
+const char *path;
+bool pathAvailable;
 
 void handleInput(const char *buffer)
 {
@@ -10,7 +14,7 @@ void handleInput(const char *buffer)
         exit(EXIT_SUCCESS);
 
     uint64_t pid, status;
-    sys_exec(buffer, 0, &pid);
+    sys_exec(buffer, 0, &pid, 0);
 
     do
     {
@@ -27,6 +31,17 @@ int main()
     sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&kBuffer, 0);
     assert(kBuffer != NULL); // assert that the buffer is valid
 
+    const char *enviroment;
+    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&enviroment, 0);
+    assert(enviroment != NULL); // assert that the enviroment is valid
+
+    uint64_t PID;
+    sys_pid(0,SYS_PID_GET,&PID); // get the pid
+
+    sys_pid(PID,SYS_PID_GET_ENVIROMENT,(uint64_t *)enviroment);
+
+    // parse the path
+    puts(enviroment);
     // main loop
     while (1)
     {

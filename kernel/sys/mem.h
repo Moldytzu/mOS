@@ -4,7 +4,7 @@
 #include <pmm.h>
 
 // mem (rsi = call, rdx = arg1, r8 = arg2)
-void mem(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAddress, uint64_t arg2, uint64_t r9, struct sched_task *task)
+void mem(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAddress, uint64_t arg2, uint64_t ignored, uint64_t r9, struct sched_task *task)
 {
     switch (call)
     {

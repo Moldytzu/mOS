@@ -8,6 +8,9 @@
 #define SYS_DISPLAY_FB 2
 
 #define SYS_PID_STATUS 0
+#define SYS_PID_GET_ENVIROMENT 1
+#define SYS_PID_SET_ENVIROMENT 2
+#define SYS_PID_GET 3
 
 #define SYS_MEM_ALLOCATE 0
 
@@ -26,6 +29,6 @@ void sys_write(void *buffer, uint64_t count, uint64_t fd);
 void sys_read(void *buffer, uint64_t count, uint64_t fd);
 void sys_input(uint8_t deviceType, char *returnPtr);
 void sys_display(uint8_t call, uint64_t arg1, uint64_t arg2);
-void sys_exec(const char *path, uint8_t newTerminal, uint64_t *pid);
+void sys_exec(const char *path, uint8_t newTerminal, uint64_t *pid, const char *env);
 void sys_pid(uint32_t pid, uint16_t info, uint64_t *retVal);
 void sys_mem(uint8_t call, uint64_t arg1, uint64_t arg2);

@@ -4,12 +4,23 @@
 
 int main()
 {
+    // ensure that the pid is 1
+    uint64_t initPID;
+    sys_pid(0,SYS_PID_GET,&initPID);
+
+    if(initPID != 1)
+    {
+        puts("The init system should be launched as PID 1\n");
+        sys_exit(1);
+    }
+
     // set tty display mode
     sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0);
 
     puts("m Init System is setting up your enviroment\n"); // display a welcome screen
 
-    // set enviroment variables
+    const char *enviroment = "PATH=/init;"; // the basic enviroment
+
     // create temp files
     // etc.
 
@@ -17,7 +28,7 @@ int main()
     puts("Launching msh from /init/msh.mx\n");
 
     uint64_t pid, status;
-    sys_exec("/init/msh.mx", 0, &pid);
+    sys_exec("/init/msh.mx", 0, &pid, enviroment);
 
     do
     {

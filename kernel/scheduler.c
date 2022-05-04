@@ -152,6 +152,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     memset64(task->allocated, 0, 128 * VMM_PAGE / sizeof(uint64_t)); // null the addresses
     task->lastVirtualAddress = (void *)TASK_BASE_ALLOC;              // set the last address
 
+    // enviroment
+    task->enviroment = mmAllocatePage();                        // 4k should be enough for now
+    memset64(task->enviroment, 0, VMM_PAGE / sizeof(uint64_t)); // clear the enviroment
+
     return task;
 }
 
