@@ -17,6 +17,13 @@ void handleInput(const char *buffer)
 
     uint16_t bufOffset = pathLen;
 
+    // don't append anything if we specify the full path
+    if(*buffer == '/')
+    {
+        bufOffset = 0;
+        goto inputContinue;
+    }
+
     // don't append the path if we already specify it
     if(strlen(buffer) <= pathLen)
         goto inputContinue;
@@ -75,12 +82,6 @@ int main()
         for (pathLen = 0; path[pathLen] != '|'; pathLen++)
             ; // calculate the path len
     }
-
-    // print the path just for debugging purposes
-    puts("The path is ");
-    for (int i = 0; i < pathLen; i++)
-        putchar(path[i]);
-    putchar('\n');
 
     // main loop
     while (1)
