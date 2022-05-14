@@ -252,3 +252,8 @@ void schedulerKill(uint32_t tid)
 
     taskKilled = true;
 }
+
+uint32_t schedulerGetLastID()
+{
+    return lastTID;
+}
