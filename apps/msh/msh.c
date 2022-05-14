@@ -8,9 +8,6 @@
 const char *path;
 bool pathAvailable;
 
-char *pFragment[64];
-uint8_t fragments = 0;
-
 void handleInput(const char *buffer)
 {
     if (strcmp(buffer, "exit") == 0) // exit command
@@ -50,16 +47,6 @@ int main()
         path++;
 
     path += 5; // skip the PATH= part
-
-    // split the path in fragments
-    while (*path++ != '|')
-    {
-        int len = 0;
-        while (*path++ != ';')
-            len++;
-        pFragment[fragments++] = (char *)(path - len - 2);
-        pFragment[fragments] = len + 2; // set the len
-    }
 
     // main loop
     while (1)

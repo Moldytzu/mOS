@@ -2,7 +2,7 @@
 
 #define SYS_STDIN 1
 
-#define PHYSICAL(virtual) ((void *)(vmmGetPhys(schedulerGetCurrent()->pageTable,(void *)(virtual))))
+#define PHYSICAL(virtual) ((void *)(vmmGetPhys(task->pageTable,(void *)(virtual))))
 
 #include <utils.h>
 #include <sys/exit.h>
