@@ -10,13 +10,16 @@ void pid(uint64_t syscallNumber, uint64_t pid, uint64_t info, uint64_t returnAdd
 
     uint64_t *retAddr = PHYSICAL(retVal);
     struct sched_task *t = schedulerGet(pid);
+    if (!t) // check if the task exists
+    {
+        *retAddr = UINT64_MAX;
+        return;
+    }
+
     switch (info)
     {
-    case 0:     // get pid state
-        if (!t) // check if the task exists
-            *retAddr = 0xFF;
-        else
-            *retAddr = t->state; // give the state in which that pid is in
+    case 0:                  // get pid state
+        *retAddr = t->state; // give the state in which that pid is in
         break;
     case 1:                                            // get pid enviroment
         memcpy(PHYSICAL(retVal), t->enviroment, 4096); // copy the enviroment
