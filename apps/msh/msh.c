@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+uint16_t pathLen;
 const char *path;
 bool pathAvailable;
 
@@ -40,13 +41,26 @@ int main()
 
     sys_pid(PID, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment);
 
+    // set the start
     path = enviroment;
 
-    // parse the path
+    // find the path
     while (memcmp(path, "PATH=", 5) != 0) // find the path in enviroment
         path++;
 
-    path += 5; // skip the PATH= part
+    pathAvailable = memcmp(path, "PATH=", 5) == 0; // check if the path is available by comparing again the bytes
+    if (pathAvailable)
+    {
+        path += 5; // skip the PATH= part
+        for (pathLen = 0; path[pathLen] != '|'; pathLen++)
+            ; // calculate the path len
+    }
+
+    // print the path just for debugging purposes
+    puts("The path is ");
+    for(int i = 0; i < pathLen; i++)
+        putchar(path[i]);
+    putchar('\n');
 
     // main loop
     while (1)
