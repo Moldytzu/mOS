@@ -15,9 +15,19 @@ void handleInput(const char *buffer)
     if (strcmp(buffer, "exit") == 0) // exit command
         exit(EXIT_SUCCESS);
 
-    memset((void *)cmdBuffer, 0, 4096);                            // clear the buffer
-    memcpy((void *)(cmdBuffer + pathLen), buffer, strlen(buffer)); // copy the input
-    if (pathLen)
+    uint16_t bufOffset = pathLen;
+
+    // don't append the path if we already specify it
+    if(strlen(buffer) <= pathLen)
+        goto inputContinue;
+
+    if(memcmp(buffer,path,pathLen) == 0)
+        bufOffset = 0;
+
+inputContinue:
+    memset((void *)cmdBuffer, 0, 4096);                              // clear the buffer
+    memcpy((void *)(cmdBuffer + bufOffset), buffer, strlen(buffer)); // copy the input
+    if (bufOffset)
         memcpy((void *)cmdBuffer, path, pathLen); // copy the path
 
     uint64_t pid, status;
