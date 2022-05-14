@@ -40,10 +40,5 @@ struct sched_task *elfLoad(const char *path)
 
     mmDeallocatePages(elf, vfsSize(fd) / VMM_PAGE + 1); // deallocate the elf
 
-    char *execPath = malloc(strlen(path) + 16);
-    memcpy((void *)execPath, path, strlen(path));                                                                                    // copy the path
-    memcpy((void *)(execPath + strlen(path)) + 1, to_string(schedulerGetLastID() + 1), strlen(to_string(schedulerGetLastID() + 1))); // copy the new id
-    execPath[strlen(path)] = ' ';                                                                                                    // put a space
-
-    return schedulerAdd(execPath, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0); // add the task
+    return schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0); // add the task
 }
