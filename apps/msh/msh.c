@@ -19,6 +19,30 @@ void handleInput(const char *buffer)
     if (strcmp(buffer, "exit") == 0) // exit command
         exit(EXIT_SUCCESS);
 
+    if (memcmp(buffer, "cd ", 3) == 0) // change directory command
+    {
+        buffer += 3; // skip "cd "
+
+        if (strcmp(buffer, "..") == 0) // go back a folder
+        {
+            for (int i = strlen(cwdBuffer) - 1; cwdBuffer[i] != '/'; cwdBuffer[i--] = '\0')
+                ; // step back to last delimiter
+        }
+        else if (*buffer == '/') // full path
+        {
+            memcpy(cwdBuffer, buffer, strlen(buffer)); // copy the buffer
+        }
+        else
+        {
+            if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // set the separator if it doesn't exist
+                cwdBuffer[strlen(cwdBuffer)] = '/';
+            memcpy(cwdBuffer + strlen(cwdBuffer), buffer, strlen(buffer)); // copy the buffer
+        }
+
+        sys_pid(0, SYS_PID_SET_CWD, (uint64_t *)cwdBuffer); // set the current working directory buffer
+        return;
+    }
+
     uint16_t bufOffset = pathLen;
 
     // don't append anything if we specify the full path
@@ -53,7 +77,7 @@ inputContinue:
         memcpy((void *)cmdBuffer, cwdBuffer, bufOffset);                 // copy the path
 
         sys_vfs(SYS_VFS_FILE_EXISTS, (uint64_t)cmdBuffer, (uint64_t)&status); // check if file exists
-        if(status)
+        if (status)
             goto execute;
 
         puts("Couldn't find executable ");
