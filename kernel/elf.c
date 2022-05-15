@@ -11,7 +11,10 @@ struct sched_task *elfLoad(const char *path)
     uint64_t fd = vfsOpen(path);                                   // open the file
     Elf64_Ehdr *elf = mmAllocatePages(vfsSize(fd) / VMM_PAGE + 1); // allocate the raw elf
     if (!elf)                                                      // return if we didn't get the header
+    {
+        mmDeallocatePages(elf, vfsSize(fd) / VMM_PAGE + 1);
         return false;
+    }
 
     vfsRead(fd, elf, vfsSize(fd), 0); // read the elf
 
@@ -45,5 +48,7 @@ struct sched_task *elfLoad(const char *path)
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter
 
-    return schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0, cwd); // add the task
+    struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0, cwd); // add the task
+    free(cwd);                                                                                                                     // free
+    return task;                                                                                                                   // return the task
 }
