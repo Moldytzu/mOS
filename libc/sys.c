@@ -40,3 +40,8 @@ void sys_mem(uint8_t call, uint64_t arg1, uint64_t arg2)
 {
     _syscall(SYS_MEM,call,arg1,arg2,0,0);
 }
+
+void sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2)
+{
+    _syscall(SYS_VFS,call,arg1,arg2,0,0);
+}

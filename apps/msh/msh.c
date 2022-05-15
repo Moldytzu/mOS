@@ -13,6 +13,9 @@ char *cwdBuffer;
 
 void handleInput(const char *buffer)
 {
+    if(!*buffer) // empty input
+        return; 
+
     if (strcmp(buffer, "exit") == 0) // exit command
         exit(EXIT_SUCCESS);
 
@@ -38,7 +41,18 @@ inputContinue:
     if (bufOffset)
         memcpy((void *)cmdBuffer, path, pathLen); // copy the path
 
-    uint64_t pid, status;
+    uint64_t status;
+    sys_vfs(SYS_VFS_FILE_EXISTS,(uint64_t)cmdBuffer,(uint64_t)&status); // check if file exists
+
+    if(!status)
+    {
+        puts("Couldn't find executable ");
+        puts(buffer);
+        putchar('\n');
+        return;
+    }
+
+    uint64_t pid;
     sys_exec(cmdBuffer, 0, &pid, 0);
 
     do
