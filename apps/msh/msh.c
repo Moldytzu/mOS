@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+uint64_t pid;
 uint16_t pathLen = 0;
 const char *path;
 
@@ -43,7 +44,7 @@ void handleInput(const char *buffer)
                 cwdBuffer[strlen(cwdBuffer)] = '/';
         }
 
-        sys_pid(0, SYS_PID_SET_CWD, (uint64_t *)cwdBuffer); // set the current working directory buffer
+        sys_pid(pid, SYS_PID_SET_CWD, (uint64_t *)cwdBuffer); // set the current working directory buffer
         return;
     }
 
@@ -130,9 +131,8 @@ int main()
     sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cwdBuffer, 0);
     assert(cmdBuffer != NULL); // assert that the buffer is valid
 
-    uint64_t PID;
-    sys_pid(0, SYS_PID_GET, &PID);                                // get the pid
-    sys_pid(PID, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
+    sys_pid(0, SYS_PID_GET, &pid);                                // get the pid
+    sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
 
     // set the start
     path = enviroment;
@@ -151,8 +151,8 @@ int main()
     // main loop
     while (1)
     {
-        sys_pid(0, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
-        memset(kBuffer, 0, 4096);                           // clear the buffer
+        sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
+        memset(kBuffer, 0, 4096);                             // clear the buffer
 
         char chr;
 
