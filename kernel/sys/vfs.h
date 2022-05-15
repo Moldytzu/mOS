@@ -9,7 +9,9 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
     if (retVal < alignD(task->intrerruptStack.rsp, 4096)) // prevent crashing
         return;
 
+    struct vfs_node *currentNode;
     uint64_t *retAddr = PHYSICAL(retVal);
+    const char *name, *tmp;
 
     switch (call)
     {
@@ -29,8 +31,8 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
             *retAddr = false;
             break;
         }
-        const char *name, *tmp = PHYSICAL(arg1); // tmp is a backup for the name
-        struct vfs_node *currentNode = vfsNodes();
+        tmp = PHYSICAL(arg1); // tmp is a backup for the name
+        currentNode = vfsNodes();
         do
         {
             if (!currentNode->filesystem)
@@ -46,7 +48,7 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
             if (strstarts((const char *)currentNode->path, name)) // compare the path
             {
                 *retAddr = true; // exists
-                return; // return to the application
+                return;          // return to the application
             }
 
         next:
@@ -54,6 +56,42 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
         } while (currentNode);
 
         *retAddr = false; // doesn't exist
+        break;
+    case 2: // list directory
+        if (arg1 < alignD(task->intrerruptStack.rsp, 4096))
+        {
+            *retAddr = 0;
+            break;
+        }
+
+        tmp = PHYSICAL(arg1); // tmp is a backup for the name
+        char *retChar = (char *)retAddr;
+
+        currentNode = vfsNodes();
+        do
+        {
+            if (!currentNode->filesystem)
+                goto next1;
+
+            name = tmp; // reset the pointer
+
+            if (!strstarts(name, currentNode->filesystem->mountName)) // compare the mount name
+                goto next1;
+
+            name += strlen(currentNode->filesystem->mountName); // move the pointer after the mount name
+
+            if (!strstarts((const char *)currentNode->path, name)) // compare the path
+                goto next1;
+
+            memcpy(retChar, currentNode->filesystem->mountName, strlen(currentNode->filesystem->mountName)); // copy the mount name
+            retChar += strlen(currentNode->filesystem->mountName); // move the pointer forward
+            memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
+            retChar += strlen(currentNode->path); // move the pointer forward
+            *(retChar++) = ' '; // append a space
+        next1:
+            currentNode = currentNode->next; // next node
+        } while (currentNode);
+
         break;
     default:
         break;

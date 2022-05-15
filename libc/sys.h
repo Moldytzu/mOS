@@ -18,6 +18,7 @@
 
 #define SYS_VFS_FILE_EXISTS 0
 #define SYS_VFS_DIRECTORY_EXISTS 1
+#define SYS_VFS_LIST_DIRECTORY 2
 
 #define SYS_EXIT 0
 #define SYS_WRITE 1
