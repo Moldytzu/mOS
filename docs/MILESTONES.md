@@ -1,7 +1,6 @@
 # Milestones to reach
 ### shell
-### libc (maybe mlibc or something)
-### custom gcc build
+### libc
 ### gui infrastructure
 ### driver support
 

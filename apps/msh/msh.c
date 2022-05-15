@@ -31,6 +31,7 @@ void handleInput(const char *buffer)
         }
         else if (*buffer == '/') // full path
         {
+            memset(cwdBuffer, 0, 4096);                // clear the buffer
             memcpy(cwdBuffer, buffer, strlen(buffer)); // copy the buffer
         }
         else
@@ -42,6 +43,17 @@ void handleInput(const char *buffer)
 
             if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
                 cwdBuffer[strlen(cwdBuffer)] = '/';
+        }
+
+        uint64_t status;
+        sys_vfs(SYS_VFS_DIRECTORY_EXISTS, (uint64_t)cwdBuffer, (uint64_t)&status); // check if the directory exists
+
+        if (!status)
+        {
+            puts("Couldn't find directory ");
+            puts(cwdBuffer);
+            putchar('\n');
+            return;
         }
 
         sys_pid(pid, SYS_PID_SET_CWD, (uint64_t *)cwdBuffer); // set the current working directory buffer

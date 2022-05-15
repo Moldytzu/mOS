@@ -51,6 +51,10 @@ void hang();
 void printk(const char *fmt, ...);
 void printks(const char *fmt, ...);
 
+// strstarts, strends
+bool strstarts(const char *str, const char *start);
+bool strendss(const char *str, const char *ends);
+
 // intrerrupts control
 ifunc void cli()
 {

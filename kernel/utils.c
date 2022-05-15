@@ -103,14 +103,15 @@ const char *to_hstring(uint64_t val)
 
     memset64(to_stringout, 0, sizeof(to_hstringout) / sizeof(uint64_t)); // clear output
 
-    for (int i = 0; i<16; i++, val = val >> 4) // shift the value by 4 to get each nibble
-        to_hstringout[i] = digits[val & 0xF];  // get each nibble
+    for (int i = 0; i < 16; i++, val = val >> 4) // shift the value by 4 to get each nibble
+        to_hstringout[i] = digits[val & 0xF];    // get each nibble
 
     strrev(to_hstringout); // reverse string
 
     // move the pointer until the first valid digit
     uint8_t offset = 0;
-    for(;to_hstringout[offset] == '0'; offset++);
+    for (; to_hstringout[offset] == '0'; offset++)
+        ;
 
     return to_hstringout + offset; // return the string
 }
@@ -194,4 +195,20 @@ void memcpy64(void *dest, void *src, size_t count)
 {
     for (size_t i = 0; i < count; i++)
         ((uint64_t *)dest)[i] = ((uint64_t *)src)[i];
+}
+
+bool strstarts(const char *str, const char *start)
+{
+    if (strlen(str) < strlen(start)) // the lenght is smaller than the start
+        return false;
+
+    return memcmp(str, start, strlen(start)) == 0; // compare the start
+}
+
+bool strendss(const char *str, const char *ends)
+{
+    if (strlen(str) < strlen(ends)) // the lenght is smaller than the start
+        return false;
+
+    return memcmp(str + strlen(str) - strlen(ends), ends, strlen(ends)) == 0; // compare the end
 }
