@@ -13,8 +13,8 @@ char *cwdBuffer;
 
 void handleInput(const char *buffer)
 {
-    if(!*buffer) // empty input
-        return; 
+    if (!*buffer) // empty input
+        return;
 
     if (strcmp(buffer, "exit") == 0) // exit command
         exit(EXIT_SUCCESS);
@@ -42,16 +42,27 @@ inputContinue:
         memcpy((void *)cmdBuffer, path, pathLen); // copy the path
 
     uint64_t status;
-    sys_vfs(SYS_VFS_FILE_EXISTS,(uint64_t)cmdBuffer,(uint64_t)&status); // check if file exists
+    sys_vfs(SYS_VFS_FILE_EXISTS, (uint64_t)cmdBuffer, (uint64_t)&status); // check if file exists
 
-    if(!status)
+    if (!status)
     {
+        // trying to append the cwd
+        memset((void *)cmdBuffer, 0, 4096); // clear the buffer
+        bufOffset = strlen(cwdBuffer);
+        memcpy((void *)(cmdBuffer + bufOffset), buffer, strlen(buffer)); // copy the input
+        memcpy((void *)cmdBuffer, cwdBuffer, bufOffset);                 // copy the path
+
+        sys_vfs(SYS_VFS_FILE_EXISTS, (uint64_t)cmdBuffer, (uint64_t)&status); // check if file exists
+        if(status)
+            goto execute;
+
         puts("Couldn't find executable ");
         puts(buffer);
         putchar('\n');
         return;
     }
 
+execute:
     uint64_t pid;
     sys_exec(cmdBuffer, 0, &pid, 0);
 
@@ -102,21 +113,16 @@ int main()
             ; // calculate the path len
     }
 
-    sys_pid(0, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
-    puts(cwdBuffer);                                    // print the buffer
-    cwdBuffer[0] = '@';
-    sys_pid(0, SYS_PID_SET_CWD, (uint64_t *)cwdBuffer); // set the current working directory buffer
-    sys_pid(0, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
-    puts(cwdBuffer);                                    // print the buffer
-
     // main loop
     while (1)
     {
-        memset(kBuffer, 0, 4096); // clear the buffer
+        sys_pid(0, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
+        memset(kBuffer, 0, 4096);                           // clear the buffer
 
         char chr;
 
-        puts("m$ "); // print the prompt
+        puts(cwdBuffer);
+        puts(" m$ "); // print the prompt
 
         // read in the buffer
         do
