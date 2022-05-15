@@ -43,6 +43,12 @@ void handleInput(const char *buffer)
         return;
     }
 
+    if (memcmp(buffer, "./", 2) == 0) // this folder prefix
+    {
+        buffer += 2; // skip "./"
+        goto appendCWD; // append the cwd and execute
+    }
+
     uint16_t bufOffset = pathLen;
 
     // don't append anything if we specify the full path
@@ -70,6 +76,7 @@ inputContinue:
 
     if (!status)
     {
+appendCWD:
         // trying to append the cwd
         memset((void *)cmdBuffer, 0, 4096); // clear the buffer
         bufOffset = strlen(cwdBuffer);
