@@ -17,6 +17,7 @@ void mem(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
         vmmMap(task->pageTable, task->lastVirtualAddress, pageAddress, true, true); // map the address
         *(uint64_t *)PHYSICAL(arg1) = (uint64_t)task->lastVirtualAddress;           // give the application the virtual address
         task->lastVirtualAddress += 4096;                                           // increment the virtual address
+        memset64(pageAddress, 0, VMM_PAGE / sizeof(uint64_t));                      // clear the page
         break;
     default:
         break;
