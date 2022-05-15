@@ -25,7 +25,7 @@ void handleInput(const char *buffer)
 
         if (strcmp(buffer, "..") == 0) // go back a folder
         {
-            for (int i = strlen(cwdBuffer) - 1; cwdBuffer[i] != '/'; cwdBuffer[i--] = '\0')
+            for (int i = strlen(cwdBuffer) - 2; cwdBuffer[i] != '/'; cwdBuffer[i--] = '\0')
                 ; // step back to last delimiter
         }
         else if (*buffer == '/') // full path
@@ -34,9 +34,13 @@ void handleInput(const char *buffer)
         }
         else
         {
-            if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // set the separator if it doesn't exist
+            if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
                 cwdBuffer[strlen(cwdBuffer)] = '/';
+
             memcpy(cwdBuffer + strlen(cwdBuffer), buffer, strlen(buffer)); // copy the buffer
+
+            if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
+                cwdBuffer[strlen(cwdBuffer)] = '/';
         }
 
         sys_pid(0, SYS_PID_SET_CWD, (uint64_t *)cwdBuffer); // set the current working directory buffer
@@ -45,7 +49,7 @@ void handleInput(const char *buffer)
 
     if (memcmp(buffer, "./", 2) == 0) // this folder prefix
     {
-        buffer += 2; // skip "./"
+        buffer += 2;    // skip "./"
         goto appendCWD; // append the cwd and execute
     }
 
@@ -76,7 +80,7 @@ inputContinue:
 
     if (!status)
     {
-appendCWD:
+    appendCWD:
         // trying to append the cwd
         memset((void *)cmdBuffer, 0, 4096); // clear the buffer
         bufOffset = strlen(cwdBuffer);
