@@ -12,7 +12,8 @@
 
 struct sched_task
 {
-    char name[128];                              // 128 characters should be enough
+    char name[512];                              // 512 characters should be enough
+    char cwd[512];                               // current working directory
     uint8_t priority;                            // higher priority means more ticks allocated to the task
     uint8_t priorityCounter;                     // counter used for priority calculation
     uint8_t state;                               // current state
@@ -37,6 +38,6 @@ void schedulerPrioritize(uint32_t tid, uint8_t priority);
 void schedulerSetTerminal(uint32_t tid, uint32_t terminal);
 void schedulerKill(uint32_t tid);
 uint32_t schedulerGetLastID();
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal);
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd);
 struct sched_task *schedulerGet(uint32_t tid);
 struct sched_task *schedulerGetCurrent();

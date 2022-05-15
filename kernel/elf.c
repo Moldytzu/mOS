@@ -40,5 +40,5 @@ struct sched_task *elfLoad(const char *path)
 
     mmDeallocatePages(elf, vfsSize(fd) / VMM_PAGE + 1); // deallocate the elf
 
-    return schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0); // add the task
+    return schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0, 0); // add the task
 }

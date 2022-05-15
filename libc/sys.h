@@ -11,6 +11,8 @@
 #define SYS_PID_GET_ENVIROMENT 1
 #define SYS_PID_SET_ENVIROMENT 2
 #define SYS_PID_GET 3
+#define SYS_PID_GET_CWD 4
+#define SYS_PID_SET_CWD 5
 
 #define SYS_MEM_ALLOCATE 0
 

@@ -84,9 +84,9 @@ void schedulerInit()
 
     firstTerminal = vtCreate(); // create the first terminal
 
-    void *task = mmAllocatePage();                             // create an empty page just for the idle task
-    memcpy8(task, (void *)idleTask, VMM_PAGE);                 // copy the executable part
-    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0); // create the idle task
+    void *task = mmAllocatePage();                                // create an empty page just for the idle task
+    memcpy8(task, (void *)idleTask, VMM_PAGE);                    // copy the executable part
+    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0); // create the idle task
 }
 
 // enable the scheduler and then jump in the first task
@@ -99,7 +99,7 @@ void schedulerEnable()
 }
 
 // add new task in the queue
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal)
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd)
 {
     struct sched_task *task = &rootTask; // first task
 
@@ -155,6 +155,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     // enviroment
     task->enviroment = mmAllocatePage();                        // 4k should be enough for now
     memset64(task->enviroment, 0, VMM_PAGE / sizeof(uint64_t)); // clear the enviroment
+    if (!cwd)
+        task->cwd[0] = '/'; // set the current working directory to the root
+    else
+        memcpy(task->cwd, cwd, strlen(cwd)); // copy the current working directory
 
     return task;
 }

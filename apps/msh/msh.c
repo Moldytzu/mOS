@@ -9,6 +9,7 @@ uint16_t pathLen = 0;
 const char *path;
 
 const char *cmdBuffer;
+char *cwdBuffer;
 
 void handleInput(const char *buffer)
 {
@@ -18,17 +19,17 @@ void handleInput(const char *buffer)
     uint16_t bufOffset = pathLen;
 
     // don't append anything if we specify the full path
-    if(*buffer == '/')
+    if (*buffer == '/')
     {
         bufOffset = 0;
         goto inputContinue;
     }
 
     // don't append the path if we already specify it
-    if(strlen(buffer) <= pathLen)
+    if (strlen(buffer) <= pathLen)
         goto inputContinue;
 
-    if(memcmp(buffer,path,pathLen) == 0)
+    if (memcmp(buffer, path, pathLen) == 0)
         bufOffset = 0;
 
 inputContinue:
@@ -65,6 +66,10 @@ int main()
     sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cmdBuffer, 0);
     assert(cmdBuffer != NULL); // assert that the buffer is valid
 
+    // current working directory buffer
+    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cwdBuffer, 0);
+    assert(cmdBuffer != NULL); // assert that the buffer is valid
+
     uint64_t PID;
     sys_pid(0, SYS_PID_GET, &PID);                                // get the pid
     sys_pid(PID, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
@@ -82,6 +87,13 @@ int main()
         for (pathLen = 0; path[pathLen] != '|'; pathLen++)
             ; // calculate the path len
     }
+
+    sys_pid(0, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
+    puts(cwdBuffer);                                    // print the buffer
+    cwdBuffer[0] = '@';
+    sys_pid(0, SYS_PID_SET_CWD, (uint64_t *)cwdBuffer); // set the current working directory buffer
+    sys_pid(0, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
+    puts(cwdBuffer);                                    // print the buffer
 
     // main loop
     while (1)

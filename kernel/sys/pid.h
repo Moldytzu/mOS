@@ -30,6 +30,12 @@ void pid(uint64_t syscallNumber, uint64_t pid, uint64_t info, uint64_t returnAdd
     case 3:                  // get current pid
         *retAddr = task->id; // the id
         break;
+    case 4:                                    // get current working directory
+        memcpy(PHYSICAL(retVal), t->cwd, 512); // copy the buffer
+        break;
+    case 5:                                    // set current working directory
+        memcpy(t->cwd, PHYSICAL(retVal), 512); // copy the buffer
+        break;
     default:
         break;
     }
