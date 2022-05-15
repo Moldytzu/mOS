@@ -65,3 +65,20 @@ ifunc void sti()
 {
     iasm("sti");
 }
+
+// basic maths
+ifunc int min(int a, int b)
+{
+    if (a > b)
+        return b;
+    
+    return a;
+}
+
+ifunc int max(int a, int b)
+{
+    if (a > b)
+        return a;
+    
+    return b;
+}
