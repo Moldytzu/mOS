@@ -129,7 +129,7 @@ int main()
 
     // current working directory buffer
     sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cwdBuffer, 0);
-    assert(cmdBuffer != NULL); // assert that the buffer is valid
+    assert(cwdBuffer != NULL); // assert that the buffer is valid
 
     sys_pid(0, SYS_PID_GET, &pid);                                // get the pid
     sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
