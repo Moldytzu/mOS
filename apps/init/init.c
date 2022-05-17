@@ -30,7 +30,8 @@ int main()
         puts("Launching msh from /init/msh.mx\n");
 
         uint64_t pid, status;
-        sys_exec("/init/msh.mx", 0, &pid, enviroment);
+        struct sys_exec_packet p = {0, enviroment, "/init/"};
+        sys_exec("/init/msh.mx", &pid, &p);
 
         do
         {

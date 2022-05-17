@@ -8,7 +8,7 @@
 uint64_t pid;
 uint16_t pathLen = 0;
 const char *path;
-
+const char *enviroment;
 const char *cmdBuffer;
 char *cwdBuffer;
 
@@ -111,13 +111,14 @@ inputContinue:
     }
 
 execute:
-    uint64_t pid;
-    sys_exec(cmdBuffer, 0, &pid, 0);
+    uint64_t newPid;
+    struct sys_exec_packet p = {0, enviroment, 0};
+    sys_exec(cmdBuffer, &newPid, &p);
 
     do
     {
-        sys_pid(pid, SYS_PID_STATUS, &status); // get the status of the pid
-    } while (status == 0);                     // wait for the pid to be stopped
+        sys_pid(newPid, SYS_PID_STATUS, &status); // get the status of the pid
+    } while (status == 0);                        // wait for the pid to be stopped
 }
 
 int main()
@@ -131,7 +132,6 @@ int main()
     assert(kBuffer != NULL); // assert that the buffer is valid
 
     // enviroment buffer
-    const char *enviroment;
     sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&enviroment, 0);
     assert(enviroment != NULL); // assert that the enviroment is valid
 
