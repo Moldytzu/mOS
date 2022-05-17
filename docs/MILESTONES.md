@@ -1,5 +1,6 @@
 # Milestones to reach
 ### shell
+### ipc (simple sockets that have their own buffer and can be written or read by any task)
 ### libc
 ### gui infrastructure
 ### driver support

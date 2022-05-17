@@ -3,8 +3,6 @@
 void sys_exit(uint64_t status)
 {
     _syscall(SYS_EXIT, status, 0, 0, 0, 0);
-    while (1)
-        ; // endless loop
 }
 
 void sys_write(void *buffer, uint64_t count, uint64_t fd)

@@ -55,7 +55,7 @@ void printks(const char *fmt, ...);
 bool strstarts(const char *str, const char *start);
 bool strendss(const char *str, const char *ends);
 
-// intrerrupts control
+// inline assembly shortcuts
 ifunc void cli()
 {
     iasm("cli");
@@ -64,6 +64,11 @@ ifunc void cli()
 ifunc void sti()
 {
     iasm("sti");
+}
+
+ifunc void hlt()
+{
+    iasm("hlt");
 }
 
 // basic maths

@@ -255,6 +255,10 @@ void schedulerKill(uint32_t tid)
     mmDeallocatePage(task);            // free the task
 
     taskKilled = true;
+
+    // halt until next intrerrupt fires
+    sti();
+    hlt();
 }
 
 uint32_t schedulerGetLastID()

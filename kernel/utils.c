@@ -12,9 +12,9 @@ uint32_t strlen(const char *str)
 
 void hang()
 {
-    iasm("cli"); // disable intrerrupts
+    cli(); // disable intrerrupts
     for (;;)
-        iasm("hlt"); // halt
+        hlt(); // halt
 }
 
 int memcmp(const void *a, const void *b, size_t len)
