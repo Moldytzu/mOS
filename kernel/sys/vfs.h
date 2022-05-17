@@ -83,6 +83,9 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
         } while (currentNode);
 
         break;
+    case 3: // size of descriptor
+        *retAddr = vfsSize(arg1);
+        break;
     default:
         break;
     }
