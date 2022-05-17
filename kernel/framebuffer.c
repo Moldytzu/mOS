@@ -30,8 +30,8 @@ void framebufferInit()
 // clear the framebuffer with a colour
 inline void framebufferClear(uint32_t colour)
 {
-    cursor.X = cursor.Y = 0;                                                                                                                                // reset cursor position
-    memset64((void *)framebuffer->framebuffer_addr, (uint64_t)colour << 32 | colour, (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height / 2) / sizeof(uint64_t)); // clear the screen
+    cursor.X = cursor.Y = 0;                                                                                                                                                     // reset cursor position
+    memset64((void *)framebuffer->framebuffer_addr, (uint64_t)colour << 32 | colour, (framebuffer->framebuffer_pitch * framebuffer->framebuffer_height) / sizeof(uint64_t)); // clear the screen
 }
 
 // load a font
@@ -39,7 +39,7 @@ void framebufferLoadFont(const char *name)
 {
     font = (struct psf1_header *)initrdGet(name);
 
-    if(!font)
+    if (!font)
         goto error;
 
     if (font->magic[0] != PSF1_MAGIC0 && font->magic[0] != PSF1_MAGIC1) // if the psf1's magic isn't the one we expect, just fail
@@ -76,10 +76,16 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
 }
 
 // create a new line
-inline static void newline()
+ifunc void newline()
 {
     cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
-    cursor.X = 0;                   // reset cursor X
+    cursor.X = 0; // reset cursor X
+
+    if (cursor.Y + font->charsize + 1 >= framebuffer->framebuffer_height)
+    {
+        cursor.Y = 0;
+        framebufferClear(0);
+    }
 }
 
 // write a character
