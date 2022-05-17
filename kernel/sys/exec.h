@@ -8,7 +8,7 @@ struct pack sys_exec_packet
 {
     uint8_t shouldCreateNewTerminal;
     const char *enviroment;
-    const char *pwd;
+    const char *cwd;
 };
 
 // exec (rsi = path, rdx = pid, r8 = packet)
@@ -32,8 +32,11 @@ void exec(uint64_t syscallNumber, uint64_t path, uint64_t pid, uint64_t returnAd
     else
         newTask->terminal = task->terminal; // set the parent's terminal id
 
-    if (input->enviroment > (const char *)TASK_BASE_ADDRESS)
-        memcpy(newTask->enviroment, PHYSICAL(input->enviroment), 4096); // copy the enviroment
+    if (input->enviroment > (char *)alignD(task->intrerruptStack.rsp, 4096))
+        memcpy(newTask->enviroment, PHYSICAL(input->enviroment), strlen(PHYSICAL(input->enviroment)) + 1); // copy the enviroment
+
+    if (input->cwd > (char *)alignD(task->intrerruptStack.rsp, 4096))
+        memcpy(newTask->cwd, PHYSICAL(input->cwd), strlen(PHYSICAL(input->cwd)) + 1); // copy the initial working directory
 
     *ret = newTask->id; // set the pid
 }

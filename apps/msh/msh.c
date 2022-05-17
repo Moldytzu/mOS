@@ -53,6 +53,9 @@ void handleInput(const char *buffer)
             puts("Couldn't find directory ");
             puts(cwdBuffer);
             putchar('\n');
+
+            // restore the cwd
+            sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
             return;
         }
 
@@ -112,7 +115,7 @@ inputContinue:
 
 execute:
     uint64_t newPid;
-    struct sys_exec_packet p = {0, enviroment, 0};
+    struct sys_exec_packet p = {0, enviroment, cwdBuffer};
     sys_exec(cmdBuffer, &newPid, &p);
 
     do
