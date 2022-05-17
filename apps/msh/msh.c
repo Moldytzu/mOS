@@ -40,10 +40,10 @@ void handleInput(const char *buffer)
                 cwdBuffer[strlen(cwdBuffer)] = '/';
 
             memcpy(cwdBuffer + strlen(cwdBuffer), buffer, strlen(buffer)); // copy the buffer
-
-            if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
-                cwdBuffer[strlen(cwdBuffer)] = '/';
         }
+
+        if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
+            cwdBuffer[strlen(cwdBuffer)] = '/';
 
         uint64_t status;
         sys_vfs(SYS_VFS_DIRECTORY_EXISTS, (uint64_t)cwdBuffer, (uint64_t)&status); // check if the directory exists
