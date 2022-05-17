@@ -20,4 +20,6 @@ void write(uint64_t syscallNumber, uint64_t buffer, uint64_t count, uint64_t ret
     }
 
     vfsWrite(fd, (void *)charBuffer, count, 0); // write to the descriptor
+
+    // todo: also support writing to another terminal
 }
