@@ -51,7 +51,7 @@ void handleInput(const char *buffer)
         if (!status)
         {
             puts("Couldn't find directory ");
-            puts(cwdBuffer);
+            puts(buffer);
             putchar('\n');
 
             // restore the cwd

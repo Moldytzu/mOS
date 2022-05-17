@@ -13,24 +13,20 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
     uint64_t *retAddr = PHYSICAL(retVal);
     const char *name, *tmp;
 
+    if (arg1 < alignD(task->intrerruptStack.rsp, 4096))
+    {
+        *retAddr = 0;
+        return;
+    }
+
     switch (call)
     {
-    case 0: // file path exists
-        if (arg1 < alignD(task->intrerruptStack.rsp, 4096))
-        {
-            *retAddr = false;
-            break;
-        }
+    case 0:                                    // file path exists
         uint64_t fd = vfsOpen(PHYSICAL(arg1)); // open
         *retAddr = fd > 0;                     // if the fd is valid then the file exists
         vfsClose(fd);                          // close
         break;
-    case 1: // directory path exists
-        if (arg1 < alignD(task->intrerruptStack.rsp, 4096))
-        {
-            *retAddr = false;
-            break;
-        }
+    case 1:                   // directory path exists
         tmp = PHYSICAL(arg1); // tmp is a backup for the name
         currentNode = vfsNodes();
         do
@@ -57,13 +53,7 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
 
         *retAddr = false; // doesn't exist
         break;
-    case 2: // list directory
-        if (arg1 < alignD(task->intrerruptStack.rsp, 4096))
-        {
-            *retAddr = 0;
-            break;
-        }
-
+    case 2:                   // list directory
         tmp = PHYSICAL(arg1); // tmp is a backup for the name
         char *retChar = (char *)retAddr;
 
@@ -84,10 +74,10 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
                 goto next1;
 
             memcpy(retChar, currentNode->filesystem->mountName, strlen(currentNode->filesystem->mountName)); // copy the mount name
-            retChar += strlen(currentNode->filesystem->mountName); // move the pointer forward
-            memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
-            retChar += strlen(currentNode->path); // move the pointer forward
-            *(retChar++) = ' '; // append a space
+            retChar += strlen(currentNode->filesystem->mountName);                                           // move the pointer forward
+            memcpy(retChar, currentNode->path, strlen(currentNode->path));                                   // copy the path
+            retChar += strlen(currentNode->path);                                                            // move the pointer forward
+            *(retChar++) = ' ';                                                                              // append a space
         next1:
             currentNode = currentNode->next; // next node
         } while (currentNode);
