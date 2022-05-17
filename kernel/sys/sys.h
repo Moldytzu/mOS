@@ -14,3 +14,7 @@
 #include <sys/pid.h>
 #include <sys/mem.h>
 #include <sys/vfs.h>
+#include <sys/open.h>
+#include <sys/close.h>
+
+void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, struct sched_task *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close};
