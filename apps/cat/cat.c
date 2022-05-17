@@ -6,14 +6,10 @@ int main()
 {
     uint64_t fd, size;
     sys_open("/init/test.file", &fd); // open the file
-
-    if (!fd)
-    {
-        puts("Failed to open the file.\n");
-        return 0;
-    }
+    assert(fd != 0);
 
     sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
+    assert(size != 0);
 
     // allocate the buffer
     void *buffer;
