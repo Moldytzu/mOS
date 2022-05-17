@@ -8,6 +8,6 @@ void open(uint64_t syscallNumber, uint64_t returnPtr, uint64_t path, uint64_t re
         return;
 
     uint64_t *returnVal = PHYSICAL(returnPtr);
-    uint64_t fd = vfsOpen("/init/test.file"); // open the node
+    uint64_t fd = vfsOpen(PHYSICAL(path)); // open the node
     *returnVal = fd;                       // return the value
 }

@@ -49,7 +49,7 @@ void sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2)
 
 void sys_open(const char *path, uint64_t *fd)
 {
-    _syscall(SYS_OPEN, (uint64_t)path, (uint64_t)fd, 0, 0, 0);
+    _syscall(SYS_OPEN, (uint64_t)fd, (uint64_t)path, 0, 0, 0);
 }
 
 void sys_close(uint64_t fd)

@@ -9,5 +9,8 @@ int main()
     if(!fd)
     {
         puts("Failed to open the file.\n");
+        return 0;
     }
+
+    sys_close(fd);
 }  
