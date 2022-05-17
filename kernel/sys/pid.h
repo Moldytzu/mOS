@@ -5,7 +5,7 @@
 // pid (rsi = pid, rdx = info, r8 = retVal/inputVal)
 void pid(uint64_t syscallNumber, uint64_t pid, uint64_t info, uint64_t returnAddress, uint64_t retVal, uint64_t ignored, uint64_t r9, struct sched_task *task)
 {
-    if (retVal < alignD(task->intrerruptStack.rsp, 4096) - 4096) // prevent crashing
+    if (!INBOUNDARIES(retVal)) // prevent crashing
         return;
 
     uint64_t *retAddr = PHYSICAL(retVal);

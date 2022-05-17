@@ -4,6 +4,7 @@
 #include <bootloader.h>
 #include <serial.h>
 #include <heap.h>
+#include <panic.h>
 
 void *kernelStack;
 struct vt_terminal *firstTerminal; // first usable terminal
@@ -218,6 +219,9 @@ struct sched_task *schedulerGet(uint32_t tid)
 
 void schedulerKill(uint32_t tid)
 {
+    if(tid == 1)
+        panick("Attempt killing the init system.");
+
     struct sched_task *task = schedulerGet(tid);
 
     if (!task)

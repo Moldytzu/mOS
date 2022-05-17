@@ -6,7 +6,7 @@
 // input (rsi = device type, rdx = return pointer)
 void input(uint64_t syscallNumber, uint64_t deviceType, uint64_t returnPtr, uint64_t returnAddress, uint64_t r8, uint64_t ignored, uint64_t r9, struct sched_task *task)
 {
-    if (returnPtr < alignD(task->intrerruptStack.rsp, 4096) - 4096) // prevent crashing
+    if (!INBOUNDARIES(returnPtr)) // prevent crashing
         return;
 
     char *ret = (char *)PHYSICAL(returnPtr); // return pointer

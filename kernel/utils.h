@@ -15,6 +15,7 @@
 #define iasm asm volatile
 #define ifunc static inline __attribute__((always_inline))
 #define doptimize __attribute__((optimize("O0")))
+#define between(a, b, c)  (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 
 // strlen
 uint32_t strlen(const char *str);
