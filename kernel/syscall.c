@@ -16,10 +16,12 @@ void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t
     printks("syscall: number 0x%x, argument 1 is 0x%x, argument 2 is 0x%x, return address is 0x%p, argument 3 is 0x%x, argument 4 is 0x%x\n\r", syscallNumber, rsi, rdx, returnAddress, r8, r9);
 #endif
 
-    if (syscallNumber < (sizeof(syscallHandlers) / sizeof(void *)))                                               // check if the syscall is in range
-        syscallHandlers[syscallNumber](syscallNumber, rsi, rdx, returnAddress, r8, 0, r9, schedulerGetCurrent()); // call the handler
+    struct sched_task *t = schedulerGetCurrent();
 
-    vmmSwap(schedulerGetCurrent()->pageTable); // swap the page table back
+    if (syscallNumber < (sizeof(syscallHandlers) / sizeof(void *)))                           // check if the syscall is in range
+        syscallHandlers[syscallNumber](syscallNumber, rsi, rdx, returnAddress, r8, 0, r9, t); // call the handler
+
+    vmmSwap(t->pageTable); // swap the page table back
 }
 
 // init syscall handling
