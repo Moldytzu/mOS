@@ -8,8 +8,8 @@ void mem(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
 {
     switch (call)
     {
-    case 0:                                                 // mem allocate
-        if (arg1 < alignD(task->intrerruptStack.rsp, 4096)) // prevent crashing
+    case 0:                                                        // mem allocate
+        if (arg1 < alignD(task->intrerruptStack.rsp, 4096) - 4096) // prevent crashing
             return;
         void *pageAddress = mmAllocatePage();                                       // allocate a page
         uint32_t index = task->allocatedIndex++;                                    // get the index

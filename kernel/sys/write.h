@@ -7,9 +7,8 @@ void write(uint64_t syscallNumber, uint64_t buffer, uint64_t count, uint64_t ret
 {
     if (fd == SYS_STDIN)
     {
-        if (buffer < TASK_BASE_ADDRESS) // prevent a crash
-            if (buffer < alignD(task->intrerruptStack.rsp, 4096))
-                return;
+        if (buffer < alignD(task->intrerruptStack.rsp, 4096) - 4096) // prevent a crash
+            return;
 
         const char *charBuffer = (const char *)PHYSICAL(buffer); // get physical address of the buffer
         struct vt_terminal *t = vtGet(task->terminal);           // terminal of the task
