@@ -7,21 +7,17 @@
 
 int main()
 {
-    uint64_t pid, no;
-    char *cwdBuffer, *dirBuffer;
+    uint64_t pid;
+    char *cwdBuffer;
 
     // current working directory buffer
     sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cwdBuffer, 0);
     assert(cwdBuffer != NULL); // assert that the buffer is valid
 
-    // directory listing buffer
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&dirBuffer, 0);
-    assert(dirBuffer != NULL); // assert that the buffer is valid
-
-    sys_pid(0, SYS_PID_GET, &pid); // get the pid
+    sys_pid(0, SYS_PID_GET, &pid);                        // get the pid
     sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
-    sys_vfs(SYS_VFS_LIST_DIRECTORY, (uint64_t)cwdBuffer, (uint64_t)dirBuffer);
 
-    puts(dirBuffer);
-    puts("\n");
+    uint64_t newPid;
+    struct sys_exec_packet p = {0, "|", cwdBuffer};
+    sys_exec("/init/ls.mx", &newPid, &p);
 }
