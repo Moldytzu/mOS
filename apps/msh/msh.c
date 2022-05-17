@@ -91,6 +91,10 @@ inputContinue:
     if (bufOffset)
         memcpy((void *)cmdBuffer, path, pathLen); // copy the path
 
+    // append the extension if it doesn't exist
+    if (memcmp(cmdBuffer + strlen(cmdBuffer) - 3, ".mx", 3) != 0)
+        memcpy((void *)(cmdBuffer + strlen(cmdBuffer)), ".mx", 3); // copy the extension
+
     uint64_t status;
     sys_vfs(SYS_VFS_FILE_EXISTS, (uint64_t)cmdBuffer, (uint64_t)&status); // check if file exists
 
