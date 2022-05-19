@@ -1,11 +1,11 @@
 #include <sys.h>
 #include <stdio.h>
 
-void assert(int expression)
+void __assert(const char *str, const char *file)
 {
-    if(expression == 0)
-    {
-        puts("Assertion failed!\n");
-        sys_exit(1);
-    }
+    puts(str);
+    puts(" failed! (");
+    puts(file);
+    puts(")\n");
+    sys_exit(1);
 }
