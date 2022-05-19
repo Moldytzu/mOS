@@ -9,13 +9,13 @@
 #define pack __attribute__((__packed__))
 #define toMB(x) ((x) / 1024 / 1024)
 #define toKB(x) ((x) / 1024)
-#define align(val, alg) (val + (alg - val % alg))
-#define alignD(val, alg) (val - (alg - val % alg))
+#define align(val, alg) (val + (alg - (val % alg)))
+#define alignD(val, alg) (align(val, alg) - alg)
 #define unsafe_cast(val, type) (*(type *)&val)
 #define iasm asm volatile
 #define ifunc static inline __attribute__((always_inline))
 #define doptimize __attribute__((optimize("O0")))
-#define between(a, b, c)  (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
+#define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 
 // strlen
 uint32_t strlen(const char *str);
@@ -77,7 +77,7 @@ ifunc int min(int a, int b)
 {
     if (a > b)
         return b;
-    
+
     return a;
 }
 
@@ -85,6 +85,6 @@ ifunc int max(int a, int b)
 {
     if (a > b)
         return a;
-    
+
     return b;
 }
