@@ -187,6 +187,13 @@ int main()
                 putchar(chr);
                 kBuffer[kIdx++] = chr; // append the character
             }
+
+            if(kIdx == 4095) // prevent buffer overflow
+            {
+                kBuffer[4095] = 0;
+                break;
+            }
+
         } while (chr != '\n');
         kBuffer[--kIdx] = 0; // terminate the string
         kIdx = 0;
