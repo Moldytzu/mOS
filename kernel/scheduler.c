@@ -31,6 +31,27 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
+    // handle vt mode after the idle task
+    if(currentTask->id != 0)
+        goto c;
+
+    switch (vtGetMode())
+    {
+    case VT_DISPLAY_KERNEL:
+        // do nothing
+        break;
+    case VT_DISPLAY_FB:
+        // todo: copy the user display framebuffer to the global framebuffer
+        break;
+    case VT_DISPLAY_TTY0:
+        framebufferClear(0);
+        framebufferWrite(vtGet(0)->buffer);
+        break;
+    default:
+        break;
+    }
+
+c:
     if (taskKilled)
     {
         taskKilled = false;
