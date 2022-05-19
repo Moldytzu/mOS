@@ -4,4 +4,9 @@
     - Linear framebuffer display support
     - Memory allocator & mapper
     - Basic preemptive multitasking
+    - ELF executables
+    - Virtual Filesystem
     - Syscall support
+    - Initrd support
+    - ACPI support
+    - PS/2 keyboard support
