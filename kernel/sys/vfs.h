@@ -13,20 +13,26 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
     uint64_t *retAddr = PHYSICAL(retVal);
     const char *name, *tmp;
 
-    if (!INBOUNDARIES(arg1))
-    {
-        *retAddr = 0;
-        return;
-    }
-
     switch (call)
     {
-    case 0:                                    // file path exists
+    case 0: // file path exists
+        if (!INBOUNDARIES(arg1))
+        {
+            *retAddr = 0;
+            return;
+        }
+
         uint64_t fd = vfsOpen(PHYSICAL(arg1)); // open
         *retAddr = fd > 0;                     // if the fd is valid then the file exists
         vfsClose(fd);                          // close
         break;
-    case 1:                   // directory path exists
+    case 1: // directory path exists
+        if (!INBOUNDARIES(arg1))
+        {
+            *retAddr = 0;
+            return;
+        }
+
         tmp = PHYSICAL(arg1); // tmp is a backup for the name
         currentNode = vfsNodes();
         do
@@ -53,7 +59,13 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
 
         *retAddr = false; // doesn't exist
         break;
-    case 2:                   // list directory
+    case 2: // list directory
+        if (!INBOUNDARIES(arg1))
+        {
+            *retAddr = 0;
+            return;
+        }
+
         tmp = PHYSICAL(arg1); // tmp is a backup for the name
         char *retChar = (char *)retAddr;
 
