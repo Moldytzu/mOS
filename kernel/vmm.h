@@ -15,6 +15,7 @@
 
 struct pack vmm_index
 {
+    uint64_t PML4;
     uint64_t PDP;
     uint64_t PD;
     uint64_t PT;

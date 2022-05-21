@@ -19,6 +19,7 @@
     #define K_VMM_DEBUG     // virtual memory manager debug messages; If unsure: comment
     #define K_PMM_DEBUG     // physical memory manager debug messages; If unsure: comment
     #define K_PS2_DEBUG     // enable ps/2 debug messages; If unsure: comment
+    #define K_BLDR_DEBUG    // enable bootloader debug messages; If unsure: comment
 #endif
 
 // Features

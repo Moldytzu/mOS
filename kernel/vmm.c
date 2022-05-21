@@ -6,23 +6,25 @@
 #include <gdt.h>
 #include <control.h>
 
+bool pml5 = false;
 struct vmm_page_table *baseTable;
 
 // get indices in the page table of a virtual address
 struct vmm_index vmmIndex(uint64_t virtualAddress)
 {
     struct vmm_index index;
-    virtualAddress >>= 12;
-    index.P = virtualAddress & 0x1FF;                    // get the first 9 bits
-    index.PT = (virtualAddress >> 9) & 0x1FF;            // get the next 9 bits
-    index.PD = (virtualAddress >> 9 >> 9) & 0x1FF;       // get the next 9 bits
-    index.PDP = (virtualAddress >> 9 >> 9 >> 9) & 0x1FF; // get the next 9 bits
+    index.P = (virtualAddress & ((uint64_t)0x1FF << 12)) >> 12;
+    index.PT = (virtualAddress & ((uint64_t)0x1FF << 21)) >> 21;
+    index.PD = (virtualAddress & ((uint64_t)0x1FF << 30)) >> 30;
+    index.PDP = (virtualAddress & ((uint64_t)0x1FF << 39)) >> 39;
+    index.PML4 = (virtualAddress & ((uint64_t)0x1FF << 48)) >> 48;
     return index;
 }
 
 // initialize the virtual memory manager
 void vmmInit()
 {
+    pml5 = bootloaderProbePML5();     // check if pml5 is supported
     baseTable = vmmCreateTable(true); // create the base table with hhdm
     vmmSwap(baseTable);               // swap the table
 }
@@ -61,12 +63,23 @@ void vmmSetAddress(uint64_t *entry, uint64_t address)
 // set flags of some entries given by the indices
 void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw)
 {
-    struct vmm_page_table *pdp, *pd, *pt;
+    struct vmm_page_table *pml4, *pdp, *pd, *pt;
+    uint64_t currentEntry;
 
-    uint64_t currentEntry = table->entries[index.PDP]; // index pdp
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);       // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);   // userspace
-    table->entries[index.PDP] = currentEntry;          // write the entry in the table
+    if (pml5)
+    {
+        currentEntry = table->entries[index.PML4];       // index pml4
+        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);     // read-write
+        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user); // userspace
+        table->entries[index.PML4] = currentEntry;       // write the entry in the table
+    }
+    else
+        pml4 = table;
+
+    currentEntry = pml4->entries[index.PDP];         // index pdp
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);     // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user); // userspace
+    pml4->entries[index.PDP] = currentEntry;         // write the entry in the table
 
     pdp = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue
     currentEntry = pdp->entries[index.PD];                               // index further
@@ -91,16 +104,34 @@ void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user
 void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
-    struct vmm_page_table *pdp, *pd, *pt;
+    struct vmm_page_table *pml4, *pdp, *pd, *pt;
+    uint64_t currentEntry;
 
-    uint64_t currentEntry = table->entries[index.PDP]; // index pdp
+    if (pml5)
+    {
+        currentEntry = table->entries[index.PML4];         // index pml4
+        if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
+        {
+            pml4 = mmAllocatePage();                             // allocate table
+            memset64(pml4, 0, VMM_PAGE / sizeof(uint64_t));      // clear it
+            vmmSetAddress(&currentEntry, (uint64_t)pml4 >> 12);  // set it's address
+            vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
+            table->entries[index.PML4] = currentEntry;            // write the entry in the table
+        }
+        else
+            table->entries[index.PML4] = currentEntry; // write the entry in the table
+    }
+    else
+        pml4 = table;
+
+    currentEntry = pml4->entries[index.PDP];           // index pdp
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pdp = mmAllocatePage();                             // allocate table
         memset64(pdp, 0, VMM_PAGE / sizeof(uint64_t));      // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        table->entries[index.PDP] = currentEntry;           // write the entry in the table
+        pml4->entries[index.PDP] = currentEntry;            // write the entry in the table
     }
     else
         pdp = (struct vmm_page_table *)(vmmGetAddress(&currentEntry) << 12); // continue

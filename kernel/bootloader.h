@@ -2,12 +2,13 @@
 #include <utils.h>
 #include <stivale2.h>
 
-void *bootloaderGetTag(struct stivale2_struct *stivale2_struct, uint64_t id);
+void *bootloaderGetTag(uint64_t id);
 void bootloaderInit(struct stivale2_struct *stivale2_struct);
 
 void bootloaderTermWrite(const char *str);
 
 struct stivale2_module bootloaderGetModule(const char *name);
+bool bootloaderProbePML5();
 
 struct stivale2_struct_tag_framebuffer *bootloaderGetFramebuf();
 struct stivale2_struct_tag_memmap *bootloaderGetMemMap();

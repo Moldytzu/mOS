@@ -9,6 +9,7 @@ struct stivale2_struct_tag_firmware *fwTag;
 struct stivale2_struct_tag_pmrs *pmrTag;
 struct stivale2_struct_tag_hhdm *hhdmTag;
 struct stivale2_struct_tag_rsdp *rsdpTag;
+struct stivale2_struct *stivale2struct;
 
 void (*termWrite)(const char *string, size_t length);
 
@@ -47,14 +48,14 @@ __attribute__((section(".stivale2hdr"), used)) static struct stivale2_header sti
 };
 
 // get tag
-void *bootloaderGetTag(struct stivale2_struct *stivale2_struct, uint64_t id)
+void *bootloaderGetTag(uint64_t id)
 {
-    struct stivale2_tag *current_tag = (void *)stivale2_struct->tags;
+    struct stivale2_tag *current_tag = (void *)stivale2struct->tags;
     while (true)
     {
         // check if the list is over
         if (current_tag == NULL)
-            hang(); // hang if we don't find it
+            return NULL;
 
         // check whether the identifier matches.
         if (current_tag->identifier == id)
@@ -68,17 +69,18 @@ void *bootloaderGetTag(struct stivale2_struct *stivale2_struct, uint64_t id)
 // init stivale2 bootloader
 void bootloaderInit(struct stivale2_struct *stivale2_struct)
 {
-    termTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID); // get terminal
+    stivale2struct = stivale2_struct;
+    termTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_TERMINAL_ID); // get terminal
     termWrite = (void *)termTag->term_write;                                      // set write function
 
-    framebufTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID);         // get frame buffer info
-    modsTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_MODULES_ID);                 // get modules info
-    memTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);                   // get memory map
-    fwTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_FIRMWARE_ID);                  // get firmware information
-    baseAddrTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_KERNEL_BASE_ADDRESS_ID); // get kernel base address
-    pmrTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_PMRS_ID);                     // get protected memory ranges
-    hhdmTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_HHDM_ID);                    // get higher half direct mapping base
-    rsdpTag = bootloaderGetTag(stivale2_struct, STIVALE2_STRUCT_TAG_RSDP_ID);
+    framebufTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID);         // get frame buffer info
+    modsTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_MODULES_ID);                 // get modules info
+    memTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_MEMMAP_ID);                   // get memory map
+    fwTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_FIRMWARE_ID);                  // get firmware information
+    baseAddrTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_KERNEL_BASE_ADDRESS_ID); // get kernel base address
+    pmrTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_PMRS_ID);                     // get protected memory ranges
+    hhdmTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_HHDM_ID);                    // get higher half direct mapping base
+    rsdpTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_RSDP_ID);
 }
 
 // write to stivale2 terminal
@@ -141,4 +143,17 @@ void *bootloaderGetHHDM()
 struct stivale2_struct_tag_rsdp *bootloaderGetRSDP()
 {
     return rsdpTag;
+}
+
+bool bootloaderProbePML5()
+{
+    if(bootloaderGetTag(STIVALE2_HEADER_TAG_5LV_PAGING_ID))
+    {
+        #ifdef K_BLDR_DEBUG
+            printks("bldr: level 5 paging supported\n\r");
+        #endif
+        return true;
+    }
+
+    return false;
 }
