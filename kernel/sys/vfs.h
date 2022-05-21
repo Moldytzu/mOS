@@ -88,11 +88,15 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
             if (strstarts(tmp, currentNode->filesystem->mountName) && strcmp((const char *)(tmp + strlen(currentNode->filesystem->mountName)), currentNode->path) == 0) // skip the node if the full path is equal to the path name
                 goto next1;
 
-            memcpy(retChar, currentNode->filesystem->mountName, strlen(currentNode->filesystem->mountName)); // copy the mount name
-            retChar += strlen(currentNode->filesystem->mountName);                                           // move the pointer forward
-            memcpy(retChar, currentNode->path, strlen(currentNode->path));                                   // copy the path
-            retChar += strlen(currentNode->path);                                                            // move the pointer forward
-            *(retChar++) = ' ';                                                                              // append a space
+            if (!strstarts(tmp, currentNode->filesystem->mountName)) // if the name doesn't start with the mount name then copy it
+            {
+                memcpy(retChar, (void *)(currentNode->filesystem->mountName + 1), strlen(currentNode->filesystem->mountName) - 1); // copy the mount name without the delimiter
+                retChar += strlen(currentNode->filesystem->mountName);                                                             // move the pointer forward
+            }
+
+            memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
+            retChar += strlen(currentNode->path);                          // move the pointer forward
+            *(retChar++) = ' ';                                            // append a space
         next1:
             currentNode = currentNode->next; // next node
         } while (currentNode);
