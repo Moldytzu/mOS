@@ -28,37 +28,6 @@ void vmmInit()
     vmmSwap(baseTable);               // swap the table
 }
 
-// get flag of an entry
-bool vmmGetFlag(uint64_t *entry, uint8_t flag)
-{
-    return *entry & (1 << flag); // get flag
-}
-
-// set flag of an entry
-void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
-{
-    if (value)
-    {
-        *entry |= (1 << flag); // set flag
-        return;                // return
-    }
-
-    *entry &= ~(1 << flag); // unset flag
-}
-
-// get address of an entry
-uint64_t vmmGetAddress(uint64_t *entry)
-{
-    return (*entry & 0x000FFFFFFFFFF000) >> 12; // get the address from entry
-}
-
-// set address of an entry
-void vmmSetAddress(uint64_t *entry, uint64_t address)
-{
-    *entry &= 0xfff0000000000fff;             // clear address field
-    *entry |= (address & 0xFFFFFFFFFF) << 12; // set the address field
-}
-
 // set flags of some entries given by the indices
 void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw)
 {
