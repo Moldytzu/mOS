@@ -77,7 +77,7 @@ void vfs(uint64_t syscallNumber, uint64_t call, uint64_t arg1, uint64_t returnAd
 
             name = tmp; // reset the pointer
 
-            if (!strstarts(name, currentNode->filesystem->mountName)) // compare the mount name
+            if (memcmp(name, currentNode->filesystem->mountName, min(strlen(currentNode->filesystem->mountName), strlen(currentNode->path))) != 0) // compare the mount name
                 goto next1;
 
             name += strlen(currentNode->filesystem->mountName); // move the pointer after the mount name

@@ -39,8 +39,8 @@ void dsfsFSRead(struct vfs_node *node, void *buffer, uint64_t size, uint64_t off
     if (entry) // copy only if the entry is present
     {
         // limit the size
-        if(size > ((struct dsfs_entry *)((uint64_t)entry - sizeof(struct dsfs_entry)))->size)
-            size = ((struct dsfs_entry *)((uint64_t)entry - sizeof(struct dsfs_entry)))->size; 
+        if (size > ((struct dsfs_entry *)((uint64_t)entry - sizeof(struct dsfs_entry)))->size)
+            size = ((struct dsfs_entry *)((uint64_t)entry - sizeof(struct dsfs_entry)))->size;
         memcpy(buffer, entry + offset, size); // do the actual copy
     }
 }
@@ -61,13 +61,17 @@ void initrdMount()
 
     struct dsfs_entry *entry = &dsfs->firstEntry; // point to the first entry
 
+    struct vfs_node node;                                           // root node
+    memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
+    node.filesystem = &dsfsFS;                                      // set the ram filesystem
+    vfsAdd(node);
+
     for (uint32_t i = 0; i < dsfs->header.entries; i++)
     {
-        struct vfs_node node;
         memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
         node.filesystem = &dsfsFS;                                      // set the ram filesystem
         node.size = entry->size;                                        // set the size
-        memcpy64(node.path, entry->name, 56 / sizeof(uint64_t));        // copy the file path
+        memcpy64(node.path, entry->name, 56 / sizeof(uint64_t));    // copy the file path
         vfsAdd(node);
 
         entry = (struct dsfs_entry *)((uint64_t)entry + sizeof(struct dsfs_entry) + entry->size); // point to the next entry

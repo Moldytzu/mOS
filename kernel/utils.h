@@ -52,9 +52,10 @@ void hang();
 void printk(const char *fmt, ...);
 void printks(const char *fmt, ...);
 
-// strstarts, strends
+// string functions
 bool strstarts(const char *str, const char *start);
 bool strendss(const char *str, const char *ends);
+int strcmp(const char *str1, const char *str2);
 
 // inline assembly shortcuts
 ifunc void cli()

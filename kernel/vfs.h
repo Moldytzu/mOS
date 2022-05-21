@@ -15,7 +15,6 @@ struct vfs_fs
 
 struct vfs_node
 {
-    struct vfs_node *parent;   // parent node
     struct vfs_fs *filesystem; // filesystem interface
     uint64_t size;             // size of the contents
     uint64_t id;               // ID

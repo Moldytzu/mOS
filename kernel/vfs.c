@@ -13,12 +13,9 @@ void vfsInit()
     // metadata of the rootfs
     rootFS.name = "rootfs";
     rootFS.mountName = "/";
-    
-    struct vfs_node node;                                           // the default node
-    memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
-    node.filesystem = &rootFS;                                      // rootfs
-    memcpy(node.path, ".root", 5);                                  // copy the path ("/.root")
-    vfsAdd(node);
+
+    memset64(&rootNode, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the root node
+    rootNode.filesystem = &rootFS;                                      // rootfs
 }
 
 void vfsAdd(struct vfs_node node)
@@ -55,20 +52,27 @@ struct vfs_node *vfsNodes()
 uint64_t vfsOpen(const char *name)
 {
     struct vfs_node *currentNode = &rootNode;
+    const char tmp[128 /* mount name */ + 128 /* path */];
     do
     {
-        if (currentNode->filesystem)
-        {
-            if (memcmp(name, currentNode->filesystem->mountName, strlen(currentNode->filesystem->mountName)) == 0) // compare the mount name with the prefix
-            {
-                if (memcmp(name + strlen(currentNode->filesystem->mountName), currentNode->path, strlen(currentNode->path)) == 0) // compare the path
-                {
-                    if (currentNode->filesystem->open)                  // check if the handler exists
-                        if (currentNode->filesystem->open(currentNode)) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
-                            return (uint64_t)currentNode;
-                }
-            }
-        }
+        if (!currentNode->filesystem)
+            goto next;
+
+        // memory functions equivalent of sprintf("%s%s"...);
+        memset64((void *)tmp, 0, sizeof(tmp) / sizeof(uint64_t));
+        memcpy((void *)tmp, currentNode->filesystem->mountName, strlen(currentNode->filesystem->mountName));
+        memcpy((void *)(tmp + strlen(currentNode->filesystem->mountName)), currentNode->path, strlen(currentNode->path));
+
+        if (strcmp(tmp, name) != 0) // compare the temp and the name
+            goto next;
+
+        if (!currentNode->filesystem->open) // check if the handler exists
+            goto next;
+
+        if (currentNode->filesystem->open(currentNode)) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
+            return (uint64_t)currentNode;
+
+    next:
         currentNode = currentNode->next; // next node
     } while (currentNode);
     return 0; // return nothing
