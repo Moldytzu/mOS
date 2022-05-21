@@ -4,7 +4,6 @@
 #include <bootloader.h>
 #include <idt.h>
 #include <gdt.h>
-#include <control.h>
 
 bool pml5 = false;
 struct vmm_page_table *baseTable;
@@ -192,12 +191,6 @@ void vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
 void *vmmGetBaseTable()
 {
     return baseTable;
-}
-
-// swap the current page table with a new one
-void vmmSwap(void *newTable)
-{
-    controlLoadCR3((uint64_t)newTable); // cr3 is the register that holds the table
 }
 
 // get physical address of a virtual address

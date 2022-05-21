@@ -1,5 +1,6 @@
 #pragma once
 #include <utils.h>
+#include <control.h>
 
 #define VMM_ENTRY_PRESENT 0
 #define VMM_ENTRY_RW 1
@@ -38,8 +39,12 @@ struct vmm_index vmmIndex(uint64_t virtualAddress);
 
 // misc
 void vmmInit();
-void vmmSwap(void *newTable);
 struct pack vmm_page_table *vmmCreateTable(bool full);
+
+ifunc void vmmSwap(void *newTable)
+{
+    controlLoadCR3((uint64_t)newTable); // cr3 is the register that holds the table
+}
 
 // mapping
 void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw);
