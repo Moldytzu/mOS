@@ -47,7 +47,7 @@ void handleInput(const char *buffer)
 
     if (strcmp(arguments[0], "cd") == 0) // change directory command
     {
-        if(argumentsCount != 1)
+        if (argumentsCount != 1)
         {
             puts("Usage: cd <directory>\n");
             return;
@@ -148,8 +148,7 @@ inputContinue:
 
 execute:
     uint64_t newPid;
-    char *argv[] = {"abc"};
-    struct sys_exec_packet p = {0, enviroment, cwdBuffer, 1, argv};
+    struct sys_exec_packet p = {0, enviroment, cwdBuffer, argumentsCount, ((char **)&arguments) + 1};
     sys_exec(cmdBuffer, &newPid, &p);
 
     do
