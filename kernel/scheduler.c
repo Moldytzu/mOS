@@ -106,9 +106,9 @@ void schedulerInit()
 
     firstTerminal = vtCreate(); // create the first terminal
 
-    void *task = mmAllocatePage();                                // create an empty page just for the idle task
-    memcpy8(task, (void *)idleTask, VMM_PAGE);                    // copy the executable part
-    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0); // create the idle task
+    void *task = mmAllocatePage();                                      // create an empty page just for the idle task
+    memcpy8(task, (void *)idleTask, VMM_PAGE);                          // copy the executable part
+    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0, 0, 0); // create the idle task
 }
 
 // enable the scheduler and then jump in the first task
@@ -121,7 +121,7 @@ void schedulerEnable()
 }
 
 // add new task in the queue
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd)
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv)
 {
     struct sched_task *task = &rootTask; // first task
 
@@ -170,12 +170,21 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->intrerruptStack.ss = 0x1B;                                 // data segment for user
 
     // arguments
-    task->intrerruptStack.rdi = 1;               // arguments count (1, the name)
+    task->intrerruptStack.rdi = 1 + argc;        // arguments count (1, the name)
     task->intrerruptStack.rsi = (uint64_t)stack; // the stack contains the array
 
-    uint32_t offset = sizeof(void *) * 1 + 1;          // 1 address
+    uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
+
     memcpy(stack + offset, name, strlen(name));        // copy the name
     *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
+    offset += strlen(name) + 1;                        // move the offset after the name
+
+    for (int i = 0; i < argc; i++)
+    {
+        memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
+        *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
+        offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
+    }
 
     // memory fields
     task->allocated = mmAllocatePages(128);                          // the array to store the allocated addresses (holds (128 * 4096)/8 page-alligned pages or max 256 MB allocated / task)

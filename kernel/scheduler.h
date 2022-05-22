@@ -38,6 +38,6 @@ void schedulerPrioritize(uint32_t tid, uint8_t priority);
 void schedulerSetTerminal(uint32_t tid, uint32_t terminal);
 void schedulerKill(uint32_t tid);
 uint32_t schedulerGetLastID();
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd);
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv);
 struct sched_task *schedulerGet(uint32_t tid);
 struct sched_task *schedulerGetCurrent();

@@ -48,7 +48,10 @@ struct sched_task *elfLoad(const char *path)
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter
 
-    struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0, cwd); // add the task
+    int argc = 2;
+    char *argv[] = {"abc","abc"};
+
+    struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0, cwd, argc, argv); // add the task
     free(cwd);                                                                                                                     // free
     return task;                                                                                                                   // return the task
 }
