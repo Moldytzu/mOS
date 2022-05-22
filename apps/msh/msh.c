@@ -19,6 +19,8 @@ void handleInput(const char *buffer)
     if (!*buffer) // empty input
         return;
 
+    memset(arguments[0], 0, 4096); // clear the first argument
+
     int i = 0;
     argumentsCount = 0;
     // split the buffer
@@ -28,15 +30,16 @@ void handleInput(const char *buffer)
         {
             argumentsCount++; // switch the buffer
 
+            memset(arguments[argumentsCount], 0, 4096); // clear the argument
+
             if (argumentsCount > 32) // don't overrun
             {
                 argumentsCount--;
                 break;
             }
 
-            arguments[argumentsCount][i] = 0; // terminate the argument
-            i = 0;                            // reset index
-            buffer++;                         // skip character
+            i = 0;    // reset index
+            buffer++; // skip character
             continue;
         }
         arguments[argumentsCount][i++] = *(buffer++);
@@ -95,7 +98,7 @@ void handleInput(const char *buffer)
 
     // append the extension if it doesn't exist
     if (memcmp(arguments[0] + strlen(arguments[0]) - 3, ".mx", 3) != 0)
-        memcpy((void *)(arguments[0] + strlen(arguments[0])), ".mx", 3); // copy the extension
+        memcpy((void *)(arguments[0] + strlen(arguments[0])), ".mx\0", 4); // copy the extension (including the NULL)
 
     uint64_t status;
     sys_open(arguments[0], &status);

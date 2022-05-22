@@ -81,6 +81,8 @@ cwd: // copy the cwd before the input
         goto load;
     }
 
+    *ret = 0; // fail
+    mmDeallocatePage(buffer);
     return;
 
 load:
@@ -104,4 +106,5 @@ load:
         memcpy(newTask->cwd, PHYSICAL(input->cwd), strlen(PHYSICAL(input->cwd)) + 1); // copy the initial working directory
 
     *ret = newTask->id; // set the pid
+    mmDeallocatePage(buffer);
 }
