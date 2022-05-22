@@ -44,7 +44,6 @@ void handleInput(const char *buffer)
         }
         arguments[argumentsCount][i++] = *(buffer++);
     }
-    arguments[argumentsCount][i++] = 0; // terminate the argument
 
     if (strcmp(arguments[0], "exit") == 0) // exit command
         exit(EXIT_SUCCESS);
@@ -100,23 +99,36 @@ void handleInput(const char *buffer)
     if (memcmp(arguments[0] + strlen(arguments[0]) - 3, ".mx", 3) != 0)
         memcpy((void *)(arguments[0] + strlen(arguments[0])), ".mx\0", 4); // copy the extension (including the NULL)
 
+    memset((void *)cmdBuffer, 0, 4096);                            // clear the buffer
+    memcpy((void *)cmdBuffer, arguments[0], strlen(arguments[0])); // copy the input
+
     uint64_t status;
     sys_open(arguments[0], &status);
     if (!status)
     {
+        // try to append the path
+        memset((void *)cmdBuffer, 0, 4096);
+        memcpy((void *)(cmdBuffer + pathLen), arguments[0], strlen(arguments[0])); // copy the input
+        memcpy((void *)cmdBuffer, path, pathLen);                                  // copy the path
+
+        uint64_t status;
+        sys_open(cmdBuffer, &status);
+        if (status)
+            goto execute;
+
         puts("Couldn't find executable ");
         puts(arguments[0]);
         putchar('\n');
         return;
     }
 
+execute:
     uint64_t newPid;
     char *argv[31];
     for (int i = 0; i < argumentsCount; i++)
         argv[i] = arguments[i + 1];
     struct sys_exec_packet p = {0, enviroment, cwdBuffer, argumentsCount, argv};
-    sys_exec(arguments[0], &newPid, &p);
-
+    sys_exec(cmdBuffer, &newPid, &p);
     do
     {
         sys_pid(newPid, SYS_PID_STATUS, &status); // get the status of the pid
