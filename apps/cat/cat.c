@@ -4,8 +4,16 @@
 
 int main(int argc, char **argv)
 {
+    if(argc != 2)
+    {
+        puts("Usage: ");
+        puts(argv[0]);
+        puts(" <file>\n");
+        return 1;
+    }
+
     uint64_t fd, size;
-    sys_open("/init/test.file", &fd); // open the file
+    sys_open(argv[1], &fd); // open the file
     assert(fd != 0);
 
     sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
