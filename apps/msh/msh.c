@@ -160,6 +160,9 @@ int main(int argc, char **argv)
     sys_pid(0, SYS_PID_GET, &pid);                                // get the pid
     sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
 
+    if(argc >= 2)
+        sys_pid(pid, SYS_PID_SET_CWD, (uint64_t *)argv[1]); // set the current working directory to the argument
+
     // allocate the arguments buffers
     for (int i = 0; i < 32; i++)
     {
