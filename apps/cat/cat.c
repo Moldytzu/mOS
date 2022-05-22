@@ -2,7 +2,7 @@
 #include <sys.h>
 #include <assert.h>
 
-int main()
+int main(int argc, char **argv)
 {
     uint64_t fd, size;
     sys_open("/init/test.file", &fd); // open the file

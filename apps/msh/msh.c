@@ -129,7 +129,7 @@ execute:
     } while (status == 0);                        // wait for the pid to be stopped
 }
 
-int main()
+int main(int argc, char **argv)
 {
     puts("m Shell\n");
 

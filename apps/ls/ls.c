@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-int main()
+int main(int argc, char **argv)
 {
     uint64_t pid, no;
     char *cwdBuffer, *dirBuffer;
