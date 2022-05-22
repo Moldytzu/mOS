@@ -93,67 +93,26 @@ void handleInput(const char *buffer)
         return;
     }
 
-    if (memcmp(arguments[0], "./", 2) == 0) // this folder prefix
-    {
-        arguments[0] += 2; // skip "./"
-        goto appendCWD;    // append the cwd and execute
-    }
-
-    uint16_t bufOffset = pathLen;
-
-    // don't append anything if we specify the full path
-    if (*arguments[0] == '/')
-    {
-        bufOffset = 0;
-        goto inputContinue;
-    }
-
-    // don't append the path if we already specify it
-    if (strlen(arguments[0]) <= pathLen)
-        goto inputContinue;
-
-    if (memcmp(arguments[0], path, pathLen) == 0)
-        bufOffset = 0;
-
-inputContinue:
-    memset((void *)cmdBuffer, 0, 4096);                                          // clear the buffer
-    memcpy((void *)(cmdBuffer + bufOffset), arguments[0], strlen(arguments[0])); // copy the input
-    if (bufOffset)
-        memcpy((void *)cmdBuffer, path, pathLen); // copy the path
-
     // append the extension if it doesn't exist
-    if (memcmp(cmdBuffer + strlen(cmdBuffer) - 3, ".mx", 3) != 0)
-        memcpy((void *)(cmdBuffer + strlen(cmdBuffer)), ".mx", 3); // copy the extension
+    if (memcmp(arguments[0] + strlen(arguments[0]) - 3, ".mx", 3) != 0)
+        memcpy((void *)(arguments[0] + strlen(arguments[0])), ".mx", 3); // copy the extension
 
     uint64_t status;
-    sys_vfs(SYS_VFS_FILE_EXISTS, (uint64_t)cmdBuffer, (uint64_t)&status); // check if file exists
-
+    sys_open(arguments[0], &status);
     if (!status)
     {
-    appendCWD:
-        // trying to append the cwd
-        memset((void *)cmdBuffer, 0, 4096); // clear the buffer
-        bufOffset = strlen(cwdBuffer);
-        memcpy((void *)(cmdBuffer + bufOffset), arguments[0], strlen(arguments[0])); // copy the input
-        memcpy((void *)cmdBuffer, cwdBuffer, bufOffset);                             // copy the path
-
-        sys_vfs(SYS_VFS_FILE_EXISTS, (uint64_t)cmdBuffer, (uint64_t)&status); // check if file exists
-        if (status)
-            goto execute;
-
         puts("Couldn't find executable ");
         puts(arguments[0]);
         putchar('\n');
         return;
     }
 
-execute:
     uint64_t newPid;
     char *argv[31];
     for (int i = 0; i < argumentsCount; i++)
         argv[i] = arguments[i + 1];
     struct sys_exec_packet p = {0, enviroment, cwdBuffer, argumentsCount, argv};
-    sys_exec(cmdBuffer, &newPid, &p);
+    sys_exec(arguments[0], &newPid, &p);
 
     do
     {

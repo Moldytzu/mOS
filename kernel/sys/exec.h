@@ -3,6 +3,7 @@
 #include <scheduler.h>
 #include <elf.h>
 #include <vt.h>
+#include <pmm.h>
 
 struct pack sys_exec_packet
 {
@@ -45,7 +46,45 @@ void exec(uint64_t syscallNumber, uint64_t path, uint64_t pid, uint64_t returnAd
         }
     }
 
-    struct sched_task *newTask = elfLoad(PHYSICAL(path), argc, argv);
+    uint64_t fd;
+    char *inputPath = PHYSICAL(path);
+    char *buffer = mmAllocatePage();
+
+    if (memcmp(inputPath, "./", 2) == 0) // check if the task requests from the current directory
+    {
+        inputPath += 2; // skip ./
+        goto cwd;
+    }
+
+    memset64(buffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the buffer
+    memcpy(buffer, inputPath, strlen(inputPath));     // copy the input
+
+    // check if it exists
+    fd = vfsOpen(buffer);
+    if (fd)
+    {
+        vfsClose(fd);
+        goto load;
+    }
+
+cwd: // copy the cwd before the input
+    uint64_t offset = strlen(task->cwd);
+    memset64(buffer, 0, VMM_PAGE / sizeof(uint64_t));
+    memcpy((void *)(buffer + offset), inputPath, strlen(inputPath));
+    memcpy((void *)buffer, task->cwd, offset);
+
+    // check if it exists
+    fd = vfsOpen(buffer);
+    if (fd)
+    {
+        vfsClose(fd);
+        goto load;
+    }
+
+    return;
+
+load:
+    struct sched_task *newTask = elfLoad(buffer, argc, argv);
 
     if (newTask == NULL) // failed to load the task
     {
