@@ -32,7 +32,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
     // handle vt mode after the idle task
-    if(currentTask->id != 0)
+    if (currentTask->id != 0)
         goto c;
 
     switch (vtGetMode())
@@ -152,7 +152,8 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     struct vmm_page_table *newTable = vmmCreateTable(false); // create a new page table
     task->pageTable = newTable;                              // set the new page table
 
-    void *stack = mmAllocatePages(stackSize / VMM_PAGE); // allocate stack for the task
+    void *stack = mmAllocatePages(stackSize / VMM_PAGE);         // allocate stack for the task
+    memset64(stack, 0, stackSize / VMM_PAGE / sizeof(uint64_t)); // clear the stack
 
     for (size_t i = 0; i < stackSize; i += VMM_PAGE) // map task stack as user, read-write
         vmmMap(newTable, (void *)stack + i, stack + i, true, true);
@@ -167,6 +168,13 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->intrerruptStack.rbp = task->intrerruptStack.rsp;           // stack frame pointer
     task->intrerruptStack.cs = 0x23;                                 // code segment for user
     task->intrerruptStack.ss = 0x1B;                                 // data segment for user
+
+    // arguments
+    task->intrerruptStack.rdi = 1;               // arguments count (1, the name)
+    task->intrerruptStack.rsi = (uint64_t)stack; // the stack contains the array
+
+    uint32_t offset = sizeof(void *) * 1 + 1; // 1 address
+    memcpy(stack, name, strlen(name));        // copy the name
 
     // memory fields
     task->allocated = mmAllocatePages(128);                          // the array to store the allocated addresses (holds (128 * 4096)/8 page-alligned pages or max 256 MB allocated / task)
@@ -240,7 +248,7 @@ struct sched_task *schedulerGet(uint32_t tid)
 
 void schedulerKill(uint32_t tid)
 {
-    if(tid == 1)
+    if (tid == 1)
         panick("Attempt killing the init system.");
 
     struct sched_task *task = schedulerGet(tid);

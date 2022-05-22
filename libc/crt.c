@@ -1,8 +1,8 @@
 #include <sys.h>
 
-extern int main();
+extern int main(int argc, char **argv);
 
-void _mmain() // main function
+void _mmain(int argc, char **argv) // main function
 {
-    sys_exit(main()); // call the main function that returns a status code
+    sys_exit(main(argc, argv)); // call the main function that returns a status code
 }

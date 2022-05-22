@@ -27,7 +27,7 @@ void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t
 // init syscall handling
 void syscallInit(uint16_t vector)
 {
-    printk("Installing system call handler on vector 0x%x...", vector);
+    printk("Installing system call handler on vector 0x%x and enabling sysret/syscall...", vector);
     idtSetGate((void *)SyscallIntHandlerEntry, vector, IDT_InterruptGateU, true);
     printk("done\n");
 
