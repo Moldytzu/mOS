@@ -11,35 +11,68 @@ const char *path;
 const char *enviroment;
 const char *cmdBuffer;
 char *cwdBuffer;
+char *arguments[32];
+int argumentsCount = 0;
 
 void handleInput(const char *buffer)
 {
     if (!*buffer) // empty input
         return;
 
-    if (strcmp(buffer, "exit") == 0) // exit command
+    // clear the arguments buffer
+    for(int i = 0; i < 32; i++)
+        memset(arguments[i],0,4096);
+
+    int i = 0;
+    argumentsCount = 0;
+    // split the buffer
+    while(*buffer)
+    {
+        if(*buffer == ' ') // split
+        {
+            argumentsCount++; // switch the buffer
+
+            if(argumentsCount > 32)
+                break;
+
+            i = 0; // reset index
+            buffer++; // skip character
+            continue;
+        }
+        arguments[argumentsCount][i++] = *(buffer++);
+    }
+
+    // display the arguments
+    for(int i = 0; i <= argumentsCount; i++)
+    {
+        puts(arguments[i]);
+        putchar(' ');
+    }
+    putchar('\n');
+
+    if (strcmp(arguments[0], "exit") == 0) // exit command
         exit(EXIT_SUCCESS);
 
-    if (memcmp(buffer, "cd ", 3) == 0) // change directory command
+    if (memcmp(arguments[0], "cd ", 3) == 0) // change directory command
     {
-        buffer += 3; // skip "cd "
+        arguments[0] += 3; // skip "cd "
 
-        if (strcmp(buffer, "..") == 0) // go back a folder
+        if (strcmp(arguments[0], "..") == 0) // go back a folder
         {
             for (int i = strlen(cwdBuffer) - 2; cwdBuffer[i] != '/'; cwdBuffer[i--] = '\0')
                 ; // step back to last delimiter
         }
-        else if (*buffer == '/') // full path
+        else if (*arguments[0] == '/') // full path
         {
             memset(cwdBuffer, 0, 4096);                // clear the buffer
-            memcpy(cwdBuffer, buffer, strlen(buffer)); // copy the buffer
+            memcpy(cwdBuffer, arguments[0], strlen(arguments[0])); // copy the buffer
         }
         else
         {
             if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
                 cwdBuffer[strlen(cwdBuffer)] = '/';
 
-            memcpy(cwdBuffer + strlen(cwdBuffer), buffer, strlen(buffer)); // copy the buffer
+            memcpy(cwdBuffer + strlen(cwdBuffer), arguments[0], strlen(arguments[0])); // copy the buffer
         }
 
         if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
@@ -51,7 +84,7 @@ void handleInput(const char *buffer)
         if (!status)
         {
             puts("Couldn't find directory ");
-            puts(buffer);
+            puts(arguments[0]);
             putchar('\n');
 
             // restore the cwd
@@ -63,31 +96,31 @@ void handleInput(const char *buffer)
         return;
     }
 
-    if (memcmp(buffer, "./", 2) == 0) // this folder prefix
+    if (memcmp(arguments[0], "./", 2) == 0) // this folder prefix
     {
-        buffer += 2;    // skip "./"
+        arguments[0] += 2;    // skip "./"
         goto appendCWD; // append the cwd and execute
     }
 
     uint16_t bufOffset = pathLen;
 
     // don't append anything if we specify the full path
-    if (*buffer == '/')
+    if (*arguments[0] == '/')
     {
         bufOffset = 0;
         goto inputContinue;
     }
 
     // don't append the path if we already specify it
-    if (strlen(buffer) <= pathLen)
+    if (strlen(arguments[0]) <= pathLen)
         goto inputContinue;
 
-    if (memcmp(buffer, path, pathLen) == 0)
+    if (memcmp(arguments[0], path, pathLen) == 0)
         bufOffset = 0;
 
 inputContinue:
     memset((void *)cmdBuffer, 0, 4096);                              // clear the buffer
-    memcpy((void *)(cmdBuffer + bufOffset), buffer, strlen(buffer)); // copy the input
+    memcpy((void *)(cmdBuffer + bufOffset), arguments[0], strlen(arguments[0])); // copy the input
     if (bufOffset)
         memcpy((void *)cmdBuffer, path, pathLen); // copy the path
 
@@ -104,7 +137,7 @@ inputContinue:
         // trying to append the cwd
         memset((void *)cmdBuffer, 0, 4096); // clear the buffer
         bufOffset = strlen(cwdBuffer);
-        memcpy((void *)(cmdBuffer + bufOffset), buffer, strlen(buffer)); // copy the input
+        memcpy((void *)(cmdBuffer + bufOffset), buffer, strlen(arguments[0])); // copy the input
         memcpy((void *)cmdBuffer, cwdBuffer, bufOffset);                 // copy the path
 
         sys_vfs(SYS_VFS_FILE_EXISTS, (uint64_t)cmdBuffer, (uint64_t)&status); // check if file exists
@@ -112,7 +145,7 @@ inputContinue:
             goto execute;
 
         puts("Couldn't find executable ");
-        puts(buffer);
+        puts(arguments[0]);
         putchar('\n');
         return;
     }
@@ -154,6 +187,13 @@ int main(int argc, char **argv)
     sys_pid(0, SYS_PID_GET, &pid);                                // get the pid
     sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
 
+    // allocate the arguments buffers
+    for (int i = 0; i < 32; i++)
+    {
+        sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&arguments[i], 0);
+        assert(arguments[i] != NULL); // assert that the buffer is valid
+    }
+
     // set the start
     path = enviroment;
 
@@ -189,7 +229,7 @@ int main(int argc, char **argv)
                 kBuffer[kIdx++] = chr; // append the character
             }
 
-            if(kIdx == 4095) // prevent buffer overflow
+            if (kIdx == 4095) // prevent buffer overflow
             {
                 kBuffer[4095] = 0;
                 break;
