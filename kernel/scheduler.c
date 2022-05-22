@@ -173,8 +173,9 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->intrerruptStack.rdi = 1;               // arguments count (1, the name)
     task->intrerruptStack.rsi = (uint64_t)stack; // the stack contains the array
 
-    uint32_t offset = sizeof(void *) * 1 + 1; // 1 address
-    memcpy(stack, name, strlen(name));        // copy the name
+    uint32_t offset = sizeof(void *) * 1 + 1;          // 1 address
+    memcpy(stack + offset, name, strlen(name));        // copy the name
+    *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
 
     // memory fields
     task->allocated = mmAllocatePages(128);                          // the array to store the allocated addresses (holds (128 * 4096)/8 page-alligned pages or max 256 MB allocated / task)

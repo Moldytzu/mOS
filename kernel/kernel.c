@@ -49,7 +49,7 @@ void exceptionHandler(struct idt_intrerrupt_stack *stack)
     vmmSwap(vmmGetBaseTable()); // swap to the base table
     if (stack->cs == 0x23)      // userspace
     {
-        printk("\n%s crashed! Terminating it.\n", schedulerGetCurrent()->name);
+        printks("\n%s crashed! Terminating it.\n", schedulerGetCurrent()->name);
         schedulerKill(schedulerGetCurrent()->id); // terminate the task
         schedulerSchedule(stack);                 // schedule next task
         return;
