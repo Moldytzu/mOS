@@ -6,7 +6,7 @@
 #include <scheduler.h>
 #include <heap.h>
 
-struct sched_task *elfLoad(const char *path)
+struct sched_task *elfLoad(const char *path, int argc, char **argv)
 {
     uint64_t fd = vfsOpen(path);                                   // open the file
     Elf64_Ehdr *elf = mmAllocatePages(vfsSize(fd) / VMM_PAGE + 1); // allocate the raw elf
@@ -47,9 +47,6 @@ struct sched_task *elfLoad(const char *path)
     memcpy(cwd, path, strlen(path));
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter
-
-    int argc = 2;
-    char *argv[] = {"abc","abc"};
 
     struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0, cwd, argc, argv); // add the task
     free(cwd);                                                                                                                     // free

@@ -9,6 +9,8 @@ struct pack sys_exec_packet
     uint8_t shouldCreateNewTerminal;
     const char *enviroment;
     const char *cwd;
+    int argc;
+    char **argv;
 };
 
 // exec (rsi = path, rdx = pid, r8 = packet)
@@ -17,9 +19,33 @@ void exec(uint64_t syscallNumber, uint64_t path, uint64_t pid, uint64_t returnAd
     if (!INBOUNDARIES(path) || !INBOUNDARIES(pid) || !INBOUNDARIES(packet)) // prevent a crash
         return;
 
-    struct sched_task *newTask = elfLoad(PHYSICAL(path));
+    int argc = 0;
+    char **argv = NULL;
+
     uint64_t *ret = PHYSICAL(pid);
     struct sys_exec_packet *input = PHYSICAL(packet);
+
+    if (input->argc)
+    {
+        if (!INBOUNDARIES(input->argv))
+            return;
+
+        input->argv = PHYSICAL(input->argv); // get phyisical address of the argv
+
+        argc = input->argc;
+        argv = input->argv;
+
+        // convert addresses to physical
+        for (int i = 0; i < input->argc; i++)
+        {
+            if(!INBOUNDARIES(input->argv[i])) // check
+                return;
+
+            input->argv[i] = PHYSICAL(input->argv[i]);
+        }
+    }
+
+    struct sched_task *newTask = elfLoad(PHYSICAL(path), argc, argv);
 
     if (newTask == NULL) // failed to load the task
     {

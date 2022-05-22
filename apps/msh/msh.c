@@ -119,7 +119,8 @@ inputContinue:
 
 execute:
     uint64_t newPid;
-    struct sys_exec_packet p = {0, enviroment, cwdBuffer};
+    char *argv[] = {"abc"};
+    struct sys_exec_packet p = {0, enviroment, cwdBuffer, 1, argv};
     sys_exec(cmdBuffer, &newPid, &p);
 
     do
