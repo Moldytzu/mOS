@@ -152,8 +152,8 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     struct vmm_page_table *newTable = vmmCreateTable(false); // create a new page table
     task->pageTable = newTable;                              // set the new page table
 
-    void *stack = mmAllocatePages(stackSize / VMM_PAGE);         // allocate stack for the task
-    memset64(stack, 0, stackSize / VMM_PAGE / sizeof(uint64_t)); // clear the stack
+    void *stack = mmAllocatePages(stackSize / VMM_PAGE); // allocate stack for the task
+    memset64(stack, 0, stackSize / sizeof(uint64_t));    // clear the stack
 
     for (size_t i = 0; i < stackSize; i += VMM_PAGE) // map task stack as user, read-write
         vmmMap(newTable, (void *)stack + i, stack + i, true, true);

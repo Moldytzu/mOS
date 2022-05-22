@@ -19,10 +19,6 @@ void handleInput(const char *buffer)
     if (!*buffer) // empty input
         return;
 
-    // clear the arguments buffer
-    for (int i = 0; i < 32; i++)
-        memset(arguments[i], 0, 4096);
-
     int i = 0;
     argumentsCount = 0;
     // split the buffer
@@ -32,15 +28,20 @@ void handleInput(const char *buffer)
         {
             argumentsCount++; // switch the buffer
 
-            if (argumentsCount > 32)
+            if (argumentsCount > 32) // don't overrun
+            {
+                argumentsCount--;
                 break;
+            }
 
-            i = 0;    // reset index
-            buffer++; // skip character
+            arguments[argumentsCount][i] = 0; // terminate the argument
+            i = 0;                            // reset index
+            buffer++;                         // skip character
             continue;
         }
         arguments[argumentsCount][i++] = *(buffer++);
     }
+    arguments[argumentsCount][i++] = 0; // terminate the argument
 
     if (strcmp(arguments[0], "exit") == 0) // exit command
         exit(EXIT_SUCCESS);
@@ -133,8 +134,8 @@ inputContinue:
         // trying to append the cwd
         memset((void *)cmdBuffer, 0, 4096); // clear the buffer
         bufOffset = strlen(cwdBuffer);
-        memcpy((void *)(cmdBuffer + bufOffset), buffer, strlen(arguments[0])); // copy the input
-        memcpy((void *)cmdBuffer, cwdBuffer, bufOffset);                       // copy the path
+        memcpy((void *)(cmdBuffer + bufOffset), arguments[0], strlen(arguments[0])); // copy the input
+        memcpy((void *)cmdBuffer, cwdBuffer, bufOffset);                             // copy the path
 
         sys_vfs(SYS_VFS_FILE_EXISTS, (uint64_t)cmdBuffer, (uint64_t)&status); // check if file exists
         if (status)
@@ -148,7 +149,10 @@ inputContinue:
 
 execute:
     uint64_t newPid;
-    struct sys_exec_packet p = {0, enviroment, cwdBuffer, argumentsCount, ((char **)&arguments) + 1};
+    char *argv[31];
+    for (int i = 0; i < argumentsCount; i++)
+        argv[i] = arguments[i + 1];
+    struct sys_exec_packet p = {0, enviroment, cwdBuffer, argumentsCount, argv};
     sys_exec(cmdBuffer, &newPid, &p);
 
     do

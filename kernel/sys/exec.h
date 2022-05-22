@@ -36,12 +36,12 @@ void exec(uint64_t syscallNumber, uint64_t path, uint64_t pid, uint64_t returnAd
         argv = input->argv;
 
         // convert addresses to physical
-        for (int i = 0; i < input->argc; i++)
+        for (int i = 0; i < argc; i++)
         {
-            if(!INBOUNDARIES(input->argv[i])) // check
+            if (!INBOUNDARIES(argv[i])) // check
                 return;
 
-            input->argv[i] = PHYSICAL(input->argv[i]);
+            argv[i] = PHYSICAL(argv[i]);
         }
     }
 
