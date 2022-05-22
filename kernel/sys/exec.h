@@ -46,47 +46,16 @@ void exec(uint64_t syscallNumber, uint64_t path, uint64_t pid, uint64_t returnAd
         }
     }
 
-    uint64_t fd;
-    char *inputPath = PHYSICAL(path);
-    char *buffer = mmAllocatePage();
+    char *inputPath = expandPath(PHYSICAL(path), task); // expand the path
 
-    if (memcmp(inputPath, "./", 2) == 0) // check if the task requests from the current directory
+    if (inputPath == NULL) // if the path is null then it doesn't exist
     {
-        inputPath += 2; // skip ./
-        goto cwd;
+        *ret = 0; // fail
+        mmDeallocatePage(inputPath);
+        return;
     }
 
-    memset64(buffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the buffer
-    memcpy(buffer, inputPath, strlen(inputPath));     // copy the input
-
-    // check if it exists
-    fd = vfsOpen(buffer);
-    if (fd)
-    {
-        vfsClose(fd);
-        goto load;
-    }
-
-cwd: // copy the cwd before the input
-    uint64_t offset = strlen(task->cwd);
-    memset64(buffer, 0, VMM_PAGE / sizeof(uint64_t));
-    memcpy((void *)(buffer + offset), inputPath, strlen(inputPath));
-    memcpy((void *)buffer, task->cwd, offset);
-
-    // check if it exists
-    fd = vfsOpen(buffer);
-    if (fd)
-    {
-        vfsClose(fd);
-        goto load;
-    }
-
-    *ret = 0; // fail
-    mmDeallocatePage(buffer);
-    return;
-
-load:
-    struct sched_task *newTask = elfLoad(buffer, argc, argv);
+    struct sched_task *newTask = elfLoad(inputPath, argc, argv); // do the loading
 
     if (newTask == NULL) // failed to load the task
     {
@@ -106,5 +75,5 @@ load:
         memcpy(newTask->cwd, PHYSICAL(input->cwd), strlen(PHYSICAL(input->cwd)) + 1); // copy the initial working directory
 
     *ret = newTask->id; // set the pid
-    mmDeallocatePage(buffer);
+    mmDeallocatePage(inputPath);
 }
