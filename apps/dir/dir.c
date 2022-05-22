@@ -18,6 +18,6 @@ int main()
     sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
 
     uint64_t newPid;
-    struct sys_exec_packet p = {0, "|", cwdBuffer};
+    struct sys_exec_packet p = {0, "|", cwdBuffer, 0, 0};
     sys_exec("/init/ls.mx", &newPid, &p);
 }
