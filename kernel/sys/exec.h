@@ -15,7 +15,7 @@ struct pack sys_exec_packet
 };
 
 // exec (rsi = path, rdx = pid, r8 = packet)
-void exec(uint64_t syscallNumber, uint64_t path, uint64_t pid, uint64_t returnAddress, uint64_t packet, uint64_t ignored, uint64_t r9, struct sched_task *task)
+void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, struct sched_task *task)
 {
     if (!INBOUNDARIES(path) || !INBOUNDARIES(pid) || !INBOUNDARIES(packet)) // prevent a crash
         return;
