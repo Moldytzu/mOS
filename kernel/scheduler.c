@@ -23,6 +23,8 @@ void idleTask()
         ;
 }
 
+uint8_t simdContext[512] __attribute__((aligned(16)));
+
 // schedule the next task
 void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 {
@@ -30,6 +32,8 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
         return; // don't do anything if it isn't enabled
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
+
+    iasm("fxsave %0 "::"m"(simdContext)); // save simd context
 
     // handle vt mode after the idle task
     if (currentTask->id != 0)
@@ -76,6 +80,9 @@ c:
     // save the registers
     memcpy8(&currentTask->intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack));
 
+    // copy the simd context
+    memcpy64(currentTask->simdContext, simdContext, sizeof(currentTask->simdContext) / sizeof(uint64_t));
+
 loadnext:
     // load the next task
     do
@@ -92,6 +99,11 @@ loadnext:
 
     // copy the new registers
     memcpy8(stack, &currentTask->intrerruptStack, sizeof(struct idt_intrerrupt_stack));
+
+    // copy the new simd context
+    memcpy64(simdContext, currentTask->simdContext, sizeof(currentTask->simdContext) / sizeof(uint64_t));
+
+    iasm("fxrstor %0 "::"m"(simdContext)); // restore simd context
 
     vmmSwap(currentTask->pageTable); // swap the page table
 }

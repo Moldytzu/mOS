@@ -20,6 +20,7 @@ struct sched_task
     uint32_t id;                                 // task ID (TID)
     struct vmm_page_table *pageTable;            // pointer to the page table
     struct idt_intrerrupt_stack intrerruptStack; // the last intrerrupt stack
+    uint8_t simdContext[512];                    // simd context (contains sse and fpu information)
     uint32_t terminal;                           // task terminal
     void **allocated;                            // allocated pages
     uint32_t allocatedIndex;                     // current index
