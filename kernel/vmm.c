@@ -8,18 +8,6 @@
 bool pml5 = false;
 struct vmm_page_table *baseTable;
 
-// get indices in the page table of a virtual address
-struct vmm_index vmmIndex(uint64_t virtualAddress)
-{
-    struct vmm_index index;
-    index.P = (virtualAddress & ((uint64_t)0x1FF << 12)) >> 12;
-    index.PT = (virtualAddress & ((uint64_t)0x1FF << 21)) >> 21;
-    index.PD = (virtualAddress & ((uint64_t)0x1FF << 30)) >> 30;
-    index.PDP = (virtualAddress & ((uint64_t)0x1FF << 39)) >> 39;
-    index.PML4 = (virtualAddress & ((uint64_t)0x1FF << 48)) >> 48;
-    return index;
-}
-
 // initialize the virtual memory manager
 void vmmInit()
 {
