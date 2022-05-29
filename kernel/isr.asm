@@ -57,7 +57,6 @@ PITHandlerEntry:
     iretq
 
 SyscallHandlerEntry:
-    cli
     PUSH_REG
     call syscallHandler ; call the syscall handler
     POP_REG

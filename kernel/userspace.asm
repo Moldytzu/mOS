@@ -17,6 +17,10 @@ sysretInit:
 	rdmsr
 	mov	rdx, 0x00130008 ; syscall base is 0x08, sysret base is 0x13
 	wrmsr
+	mov	rcx, 0xc0000084 ; FMASK
+	rdmsr
+	mov	rax, (0xFFFFFFFFFFFFFFFF & ~0b10) ; mask every flag
+	wrmsr
 	ret
 
 userspaceJump:
