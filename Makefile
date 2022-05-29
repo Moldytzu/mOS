@@ -13,6 +13,9 @@ all: $(OUTPUT)
 run: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT)
 
+run-kvm: $(OUTPUT)
+	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) --enable-kvm -cpu host
+
 run-debug: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) $(QEMUDEBUG)
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
