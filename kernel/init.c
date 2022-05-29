@@ -88,6 +88,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     pitInit();
     printk("done\n");
 
+    // initialize the scheduler
+    printk("Initializing the Scheduler...");
+    schedulerInit();
+    printk("done\n");
+
     // initialize the acpi interface
     printk("Initializing the ACPI interface...");
     acpiInit();
@@ -104,11 +109,6 @@ void _start(struct stivale2_struct *stivale2_struct)
     ps2Init();
     printk("done\n");
 #endif
-
-    // initialize the scheduler
-    printk("Initializing the Scheduler...");
-    schedulerInit();
-    printk("done\n");
 
     // initialize system calls
     syscallInit(0x51);

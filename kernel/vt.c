@@ -27,7 +27,8 @@ struct vt_terminal *vtCreate()
     memset64(currentTerminal, 0, sizeof(struct vt_terminal) / sizeof(uint64_t)); // clear the terminal
     currentTerminal->buffer = mmAllocatePage();                                  // allocate the buffer
     memset64((void *)currentTerminal->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the buffer
-    currentTerminal->bufferLen = VMM_PAGE;                                       // set the lenght of the buffer
+    currentTerminal->kbBuffer = mmAllocatePage();                                // allocate the keyboard buffer
+    memset64((void *)currentTerminal->kbBuffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the keyboard buffer
     currentTerminal->id = lastID++;                                              // set the ID
 
 #ifdef K_VT_DEBUG
@@ -42,13 +43,13 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
     if (vt == &rootTerminal)
         refresh = true; // set refresh flag
 
-    const char *input = str;                    // input buffer
-    if (vt->bufferIdx + count >= vt->bufferLen) // check if we could overflow
+    const char *input = str;               // input buffer
+    if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow
     {
-        input += (vt->bufferIdx + count) - vt->bufferLen;                  // move the pointer until where it overflows
-        count -= (vt->bufferIdx + count) - vt->bufferLen;                  // decrease the count by the number of bytes where it overflows
-        memset64((void *)vt->buffer, 0, vt->bufferLen / sizeof(uint64_t)); // clear the buffer
-        vt->bufferIdx = 0;                                                 // reset the index
+        input += (vt->bufferIdx + count) - VMM_PAGE;                  // move the pointer until where it overflows
+        count -= (vt->bufferIdx + count) - VMM_PAGE;                  // decrease the count by the number of bytes where it overflows
+        memset64((void *)vt->buffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the buffer
+        vt->bufferIdx = 0;                                            // reset the index
     }
 
     memcpy8((void *)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer
@@ -74,6 +75,25 @@ struct vt_terminal *vtGet(uint32_t id)
         terminal = terminal->next;
 
     return terminal;
+}
+
+void vtkbAppend(struct vt_terminal *vt, char c)
+{
+    vt->kbBuffer[vt->kbBufferIdx++] = c; // append the character
+
+    if (vt->kbBufferIdx == 4096) // prevent buffer overflow
+        vt->kbBufferIdx = 0;
+}
+
+char vtkbGet(struct vt_terminal *vt)
+{
+    char last = vt->kbBuffer[vt->kbBufferIdx];
+    vt->kbBuffer[vt->kbBufferIdx--] = '\0'; // clear the character
+
+    if (vt->kbBufferIdx < 0) // prevent buffer underflow
+        vt->kbBufferIdx = 0;
+
+    return last;
 }
 
 uint16_t mode;

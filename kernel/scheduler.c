@@ -293,6 +293,7 @@ void schedulerKill(uint32_t tid)
         struct vt_terminal *terminal = vtGet(task->terminal);
         terminal->previous->next = terminal->next;  // bypass this node
         mmDeallocatePage((void *)terminal->buffer); // deallocate the buffer
+        mmDeallocatePage((void *)terminal->kbBuffer); // deallocate the buffer
         free(terminal);                             // free the terminal
     }
 

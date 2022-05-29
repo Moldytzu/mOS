@@ -1,33 +1,31 @@
 #include <input.h>
+#include <vt.h>
+#include <scheduler.h>
 
-char kbBuffer[4096]; // keyboard buffer
-int kbIndex = 0;
+struct vt_terminal *startTerminal, *currentTerminal;
 
 void kbAppendChar(char c)
 {
-    kbBuffer[kbIndex++] = c; // append the character
-
-    if (kbIndex == 4096) // prevent buffer overflow
-        kbIndex = 0;
+    // loop thru each terminal and then append the character to each of them
+    currentTerminal = startTerminal;
+    while (currentTerminal)
+    {
+        vtkbAppend(currentTerminal, c);
+        currentTerminal = currentTerminal->next;
+    }
 }
 
 char kbGetLastKey()
 {
-    char last = kbBuffer[kbIndex];
-    kbBuffer[kbIndex--] = '\0'; // clear the character
-
-    if (kbIndex < 0) // prevent buffer underflow
-        kbIndex = 0;
-
-    return last;
+    return vtkbGet(vtGet(schedulerGetCurrent()->terminal)); // get last key of the terminal
 }
 
 char *kbGetBuffer()
 {
-    return kbBuffer;
+    return (char *)vtGet(schedulerGetCurrent()->terminal)->buffer; // get the buffer
 }
 
 void inputInit()
 {
-    memset64(kbBuffer, 0, sizeof(kbBuffer) / sizeof(uint64_t)); // clear the buffer
+    startTerminal = vtGet(0);
 }
