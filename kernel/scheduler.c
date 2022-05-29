@@ -35,7 +35,7 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
 
     iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
 
-    // handle vt mode after the idle task
+    // handle vt mode and calculate cpu time only after switching the idle task
     if (currentTask->id != 0)
         goto c;
 
@@ -53,6 +53,27 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
         break;
     default:
         break;
+    }
+
+    // calculate the overall syscall usage
+    uint32_t syscalls = 0;
+    struct sched_task *task = rootTask.next; // second task
+    while (task)
+    {
+        syscalls += task->syscallUsage;
+        task = task->next;
+    }
+
+    // calculate the percents for each task
+    task = rootTask.next; // second task
+    while (task)
+    {
+        task->overallCPUpercent = ((syscalls + 1) * 100) / ((task->syscallUsage + 1) * 100); // multiply everything by 100 so we don't use expensive floating point math, add 1 everywhere so the kernel doesn't crash on division by zero
+        task->syscallUsage = 0;                                                              // reset the counter, will be incremented when the task uses any syscall
+#ifdef K_SCHED_DEBUG
+        printks("sched: %s used %d percent of the total CPU time\n\r", task->name, task->overallCPUpercent);
+#endif
+        task = task->next;
     }
 
 c:
@@ -291,10 +312,10 @@ void schedulerKill(uint32_t tid)
     if (found == 1) // if only one task is using that task (the task we're killing) then we deallocate the terminal
     {
         struct vt_terminal *terminal = vtGet(task->terminal);
-        terminal->previous->next = terminal->next;  // bypass this node
-        mmDeallocatePage((void *)terminal->buffer); // deallocate the buffer
+        terminal->previous->next = terminal->next;    // bypass this node
+        mmDeallocatePage((void *)terminal->buffer);   // deallocate the buffer
         mmDeallocatePage((void *)terminal->kbBuffer); // deallocate the buffer
-        free(terminal);                             // free the terminal
+        free(terminal);                               // free the terminal
     }
 
     // deallocate the memory allocations

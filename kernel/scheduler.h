@@ -26,6 +26,8 @@ struct sched_task
     uint32_t allocatedIndex;                     // current index
     void *lastVirtualAddress;                    // last virtual address of the allocation
     char *enviroment;                            // enviroment variables
+    uint32_t syscallUsage;                       // the count of syscalls issued by the task in a cycle
+    uint8_t overallCPUpercent;                   // percent of the cpu used
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task

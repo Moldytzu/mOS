@@ -18,8 +18,10 @@ void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t
 
     struct sched_task *t = schedulerGetCurrent();
 
-    if (syscallNumber < (sizeof(syscallHandlers) / sizeof(void *)))                           // check if the syscall is in range
-        syscallHandlers[syscallNumber](rsi, rdx, r8, r9, t); // call the handler
+    t->syscallUsage++; // increase the syscall usage
+
+    if (syscallNumber < (sizeof(syscallHandlers) / sizeof(void *))) // check if the syscall is in range
+        syscallHandlers[syscallNumber](rsi, rdx, r8, r9, t);        // call the handler
 
     vmmSwap(t->pageTable); // swap the page table back
 }
