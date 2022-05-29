@@ -6,6 +6,7 @@
 
 extern void sysretInit();
 extern void SyscallIntHandlerEntry();
+uint32_t count = 1;
 
 // handler called on syscall
 void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t returnAddress, uint64_t r8, uint64_t r9)
@@ -19,11 +20,19 @@ void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t
     struct sched_task *t = schedulerGetCurrent();
 
     t->syscallUsage++; // increase the syscall usage
+    count++;
 
     if (syscallNumber < (sizeof(syscallHandlers) / sizeof(void *))) // check if the syscall is in range
         syscallHandlers[syscallNumber](rsi, rdx, r8, r9, t);        // call the handler
 
     vmmSwap(t->pageTable); // swap the page table back
+}
+
+uint32_t syscallGetCount()
+{
+    register uint32_t tmp = count; // store the count
+    count = 1;                     // reset the count
+    return tmp;                    // return the count
 }
 
 // init syscall handling

@@ -5,6 +5,7 @@
 #include <serial.h>
 #include <heap.h>
 #include <panic.h>
+#include <syscall.h>
 
 void *kernelStack;
 struct vt_terminal *firstTerminal; // first usable terminal
@@ -55,21 +56,14 @@ void schedulerSchedule(struct idt_intrerrupt_stack *stack)
         break;
     }
 
-    // calculate the overall syscall usage
-    uint32_t syscalls = 0;
+    register uint32_t syscalls = syscallGetCount(); // get the overall syscall usage
+
+    // calculate the percents for each task
     struct sched_task *task = rootTask.next; // second task
     while (task)
     {
-        syscalls += task->syscallUsage;
-        task = task->next;
-    }
-
-    // calculate the percents for each task
-    task = rootTask.next; // second task
-    while (task)
-    {
-        task->overallCPUpercent = ((syscalls + 1) * 100) / ((task->syscallUsage + 1) * 100); // multiply everything by 100 so we don't use expensive floating point math, add 1 everywhere so the kernel doesn't crash on division by zero
-        task->syscallUsage = 0;                                                              // reset the counter, will be incremented when the task uses any syscall
+        task->overallCPUpercent = (task->syscallUsage * 100) / syscalls; // multiply everything by 100 so we don't use expensive floating point math
+        task->syscallUsage = 1;                                          // reset the counter at one so we don't divide by zero, will be incremented when the task uses any syscall
 #ifdef K_SCHED_DEBUG
         printks("sched: %s used %d percent of the total CPU time\n\r", task->name, task->overallCPUpercent);
 #endif
@@ -232,6 +226,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
         task->cwd[0] = '/'; // set the current working directory to the root
     else
         memcpy(task->cwd, cwd, strlen(cwd)); // copy the current working directory
+    task->syscallUsage = 1;
 
     return task;
 }
