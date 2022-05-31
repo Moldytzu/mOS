@@ -4,6 +4,10 @@
 #define ACPI_GAS_SYSMEM 0
 #define ACPI_GAS_SYSIO 1
 
+#define ACPI_HPET_GENERAL_CAPABILITIES_REGISTER_COUNTER 0x0
+#define ACPI_HPET_GENERAL_CONFIGURATION_REGISTER 0x10
+#define ACPI_HPET_MAIN_COUNTER 0xF0
+
 struct pack acpi_rsdp
 {
     uint8_t signature[8];
