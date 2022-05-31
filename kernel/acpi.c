@@ -3,12 +3,14 @@
 #include <vmm.h>
 #include <bootloader.h>
 #include <io.h>
+#include <panic.h>
 
 uint8_t revision;
 struct acpi_rsdp *rsdp;
 struct acpi_sdt *sdt;
 struct acpi_fadt *fadt;
 struct acpi_mcfg *mcfg;
+struct acpi_hpet *hpet;
 
 struct acpi_pci_descriptor pciFuncs[8 * 32 * 255]; // 8 functions / device, 32 devices / bus, 255 buses
 uint16_t pciIndex = 0;
@@ -164,6 +166,13 @@ void acpiInit()
     // get fadt & mcfg
     fadt = (struct acpi_fadt *)acpiGet("FACP");
     mcfg = (struct acpi_mcfg *)acpiGet("MCFG");
+
+#ifdef K_HPET
+    hpet = (struct acpi_hpet *)acpiGet("HPET");
+
+    if(!hpet)
+        panick("The HPET isn't present!");
+#endif
 
     // enable ACPI mode if FADT is present
     if (fadt)

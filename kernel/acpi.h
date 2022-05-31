@@ -147,6 +147,16 @@ struct pack acpi_pci_descriptor
     uint8_t function;
 };
 
+struct pack acpi_hpet
+{
+    struct acpi_sdt header;
+    uint32_t eventTimerID;
+    struct acpi_gas base;
+    uint8_t hpetNumber;
+    uint16_t minimumTicks;
+    uint8_t protection;
+};
+
 struct acpi_sdt *acpiGet(const char *sig);
 void acpiEnumeratePCI();
 void acpiInit();
