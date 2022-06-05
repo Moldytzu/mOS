@@ -145,6 +145,7 @@ struct stivale2_struct_tag_rsdp *bootloaderGetRSDP()
     return rsdpTag;
 }
 
+// probe for pml5 support
 bool bootloaderProbePML5()
 {
     if(bootloaderGetTag(STIVALE2_HEADER_TAG_5LV_PAGING_ID))

@@ -6,6 +6,7 @@
 #include <scheduler.h>
 #include <heap.h>
 
+// load an elf
 struct sched_task *elfLoad(const char *path, int argc, char **argv)
 {
     uint64_t fd = vfsOpen(path);                                   // open the file

@@ -7,11 +7,11 @@
 
 struct vt_terminal
 {
-    const char *buffer;   // pointer to the terminal buffer
-    int bufferIdx;   // current index in the buffer
-    char *kbBuffer; // pointer to the keyboard buffer
-    int kbBufferIdx; // current index in the keyboard buffer
-    uint32_t id;          // ID
+    const char *buffer; // pointer to the terminal buffer
+    int bufferIdx;      // current index in the buffer
+    char *kbBuffer;     // pointer to the keyboard buffer
+    int kbBufferIdx;    // current index in the keyboard buffer
+    uint32_t id;        // ID
 
     struct vt_terminal *previous; // previous terminal
     struct vt_terminal *next;     // next terminal

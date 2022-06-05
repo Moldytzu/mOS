@@ -5,9 +5,10 @@
 struct dsfs_fs *dsfs;
 struct vfs_fs dsfsFS;
 
+// initialize the initrd
 void initrdInit()
 {
-    dsfs = (struct dsfs_fs *)bootloaderGetModule("initrd.dsfs").begin;
+    dsfs = (struct dsfs_fs *)bootloaderGetModule("initrd.dsfs").begin; // get the begining of the 
 
     if (!dsfs)
     {
@@ -22,16 +23,19 @@ void initrdInit()
     }
 }
 
+// open handler
 uint8_t dsfsFSOpen(struct vfs_node *node)
 {
     return 1; // status ok
 }
 
+// close handler
 void dsfsFSClose(struct vfs_node *node)
 {
     // don't do anything
 }
 
+// read handler
 void dsfsFSRead(struct vfs_node *node, void *buffer, uint64_t size, uint64_t offset)
 {
     memset8(buffer, 0, size); // clear the buffer
@@ -45,11 +49,13 @@ void dsfsFSRead(struct vfs_node *node, void *buffer, uint64_t size, uint64_t off
     }
 }
 
+// write handler
 void dsfsFSWrite(struct vfs_node *node, void *buffer, uint64_t size, uint64_t offset)
 {
     // do nothing
 }
 
+// mount the filesystem
 void initrdMount()
 {
     dsfsFS.name = "dsfs";
@@ -78,6 +84,7 @@ void initrdMount()
     }
 }
 
+// get an entry from the filesystem
 void *initrdGet(const char *name)
 {
     struct dsfs_entry *entry = &dsfs->firstEntry; // point to the first entry

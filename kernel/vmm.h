@@ -45,11 +45,13 @@ ifunc void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
     *entry &= ~(1 << flag); // unset flag
 }
 
+// get the address of an entry
 ifunc uint64_t vmmGetAddress(uint64_t *entry)
 {
     return (*entry & 0x000FFFFFFFFFF000) >> 12; // get the address from entry
 }
 
+// set the address of an entry
 ifunc void vmmSetAddress(uint64_t *entry, uint64_t address)
 {
     *entry &= 0xfff0000000000fff;             // clear address field
@@ -72,6 +74,7 @@ ifunc struct vmm_index vmmIndex(uint64_t virtualAddress)
 void vmmInit();
 struct pack vmm_page_table *vmmCreateTable(bool full);
 
+// swap the page table
 ifunc void vmmSwap(void *newTable)
 {
     controlLoadCR3((uint64_t)newTable); // cr3 is the register that holds the table

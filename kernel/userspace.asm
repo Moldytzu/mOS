@@ -3,6 +3,7 @@ bits 64
 global sysretInit, userspaceJump
 extern SyscallHandlerEntry
 
+; initialize the sysret/syscall functionality
 sysretInit:
 	mov rax, SyscallHandlerEntry ; syscall handler entry
 	mov	rdx, rax
@@ -23,6 +24,7 @@ sysretInit:
 	wrmsr
 	ret
 
+; jump in userspace
 userspaceJump:
     mov rcx, rdi ; set the new rip
     mov rsp, rsi ; set the new stack

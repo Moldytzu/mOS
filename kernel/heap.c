@@ -9,12 +9,14 @@ void *end = 0;
 void expand(size_t);
 void split(struct heap_segment *, size_t);
 
+// initialize the heap
 void heapInit()
 {
     end = (void *)HEAP_START;
     expand(VMM_PAGE); // expand to a page
 }
 
+// expand the heap
 void expand(size_t size)
 {
     size += sizeof(struct heap_segment); // count the first segment's header
@@ -56,6 +58,7 @@ void expand(size_t size)
     }
 }
 
+// allocate on the heap
 void *malloc(size_t size)
 {
     if (size == 0)
@@ -89,6 +92,7 @@ void *malloc(size_t size)
     return NULL;
 }
 
+// split a segment
 void split(struct heap_segment *segment, size_t size)
 {
     if (segment->size < size + sizeof(struct heap_segment)) // can't split a small segment at a larger size
@@ -107,6 +111,7 @@ void split(struct heap_segment *segment, size_t size)
     segment->size = size; // set new size
 }
 
+// reallocate
 void *realloc(void *ptr, size_t size)
 {
     void *buffer = malloc(size);
@@ -122,7 +127,8 @@ void *realloc(void *ptr, size_t size)
     return buffer;
 }
 
+// free a segment
 void free(void *ptr)
 {
-    ((struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment)))->free = true; // mark the block as free
+    ((struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment)))->free = true; // mark the segment as free
 }

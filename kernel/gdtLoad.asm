@@ -2,6 +2,7 @@ bits 64
 
 global gdtLoad
 
+; load the gdt
 gdtLoad:
     lgdt [rdi] ; load gdt from the first argument
     mov ax, (8*2) ; 2nd segment, kernel data

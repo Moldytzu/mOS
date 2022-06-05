@@ -271,6 +271,7 @@ void schedulerSetTerminal(uint32_t tid, uint32_t terminal)
     task->terminal = terminal; // set new terminal
 }
 
+// get the task with the id
 struct sched_task *schedulerGet(uint32_t tid)
 {
     struct sched_task *task = &rootTask; // first task
@@ -284,6 +285,7 @@ struct sched_task *schedulerGet(uint32_t tid)
     return task; // return the task
 }
 
+// kill the task with the id
 void schedulerKill(uint32_t tid)
 {
     if (tid == 1)
@@ -333,6 +335,7 @@ void schedulerKill(uint32_t tid)
     hlt();
 }
 
+// get last id
 uint32_t schedulerGetLastID()
 {
     return lastTID;

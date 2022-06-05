@@ -28,6 +28,7 @@ void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t
     vmmSwap(t->pageTable); // swap the page table back
 }
 
+// get the count of used syscalls
 uint32_t syscallGetCount()
 {
     register uint32_t tmp = count; // store the count

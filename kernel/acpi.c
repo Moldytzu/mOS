@@ -15,6 +15,7 @@ struct acpi_hpet *hpet;
 struct acpi_pci_descriptor pciFuncs[8 * 32 * 255]; // 8 functions / device, 32 devices / bus, 255 buses
 uint16_t pciIndex = 0;
 
+// get a descriptor table with a signature
 struct acpi_sdt *acpiGet(const char *sig)
 {
     bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
@@ -50,6 +51,7 @@ struct acpi_sdt *acpiGet(const char *sig)
     return NULL; // return nothing
 }
 
+// enumerate a function
 void enumerateFunction(uint64_t base, uint8_t function, uint8_t device, uint8_t bus)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (function << 12));
@@ -69,6 +71,7 @@ void enumerateFunction(uint64_t base, uint8_t function, uint8_t device, uint8_t 
     pciFuncs[pciIndex++] = d;
 }
 
+// enumerate a device
 void enumerateDevice(uint64_t base, uint8_t device, uint8_t bus)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (device << 15));
@@ -80,6 +83,7 @@ void enumerateDevice(uint64_t base, uint8_t device, uint8_t bus)
         enumerateFunction((uint64_t)header, i, device, bus);
 }
 
+// enumerate a bus
 void enumerateBus(uint64_t base, uint8_t bus)
 {
     struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (bus << 20));
@@ -91,6 +95,7 @@ void enumerateBus(uint64_t base, uint8_t bus)
         enumerateDevice((uint64_t)header, i, bus);
 }
 
+// enumerate the pci bus using mcfg
 void acpiEnumeratePCI()
 {
     size_t entries = (mcfg->header.length - sizeof(struct acpi_mcfg)) / sizeof(struct acpi_pci_config);
@@ -99,6 +104,7 @@ void acpiEnumeratePCI()
             enumerateBus(mcfg->buses[i].base, j); // enumerate every bus
 }
 
+// reboot using acpi
 void acpiReboot()
 {
     if (revision == 0 || !fadt) // acpi 1.0 doesn't support reboot, fadt must be present for acpi 2.0+ reboot
@@ -126,6 +132,7 @@ triplefault:
     iasm("lidt %0" ::"m"(pciFuncs)); // load an invalid IDT => triple fault / reboot
 }
 
+// initialize the acpi subsystem
 void acpiInit()
 {
     // get rsdp

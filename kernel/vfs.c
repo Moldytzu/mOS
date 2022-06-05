@@ -6,6 +6,7 @@ uint64_t lastNode = 0;
 
 struct vfs_fs rootFS;
 
+// initialize the subsystem
 void vfsInit()
 {
     memset64(&rootFS, 0, sizeof(rootFS) / sizeof(uint64_t)); // clear the root filesystem
@@ -18,6 +19,7 @@ void vfsInit()
     rootNode.filesystem = &rootFS;                                      // rootfs
 }
 
+// add a node
 void vfsAdd(struct vfs_node node)
 {
     uint64_t id = lastNode++;
@@ -39,16 +41,19 @@ void vfsAdd(struct vfs_node node)
     memcpy64(currentNode, &node, sizeof(struct vfs_node) / sizeof(uint64_t)); // copy the node information
 }
 
+// remove a node
 void vfsRemove(struct vfs_node *node)
 {
     memset64(node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
 }
 
+// return the nodes
 struct vfs_node *vfsNodes()
 {
     return &rootNode;
 }
 
+// open a node with the name
 uint64_t vfsOpen(const char *name)
 {
     struct vfs_node *currentNode = &rootNode;
@@ -78,6 +83,7 @@ uint64_t vfsOpen(const char *name)
     return 0; // return nothing
 }
 
+// close a node
 void vfsClose(uint64_t fd)
 {
     if (!fd) // don't handle empty/non-existent file descriptors
@@ -88,6 +94,7 @@ void vfsClose(uint64_t fd)
         node->filesystem->close(node); // inform the filesystem that we closed the node
 }
 
+// read from a node in a buffer
 void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
     if (!fd) // don't handle empty/non-existent file descriptors
@@ -98,6 +105,7 @@ void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
         node->filesystem->read(node, buffer, size, offset); // inform the filesystem that we want to read
 }
 
+// write to a node from a buffer
 void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
     if (!fd) // don't handle empty/non-existent file descriptors
@@ -108,6 +116,7 @@ void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
         node->filesystem->write(node, buffer, size, offset); // inform the filesystem that we want to write
 }
 
+// return the size of a node
 uint64_t vfsSize(uint64_t fd)
 {
     if (!fd) // don't handle empty/non-existent file descriptors

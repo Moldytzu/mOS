@@ -7,6 +7,7 @@ struct vt_terminal rootTerminal;
 uint32_t lastID = 0;
 bool refresh = false;
 
+// create new terminal and return it's address
 struct vt_terminal *vtCreate()
 {
     struct vt_terminal *currentTerminal = &rootTerminal; // first terminal
@@ -38,6 +39,7 @@ struct vt_terminal *vtCreate()
     return currentTerminal;
 }
 
+// append text on a terminal
 void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
 {
     if (vt == &rootTerminal)
@@ -60,11 +62,13 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
 #endif
 }
 
+// get first terminal
 struct vt_terminal *vtRoot()
 {
     return &rootTerminal;
 }
 
+// get terminal with id
 struct vt_terminal *vtGet(uint32_t id)
 {
     if (id > lastID) // out of bounds
@@ -77,6 +81,7 @@ struct vt_terminal *vtGet(uint32_t id)
     return terminal;
 }
 
+// append a key to the keyboard buffer
 void vtkbAppend(struct vt_terminal *vt, char c)
 {
     vt->kbBuffer[vt->kbBufferIdx++] = c; // append the character
@@ -85,6 +90,7 @@ void vtkbAppend(struct vt_terminal *vt, char c)
         vt->kbBufferIdx = 0;
 }
 
+// pop a key from the keyboard buffer
 char vtkbGet(struct vt_terminal *vt)
 {
     char last = vt->kbBuffer[vt->kbBufferIdx];
@@ -98,11 +104,13 @@ char vtkbGet(struct vt_terminal *vt)
 
 uint16_t mode;
 
+// set the mode of displaying things
 void vtSetMode(uint16_t displayMode)
 {
     mode = displayMode;
 }
 
+// get the mode
 uint16_t vtGetMode()
 {
     if (mode != VT_DISPLAY_TTY0)
