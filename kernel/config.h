@@ -23,7 +23,6 @@
 #endif
 
 // Features
-#define K_HPET         // enable hpet support; If unsure: uncomment
 #define K_PS2          // enable ps/2 support; If unsure: uncomment
 #define K_IDT_IST      // enable ist; If unsure: uncomment
 #define K_IDT_DIS_KIRQ // disable intrerrupts during kernel startup; If unsure: comment

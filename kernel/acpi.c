@@ -126,30 +126,6 @@ triplefault:
     iasm("lidt %0" ::"m"(pciFuncs)); // load an invalid IDT => triple fault / reboot
 }
 
-#ifdef K_HPET
-uint64_t hpetFrequency;
-
-ifunc void hpetWrite(uint64_t offset, uint64_t value)
-{
-    *((uint64_t *)hpet->base.address + offset) = value;
-}
-
-ifunc uint64_t hpetRead(uint64_t offset)
-{
-    return *((uint64_t *)hpet->base.address + offset);
-}
-
-ifunc void hpetSleep(uint64_t ms)
-{
-    uint64_t end = hpetRead(ACPI_HPET_MAIN_COUNTER) + (ms * 1000000000000) / hpetFrequency;
-    while (hpetRead(ACPI_HPET_MAIN_COUNTER) < end)
-    {
-        printk("%d ", hpetRead(ACPI_HPET_MAIN_COUNTER));
-    }
-}
-
-#endif
-
 void acpiInit()
 {
     // get rsdp
@@ -190,25 +166,6 @@ void acpiInit()
     // get fadt & mcfg
     fadt = (struct acpi_fadt *)acpiGet("FACP");
     mcfg = (struct acpi_mcfg *)acpiGet("MCFG");
-
-#ifdef K_HPET
-    hpet = (struct acpi_hpet *)acpiGet("HPET");
-
-    if (!hpet)
-        panick("The HPET isn't present!");
-
-    if (hpet->base.addressSpace != ACPI_GAS_SYSMEM)
-        panick("The HPET isn't mapped in the system memory!");
-
-    // initialization sequence
-    vmmMap(vmmGetBaseTable(), (void *)hpet->base.address, (void *)hpet->base.address, false, true);              // map the hpet as rw
-    hpetFrequency = hpetRead(ACPI_HPET_GENERAL_CAPABILITIES_REGISTER_COUNTER) >> 32;                             // calculate the frequency
-    hpetWrite(ACPI_HPET_MAIN_COUNTER, 0);                                                                        // reset the main counter
-    hpetWrite(ACPI_HPET_GENERAL_CONFIGURATION_REGISTER, hpetRead(ACPI_HPET_GENERAL_CONFIGURATION_REGISTER) | 1); // set ENABLE_CNF thus enabling the main counter
-
-    hpetSleep(1000); // sleep 1 second
-
-#endif
 
     // enable ACPI mode if FADT is present
     if (fadt)
