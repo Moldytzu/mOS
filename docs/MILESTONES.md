@@ -1,9 +1,9 @@
 # Milestones to reach
-### shell
 ### ipc (simple sockets that have their own buffer and can be written or read by any task)
 ### libc
 ### gui infrastructure
 ### driver support
+### userspace applications
 
 # Reached milestones
 ### IDT and GDT
@@ -21,3 +21,4 @@
 ### acpi support
 ### initrd (custom format)
 ### virtual file system
+### shell
