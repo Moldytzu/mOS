@@ -13,6 +13,7 @@
 #include <scheduler.h>
 #include <elf.h>
 #include <vfs.h>
+#include <socket.h>
 
 void panick(const char *);
 
@@ -40,6 +41,15 @@ void kmain()
 
     if (!elfLoad("/init/init.mx", 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
+
+    // socket test
+    const char *a = mmAllocatePage();
+    memset64((void *)a, 0, 4096 /8);
+    struct sock_socket *s = sockCreate(); // create the socket
+    sockAppend(s, "abcdef", 6);           // append text
+    sockRead(s, a, 3);                    // read from the socket first 3 bytes
+    printk("socket content: %s");         // display the contents
+    hang();
 
     schedulerEnable(); // enable the schduler and jump in userspace
 }
