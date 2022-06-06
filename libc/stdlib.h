@@ -15,3 +15,5 @@ void abort();
 void exit(int status);
 int abs(int x);
 long int labs(long int x);
+int atoi(const char *str);
+long atol(const char *str);
