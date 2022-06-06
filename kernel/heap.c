@@ -82,6 +82,7 @@ void *malloc(size_t size)
             currentSegment->free = false; // set as busy
             return (void *)((uint64_t)currentSegment + sizeof(struct heap_segment));
         }
+
         else if (currentSegment->size == size)
         {
             currentSegment->free = false; // set as busy

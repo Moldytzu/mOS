@@ -18,7 +18,7 @@ struct sock_socket *sockCreate()
 
         if (currentSocket->buffer)
         {
-            currentSocket->next = malloc(sizeof(struct sock_socket)); // allocate next socket if the current socket is valid
+            currentSocket->next = mmAllocatePage(); // allocate next socket if the current socket is valid (FIXME: use the heap that is toasty rn)
             currentSocket->next->previous = currentSocket;            // set the previous socket
             currentSocket = currentSocket->next;                      // set current socket to the newly allocated socket
         }
@@ -29,7 +29,7 @@ struct sock_socket *sockCreate()
     memset64((void *)currentSocket->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the buffer
     currentSocket->id = lastSockID++;                                          // set the ID
 
-#ifdef K_sock_DEBUG
+#ifdef K_SOCK_DEBUG
     printks("sock: creating new socket with ID %d\n\r", currentSocket->id);
 #endif
 
@@ -54,7 +54,7 @@ void sockAppend(struct sock_socket *sock, const char *str, size_t count)
     memcpy8((void *)((uint64_t)sock->buffer + sock->bufferIdx), (void *)input, count); // copy the buffer
     sock->bufferIdx += count;                                                          // increment the index
 
-#ifdef K_sock_DEBUG
+#ifdef K_SOCK_DEBUG
     printks("sock: appended %d bytes to socket %d\n\r", count, sock->id);
 #endif
 }
@@ -85,4 +85,11 @@ struct sock_socket *sockGet(uint32_t id)
         socket = socket->next;
 
     return socket;
+}
+
+// initialize the subsystem
+void sockInit()
+{
+    memset64(&rootSocket, 0, sizeof(struct sock_socket) / sizeof(uint64_t));
+    sockCreate(); // create the first socket
 }

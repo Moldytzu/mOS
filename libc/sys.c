@@ -54,3 +54,8 @@ void sys_close(uint64_t fd)
 {
     _syscall(SYS_CLOSE, fd, 0, 0, 0, 0);
 }
+
+void sys_socket(uint8_t call, uint64_t arg1, uint64_t arg2)
+{
+    _syscall(SYS_SOCKET, call, arg1, arg2, 0, 0);
+}

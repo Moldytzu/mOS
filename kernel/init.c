@@ -18,6 +18,7 @@
 #include <vfs.h>
 #include <ps2.h>
 #include <input.h>
+#include <socket.h>
 
 void kmain();
 
@@ -109,6 +110,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     ps2Init();
     printk("done\n");
 #endif
+
+    // initialize the ipc (sockets)
+    printk("Initializing IPC...");
+    sockInit();
+    printk("done\n");
 
     // initialize system calls
     syscallInit(0x51);

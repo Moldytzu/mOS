@@ -21,6 +21,8 @@
 #define SYS_VFS_LIST_DIRECTORY 2
 #define SYS_VFS_FILE_SIZE 3
 
+#define SYS_SOCKET_CREATE 0
+
 #define SYS_EXIT 0
 #define SYS_WRITE 1
 #define SYS_READ 2
@@ -32,6 +34,7 @@
 #define SYS_VFS 8
 #define SYS_OPEN 9
 #define SYS_CLOSE 10
+#define SYS_SOCKET 11
 
 struct __attribute__((packed)) sys_exec_packet
 {
@@ -54,3 +57,4 @@ void sys_mem(uint8_t call, uint64_t arg1, uint64_t arg2);
 void sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2);
 void sys_open(const char *path, uint64_t *fd);
 void sys_close(uint64_t fd);
+void sys_socket(uint8_t call, uint64_t arg1, uint64_t arg2);

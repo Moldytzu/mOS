@@ -65,5 +65,6 @@ cwd: // copy the cwd before the input
 #include <sys/vfs.h>
 #include <sys/open.h>
 #include <sys/close.h>
+#include <sys/socket.h>
 
-void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, struct sched_task *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close};
+void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, struct sched_task *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket};

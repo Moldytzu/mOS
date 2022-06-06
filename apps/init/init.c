@@ -1,6 +1,7 @@
 #include <sys.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 int main(int argc, char **argv)
 {
@@ -19,10 +20,13 @@ int main(int argc, char **argv)
 
     puts("m Init System is setting up your enviroment\n"); // display a welcome screen
 
-    const char *enviroment = "PATH=/init/|"; // the basic enviroment
+    // create a socket for ipc
+    uint64_t sockID = 0;
+    sys_socket(SYS_SOCKET_CREATE, (uint64_t)&sockID, 0);
 
-    // create temp files
-    // etc.
+    assert(sockID != 0); // assert that the socket is valid
+
+    const char *enviroment = "PATH=/init/|"; // the basic enviroment
 
     while (1)
     {
