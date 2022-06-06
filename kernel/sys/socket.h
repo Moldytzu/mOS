@@ -2,18 +2,43 @@
 #include <vfs.h>
 #include <socket.h>
 
-// (rsi = call, rbx = arg1, r8 = arg2)
-void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_task *task)
+// (rsi = call, rbx = arg1, r8 = arg2, r9 = arg3)
+void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct sched_task *task)
 {
     uint64_t *arg1Ptr = PHYSICAL(arg1);
     uint64_t *arg2Ptr = PHYSICAL(arg2);
+    uint64_t *arg3Ptr = PHYSICAL(arg2);
+    struct sock_socket *s;
+
     switch (call)
     {
     case 0: // socket create
-        if(!arg1Ptr)
+        if (!arg1Ptr || !INBOUNDARIES(arg1))
             return;
-    
+
         *arg1Ptr = sockCreate()->id; // create a new socket then return it's id
+        break;
+    case 1: // socket write
+        s = sockGet(arg1);
+        if (!s || !INBOUNDARIES(arg2))
+            return;
+
+        sockAppend(s, (const char *)arg2Ptr, arg3);
+        break;
+    case 2: // socket read
+        s = sockGet(arg1);
+        if (!s || !INBOUNDARIES(arg2))
+            return;
+
+        sockRead(s, (const char *)arg2Ptr, arg3);
+        break;
+    case 3:                // socket destroy
+        s = sockGet(arg1); // get the socket
+        if (!s)
+            return;
+        s->previous->next = s->next;         // bypass this socket
+        mmDeallocatePage((void *)s->buffer); // deallocate the buffer
+        mmDeallocatePage(s);                 // free the socket
         break;
     default:
         break;

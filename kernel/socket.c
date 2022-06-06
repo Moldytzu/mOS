@@ -18,9 +18,9 @@ struct sock_socket *sockCreate()
 
         if (currentSocket->buffer)
         {
-            currentSocket->next = mmAllocatePage(); // allocate next socket if the current socket is valid (FIXME: use the heap that is toasty rn)
-            currentSocket->next->previous = currentSocket;            // set the previous socket
-            currentSocket = currentSocket->next;                      // set current socket to the newly allocated socket
+            currentSocket->next = mmAllocatePage();        // allocate next socket if the current socket is valid (FIXME: use the heap that is toasty rn)
+            currentSocket->next->previous = currentSocket; // set the previous socket
+            currentSocket = currentSocket->next;           // set current socket to the newly allocated socket
         }
     }
 
@@ -39,7 +39,7 @@ struct sock_socket *sockCreate()
 // append text on a socket
 void sockAppend(struct sock_socket *sock, const char *str, size_t count)
 {
-    if (!sock)
+    if (!sock || !count)
         return;
 
     const char *input = str;                 // input buffer
@@ -65,7 +65,10 @@ void sockRead(struct sock_socket *sock, const char *str, size_t count)
     if (!sock)
         return;
 
-    memcpy((void *)str, (void *)sock->buffer, count); // copy the buffer
+    memcpy((void *)str, (void *)sock->buffer, count);               // copy the buffer
+    memmove((void *)sock->buffer, sock->buffer + count - 1, count); // move the content after the requested count at the front
+    memset((void *)sock->buffer + count - 1, 0, 4096 - count + 1);  // clear the ghost of the content
+    sock->bufferIdx = 0;                                            // reset the index
 }
 
 // get first socket

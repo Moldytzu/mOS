@@ -5,6 +5,7 @@ struct sock_socket
 {
     const char *buffer; // pointer to the terminal buffer
     int bufferIdx;      // current index in the buffer
+    int readIdx;        // current read index in the buffer
     uint32_t id;        // ID
 
     struct sock_socket *previous; // previous terminal

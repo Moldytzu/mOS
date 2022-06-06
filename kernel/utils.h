@@ -158,6 +158,30 @@ ifunc void *memset(void *dstpp, int c, size_t len)
     return dstpp;
 }
 
+// move memory
+ifunc void *memmove(void *dest, const void *src, size_t n)
+{
+    uint8_t *from = (uint8_t *)src;
+    uint8_t *to = (uint8_t *)dest;
+
+    if (from == to || n == 0)
+        return dest;
+    if (to > from && to - from < n)
+    {
+        for (size_t i = n - 1; i >= 0; i--)
+            to[i] = from[i];
+        return dest;
+    }
+    if (from > to && from - to < n)
+    {
+        for (size_t i = 0; i < n; i++)
+            to[i] = from[i];
+        return dest;
+    }
+    memcpy(dest, src, n);
+    return dest;
+}
+
 // to_string
 const char *to_string(uint64_t val);
 const char *to_hstring(uint64_t val);

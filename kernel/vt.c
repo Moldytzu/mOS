@@ -42,6 +42,9 @@ struct vt_terminal *vtCreate()
 // append text on a terminal
 void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
 {
+    if(!count || !vt)
+        return;
+
     if (vt == &rootTerminal)
         refresh = true; // set refresh flag
 
