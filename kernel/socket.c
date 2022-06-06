@@ -87,6 +87,9 @@ struct sock_socket *sockGet(uint32_t id)
     while (socket->id != id && socket->next)
         socket = socket->next;
 
+    if(socket->id != id) // another sanity check
+        return NULL;
+
     return socket;
 }
 
