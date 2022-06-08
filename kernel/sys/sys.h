@@ -25,7 +25,7 @@ ifunc char *expandPath(const char *path, struct sched_task *task)
     }
 
     memset64(buffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the buffer
-    memcpy(buffer, path, strlen(path));     // copy the input
+    memcpy(buffer, path, strlen(path));               // copy the input
 
     // check if it exists
     fd = vfsOpen(buffer);

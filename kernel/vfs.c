@@ -1,6 +1,8 @@
 #include <vfs.h>
 #include <heap.h>
 
+#define ISVALID(node) (node && node->filesystem)
+
 struct vfs_node rootNode; // root of the linked list
 uint64_t lastNode = 0;
 
@@ -56,6 +58,12 @@ struct vfs_node *vfsNodes()
 // open a node with the name
 uint64_t vfsOpen(const char *name)
 {
+    if (!name)
+        return 0;
+
+    if (*name != '/') // non-existent path
+        return 0;
+
     struct vfs_node *currentNode = &rootNode;
     const char tmp[128 /* mount name */ + 128 /* path */];
     do
@@ -86,10 +94,10 @@ uint64_t vfsOpen(const char *name)
 // close a node
 void vfsClose(uint64_t fd)
 {
-    if (!fd) // don't handle empty/non-existent file descriptors
+    struct vfs_node *node = (struct vfs_node *)fd;
+    if (!ISVALID(node)) // check if the node is valid
         return;
 
-    struct vfs_node *node = (struct vfs_node *)fd;
     if (node->filesystem->close)       // check if the handler exists
         node->filesystem->close(node); // inform the filesystem that we closed the node
 }
@@ -97,10 +105,10 @@ void vfsClose(uint64_t fd)
 // read from a node in a buffer
 void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
-    if (!fd) // don't handle empty/non-existent file descriptors
+    struct vfs_node *node = (struct vfs_node *)fd;
+    if (!ISVALID(node)) // check if the node is valid
         return;
 
-    struct vfs_node *node = (struct vfs_node *)fd;
     if (node->filesystem->read)                             // check if the handler exists
         node->filesystem->read(node, buffer, size, offset); // inform the filesystem that we want to read
 }
@@ -108,10 +116,10 @@ void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 // write to a node from a buffer
 void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
-    if (!fd) // don't handle empty/non-existent file descriptors
+    struct vfs_node *node = (struct vfs_node *)fd;
+    if (!ISVALID(node)) // check if the node is valid
         return;
 
-    struct vfs_node *node = (struct vfs_node *)fd;
     if (node->filesystem->write)                             // check if the handler exists
         node->filesystem->write(node, buffer, size, offset); // inform the filesystem that we want to write
 }
@@ -119,9 +127,9 @@ void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 // return the size of a node
 uint64_t vfsSize(uint64_t fd)
 {
-    if (!fd) // don't handle empty/non-existent file descriptors
+    struct vfs_node *node = (struct vfs_node *)fd;
+    if (!ISVALID(node)) // check if the node is valid
         return 0;
 
-    struct vfs_node *node = (struct vfs_node *)fd;
     return node->size; // return the size
 }

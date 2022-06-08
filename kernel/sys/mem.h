@@ -8,12 +8,11 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_
 {
     switch (call)
     {
-    case 0:                                                        // mem allocate
+    case 0:                      // mem allocate
         if (!INBOUNDARIES(arg1)) // prevent crashing
             return;
         void *pageAddress = mmAllocatePage();                                       // allocate a page
-        uint32_t index = task->allocatedIndex++;                                    // get the index
-        task->allocated[index] = pageAddress;                                       // keep evidence of it
+        task->allocated[task->allocatedIndex++] = pageAddress;                      // keep evidence of it
         vmmMap(task->pageTable, task->lastVirtualAddress, pageAddress, true, true); // map the address
         *(uint64_t *)PHYSICAL(arg1) = (uint64_t)task->lastVirtualAddress;           // give the application the virtual address
         task->lastVirtualAddress += 4096;                                           // increment the virtual address
