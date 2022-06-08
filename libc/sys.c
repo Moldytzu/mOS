@@ -59,3 +59,8 @@ void sys_socket(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 {
     _syscall(SYS_SOCKET, call, arg1, arg2, arg3, 0);
 }
+
+void sys_power(uint8_t call, uint64_t arg1, uint64_t arg2)
+{
+    _syscall(SYS_POWER, call, arg1, arg2, 0, 0);
+}

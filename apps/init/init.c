@@ -10,14 +10,24 @@ void *buffer;
 void eventLoop()
 {
     sys_socket(SYS_SOCKET_READ, sockID, (uint64_t)buffer, 4096); // read the whole socket
-    if (*(char *)buffer)                                         // check if the buffer is filled with something
+    if (!*(char *)buffer)                                        // if empty give up
+        return;
+
+    if(strcmp(buffer, "shutdown") == 0) // shutdown command
     {
-        puts("init: received ");
-        puts(buffer);                                                // print the contents
-        putchar('\n');
-        memset(buffer, 0, 4096);
+        sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0); // set mode to tty
+        puts("\n\n\n Shutdowning...");
+        sys_power(SYS_POWER_SHUTDOWN,0,0);
     }
-        
+
+    if(strcmp(buffer, "reboot") == 0) // shutdown command
+    {
+        sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0); // set mode to tty
+        puts("\n\n\n Rebooting...");
+        sys_power(SYS_POWER_REBOOT,0,0);
+    }
+
+    memset(buffer, 0, 4096); // clear the buffer
 }
 
 int main(int argc, char **argv)
@@ -28,7 +38,7 @@ int main(int argc, char **argv)
 
     if (initPID != 1)
     {
-        puts("The init system should be launched as PID 1\n");
+        puts("The init system has to be launched as PID 1!\n");
         sys_exit(1);
     }
 

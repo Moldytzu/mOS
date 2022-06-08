@@ -26,6 +26,10 @@
 #define SYS_SOCKET_READ 2
 #define SYS_SOCKET_DESTROY 3
 
+#define SYS_POWER_REBOOT 0
+#define SYS_POWER_SHUTDOWN 1
+#define SYS_POWER_UPTIME 2
+
 #define SYS_EXIT 0
 #define SYS_WRITE 1
 #define SYS_READ 2
@@ -38,6 +42,7 @@
 #define SYS_OPEN 9
 #define SYS_CLOSE 10
 #define SYS_SOCKET 11
+#define SYS_POWER 12
 
 struct __attribute__((packed)) sys_exec_packet
 {
@@ -61,3 +66,4 @@ void sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2);
 void sys_open(const char *path, uint64_t *fd);
 void sys_close(uint64_t fd);
 void sys_socket(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
+void sys_power(uint8_t call, uint64_t arg1, uint64_t arg2);
