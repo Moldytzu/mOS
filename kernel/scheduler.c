@@ -102,11 +102,15 @@ loadnext:
     // load the next task
     do
     {
-        if (currentTask->next == NULL)
+        if (currentTask->next == NULL) // wrap around
             currentTask = &rootTask;
         else
             currentTask = currentTask->next;
-    } while (currentTask->state != 0);
+        
+        if(currentTask->sleep) // if the task is in sleep
+            currentTask->sleep--; // decrement the counter
+    
+    } while (currentTask->state != 0 || currentTask->sleep);
 
 #ifdef K_SCHED_DEBUG
     printks("sched: loading %s\n\r", currentTask->name);

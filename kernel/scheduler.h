@@ -12,7 +12,7 @@
 
 struct sched_task
 {
-    char name[512];                              // 512 characters should be enough
+    char name[512];                              // name
     char cwd[512];                               // current working directory
     uint8_t priority;                            // higher priority means more ticks allocated to the task
     uint8_t priorityCounter;                     // counter used for priority calculation
@@ -28,6 +28,7 @@ struct sched_task
     char *enviroment;                            // enviroment variables
     uint32_t syscallUsage;                       // the count of syscalls issued by the task in a cycle
     uint8_t overallCPUpercent;                   // percent of the cpu used
+    uint32_t sleep;                              // ticks to sleep
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task

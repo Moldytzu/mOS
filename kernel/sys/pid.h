@@ -1,13 +1,11 @@
 #pragma once
 #include <sys/sys.h>
 #include <scheduler.h>
+#include <pit.h>
 
 // pid (rsi = pid, rdx = info, r8 = retVal/inputVal)
 void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, struct sched_task *task)
 {
-    if (!INBOUNDARIES(retVal)) // prevent crashing
-        return;
-
     uint64_t *retAddr = PHYSICAL(retVal);
     struct sched_task *t = schedulerGet(pid);
     if (!t) // check if the task exists
@@ -31,7 +29,9 @@ void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, struct sched
             break;
         memcpy(t->enviroment, PHYSICAL(retVal), 4096); // copy the enviroment
         break;
-    case 3:                  // get current pid
+    case 3:                        // get current pid
+        if (!INBOUNDARIES(retVal)) // prevent crashing
+            return;
         *retAddr = task->id; // the id
         break;
     case 4:                         // get current working directory
@@ -44,6 +44,8 @@ void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, struct sched
             break;
         memcpy(t->cwd, PHYSICAL(retVal), 512); // copy the buffer
         break;
+    case 6:                                                           // sleep for miliseconds
+        t->sleep = (uint32_t)(((retVal) / 1000) * pitGetScale()); // convert ms to seconds then seconds to ticks
     default:
         break;
     }

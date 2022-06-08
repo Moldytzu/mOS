@@ -1,5 +1,4 @@
 # Milestones to reach
-### ipc (simple sockets that have their own buffer and can be written or read by any task)
 ### libc
 ### gui infrastructure
 ### driver support
@@ -22,3 +21,4 @@
 ### initrd (custom format)
 ### virtual file system
 ### shell
+### ipc
