@@ -30,12 +30,17 @@ INTERNALCFLAGS :=   		 \
 	-mcmodel=kernel      	 \
 	-Werror 			     \
 	-Wno-int-to-pointer-cast \
-	-march=nocona            \
+	-msse                    \
+	-msse2                   \
+	-msse3                   \
+	-msse4                   \
+	-msse4.1                 \
+	-msse4.2                 \
 	-MMD
 
 # Internal linker flags that should not be changed by the user.
-INTERNALLDFLAGS :=    \
-	-T../linker.ld            \
+INTERNALLDFLAGS :=         \
+	-T../linker.ld         \
 	-nostdlib              \
 	-zmax-page-size=0x1000 \
 	-static

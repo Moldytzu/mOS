@@ -19,6 +19,7 @@
 #include <ps2.h>
 #include <input.h>
 #include <socket.h>
+#include <panic.h>
 
 void kmain();
 
@@ -44,6 +45,10 @@ void _start(struct stivale2_struct *stivale2_struct)
     else
         printk("UEFI");
     printk(" mode.\n");
+
+    // test for the required features
+    if(!fpuCheck())
+        panick("Unsupported CPU. SSE 4.2 isn't supported!");
 
     // display framebuffer information
     printk("Got framebuffer with the size %dx%d.\n", bootloaderGetFramebuf()->framebuffer_width, bootloaderGetFramebuf()->framebuffer_height);
