@@ -44,8 +44,17 @@ void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, struct sched
             break;
         memcpy(t->cwd, PHYSICAL(retVal), 512); // copy the buffer
         break;
-    case 6:                                                           // sleep for miliseconds
+    case 6:                                                       // preprare sleep for miliseconds
         t->sleep = (uint32_t)(((retVal) / 1000) * pitGetScale()); // convert ms to seconds then seconds to ticks
+        t->waitingSleep = true;
+    case 7: // perform sleep
+        if(!t->waitingSleep)
+            break;
+
+        t->waitingSleep = false; // perform the sleeping
+
+        // skip saving next tick
+        schedulerSkipNextSaving();
     default:
         break;
     }

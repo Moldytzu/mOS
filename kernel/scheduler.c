@@ -13,7 +13,8 @@ struct sched_task rootTask;        // root of the tasks list
 struct sched_task *currentTask;    // current task in the tasks list
 uint32_t lastTID = 0;              // last task ID
 bool enabled = false;              // enabled
-bool taskKilled = false;
+bool taskKilled = false;           // flag that indicates if task was killed
+bool skipSaving = false;           // flag that indicates if we should skip saving registers next tick
 
 extern void userspaceJump(uint64_t rip, uint64_t stack);
 
@@ -88,6 +89,12 @@ c:
     }
     currentTask->priorityCounter = currentTask->priority; // reset counter
 
+    if (skipSaving)
+    {
+        skipSaving = false;
+        goto loadnext;
+    }
+
 #ifdef K_SCHED_DEBUG
     printks("sched: saving %s\n\r", currentTask->name);
 #endif
@@ -106,11 +113,11 @@ loadnext:
             currentTask = &rootTask;
         else
             currentTask = currentTask->next;
-        
-        if(currentTask->sleep) // if the task is in sleep
-            currentTask->sleep--; // decrement the counter
-    
-    } while (currentTask->state != 0 || currentTask->sleep);
+
+        if (currentTask->sleep && !currentTask->waitingSleep) // if the task is in sleep
+            currentTask->sleep--;                             // decrement the counter
+
+    } while (currentTask->state != 0 || (currentTask->sleep && !currentTask->waitingSleep));
 
 #ifdef K_SCHED_DEBUG
     printks("sched: loading %s\n\r", currentTask->name);
@@ -343,4 +350,10 @@ void schedulerKill(uint32_t tid)
 uint32_t schedulerGetLastID()
 {
     return lastTID;
+}
+
+// skip saving registers next cycle
+void schedulerSkipNextSaving()
+{
+    skipSaving = true;
 }
