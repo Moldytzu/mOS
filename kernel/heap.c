@@ -1,9 +1,9 @@
 #include <heap.h>
 #include <vmm.h>
 #include <pmm.h>
+#include <panic.h>
 
 struct heap_segment *lastSegment = NULL;
-struct heap_segment *currentSegment = NULL;
 void *end = 0;
 
 void expand(size_t);
@@ -19,91 +19,72 @@ void heapInit()
 // expand the heap
 void expand(size_t size)
 {
-    size += sizeof(struct heap_segment); // count the first segment's header
-    size = align(size, VMM_PAGE);        // align the size to a page's size
+    size = align(size, VMM_PAGE); // align the size to page boundary
 
-    size_t pages = size / VMM_PAGE; // calculate how many pages we have to allocate
+    struct heap_segment *next = (struct heap_segment *)end; // set new segment to the last address
 
-    struct heap_segment *next = (struct heap_segment *)end; // set next segment to last address
-
-    // allocate next pages
-    for (size_t i = 0; i < pages; i++)
+    // allocate new heap pages
+    for (size_t p = 0; p < (size / VMM_PAGE) + 1; p++)
     {
-        vmmMap(vmmGetBaseTable(), end, mmAllocatePage(), false, true); // map next page
-        end += VMM_PAGE;                                               // move to the next page
+        vmmMap(vmmGetBaseTable(), end, mmAllocatePage(), false, true);
+        end += VMM_PAGE;
     }
 
-    if (lastSegment != NULL && lastSegment->free) // expand last segment if it's free
-    {
-        lastSegment->size += size;
-    }
-    else // create another if not
-    {
-        next->size = size - sizeof(struct heap_segment);
-        next->free = true;
-        next->last = lastSegment;
-        next->next = NULL;
+    // generate required metadata
+    next->free = true;
+    next->next = NULL;
+    next->signature = 0x4321;
+    next->size = size;
 
-        // link the blocks
-        if (lastSegment != NULL)
-        {
-            lastSegment->next = next;
-        }
+    if (!lastSegment) // if the last segment is invalid then make it the newly generated segment
         lastSegment = next;
-    }
-
-    if (currentSegment == NULL)
-    {
-        currentSegment = next;
-    }
+    else if (lastSegment->free == true) // if the last segment is free then extend it's size
+        lastSegment->size += size;
+    else // else link the segments together
+        lastSegment->next = next;
 }
 
 // allocate on the heap
 void *malloc(size_t size)
 {
     if (size == 0)
-        return NULL;
+        printk("Invalid heap allocation");
 
-    size = align(size, 0x10);
+    struct heap_segment *currentSegment = (void *)HEAP_START;
 
-    while (1) // loop thru each segment
+    while (currentSegment)
     {
-        if (!currentSegment->free)
+        if (!currentSegment->free || currentSegment->size < size)
         {
-            if (!currentSegment->next)
-                break;                             // if we are at the last segment exit out of loop
-            currentSegment = currentSegment->next; // check next segment
+            currentSegment = currentSegment->next;
             continue;
         }
 
         if (currentSegment->size > size)
         {
-            split(currentSegment, size);  // split this segment at the needed lenght
-            currentSegment->free = false; // set as busy
-            return (void *)((uint64_t)currentSegment + sizeof(struct heap_segment));
+            split(currentSegment, size + 1);                     // split the segment at the required size
+            currentSegment->free = false;                        // mark the segment as busy
+            return currentSegment + sizeof(struct heap_segment); // return it's content address
         }
 
-        else if (currentSegment->size == size)
+        if (currentSegment->size == size)
         {
-            currentSegment->free = false; // set as busy
-            return (void *)((uint64_t)currentSegment + sizeof(struct heap_segment));
+            currentSegment->free = false;                        // mark the segment as busy
+            return currentSegment + sizeof(struct heap_segment); // return it's content address
         }
     }
 
-    return NULL;
+    expand(size);        // expand the heap
+    return malloc(size); // retry
 }
 
 // split a segment
 void split(struct heap_segment *segment, size_t size)
 {
-    if (segment->size < size + sizeof(struct heap_segment)) // can't split a small segment at a larger size
-        return;
-
     struct heap_segment *new = (struct heap_segment *)((uint64_t)segment + sizeof(struct heap_segment) + size);
     new->free = true;
     new->size = segment->size - (size + sizeof(struct heap_segment));
     new->next = segment->next;
-    new->last = segment;
 
     if (segment->next == NULL) // link the segment if the chain is over
         lastSegment = new;
@@ -116,14 +97,14 @@ void split(struct heap_segment *segment, size_t size)
 void *realloc(void *ptr, size_t size)
 {
     void *buffer = malloc(size);
-    
+
     size_t s = ((struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment)))->size;
-    
+
     if (size < s)
         memcpy8(buffer, ptr, size);
     else
         memcpy8(buffer, ptr, s);
-    
+
     free(ptr);
     return buffer;
 }
@@ -131,5 +112,6 @@ void *realloc(void *ptr, size_t size)
 // free a segment
 void free(void *ptr)
 {
-    ((struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment)))->free = true; // mark the segment as free
+    struct heap_segment *seg = (struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment));
+    seg->free = true; // mark the segment as free
 }

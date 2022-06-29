@@ -78,6 +78,8 @@ void _start(struct stivale2_struct *stivale2_struct)
     heapInit();
     printk("done\n");
 
+    malloc(3 * 4096);
+
     // initialize the virtual filesystem
     printk("Initializing the Virtual Filesystem...");
     vfsInit();
@@ -108,6 +110,8 @@ void _start(struct stivale2_struct *stivale2_struct)
     printk("Initializing the Input subystem...");
     inputInit();
     printk("done\n");
+
+    free(malloc(1024));
 
     // initialize the ps2 controller and devices if enabled
 #ifdef K_PS2
