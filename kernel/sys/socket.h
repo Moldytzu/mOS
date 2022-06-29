@@ -1,6 +1,7 @@
 #include <sys/sys.h>
 #include <vfs.h>
 #include <socket.h>
+#include <heap.h>
 
 // (rsi = call, rbx = arg1, r8 = arg2, r9 = arg3)
 void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct sched_task *task)
@@ -38,7 +39,7 @@ void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
             return;
         s->previous->next = s->next;         // bypass this socket
         mmDeallocatePage((void *)s->buffer); // deallocate the buffer
-        mmDeallocatePage(s);                 // free the socket
+        free(s);                             // free the socket
         break;
     default:
         break;

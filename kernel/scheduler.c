@@ -30,7 +30,7 @@ uint8_t simdContext[512] __attribute__((aligned(16)));
 
 // schedule the next task
 void schedulerSchedule(struct idt_intrerrupt_stack *stack)
-{ 
+{
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
@@ -180,7 +180,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 
         if (task->pageTable)
         {
-            task->next = mmAllocatePage();                                         // allocate next task if the current task is valid (FIXME: use the heap that's toasty rn)
+            task->next = mmAllocatePage();                                         // allocate next task if the current task is valid
             memset64(task->next, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the thread
             task->next->previous = task;                                           // set the previous task
             task = task->next;                                                     // set current task to the newly allocated task

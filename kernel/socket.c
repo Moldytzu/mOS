@@ -18,9 +18,9 @@ struct sock_socket *sockCreate()
 
         if (currentSocket->buffer)
         {
-            currentSocket->next = mmAllocatePage();        // allocate next socket if the current socket is valid (FIXME: use the heap that is toasty rn)
-            currentSocket->next->previous = currentSocket; // set the previous socket
-            currentSocket = currentSocket->next;           // set current socket to the newly allocated socket
+            currentSocket->next = malloc(sizeof(struct sock_socket)); // allocate next socket if the current socket is valid
+            currentSocket->next->previous = currentSocket;            // set the previous socket
+            currentSocket = currentSocket->next;                      // set current socket to the newly allocated socket
         }
     }
 
@@ -87,7 +87,7 @@ struct sock_socket *sockGet(uint32_t id)
     while (socket->id != id && socket->next)
         socket = socket->next;
 
-    if(socket->id != id) // another sanity check
+    if (socket->id != id) // another sanity check
         return NULL;
 
     return socket;
