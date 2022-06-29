@@ -43,7 +43,7 @@ void pitInit()
     packet.operatingmode = 0b010; // mode 2, rate generator
     packet.binarymode = 0b0;      // binary mode
 
-    pitSet(100); // 100 hz (intrerrupt every ~10 miliseconds)
+    pitSet(200); // 200 hz (intrerrupt every ~5 miliseconds)
 
     // set idt gate
     idtSetGate((void *)PITHandlerEntry, PIC_IRQ_0, IDT_InterruptGateU, true);

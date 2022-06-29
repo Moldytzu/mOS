@@ -37,24 +37,16 @@ void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, struct sched
     case 4:                         // get current working directory
         if (!INAPPLICATION(retVal)) // available only in the allocated memory
             break;
-        memcpy(PHYSICAL(retVal), t->cwd, 512); // copy the buffer
+        memcpy(PHYSICAL(retVal), task->cwd, 512); // copy the buffer
         break;
     case 5:                         // set current working directory
         if (!INAPPLICATION(retVal)) // available only in the allocated memory
             break;
-        memcpy(t->cwd, PHYSICAL(retVal), 512); // copy the buffer
+        memcpy(task->cwd, PHYSICAL(retVal), 512); // copy the buffer
         break;
-    case 6:                                                       // preprare sleep for miliseconds
-        t->sleep = (uint32_t)(((retVal) / 1000) * pitGetScale()); // convert ms to seconds then seconds to ticks
-        t->waitingSleep = true;
-    case 7: // perform sleep
-        if(!t->waitingSleep)
-            break;
-
-        t->waitingSleep = false; // perform the sleeping
-
-        // skip saving next tick
-        schedulerSkipNextSaving();
+    case 6:                                                                  // sleep for miliseconds
+        task->sleep = (uint32_t)((retVal * 1000 / 1000000) * pitGetScale()); // convert ms to seconds then seconds to ticks
+        pitSet(0xFFFF);                                                      // create intrerrupt imediately
     default:
         break;
     }

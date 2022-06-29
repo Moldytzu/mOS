@@ -6,6 +6,7 @@
 #include <heap.h>
 #include <panic.h>
 #include <syscall.h>
+#include <pit.h>
 
 void *kernelStack;
 struct vt_terminal *firstTerminal; // first usable terminal
@@ -29,13 +30,16 @@ uint8_t simdContext[512] __attribute__((aligned(16)));
 
 // schedule the next task
 void schedulerSchedule(struct idt_intrerrupt_stack *stack)
-{
+{ 
     if (!enabled)
         return; // don't do anything if it isn't enabled
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
     iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
+
+    if (currentTask->sleep)
+        pitSet(200); // reset the timings
 
     // handle vt mode and calculate cpu time only after switching the idle task
     if (currentTask->id != 0)
@@ -114,10 +118,16 @@ loadnext:
         else
             currentTask = currentTask->next;
 
-        if (currentTask->sleep && !currentTask->waitingSleep) // if the task is in sleep
-            currentTask->sleep--;                             // decrement the counter
+        if (currentTask->sleep) // if the task is in sleep
+        {
+#ifdef K_SCHED_DEBUG
+            printks("sched: %s is sleeping for %d ticks\n\r", currentTask->name, currentTask->sleep);
+#endif
+            currentTask->sleep--; // decrement the counter
+            goto loadnext;        // skip
+        }
 
-    } while (currentTask->state != 0 || (currentTask->sleep && !currentTask->waitingSleep));
+    } while (currentTask->state != 0);
 
 #ifdef K_SCHED_DEBUG
     printks("sched: loading %s\n\r", currentTask->name);
@@ -300,7 +310,7 @@ struct sched_task *schedulerGet(uint32_t tid)
 void schedulerKill(uint32_t tid)
 {
     if (tid == 1)
-        panick("Attempt killing the init system.");
+        panick("Attempt to kill the init system.");
 
     struct sched_task *task = schedulerGet(tid);
 

@@ -13,20 +13,18 @@ void eventLoop()
     if (!*(char *)buffer)                                        // if empty give up
         return;
 
-    if(strcmp(buffer, "shutdown") == 0) // shutdown command
+    if (strcmp(buffer, "shutdown") == 0) // shutdown command
     {
         sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Shutdowning...");
-        sys_power(SYS_POWER_SHUTDOWN,0,0);
+        sys_power(SYS_POWER_SHUTDOWN, 0, 0);
     }
 
-    if(strcmp(buffer, "reboot") == 0) // shutdown command
+    if (strcmp(buffer, "reboot") == 0) // shutdown command
     {
         sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Rebooting...");
-    sys_pid(0, SYS_PID_SET_SLEEP, (uint64_t *)1000);
-    sys_pid(0, SYS_PID_PERFORM_SLEEP, NULL);
-        sys_power(SYS_POWER_REBOOT,0,0);
+        sys_power(SYS_POWER_REBOOT, 0, 0);
     }
 
     memset(buffer, 0, 4096); // clear the buffer
