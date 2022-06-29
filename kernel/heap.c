@@ -65,16 +65,14 @@ void *malloc(size_t size)
             split(currentSegment, size + 1); // split the segment at the required size
             currentSegment->free = false;    // mark the segment as busy
             currentSegment->signature = 0x4321;
-            printk("returning %p (header at %p) ", (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)24), currentSegment);
-            return (struct heap_segment *)(currentSegment + sizeof(struct heap_segment)); // return its content address
+            return (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment)); // return its content address
         }
 
         if (currentSegment->size == size)
         {
             currentSegment->free = false; // mark the segment as busy
             currentSegment->signature = 0x4321;
-            printk("returning %p (header at %p) ", (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)24), currentSegment);
-            return (struct heap_segment *)(currentSegment + sizeof(struct heap_segment)); // return its content address
+            return (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment)); // return its content address
         }
     }
 
@@ -120,10 +118,8 @@ void free(void *ptr)
 {
     struct heap_segment *seg = ptr - sizeof(struct heap_segment);
 
-    printk("freeing %p (header at %p) ", ptr, seg);
-
     if (seg->signature != 0x4321)
-        panick("Unalligned free of a heap segment!");
+        panick("Misalligned free of a heap segment!");
 
     seg->free = true; // mark the segment as free
 }

@@ -109,8 +109,6 @@ void _start(struct stivale2_struct *stivale2_struct)
     inputInit();
     printk("done\n");
 
-    free(malloc(1024));
-
     // initialize the ps2 controller and devices if enabled
 #ifdef K_PS2
     printk("Initializing the PS/2 devices...");
