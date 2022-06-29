@@ -78,8 +78,6 @@ void _start(struct stivale2_struct *stivale2_struct)
     heapInit();
     printk("done\n");
 
-    malloc(3 * 4096);
-
     // initialize the virtual filesystem
     printk("Initializing the Virtual Filesystem...");
     vfsInit();

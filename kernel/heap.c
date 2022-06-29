@@ -62,15 +62,19 @@ void *malloc(size_t size)
 
         if (currentSegment->size > size)
         {
-            split(currentSegment, size + 1);                     // split the segment at the required size
-            currentSegment->free = false;                        // mark the segment as busy
-            return currentSegment + sizeof(struct heap_segment); // return it's content address
+            split(currentSegment, size + 1); // split the segment at the required size
+            currentSegment->free = false;    // mark the segment as busy
+            currentSegment->signature = 0x4321;
+            printk("returning %p (header at %p) ", (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)24), currentSegment);
+            return (struct heap_segment *)(currentSegment + sizeof(struct heap_segment)); // return its content address
         }
 
         if (currentSegment->size == size)
         {
-            currentSegment->free = false;                        // mark the segment as busy
-            return currentSegment + sizeof(struct heap_segment); // return it's content address
+            currentSegment->free = false; // mark the segment as busy
+            currentSegment->signature = 0x4321;
+            printk("returning %p (header at %p) ", (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)24), currentSegment);
+            return (struct heap_segment *)(currentSegment + sizeof(struct heap_segment)); // return its content address
         }
     }
 
@@ -85,12 +89,14 @@ void split(struct heap_segment *segment, size_t size)
     new->free = true;
     new->size = segment->size - (size + sizeof(struct heap_segment));
     new->next = segment->next;
+    new->signature = 0x4321;
 
     if (segment->next == NULL) // link the segment if the chain is over
         lastSegment = new;
 
     segment->next = new;  // set new segment
     segment->size = size; // set new size
+    segment->signature = 0x4321;
 }
 
 // reallocate
@@ -112,6 +118,12 @@ void *realloc(void *ptr, size_t size)
 // free a segment
 void free(void *ptr)
 {
-    struct heap_segment *seg = (struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment));
+    struct heap_segment *seg = ptr - sizeof(struct heap_segment);
+
+    printk("freeing %p (header at %p) ", ptr, seg);
+
+    if (seg->signature != 0x4321)
+        panick("Unalligned free of a heap segment!");
+
     seg->free = true; // mark the segment as free
 }
