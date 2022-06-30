@@ -50,6 +50,8 @@ void *malloc(size_t size)
     if (size == 0)
         printk("Invalid heap allocation");
 
+    size = align(size, 16);
+
     struct heap_segment *currentSegment = (void *)HEAP_START;
 
     while (currentSegment)
@@ -64,14 +66,12 @@ void *malloc(size_t size)
         {
             split(currentSegment, size + 1); // split the segment at the required size
             currentSegment->free = false;    // mark the segment as busy
-            currentSegment->signature = 0x4321;
             return (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment)); // return its content address
         }
 
         if (currentSegment->size == size)
         {
             currentSegment->free = false; // mark the segment as busy
-            currentSegment->signature = 0x4321;
             return (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment)); // return its content address
         }
     }
@@ -94,7 +94,6 @@ void split(struct heap_segment *segment, size_t size)
 
     segment->next = new;  // set new segment
     segment->size = size; // set new size
-    segment->signature = 0x4321;
 }
 
 // reallocate
