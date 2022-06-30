@@ -86,3 +86,4 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
 void vmmUnmap(struct vmm_page_table *table, void *virtualAddress);
 void *vmmGetBaseTable();
 void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress);
+void vmmDestroy(struct vmm_page_table *table);

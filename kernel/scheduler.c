@@ -345,9 +345,9 @@ void schedulerKill(uint32_t tid)
 
     // deallocate the task
     struct sched_task *prev = task->previous;
-    prev->next = task->next;           // bypass this node
-    mmDeallocatePage(task->pageTable); // free the page table
-    mmDeallocatePage(task);            // free the task
+    prev->next = task->next;     // bypass this node
+    vmmDestroy(task->pageTable); // destroy the page table
+    mmDeallocatePage(task);      // free the task
 
     taskKilled = true;
 

@@ -21,16 +21,7 @@ void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user
 {
     struct vmm_page_table *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
-
-    if (pml5)
-    {
-        currentEntry = table->entries[index.PML4];       // index pml4
-        vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);     // read-write
-        vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user); // userspace
-        table->entries[index.PML4] = currentEntry;       // write the entry in the table
-    }
-    else
-        pml4 = table;
+    pml4 = table;
 
     currentEntry = pml4->entries[index.PDP];         // index pdp
     vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);     // read-write
@@ -63,22 +54,7 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
     struct vmm_page_table *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
 
-    if (pml5)
-    {
-        currentEntry = table->entries[index.PML4];         // index pml4
-        if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
-        {
-            pml4 = mmAllocatePage();                             // allocate table
-            memset64(pml4, 0, VMM_PAGE / sizeof(uint64_t));      // clear it
-            vmmSetAddress(&currentEntry, (uint64_t)pml4 >> 12);  // set it's address
-            vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-            table->entries[index.PML4] = currentEntry;            // write the entry in the table
-        }
-        else
-            table->entries[index.PML4] = currentEntry; // write the entry in the table
-    }
-    else
-        pml4 = table;
+    pml4 = table;
 
     currentEntry = pml4->entries[index.PDP];           // index pdp
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
@@ -224,4 +200,23 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
 #endif
 
     return newTable; // return the created table
+}
+
+// free a table
+void vmmDestroy(struct vmm_page_table *table)
+{
+#ifdef K_VMM_DEBUG
+    printks("vmm: destroying page table at 0x%p\n\r", table);
+#endif
+    for (int i = 0; i < 512; i++)
+    {
+        uint64_t address = table->entries[i];
+
+        if (!vmmGetFlag(&address, VMM_ENTRY_PRESENT)) // we look for the present entries only
+            continue;
+
+        mmDeallocatePage((void *)vmmGetAddress(&address)); // deallocate it
+    }
+
+    mmDeallocatePage(table);
 }
