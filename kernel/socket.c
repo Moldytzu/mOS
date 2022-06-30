@@ -99,3 +99,11 @@ void sockInit()
     memset64(&rootSocket, 0, sizeof(struct sock_socket) / sizeof(uint64_t));
     sockCreate(); // create the first socket
 }
+
+// free the socket
+void sockDestroy(struct sock_socket *sock)
+{
+    sock->previous->next = sock->next;      // bypass this socket
+    mmDeallocatePage((void *)sock->buffer); // deallocate the buffer
+    free(sock);                             // free the socket
+}

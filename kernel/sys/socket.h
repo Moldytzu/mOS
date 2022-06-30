@@ -37,9 +37,8 @@ void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
         s = sockGet(arg1); // get the socket
         if (!s)
             return;
-        s->previous->next = s->next;         // bypass this socket
-        mmDeallocatePage((void *)s->buffer); // deallocate the buffer
-        free(s);                             // free the socket
+
+        sockDestroy(s);
         break;
     default:
         break;

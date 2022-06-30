@@ -12,6 +12,7 @@ struct sock_socket
     struct sock_socket *next;     // next terminal
 };
 
+void sockDestroy(struct sock_socket *sock);
 void sockInit();
 struct sock_socket *sockCreate();
 void sockAppend(struct sock_socket *sock, const char *str, size_t count);
