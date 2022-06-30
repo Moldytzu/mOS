@@ -42,7 +42,7 @@ struct vt_terminal *vtCreate()
 // append text on a terminal
 void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
 {
-    if(!count || !vt)
+    if (!count || !vt)
         return;
 
     if (vt == &rootTerminal)
@@ -126,4 +126,13 @@ uint16_t vtGetMode()
     }
 
     return 0; // return the null mode (kernel mode)
+}
+
+// free the terminal
+void vtDestroy(struct vt_terminal *vt)
+{
+    vt->previous->next = vt->next;          // bypass this node
+    mmDeallocatePage((void *)vt->buffer);   // deallocate the buffer
+    mmDeallocatePage((void *)vt->kbBuffer); // deallocate the buffer
+    free(vt);                               // free the terminal
 }

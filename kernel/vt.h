@@ -17,6 +17,7 @@ struct vt_terminal
     struct vt_terminal *next;     // next terminal
 };
 
+void vtDestroy(struct vt_terminal *vt);
 void vtSetMode(uint16_t displayMode);
 uint16_t vtGetMode();
 void vtkbAppend(struct vt_terminal *vt, char c);
