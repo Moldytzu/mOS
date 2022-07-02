@@ -29,7 +29,7 @@ void idleTask()
 uint8_t simdContext[512] __attribute__((aligned(16)));
 
 // schedule the next task
-void schedulerSchedule(struct idt_intrerrupt_stack *stack)
+void optimize schedulerSchedule(struct idt_intrerrupt_stack *stack)
 {
     if (!enabled)
         return; // don't do anything if it isn't enabled

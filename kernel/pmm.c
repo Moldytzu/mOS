@@ -10,7 +10,7 @@ struct mm_pool pools[0xFFFF]; // 16k pools should be enough
 struct stivale2_struct_tag_memmap *map;
 
 // check if a page is free
-bool mmIsFreePage(struct mm_pool *pool, size_t page)
+bool optimize mmIsFreePage(struct mm_pool *pool, size_t page)
 {
     uint8_t *bitmapBase = pool->base;
     size_t bitmapByteIndex = 0, pageIndex = 0;
@@ -32,7 +32,7 @@ bool mmIsFreePage(struct mm_pool *pool, size_t page)
 }
 
 // allocate a page index on a pool
-void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
+void optimize *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
 {
     uint8_t *bitmapBase = pool->base;
     size_t bitmapByteIndex = 0, pageIndex = 0;
@@ -59,7 +59,7 @@ void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
 }
 
 // deallocate a page address on a pool
-void mmDeallocatePagePool(struct mm_pool *pool, void *address)
+void optimize mmDeallocatePagePool(struct mm_pool *pool, void *address)
 {
     uint8_t *bitmapBase = pool->base;
     size_t bitmapByteIndex = 0, pageIndex = 0;
@@ -82,7 +82,7 @@ void mmDeallocatePagePool(struct mm_pool *pool, void *address)
 }
 
 // allocate a page on a pool
-void *mmAllocatePagePool(struct mm_pool *pool)
+void optimize *mmAllocatePagePool(struct mm_pool *pool)
 {
     while (pool->bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
     {
@@ -109,7 +109,7 @@ void *mmAllocatePagePool(struct mm_pool *pool)
 }
 
 // allocate `pages` pages on a pool
-void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
+void optimize *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
 {
     size_t poolPageCount = pool->total / VMM_PAGE;
 
@@ -133,7 +133,7 @@ continueFor:
 }
 
 // allocate more pages
-void *mmAllocatePages(size_t pages)
+void optimize *mmAllocatePages(size_t pages)
 {
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
@@ -150,7 +150,7 @@ void *mmAllocatePages(size_t pages)
 }
 
 // allocate a page
-void *mmAllocatePage()
+void optimize *mmAllocatePage()
 {
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
@@ -167,7 +167,7 @@ void *mmAllocatePage()
 }
 
 // deallocate page
-void mmDeallocatePage(void *address)
+void optimize mmDeallocatePage(void *address)
 {
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
@@ -177,7 +177,7 @@ void mmDeallocatePage(void *address)
 }
 
 // deallocate pages
-void mmDeallocatePages(void *address, size_t pages)
+void optimize mmDeallocatePages(void *address, size_t pages)
 {
     for(size_t i = 0; i < pages; i++)
         mmDeallocatePage((void*)((uint64_t)address + VMM_PAGE * i));
@@ -228,7 +228,7 @@ struct mm_pool *mmGetPools()
 }
 
 // calculate a total of the values from the pools
-struct mm_pool mmGetTotal()
+struct mm_pool optimize mmGetTotal()
 {
     struct mm_pool total;
 

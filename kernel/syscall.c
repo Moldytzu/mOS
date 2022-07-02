@@ -9,7 +9,7 @@ extern void SyscallIntHandlerEntry();
 uint32_t count = 1;
 
 // handler called on syscall
-void syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t returnAddress, uint64_t r8, uint64_t r9)
+void optimize syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx, uint64_t returnAddress, uint64_t r8, uint64_t r9)
 {
     vmmSwap(vmmGetBaseTable()); // swap the page table with the base so we can access every piece of memory
 

@@ -36,7 +36,7 @@ ifunc int memcmp(const void *a, const void *b, size_t len)
 }
 
 // string length
-ifunc optimize uint32_t strlen(const char *str)
+ifunc uint32_t strlen(const char *str)
 {
     uint32_t i = 0;
     for (; *str; str++, i++)

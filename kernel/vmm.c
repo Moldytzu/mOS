@@ -17,7 +17,7 @@ void vmmInit()
 }
 
 // set flags of some entries given by the indices
-void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw)
+void optimize vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw)
 {
     struct vmm_page_table *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
@@ -48,7 +48,7 @@ void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user
 }
 
 // map a virtual address to a physical address in a page table
-void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
+void optimize vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     struct vmm_page_table *pml4, *pdp, *pd, *pt;
@@ -101,7 +101,7 @@ void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAd
 }
 
 // unmap a virtual address
-void vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
+void optimize vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     struct vmm_page_table *pdp, *pd, *pt;
@@ -127,7 +127,7 @@ void *vmmGetBaseTable()
 }
 
 // get physical address of a virtual address
-void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
+void optimize *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 {
     // get physical memory address form virtual memory address
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
@@ -147,7 +147,7 @@ void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 }
 
 // create a new table
-struct pack vmm_page_table *vmmCreateTable(bool full)
+struct pack vmm_page_table optimize *vmmCreateTable(bool full)
 {
     // create a new table to use as a base for everything
     register void *newTable = mmAllocatePage();         // allocate a page for the new table
@@ -203,7 +203,7 @@ struct pack vmm_page_table *vmmCreateTable(bool full)
 }
 
 // free a table
-void vmmDestroy(struct vmm_page_table *table)
+void optimize vmmDestroy(struct vmm_page_table *table)
 {
 #ifdef K_VMM_DEBUG
     printks("vmm: destroying page table at 0x%p\n\r", table);
