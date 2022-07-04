@@ -55,7 +55,7 @@ void *malloc(size_t size)
     size = align(size, 16);
 
 #ifdef K_HEAP_DEBUG
-    printks("heap: allocating allocating %d bytes\n\r", size);
+    printks("heap: allocating %d bytes\n\r", size);
 #endif
 
     struct heap_segment *currentSegment = (void *)HEAP_START;

@@ -29,7 +29,6 @@ struct sched_task
     uint32_t syscallUsage;                       // the count of syscalls issued by the task in a cycle
     uint8_t overallCPUpercent;                   // percent of the cpu used
     uint32_t sleep;                              // ticks to sleep
-    bool waitingSleep;
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task

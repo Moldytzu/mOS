@@ -26,9 +26,9 @@ struct vt_terminal *vtCreate()
     }
 
     memset64(currentTerminal, 0, sizeof(struct vt_terminal) / sizeof(uint64_t)); // clear the terminal
-    currentTerminal->buffer = mmAllocatePage();                                  // allocate the buffer
-    memset64((void *)currentTerminal->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the buffer
+    currentTerminal->buffer = mmAllocatePage();                                  // allocate the character buffer
     currentTerminal->kbBuffer = mmAllocatePage();                                // allocate the keyboard buffer
+    memset64((void *)currentTerminal->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the character buffer
     memset64((void *)currentTerminal->kbBuffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the keyboard buffer
     currentTerminal->id = lastID++;                                              // set the ID
 

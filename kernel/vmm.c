@@ -156,12 +156,11 @@ struct pack vmm_page_table optimize *vmmCreateTable(bool full)
     struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
     struct stivale2_struct_tag_pmrs *pmrs = bootloaderGetPMRS();                       // get pmrs
     struct stivale2_struct_tag_framebuffer *framebuffer = bootloaderGetFramebuf();     // get framebuffer address
+    struct stivale2_struct_tag_memmap *map = bootloaderGetMemMap();                    // get the memory map
 
 #ifdef K_VMM_DEBUG
     uint64_t a = mmGetTotal().available;
 #endif
-
-    struct stivale2_struct_tag_memmap *map = bootloaderGetMemMap(); // get the memory map
 
     // map PMRs
     for (size_t i = 0; i < pmrs->entries; i++)
