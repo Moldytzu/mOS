@@ -10,10 +10,10 @@
 struct sched_task *elfLoad(const char *path, int argc, char **argv)
 {
     uint64_t fd = vfsOpen(path);                                   // open the file
-    Elf64_Ehdr *elf = mmAllocatePages(vfsSize(fd) / VMM_PAGE + 1); // allocate the raw elf
+    Elf64_Ehdr *elf = malloc(vfsSize(fd)); // allocate the raw elf
     if (!elf)                                                      // return if we didn't get the header
     {
-        mmDeallocatePages(elf, vfsSize(fd) / VMM_PAGE + 1);
+        free(elf); // free it
         return false;
     }
 
@@ -42,14 +42,14 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv)
         }
     }
 
-    mmDeallocatePages(elf, vfsSize(fd) / VMM_PAGE + 1); // deallocate the elf
+    free(elf); // free the elf
 
     char *cwd = malloc(strlen(path));
     memcpy(cwd, path, strlen(path));
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter
 
-    struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0, cwd, argc, argv); // add the task
-    free(cwd);                                                                                                                     // free
-    return task;                                                                                                                   // return the task
+    struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, VMM_PAGE, buffer, vfsSize(fd), 0, cwd, argc, argv, true); // add the task
+    free(cwd);                                                                                                                                       // free
+    return task;                                                                                                                                     // return the task
 }

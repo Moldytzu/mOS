@@ -21,7 +21,6 @@ void serialWrite(const char *str)
     {
         if (*str == '\n')
             serialWritec('\r'); // the serial console uses the CRLF end line method and we don't
-        serialWritec(*str);
-        str++;
+        serialWritec(*str++);
     }
 }

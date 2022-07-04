@@ -154,9 +154,9 @@ void schedulerInit()
 
     firstTerminal = vtCreate(); // create the first terminal
 
-    void *task = mmAllocatePage();                                      // create an empty page just for the idle task
-    memcpy8(task, (void *)idleTask, VMM_PAGE);                          // copy the executable part
-    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0, 0, 0); // create the idle task
+    void *task = mmAllocatePage();                                         // create an empty page just for the idle task
+    memcpy8(task, (void *)idleTask, VMM_PAGE);                             // copy the executable part
+    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0, 0, 0, 0); // create the idle task
 }
 
 // enable the scheduler and then jump in the first task
@@ -169,7 +169,7 @@ void schedulerEnable()
 }
 
 // add new task in the queue
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv)
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf)
 {
     struct sched_task *task = &rootTask; // first task
 
@@ -194,6 +194,9 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->id = index;                                // set the task ID
     task->priority = 0;                              // switch imediately
     task->terminal = terminal;                       // terminal
+    task->elf = elf;                                 // elf status
+    task->elfBase = execBase;                        // base of elf
+    task->elfSize = execSize;                        // size of elf
     memcpy8(task->name, (char *)name, strlen(name)); // set the name
 
     // page table
@@ -235,10 +238,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     }
 
     // memory fields
-    task->allocated = malloc(sizeof(uint64_t));         // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
-    memset64(task->allocated, 0, sizeof(uint64_t) / sizeof(uint64_t));     // null its content
-    task->allocatedIndex = 0;                           // the current index in the array
-    task->lastVirtualAddress = (void *)TASK_BASE_ALLOC; // set the last address
+    task->allocated = malloc(sizeof(uint64_t));                        // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    memset64(task->allocated, 0, sizeof(uint64_t) / sizeof(uint64_t)); // null its content
+    task->allocatedIndex = 0;                                          // the current index in the array
+    task->lastVirtualAddress = (void *)TASK_BASE_ALLOC;                // set the last address
 
     // enviroment
     task->enviroment = mmAllocatePage();                        // 4k should be enough for now
@@ -341,6 +344,10 @@ void schedulerKill(uint32_t tid)
 
     free(task->allocated);
 
+    // deallocate the elf (if present)
+    if (task->elf)
+        mmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE + 1);
+
     // deallocate the task
     struct sched_task *prev = task->previous;
     prev->next = task->next;     // bypass this node
@@ -353,7 +360,8 @@ void schedulerKill(uint32_t tid)
     sti();
     hlt();
 
-    while(1); // prevent returning back
+    while (1)
+        ; // prevent returning back
 }
 
 // get last id
