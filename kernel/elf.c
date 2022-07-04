@@ -9,9 +9,9 @@
 // load an elf
 struct sched_task *elfLoad(const char *path, int argc, char **argv)
 {
-    uint64_t fd = vfsOpen(path);                                   // open the file
+    uint64_t fd = vfsOpen(path);           // open the file
     Elf64_Ehdr *elf = malloc(vfsSize(fd)); // allocate the raw elf
-    if (!elf)                                                      // return if we didn't get the header
+    if (!elf)                              // return if we didn't get the header
     {
         free(elf); // free it
         return false;

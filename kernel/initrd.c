@@ -8,7 +8,7 @@ struct vfs_fs dsfsFS;
 // initialize the initrd
 void initrdInit()
 {
-    dsfs = (struct dsfs_fs *)bootloaderGetModule("initrd.dsfs").begin; // get the begining of the 
+    dsfs = (struct dsfs_fs *)bootloaderGetModule("initrd.dsfs").begin; // get the begining of the
 
     if (!dsfs)
     {
@@ -77,7 +77,7 @@ void initrdMount()
         memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
         node.filesystem = &dsfsFS;                                      // set the ram filesystem
         node.size = entry->size;                                        // set the size
-        memcpy64(node.path, entry->name, 56 / sizeof(uint64_t));    // copy the file path
+        memcpy64(node.path, entry->name, 56 / sizeof(uint64_t));        // copy the file path
         vfsAdd(node);
 
         entry = (struct dsfs_entry *)((uint64_t)entry + sizeof(struct dsfs_entry) + entry->size); // point to the next entry
