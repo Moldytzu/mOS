@@ -207,14 +207,14 @@ void pmmInit()
     }
 
     // we need to calculate how many bytes we need for the allocator's bitmap, storing information about 8 pages per byte (we need to calculate this for each pool)
-    // let x -> usable memory in bytes; bytes = x/(VMM_PAGE*8);
+    // let x -> usable memory in bytes; bytes = x / (VMM_PAGE * bits_in_a_byte);
     for (int i = 0; pools[i].total != UINT64_MAX; i++)
     {
         pools[i].bitmapReserved = pools[i].available / 8 / VMM_PAGE;
         pools[i].allocableBase += pools[i].bitmapReserved;
         pools[i].available -= pools[i].bitmapReserved;
 
-        // align the allocableBase to VMM_PAGE
+        // align the allocableBase to a page
         pools[i].allocableBase = (void *)align((uint64_t)pools[i].allocableBase, VMM_PAGE);
 
         memset64(pools[i].base, 0, pools[i].bitmapReserved / sizeof(uint64_t)); // clear all the bytes in the bitmap

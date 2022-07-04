@@ -3,6 +3,8 @@
 #include <pmm.h>
 #include <panic.h>
 
+#define HEADER(segment) ((struct heap_segment *)((uint64_t)segment - sizeof(struct heap_segment)))
+
 struct heap_segment *lastSegment = NULL;
 void *end = 0;
 
@@ -13,13 +15,13 @@ void split(struct heap_segment *, size_t);
 void heapInit()
 {
     end = (void *)HEAP_START;
-    expand(VMM_PAGE); // expand to a page
+    expand(1); // create first segment
 }
 
 // expand the heap
 void expand(size_t size)
 {
-    size = align(size, VMM_PAGE); // align the size to page boundary
+    size = alignD(size, VMM_PAGE); // align the size to page boundary
 
     struct heap_segment *next = (struct heap_segment *)end; // set new segment to the last address
 
@@ -52,6 +54,10 @@ void *malloc(size_t size)
 
     size = align(size, 16);
 
+#ifdef K_HEAP_DEBUG
+    printks("heap: allocating allocating %d bytes\n\r", size);
+#endif
+
     struct heap_segment *currentSegment = (void *)HEAP_START;
 
     while (currentSegment)
@@ -64,17 +70,21 @@ void *malloc(size_t size)
 
         if (currentSegment->size > size)
         {
-            split(currentSegment, size + 1); // split the segment at the required size
-            currentSegment->free = false;    // mark the segment as busy
+            split(currentSegment, size);                                                                      // split the segment at the required size
+            currentSegment->free = false;                                                                     // mark the segment as busy
             return (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment)); // return its content address
         }
 
         if (currentSegment->size == size)
         {
-            currentSegment->free = false; // mark the segment as busy
+            currentSegment->free = false;                                                                     // mark the segment as busy
             return (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment)); // return its content address
         }
     }
+
+#ifdef K_HEAP_DEBUG
+    printks("heap: retrying allocating %d bytes\n\r", size);
+#endif
 
     expand(size);        // expand the heap
     return malloc(size); // retry
@@ -99,26 +109,28 @@ void split(struct heap_segment *segment, size_t size)
 // reallocate
 void *realloc(void *ptr, size_t size)
 {
-    void *buffer = malloc(size);
+    void *buffer = malloc(size);                    // allocate another buffer
+    size_t copySize = min(HEADER(ptr)->size, size); // calculate the required bytes to be copied
 
-    size_t s = ((struct heap_segment *)((uint64_t)ptr - sizeof(struct heap_segment)))->size;
-
-    if (size < s)
-        memcpy8(buffer, ptr, size);
+    // determine fastest safe block size
+    if (copySize % sizeof(uint64_t))
+        memcpy64(buffer, ptr, copySize);
+    else if (copySize % sizeof(uint32_t))
+        memcpy32(buffer, ptr, copySize);
+    else if (copySize % sizeof(uint16_t))
+        memcpy16(buffer, ptr, copySize);
     else
-        memcpy8(buffer, ptr, s);
+        memcpy8(buffer, ptr, copySize);
 
-    free(ptr);
-    return buffer;
+    free(ptr);     // free the old buffer
+    return buffer; // return the newly allocated buffer
 }
 
 // free a segment
 void free(void *ptr)
 {
-    struct heap_segment *seg = ptr - sizeof(struct heap_segment);
-
-    if (seg->signature != 0x4321)
+    if (HEADER(ptr)->signature != 0x4321)
         panick("Misalligned free of a heap segment!");
 
-    seg->free = true; // mark the segment as free
+    HEADER(ptr)->free = true; // mark the segment as free
 }

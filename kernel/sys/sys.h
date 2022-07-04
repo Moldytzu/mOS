@@ -69,3 +69,4 @@ cwd: // copy the cwd before the input
 #include <sys/power.h>
 
 void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, struct sched_task *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power};
+const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power"};

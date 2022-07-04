@@ -14,7 +14,7 @@ void optimize syscallHandler(uint64_t syscallNumber, uint64_t rsi, uint64_t rdx,
     vmmSwap(vmmGetBaseTable()); // swap the page table with the base so we can access every piece of memory
 
 #ifdef K_SYSCALL_DEBUG
-    printks("syscall: number 0x%x, argument 1 is 0x%x, argument 2 is 0x%x, return address is 0x%p, argument 3 is 0x%x, argument 4 is 0x%x\n\r", syscallNumber, rsi, rdx, returnAddress, r8, r9);
+    printks("syscall: requested %s (0x%x), argument 1 is 0x%x, argument 2 is 0x%x, return address is 0x%p, argument 3 is 0x%x, argument 4 is 0x%x\n\r", syscallNames[syscallNumber] , syscallNumber, rsi, rdx, returnAddress, r8, r9);
 #endif
 
     struct sched_task *t = schedulerGetCurrent();
@@ -40,8 +40,7 @@ uint32_t syscallGetCount()
 void syscallInit(uint16_t vector)
 {
     printk("Installing system call handler on vector 0x%x and enabling sysret/syscall...", vector);
-    idtSetGate((void *)SyscallIntHandlerEntry, vector, IDT_InterruptGateU, true);
+    idtSetGate((void *)SyscallIntHandlerEntry, vector, IDT_InterruptGateU, true); // set up the gate
+    sysretInit();                                                                 // enable sysret/syscall capability
     printk("done\n");
-
-    sysretInit(); // enable sysret/syscall capability
 }

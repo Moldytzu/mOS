@@ -235,10 +235,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     }
 
     // memory fields
-    task->allocated = mmAllocatePages(128);                          // the array to store the allocated addresses (holds (128 * 4096)/8 page-alligned pages or max 256 MB allocated / task)
-    task->allocatedIndex = 0;                                        // the current index in the array
-    memset64(task->allocated, 0, 128 * VMM_PAGE / sizeof(uint64_t)); // null the addresses
-    task->lastVirtualAddress = (void *)TASK_BASE_ALLOC;              // set the last address
+    task->allocated = malloc(sizeof(uint64_t));         // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    memset64(task->allocated, 0, sizeof(uint64_t) / sizeof(uint64_t));     // null its content
+    task->allocatedIndex = 0;                           // the current index in the array
+    task->lastVirtualAddress = (void *)TASK_BASE_ALLOC; // set the last address
 
     // enviroment
     task->enviroment = mmAllocatePage();                        // 4k should be enough for now
@@ -248,6 +248,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     else
         memcpy(task->cwd, cwd, strlen(cwd)); // copy the current working directory
     task->syscallUsage = 1;
+
+#ifdef K_SCHED_DEBUG
+    printks("sched: added %s\n\r", name);
+#endif
 
     return task;
 }
@@ -331,11 +335,11 @@ void schedulerKill(uint32_t tid)
         vtDestroy(vtGet(task->terminal));
 
     // deallocate the memory allocations
-    for (int i = 0; i < (128 * 4096) / 8; i++)
+    for (int i = 0; i < task->allocatedIndex; i++)
         if (task->allocated[i] != NULL)
             mmDeallocatePage(task->allocated[i]);
 
-    mmDeallocatePages(task->allocated, 128);
+    free(task->allocated);
 
     // deallocate the task
     struct sched_task *prev = task->previous;
@@ -348,6 +352,8 @@ void schedulerKill(uint32_t tid)
     // halt until next intrerrupt fires
     sti();
     hlt();
+
+    while(1); // prevent returning back
 }
 
 // get last id

@@ -9,7 +9,7 @@
 #define pack __attribute__((__packed__))
 #define toMB(x) ((x) / 1024 / 1024)
 #define toKB(x) ((x) / 1024)
-#define align(val, alg) (val + (alg - (val % alg)))
+#define align(val, alg) (max(val,alg) + (alg - (max(val,alg) % alg)))
 #define alignD(val, alg) (align(val, alg) - alg)
 #define unsafe_cast(val, type) (*(type *)&val)
 #define iasm asm volatile
