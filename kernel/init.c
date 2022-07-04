@@ -53,6 +53,11 @@ void _start(struct stivale2_struct *stivale2_struct)
     // display framebuffer information
     printk("Got framebuffer with the size %dx%d.\n", bootloaderGetFramebuf()->framebuffer_width, bootloaderGetFramebuf()->framebuffer_height);
 
+    // initialize the serial port
+    printk("Initializing the Serial Port COM1...");
+    serialInit();
+    printk("done\n");
+
     // initialize the physical memory manager
     printk("Initializing the Physical Memory Manager...");
     pmmInit();

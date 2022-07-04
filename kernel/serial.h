@@ -17,4 +17,5 @@ ifunc void serialWritec(char c)
     outb(COM1, c); // output the character on the serial console
 }
 
+void serialInit();
 void serialWrite(const char *str);
