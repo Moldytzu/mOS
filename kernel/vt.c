@@ -51,8 +51,6 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
     const char *input = str;               // input buffer
     if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow
     {
-        input += (vt->bufferIdx + count) - VMM_PAGE;                  // move the pointer until where it overflows
-        count -= (vt->bufferIdx + count) - VMM_PAGE;                  // decrease the count by the number of bytes where it overflows
         memset64((void *)vt->buffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the buffer
         vt->bufferIdx = 0;                                            // reset the index
     }
