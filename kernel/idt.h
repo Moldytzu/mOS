@@ -32,6 +32,7 @@ struct pack idt_gate_descriptor
 
 struct pack idt_intrerrupt_stack
 {
+    uint64_t cr3;
     uint64_t rax;
     uint64_t rbx;
     uint64_t rcx;

@@ -141,7 +141,7 @@ loadnext:
 
     iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context
 
-    vmmSwap(currentTask->pageTable); // swap the page table
+    vmmSwap((void *)currentTask->intrerruptStack.cr3); // swap the page table
 }
 
 // initialize the scheduler
@@ -219,6 +219,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->intrerruptStack.rbp = task->intrerruptStack.rsp;           // stack frame pointer
     task->intrerruptStack.cs = 0x23;                                 // code segment for user
     task->intrerruptStack.ss = 0x1B;                                 // data segment for user
+    task->intrerruptStack.cr3 = (uint64_t)task->pageTable;           // page table
 
     // arguments
     task->intrerruptStack.rdi = 1 + argc;        // arguments count (1, the name)
