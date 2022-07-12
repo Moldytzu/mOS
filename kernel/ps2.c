@@ -76,18 +76,14 @@ ifunc void port2Write(uint8_t data)
 // initialize the keyboard
 void kbInit()
 {
+    // write to the right port
     if (port1Type == PS2_TYPE_KEYBOARD)
-    {
         port1Write(0xF6); // set default parameters
-        waitResponse();   // wait for the reply
-        output();         // flush the buffer
-    }
     else if (port2Type == PS2_TYPE_KEYBOARD)
-    {
         port2Write(0xF6); // set default parameters
-        waitResponse();   // wait for the reply
-        output();         // flush the buffer
-    }
+
+    waitResponse(); // wait for the reply
+    output();       // flush the buffer
 }
 
 // keyboard scancode handler
