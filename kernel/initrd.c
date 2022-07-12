@@ -26,7 +26,7 @@ void initrdInit()
 // open handler
 uint8_t dsfsFSOpen(struct vfs_node *node)
 {
-    return 1; // status ok
+    return initrdGet(node->path) > 0; // return 1 if it is valid
 }
 
 // close handler

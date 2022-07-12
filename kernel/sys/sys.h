@@ -13,6 +13,7 @@
 #define INAPPLICATION(address) between(address, TASK_BASE_ADDRESS, task->lastVirtualAddress + 4096)
 #define INBOUNDARIES(address) (INSTACK(((uint64_t)address)) || INAPPLICATION(((uint64_t)address)))
 
+// expand relative path to full path
 ifunc char *expandPath(const char *path, struct sched_task *task)
 {
     uint64_t fd;
