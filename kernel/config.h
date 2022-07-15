@@ -6,7 +6,7 @@
 // ==========================================
 
 // Debug
-//#define K_RELEASE // generate release build of the kernel (removes all debug statements);
+#define K_RELEASE // generate release build of the kernel (removes all debug statements);
 
 #ifndef K_RELEASE
 #define K_VT_DEBUG  // vt debug messages; If unsure: comment

@@ -40,6 +40,7 @@ int main(int argc, char **argv)
     test("atoi", atoi("123") == 123);
     test("labs", labs(-1) == 1 && labs(1) == 1);
     test("atol", atol("123") == 123);
+    test("malloc", malloc(16) != NULL);
 
     // stdio
 
