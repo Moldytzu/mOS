@@ -29,6 +29,8 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv)
 
     void *buffer = mmAllocatePages(vfsSize(fd) / VMM_PAGE + 1); // allocate the buffer for the sections
 
+    memset64(buffer, 0, vfsSize(fd) / sizeof(uint64_t));
+
     Elf64_Phdr *phdr = (Elf64_Phdr *)((uint64_t)elf + elf->e_phoff); // get the program headers from the offset
 
     for (int i = 0; i < elf->e_phnum; i++, phdr++) // iterate over every program header

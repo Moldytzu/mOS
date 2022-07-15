@@ -1,15 +1,15 @@
 #include <stdlib.h>
 #include <sys.h>
 #include <stdio.h>
+#include <assert.h>
 
-#define align(val, alg) (max(val,alg) + (alg - (max(val,alg) % alg)))
+#define align(val, alg) (max(val, alg) + (alg - (max(val, alg) % alg)))
 #define alignD(val, alg) (align(val, alg) - alg)
 #define HEADER(segment) ((struct heap_segment *)((uint64_t)segment - sizeof(struct heap_segment)))
 #define HEAP_START (void *)0xB000000000
 
-struct heap_segment *lastSegment = NULL;
-void *end = NULL;
-int initialised = -1;
+struct heap_segment *lastSegment = (void *)1;
+void *end = HEAP_START;
 
 struct heap_segment
 {
@@ -38,46 +38,26 @@ void split(struct heap_segment *segment, size_t size)
 // expand the heap
 void expand(size_t size)
 {
-    puts("a");
     size = alignD(size, 4096); // align the size to page boundary
 
     struct heap_segment *next = (struct heap_segment *)end; // set new segment to the last address
 
-    puts("b");
-
     // allocate new heap pages
     for (size_t p = 0; p < (size / 4096) + 1; p++)
-    {
-        puts("c");
-        void *tmp;
-        sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&tmp, 0); // allocate
-        end += 4096;
-    }
+        sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&end, 0); // allocate
 
-    puts("d");
     // generate required metadata
     next->free = true;
     next->next = NULL;
     next->signature = 0x4321;
     next->size = size;
 
-    puts("e");
-    if (!lastSegment) // if the last segment is invalid then make it the newly generated segment
+    if ((void *)lastSegment < HEAP_START) // if the last segment is invalid then make it the newly generated segment
         lastSegment = next;
     else if (lastSegment->free == true) // if the last segment is free then extend it's size
         lastSegment->size += size;
     else // else link the segments together
         lastSegment->next = next;
-
-    puts("f");
-}
-
-void init()
-{
-    initialised = 1;
-    lastSegment = NULL;
-    end = HEAP_START;
-    expand(4096);
 }
 
 void *malloc(size_t s)
@@ -87,10 +67,8 @@ void *malloc(size_t s)
 
     s = align(s, 16);
 
-    if(initialised < 0)
-        init();
-
-    puts("looping\n");
+    if ((void *)lastSegment < HEAP_START) // uninitialised
+        expand(4096);
 
     struct heap_segment *currentSegment = (void *)HEAP_START;
 
@@ -122,4 +100,7 @@ void *malloc(size_t s)
 
 void free(void *ptr)
 {
+    assert(HEADER(ptr)->signature == 0x4321);
+
+    HEADER(ptr)->free = true; // mark the segment as free
 }

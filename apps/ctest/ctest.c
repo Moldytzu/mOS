@@ -41,6 +41,8 @@ int main(int argc, char **argv)
     test("labs", labs(-1) == 1 && labs(1) == 1);
     test("atol", atol("123") == 123);
     test("malloc", malloc(16) != NULL);
+    free(malloc(16));
+    test("free", true);
 
     // stdio
 
