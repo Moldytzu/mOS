@@ -12,8 +12,14 @@ void *sockBuffer = NULL;
 void eventLoop()
 {
     sys_socket(SYS_SOCKET_READ, sockID, (uint64_t)sockBuffer, SOCKET_SIZE); // read the whole socket
-    if (!*(char *)sockBuffer)                                        // if empty give up
+    if (!*(char *)sockBuffer)                                               // if empty give up
         return;
+
+    if (memcmp(sockBuffer, "crash ", 6) == 0)
+    {
+        puts(sockBuffer + 6);
+        puts(" has crashed!\n");
+    }
 
     if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
     {

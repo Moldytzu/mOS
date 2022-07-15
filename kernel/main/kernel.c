@@ -57,7 +57,13 @@ void exceptionHandler(struct idt_intrerrupt_stack *stack)
     vmmSwap(vmmGetBaseTable()); // swap to the base table
     if (stack->cs == 0x23)      // userspace
     {
-        printks("\n\r%s crashed! Terminating it.\n\r", schedulerGetCurrent()->name);
+        struct sock_socket *initSocket = sockGet(1);
+        
+        if(initSocket == NULL)
+            printks("\n\r%s crashed! Terminating it.\n\r", schedulerGetCurrent()->name);
+        else 
+            sockAppend(initSocket, "crash <apllication>", strlen("crash <apllication>")); // announce that the application has crashed
+        
         schedulerKill(schedulerGetCurrent()->id); // terminate the task
         schedulerSchedule(stack);                 // schedule next task
         return;
