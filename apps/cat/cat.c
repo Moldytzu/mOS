@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     assert(size != 0);
 
     // allocate the buffer
-    void *buffer = malloc(4096);
+    void *buffer = malloc(size);
     assert(buffer != NULL);
 
     sys_read(buffer, size, fd); // read the file

@@ -8,6 +8,7 @@
 
 uint64_t sockID = 0;
 void *sockBuffer = NULL;
+bool verbose = true;
 
 void eventLoop()
 {
@@ -38,6 +39,29 @@ void eventLoop()
     memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
 }
 
+void parseCFG()
+{
+    // config file
+    uint64_t fd, size;
+    void *cfg = malloc(4096);
+    assert(cfg != NULL);
+
+    sys_open("/init/init.cfg", &fd); // open the file
+    assert(fd != 0);
+
+    sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
+    assert(size != 0);
+
+    memset(cfg, 0, 4096);    // clear the buffer
+    sys_read(cfg, min(size, 4096), fd); // read the file
+
+    if (memcmp(cfg, "VERBOSE = ", strlen("VERBOSE = ")) == 0)
+    {
+        cfg += strlen("VERBOSE = ");
+        verbose = *(uint8_t *)cfg == '1';
+    }
+}
+
 int main(int argc, char **argv)
 {
     // ensure that the pid is 1
@@ -53,7 +77,10 @@ int main(int argc, char **argv)
     // set tty display mode
     sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0);
 
-    puts("m Init System is setting up your enviroment\n"); // display a welcome screen
+    parseCFG(); // parse config file
+
+    if (verbose)
+        puts("m Init System is setting up your enviroment\n"); // display a welcome screen
 
     // create a socket for ipc
     sys_socket(SYS_SOCKET_CREATE, (uint64_t)&sockID, 0, 0);
@@ -68,7 +95,8 @@ int main(int argc, char **argv)
     while (1)
     {
         // launch the shell
-        puts("Launching msh from /init/msh.mx\n");
+        if (verbose)
+            puts("Launching msh from /init/msh.mx\n");
 
         uint64_t pid, status;
         struct sys_exec_packet p = {0, enviroment, "/init/", 0, 0};
@@ -81,7 +109,8 @@ int main(int argc, char **argv)
             sys_pid(pid, SYS_PID_STATUS, &status); // get the status of the pid
         } while (status == 0);                     // wait for the pid to be stopped
 
-        puts("The shell stopped. Relaunching it.\n");
+        if (verbose)
+            puts("The shell stopped. Relaunching it.\n");
     }
     while (1)
         ; // the init system never returns
