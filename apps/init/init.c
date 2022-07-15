@@ -4,30 +4,32 @@
 #include <assert.h>
 #include <string.h>
 
+#define SOCKET_SIZE (4096 - 24)
+
 uint64_t sockID = 0;
-void *buffer;
+void *sockBuffer = NULL;
 
 void eventLoop()
 {
-    sys_socket(SYS_SOCKET_READ, sockID, (uint64_t)buffer, 4096); // read the whole socket
-    if (!*(char *)buffer)                                        // if empty give up
+    sys_socket(SYS_SOCKET_READ, sockID, (uint64_t)sockBuffer, SOCKET_SIZE); // read the whole socket
+    if (!*(char *)sockBuffer)                                        // if empty give up
         return;
 
-    if (strcmp(buffer, "shutdown") == 0) // shutdown command
+    if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
     {
         sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Shutdowning...");
         sys_power(SYS_POWER_SHUTDOWN, 0, 0);
     }
 
-    if (strcmp(buffer, "reboot") == 0) // shutdown command
+    if (strcmp(sockBuffer, "reboot") == 0) // shutdown command
     {
         sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Rebooting...");
         sys_power(SYS_POWER_REBOOT, 0, 0);
     }
 
-    memset(buffer, 0, 4096); // clear the buffer
+    memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
 }
 
 int main(int argc, char **argv)
@@ -52,10 +54,8 @@ int main(int argc, char **argv)
 
     assert(sockID != 0); // assert that the socket is valid
 
-    // allocate some memory
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&buffer, 0);
-
-    assert(buffer != NULL); // assert that the buffer is valid
+    sockBuffer = malloc(SOCKET_SIZE);
+    assert(sockBuffer != NULL); // assert that the socket buffer is valid
 
     const char *enviroment = "PATH=/init/|"; // the basic enviroment
 

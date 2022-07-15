@@ -7,15 +7,9 @@
 
 int main(int argc, char **argv)
 {
-    char *cwdBuffer, *dirBuffer;
+    char *cwdBuffer = malloc(4096), *dirBuffer = malloc(4096);
 
-    // current working directory buffer
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cwdBuffer, 0);
-    assert(cwdBuffer != NULL); // assert that the buffer is valid
-
-    // directory listing buffer
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&dirBuffer, 0);
-    assert(dirBuffer != NULL); // assert that the buffer is valid
+    assert(cwdBuffer != NULL && dirBuffer != NULL); // assert that the buffers are valid
 
     sys_pid(0, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer);                        // get the current working directory buffer
     sys_vfs(SYS_VFS_LIST_DIRECTORY, (uint64_t)cwdBuffer, (uint64_t)dirBuffer); // list the directory

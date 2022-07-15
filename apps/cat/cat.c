@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys.h>
 #include <assert.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv)
 {
@@ -20,8 +21,7 @@ int main(int argc, char **argv)
     assert(size != 0);
 
     // allocate the buffer
-    void *buffer;
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&buffer, 0);
+    void *buffer = malloc(4096);
     assert(buffer != NULL);
 
     sys_read(buffer, size, fd); // read the file

@@ -125,6 +125,7 @@ void handleInput(const char *buffer)
 execute:
     uint64_t newPid;
     char *argv[31];
+    argumentsCount = min(30, argumentsCount); // clamp the value to 30 arguments
     for (int i = 0; i < argumentsCount; i++)
         argv[i] = arguments[i + 1];
     struct sys_exec_packet p = {0, enviroment, cwdBuffer, argumentsCount, argv};
@@ -140,33 +141,32 @@ int main(int argc, char **argv)
     puts("m Shell\n");
 
     // keyboard buffer
-    char *kBuffer;
+    char *kBuffer = malloc(4096);
     uint16_t kIdx;
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&kBuffer, 0);
     assert(kBuffer != NULL); // assert that the buffer is valid
 
     // enviroment buffer
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&enviroment, 0);
+    enviroment = malloc(4096);
     assert(enviroment != NULL); // assert that the enviroment is valid
 
     // command buffer
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cmdBuffer, 0);
+    cmdBuffer = malloc(4096);
     assert(cmdBuffer != NULL); // assert that the buffer is valid
 
     // current working directory buffer
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cwdBuffer, 0);
+    cwdBuffer = malloc(512);
     assert(cwdBuffer != NULL); // assert that the buffer is valid
 
     sys_pid(0, SYS_PID_GET, &pid);                                // get the pid
     sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
 
-    if(argc >= 2)
+    if (argc >= 2)
         sys_pid(pid, SYS_PID_SET_CWD, (uint64_t *)argv[1]); // set the current working directory to the argument
 
     // allocate the arguments buffers
     for (int i = 0; i < 32; i++)
     {
-        sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&arguments[i], 0);
+        arguments[i] = malloc(4096);
         assert(arguments[i] != NULL); // assert that the buffer is valid
     }
 

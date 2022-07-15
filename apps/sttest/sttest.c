@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #define TESTS 17 /*max tests till system crash, current target is 20*/
 
@@ -17,7 +18,7 @@ void test(const char *path)
 int main(int argc, char **argv)
 {
     // current working directory buffer
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&cwdBuffer, 0);
+    cwdBuffer = malloc(512);
     assert(cwdBuffer != NULL); // assert that the buffer is valid
 
     sys_pid(0, SYS_PID_GET, &pid);                        // get the pid
