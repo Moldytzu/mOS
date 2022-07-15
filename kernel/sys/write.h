@@ -1,7 +1,6 @@
 #pragma once
 #include <sys/sys.h>
-#include <scheduler.h>
-#include <vfs.h>
+#include <fs/vfs.h>
 
 // write (rsi = buffer, rdx = count, r8 = fd)
 void write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, struct sched_task *task)

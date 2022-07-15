@@ -1,8 +1,7 @@
 #pragma once
 #include <sys/sys.h>
-#include <scheduler.h>
-#include <pmm.h>
-#include <heap.h>
+#include <mm/pmm.h>
+#include <mm/heap.h>
 
 // mem (rsi = call, rdx = arg1, r8 = arg2)
 void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_task *task)

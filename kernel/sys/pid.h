@@ -1,7 +1,6 @@
 #pragma once
 #include <sys/sys.h>
-#include <scheduler.h>
-#include <pit.h>
+#include <sched/pit.h>
 
 // pid (rsi = pid, rdx = info, r8 = retVal/inputVal)
 void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, struct sched_task *task)

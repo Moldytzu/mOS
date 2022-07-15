@@ -1,9 +1,8 @@
 #pragma once
 #include <sys/sys.h>
-#include <scheduler.h>
-#include <elf.h>
-#include <vt.h>
-#include <pmm.h>
+#include <elf/elf.h>
+#include <subsys/vt.h>
+#include <mm/pmm.h>
 
 struct pack sys_exec_packet
 {

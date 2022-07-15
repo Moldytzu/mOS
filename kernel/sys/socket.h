@@ -1,7 +1,8 @@
+#pragma once
 #include <sys/sys.h>
-#include <vfs.h>
-#include <socket.h>
-#include <heap.h>
+#include <fs/vfs.h>
+#include <subsys/socket.h>
+#include <mm/heap.h>
 
 // (rsi = call, rbx = arg1, r8 = arg2, r9 = arg3)
 void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct sched_task *task)

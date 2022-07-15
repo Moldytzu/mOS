@@ -1,8 +1,9 @@
 #pragma once
-#include <utils.h>
-#include <pmm.h>
-#include <vmm.h>
-#include <vfs.h>
+#include <misc/utils.h>
+#include <mm/pmm.h>
+#include <mm/vmm.h>
+#include <fs/vfs.h>
+#include <sched/scheduler.h>
 
 #define SYS_STDIN 1
 
