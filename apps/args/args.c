@@ -2,11 +2,8 @@
 
 int main(int argc, char **argv)
 {
-    puts("Arguments: \n");
+    printf("Arguments: (%d)\n",argc);
     for(int i = 0; i < argc; i++)
-    {
-        puts(argv[i]);
-        putchar(' ');
-    }
+        printf("%s ",argv[i]);
     putchar('\n');
 }

@@ -5,11 +5,9 @@
 
 int main(int argc, char **argv)
 {
-    if(argc != 2)
+    if (argc != 2)
     {
-        puts("Usage: ");
-        puts(argv[0]);
-        puts(" <file>\n");
+        printf("Usage: %s <file>\n", argv[0]);
         return 1;
     }
 

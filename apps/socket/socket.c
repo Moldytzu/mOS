@@ -7,9 +7,7 @@ int main(int argc, char **argv)
 {
     if(argc != 3)
     {
-        puts("Usage: ");
-        puts(argv[0]);
-        puts(" <socket> <data>\n");
+        printf("Usage: %s <socket> <data>\n",argv[0]);
         abort();
     }
 

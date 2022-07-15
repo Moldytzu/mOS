@@ -5,12 +5,15 @@
 #include <errno.h>
 #include <string.h>
 
+#define TESTS 11
+
+int currentTest;
+
 void test(const char *name, bool result)
 {
-    puts(name);
-    puts("...");
+    printf("test %d/%d : %s...", ++currentTest, 11, name);
 
-    if(result)   
+    if (result)
         puts("ok\n");
     else
         puts("fail\n");
@@ -18,22 +21,22 @@ void test(const char *name, bool result)
 
 int main(int argc, char **argv)
 {
-    puts("Testing libc...\n");
+    currentTest = 0;
 
     // assert
     assert(1 == 1);
     test("assert", 1 == 1);
-    
-    // errno
-    #ifdef EDOM 
-    #define RESULT 1
-    #else
-    #define RESULT 0
-    #endif
+
+// errno
+#ifdef EDOM
+#define RESULT 1
+#else
+#define RESULT 0
+#endif
 
     test("errno", RESULT);
 
-    #undef RESULT
+#undef RESULT
 
     // stdlib
     test("abs", abs(-1) == 1 && abs(1) == 1);

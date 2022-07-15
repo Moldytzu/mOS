@@ -18,8 +18,7 @@ void eventLoop()
 
     if (memcmp(sockBuffer, "crash ", 6) == 0)
     {
-        puts(sockBuffer + 6);
-        puts(" has crashed!\n");
+        printf("%s has crashed!\n", sockBuffer + 6 /*skip "crash "*/);
     }
 
     if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
@@ -52,13 +51,16 @@ void parseCFG()
     sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
     assert(size != 0);
 
-    memset(cfg, 0, 4096);    // clear the buffer
+    memset(cfg, 0, 4096);               // clear the buffer
     sys_read(cfg, min(size, 4096), fd); // read the file
 
-    if (memcmp(cfg, "VERBOSE = ", strlen("VERBOSE = ")) == 0)
+    for(int i = 0; i < 4096; i++, cfg++)
     {
-        cfg += strlen("VERBOSE = ");
-        verbose = *(uint8_t *)cfg == '1';
+        if (memcmp(cfg, "VERBOSE = ", strlen("VERBOSE = ")) == 0)
+        {
+            cfg += strlen("VERBOSE = ");
+            verbose = *(uint8_t *)cfg == '1';
+        }
     }
 }
 

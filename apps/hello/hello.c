@@ -2,5 +2,5 @@
 
 int main(int argc, char **argv)
 {
-    puts("Hello, m world!\n");
+    printf("Hello, m world!\n");
 }

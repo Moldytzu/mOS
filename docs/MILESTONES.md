@@ -1,8 +1,8 @@
 # Milestones to reach
 ### libc
-### gui infrastructure
 ### driver support
-### userspace applications
+### gui infrastructure
+### userspace applications & porting
 
 # Reached milestones
 ### IDT and GDT

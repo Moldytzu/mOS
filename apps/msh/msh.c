@@ -82,9 +82,7 @@ void handleInput(const char *buffer)
 
         if (!status)
         {
-            puts("Couldn't find directory ");
-            puts(arguments[1]);
-            putchar('\n');
+            printf("Couldn't find directory %s\n", arguments[1]);
 
             // restore the cwd
             sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
@@ -116,9 +114,7 @@ void handleInput(const char *buffer)
         if (status)
             goto execute;
 
-        puts("Couldn't find executable ");
-        puts(arguments[0]);
-        putchar('\n');
+        printf("Couldn't find executable %s\n", arguments[0]);
         return;
     }
 
@@ -192,8 +188,7 @@ int main(int argc, char **argv)
 
         char chr;
 
-        puts(cwdBuffer);
-        puts(" m$ "); // print the prompt
+        printf("%s m$ ",cwdBuffer); // print the prompt
 
         // read in the buffer
         do
