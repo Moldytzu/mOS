@@ -2,7 +2,7 @@ OUTPUT = out/dvd.iso
 OUTPUTEFI = out/efi.iso
 CORES = $(shell nproc)
 GDBFLAGS ?= -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue"
-QEMUFLAGS ?= -M q35 -m 2G -cpu Nehalem
+QEMUFLAGS ?= -M q35 -m 2G -cpu Skylake-Server
 QEMUDEBUG = -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 APPS = $(wildcard ./apps/*/.)
 
