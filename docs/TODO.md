@@ -2,7 +2,6 @@
 ### implement at least 50% of the C standard library functions
 
 # urgent todo list that doesn't follow the milestones
-### switch to limine from stivale2
 ### adopt multiboot2 as a second boot protocol
 ### rewrite important kernel code 
 ### fix memory leaks caused by vmmDestroy

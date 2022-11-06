@@ -147,6 +147,10 @@ void optimize *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 // create a new table
 struct pack vmm_page_table optimize *vmmCreateTable(bool full)
 {
+#ifdef K_VMM_DEBUG
+    uint64_t a = mmGetTotal().available;
+#endif
+
     // create a new table to use as a base for everything
     register void *newTable = mmAllocatePage(); // allocate a page for the new table
     memset(newTable, 0, VMM_PAGE);              // clear the page table
@@ -160,12 +164,17 @@ struct pack vmm_page_table optimize *vmmCreateTable(bool full)
     vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), false, true); // tss
     vmmMap(newTable, (void *)gdtGet(), (void *)gdtGet(), false, true); // gdt
 
+#ifdef K_IDT_IST
+    vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], false, true); // kernel ist
+    vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], false, true); // user ist
+#endif
+
     // map memory map entries as kernel rw
     for (size_t i = 0; i < memMap->entry_count; i++)
     {
         struct limine_memmap_entry *entry = memMap->entries[i];
 
-        if (entry->type == LIMINE_MEMMAP_USABLE && !full) // don't map the usable memory in non-full page tables
+        if (entry->type != LIMINE_MEMMAP_KERNEL_AND_MODULES && !full) // don't map any type of memory besides kernel
             continue;
 
         if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
@@ -179,6 +188,10 @@ struct pack vmm_page_table optimize *vmmCreateTable(bool full)
             vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), false, true);
         }
     }
+
+#ifdef K_VMM_DEBUG
+    printks("vmm: wasted %d KB on a page table\n\r", toKB(a - mmGetTotal().available));
+#endif
 
     return newTable; // return the created table
 }
