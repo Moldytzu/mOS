@@ -28,6 +28,11 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
     .revision = 0};
 
+static volatile struct limine_stack_size_request stack_request = {
+    .id = LIMINE_STACK_SIZE_REQUEST,
+    .revision = 0,
+    .stack_size = 16 * 1024};
+
 struct limine_terminal *terminal;
 
 void bootloaderInit()

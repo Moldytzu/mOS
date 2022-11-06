@@ -165,8 +165,6 @@ struct pack vmm_page_table optimize *vmmCreateTable(bool full)
     {
         struct limine_memmap_entry *entry = memMap->entries[i];
 
-        printks("%d: %d (%x -> %x)\n\r", i, entry->type, entry->base, entry->base + entry->length);
-
         if (entry->type == LIMINE_MEMMAP_USABLE && !full) // don't map the usable memory in non-full page tables
             continue;
 
@@ -174,7 +172,6 @@ struct pack vmm_page_table optimize *vmmCreateTable(bool full)
         {
             for (size_t i = 0; i < entry->length; i += 4096)
                 vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), false, true);
-            continue;
         }
         for (size_t i = 0; i < entry->length; i += 4096)
         {

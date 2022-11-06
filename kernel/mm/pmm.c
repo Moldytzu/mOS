@@ -215,6 +215,11 @@ void pmmInit()
         pools[i].allocableBase += pools[i].bitmapReserved;
         pools[i].available -= pools[i].bitmapReserved;
 
+        if(pools[i].available < VMM_PAGE) // unusable
+            pools[i].available = 0;
+
+        pools[i].available = alignD((uint64_t)pools[i].available, VMM_PAGE);
+
         // align the allocableBase to a page
         pools[i].allocableBase = (void *)align((uint64_t)pools[i].allocableBase, VMM_PAGE);
 
