@@ -5,6 +5,7 @@
 ### switch to limine from stivale2
 ### adopt multiboot2 as a second boot protocol
 ### rewrite important kernel code 
+### fix memory leaks caused by vmmDestroy
 
 # bugs to fix
 ### init.mx crash when on kvm

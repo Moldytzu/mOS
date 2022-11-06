@@ -1,4 +1,4 @@
-kernel/stivale2.h
+kernel/limine.h
 obj
 limine
 cross-compiler-builder

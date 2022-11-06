@@ -24,13 +24,13 @@
 void kmain();
 
 // entry point of the kernel
-void _start(struct stivale2_struct *stivale2_struct)
+void _start()
 {
     // initialize the fpu
     fpuInit();
 
     // initialize the bootloader interface
-    bootloaderInit(stivale2_struct);
+    bootloaderInit();
 
     // initialize the initrd
     initrdInit();
@@ -39,19 +39,14 @@ void _start(struct stivale2_struct *stivale2_struct)
     framebufferInit();
 
     // display message
-    printk("Starting up mOS' kernel in ");
-    if (bootloaderGetFirmwareType())
-        printk("BIOS");
-    else
-        printk("UEFI");
-    printk(" mode.\n");
+    printk("Starting up mOS' kernel\n");
 
     // test for the required features
     if(!fpuCheck())
         panick("Unsupported CPU. SSE 4.2 isn't supported!");
 
     // display framebuffer information
-    printk("Got framebuffer with the size %dx%d.\n", bootloaderGetFramebuf()->framebuffer_width, bootloaderGetFramebuf()->framebuffer_height);
+    printk("Got framebuffer with the size %dx%d.\n", bootloaderGetFramebuffer()->width, bootloaderGetFramebuffer()->height);
 
     // initialize the serial port
     printk("Initializing the Serial Port COM1...");

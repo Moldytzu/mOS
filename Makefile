@@ -30,7 +30,7 @@ run-efi-debug: efi
 	pkill -f qemu-system-x86_64
 
 limine:
-	-git clone https://github.com/limine-bootloader/limine.git --branch=v3.0-branch-binary --depth=1
+	-git clone https://github.com/limine-bootloader/limine.git --branch=v4.x-branch-binary --depth=1
 	make -C limine
 
 initrd:

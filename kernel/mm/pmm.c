@@ -7,7 +7,7 @@ uint16_t poolCount = 0;
 
 struct mm_pool pools[0xFFFF]; // 16k pools should be enough
 
-struct stivale2_struct_tag_memmap *map;
+struct limine_memmap_response *map;
 
 // check if a page is free
 bool optimize mmIsFreePage(struct mm_pool *pool, size_t page)
@@ -186,21 +186,22 @@ void optimize mmDeallocatePages(void *address, size_t pages)
 // initialize the physical memory manager
 void pmmInit()
 {
-    map = bootloaderGetMemMap(); // get the map
+    map = bootloaderGetMemoryMap(); // get the map
 
     // clear the pools
     memset64(&pools[0], UINT64_MAX, sizeof(pools) / sizeof(uint64_t));
 
-    for (uint64_t i = 0; i < map->entries; i++)
+    for (uint64_t i = 0; i < map->entry_count; i++)
     {
-        if (map->memmap[i].type == STIVALE2_MMAP_USABLE && map->memmap[i].length >= VMM_PAGE) // if the pool of memory is usable take it
+        struct limine_memmap_entry *e = map->entries[i];
+        if (e->type == LIMINE_MEMMAP_USABLE && e->length >= VMM_PAGE) // if the pool of memory is usable take it
         {
             uint16_t index = poolCount++;
             memset64(&pools[index], 0, sizeof(struct mm_pool) / sizeof(uint64_t));
-            pools[index].allocableBase = (void *)map->memmap[i].base; // set the base memory address
-            pools[index].base = (void *)map->memmap[i].base;
-            pools[index].total = map->memmap[i].length; // set the total memory and available memory to the length of the pool
-            pools[index].available = map->memmap[i].length;
+            pools[index].allocableBase = (void *)e->base; // set the base memory address
+            pools[index].base = (void *)e->base;
+            pools[index].total = e->length; // set the total memory and available memory to the length of the pool
+            pools[index].available = e->length;
             pools[index].full = false; // it has available memory
             pools[index].bitmapBase = pools[index].base;
         }

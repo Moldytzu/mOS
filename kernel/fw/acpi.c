@@ -136,7 +136,7 @@ triplefault:
 void acpiInit()
 {
     // get rsdp
-    rsdp = (struct acpi_rsdp *)(void *)bootloaderGetRSDP()->rsdp;
+    rsdp = (struct acpi_rsdp *)bootloaderGetRSDP();
 
     // parse the version field
     revision = rsdp->version;

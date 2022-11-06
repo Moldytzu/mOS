@@ -61,8 +61,8 @@ HEADER_DEPS += $(ASMFILES:.asm=.d)
 .PHONY: all
 all: $(KERNEL)
 
-stivale2.h:
-	curl https://raw.githubusercontent.com/stivale/stivale/master/stivale2.h -o $@
+limine.h:
+	curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o $@
 
 # Link rules for the final kernel executable.
 $(KERNEL): $(OBJ)
@@ -83,7 +83,7 @@ $(KERNEL): $(OBJ)
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) stivale2.h
+	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) limine.h
 
 .PHONY: setup
-setup: stivale2.h
+setup: limine.h

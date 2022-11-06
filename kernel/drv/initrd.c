@@ -8,17 +8,17 @@ struct vfs_fs dsfsFS;
 // initialize the initrd
 void initrdInit()
 {
-    dsfs = (struct dsfs_fs *)bootloaderGetModule("initrd.dsfs").begin; // get the begining of the
+    dsfs = (struct dsfs_fs *)bootloaderGetModule("initrd.dsfs")->address; // get the begining of the file
 
     if (!dsfs)
     {
-        bootloaderTermWrite("Failed to load the initrd from \"initrd.dsfs\".\nMake sure the file is in the root of the boot device.\n");
+        bootloaderWrite("Failed to load the initrd from \"initrd.dsfs\".\nMake sure the file is in the root of the boot device.\n");
         hang();
     }
 
     if (dsfs->header.signature[0] != 'D' && dsfs->header.signature[1] != 'D')
     {
-        bootloaderTermWrite("Failed to verify the signature of the initrd.\n");
+        bootloaderWrite("Failed to verify the signature of the initrd.\n");
         hang();
     }
 }

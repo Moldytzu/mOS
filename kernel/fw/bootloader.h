@@ -1,20 +1,14 @@
 #pragma once
 #include <misc/utils.h>
-#include <stivale2.h>
+#include <limine.h>
 
-void *bootloaderGetTag(uint64_t id);
-void bootloaderInit(struct stivale2_struct *stivale2_struct);
+void bootloaderInit();
 
-void bootloaderTermWrite(const char *str);
+void bootloaderWrite(const char *str);
 
-struct stivale2_module bootloaderGetModule(const char *name);
-bool bootloaderProbePML5();
-
-struct stivale2_struct_tag_framebuffer *bootloaderGetFramebuf();
-struct stivale2_struct_tag_memmap *bootloaderGetMemMap();
-struct stivale2_struct_tag_kernel_base_address *bootloaderGetKernelAddr();
-struct stivale2_struct_tag_pmrs *bootloaderGetPMRS();
-struct stivale2_struct_tag_rsdp *bootloaderGetRSDP();
+struct limine_file *bootloaderGetModule(const char *name);
+struct limine_framebuffer *bootloaderGetFramebuffer();
+struct limine_memmap_response *bootloaderGetMemoryMap();
+struct limine_kernel_address_response *bootloaderGetKernelAddress();
+void *bootloaderGetRSDP();
 void *bootloaderGetHHDM();
-
-uint8_t bootloaderGetFirmwareType();

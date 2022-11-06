@@ -1,160 +1,82 @@
 #include <fw/bootloader.h>
 
-struct stivale2_struct_tag_kernel_base_address *baseAddrTag;
-struct stivale2_struct_tag_framebuffer *framebufTag;
-struct stivale2_struct_tag_terminal *termTag;
-struct stivale2_struct_tag_modules *modsTag;
-struct stivale2_struct_tag_memmap *memTag;
-struct stivale2_struct_tag_firmware *fwTag;
-struct stivale2_struct_tag_pmrs *pmrTag;
-struct stivale2_struct_tag_hhdm *hhdmTag;
-struct stivale2_struct_tag_rsdp *rsdpTag;
-struct stivale2_struct *stivale2struct;
+static volatile struct limine_terminal_request terminal_request = {
+    .id = LIMINE_TERMINAL_REQUEST,
+    .revision = 0};
 
-void (*termWrite)(const char *string, size_t length);
+static volatile struct limine_memmap_request memmap_request = {
+    .id = LIMINE_MEMMAP_REQUEST,
+    .revision = 0};
 
-// We need to tell the stivale bootloader where we want our stack to be.
-static uint8_t stack[8 * 1024]; // 8 kb stack
+static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST,
+    .revision = 0};
 
-// terminal
-static struct stivale2_header_tag_terminal terminal_hdr_tag = {
-    .tag = {
-        .identifier = STIVALE2_HEADER_TAG_TERMINAL_ID, // id
-        .next = 0                                      // end
-    },
-    .flags = 0 // unused
-};
+static volatile struct limine_module_request module_request = {
+    .id = LIMINE_MODULE_REQUEST,
+    .revision = 0};
 
-// framebuffer
-static struct stivale2_header_tag_framebuffer framebuffer_hdr_tag = {
-    // Same as above.
-    .tag = {
-        .identifier = STIVALE2_HEADER_TAG_FRAMEBUFFER_ID,
-        // Instead of 0, we now point to the previous header tag. The order in
-        // which header tags are linked does not matter.
-        .next = (uint64_t)&terminal_hdr_tag},
-    // We set all the framebuffer specifics to 0 as we want the bootloader
-    // to pick the best it can.
-    .framebuffer_width = 0,
-    .framebuffer_height = 0,
-    .framebuffer_bpp = 0};
+static volatile struct limine_kernel_address_request kernel_address_request = {
+    .id = LIMINE_KERNEL_ADDRESS_REQUEST,
+    .revision = 0};
 
-// stivale header
-__attribute__((section(".stivale2hdr"), used)) static struct stivale2_header stivale_hdr = {
-    .entry_point = 0,                          // elf entry point
-    .stack = (uintptr_t)stack + sizeof(stack), // stack
-    .flags = 0b1111,
-    .tags = (uintptr_t)&framebuffer_hdr_tag // root of the linked list
-};
+static volatile struct limine_rsdp_request rsdp_request = {
+    .id = LIMINE_RSDP_REQUEST,
+    .revision = 0};
 
-// get tag
-void *bootloaderGetTag(uint64_t id)
+static volatile struct limine_framebuffer_request framebuffer_request = {
+    .id = LIMINE_FRAMEBUFFER_REQUEST,
+    .revision = 0};
+
+struct limine_terminal *terminal;
+
+void bootloaderInit()
 {
-    struct stivale2_tag *current_tag = (void *)stivale2struct->tags;
-    while (true)
+    if (terminal_request.response == NULL) // check for the response to be valid
+        hang();
+
+    terminal = terminal_request.response->terminals[0]; // point the default to the first terminal given by the bootloader
+}
+
+void bootloaderWrite(const char *str)
+{
+    terminal_request.response->write(terminal, str, strlen(str));
+}
+
+struct limine_file *bootloaderGetModule(const char *name)
+{
+    for (int i = 0; i < module_request.response->module_count; i++)
     {
-        // check if the list is over
-        if (current_tag == NULL)
-            return NULL;
+        struct limine_file *m = module_request.response->modules[i];
 
-        // check whether the identifier matches.
-        if (current_tag->identifier == id)
-            return current_tag;
-
-        // get the next tag
-        current_tag = (void *)current_tag->next;
-    }
-}
-
-// init stivale2 bootloader
-void bootloaderInit(struct stivale2_struct *stivale2_struct)
-{
-    stivale2struct = stivale2_struct;
-    termTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_TERMINAL_ID); // get terminal
-    termWrite = (void *)termTag->term_write;                                      // set write function
-
-    framebufTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID);         // get frame buffer info
-    modsTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_MODULES_ID);                 // get modules info
-    memTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_MEMMAP_ID);                   // get memory map
-    fwTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_FIRMWARE_ID);                  // get firmware information
-    baseAddrTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_KERNEL_BASE_ADDRESS_ID); // get kernel base address
-    pmrTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_PMRS_ID);                     // get protected memory ranges
-    hhdmTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_HHDM_ID);                    // get higher half direct mapping base
-    rsdpTag = bootloaderGetTag(STIVALE2_STRUCT_TAG_RSDP_ID);
-}
-
-// write to stivale2 terminal
-void bootloaderTermWrite(const char *str)
-{
-    termWrite(str, strlen(str));
-}
-
-// get stivale2 frame buffer
-struct stivale2_struct_tag_framebuffer *bootloaderGetFramebuf()
-{
-    return framebufTag;
-}
-
-// get a specific module
-struct stivale2_module bootloaderGetModule(const char *name)
-{
-    for (uint64_t i = 0; i < modsTag->module_count; i++)
-    {
-        if (strlen(modsTag->modules[i].string) != strlen(name))
-            continue;                                                                    // if the lenghts differ we don't have to check the name byte by byte
-        if (memcmp8((void *)modsTag->modules[i].string, (void *)name, strlen(name)) == 0) // if the check is successful we return the module
-            return modsTag->modules[i];
+        if(strcmp(m->path + 1 /*ignore the first slash*/, name) == 0) // compare the path names
+            return m;
     }
 
-    return *(struct stivale2_module *)NULL; // return a null pointer
+    return NULL;
 }
 
-// get memory map
-struct stivale2_struct_tag_memmap *bootloaderGetMemMap()
+struct limine_framebuffer *bootloaderGetFramebuffer()
 {
-    return memTag;
+    return framebuffer_request.response->framebuffers[0];
 }
 
-// get firmware type
-uint8_t bootloaderGetFirmwareType()
+struct limine_memmap_response *bootloaderGetMemoryMap()
 {
-    return fwTag->flags & 0b1; // 1 bios, 0 uefi
+    return memmap_request.response;
 }
 
-// get kernel address
-struct stivale2_struct_tag_kernel_base_address *bootloaderGetKernelAddr()
+struct limine_kernel_address_response *bootloaderGetKernelAddress()
 {
-    return baseAddrTag;
+    return kernel_address_request.response;
 }
 
-// get protected memory ranges
-struct stivale2_struct_tag_pmrs *bootloaderGetPMRS()
+void *bootloaderGetRSDP()
 {
-    return pmrTag;
+    return rsdp_request.response->address;
 }
 
-// get hhdm
 void *bootloaderGetHHDM()
 {
-    return (void *)hhdmTag->addr;
-}
-
-// get rsdp
-struct stivale2_struct_tag_rsdp *bootloaderGetRSDP()
-{
-    return rsdpTag;
-}
-
-// probe for pml5 support
-bool bootloaderProbePML5()
-{
-    if(bootloaderGetTag(STIVALE2_HEADER_TAG_5LV_PAGING_ID))
-    {
-        #ifdef K_BLDR_DEBUG
-            printks("bldr: level 5 paging supported\n\r");
-        #endif
-        return true;
-    }
-
-    return false;
+    return (void *)hhdm_request.response->offset;
 }

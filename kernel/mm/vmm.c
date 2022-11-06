@@ -5,13 +5,11 @@
 #include <cpu/idt.h>
 #include <cpu/gdt.h>
 
-bool pml5 = false;
 struct vmm_page_table *baseTable;
 
 // initialize the virtual memory manager
 void vmmInit()
 {
-    pml5 = bootloaderProbePML5();     // check if pml5 is supported
     baseTable = vmmCreateTable(true); // create the base table with hhdm
     vmmSwap(baseTable);               // swap the table
 }
@@ -150,53 +148,40 @@ void optimize *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 struct pack vmm_page_table optimize *vmmCreateTable(bool full)
 {
     // create a new table to use as a base for everything
-    register void *newTable = mmAllocatePage();         // allocate a page for the new table
-    memset64(newTable, 0, VMM_PAGE / sizeof(uint64_t)); // clear the paging table
+    register void *newTable = mmAllocatePage(); // allocate a page for the new table
+    memset(newTable, 0, VMM_PAGE);              // clear the page table
 
-    struct stivale2_struct_tag_kernel_base_address *kaddr = bootloaderGetKernelAddr(); // get kernel address
-    struct stivale2_struct_tag_pmrs *pmrs = bootloaderGetPMRS();                       // get pmrs
-    struct stivale2_struct_tag_framebuffer *framebuffer = bootloaderGetFramebuf();     // get framebuffer address
-    struct stivale2_struct_tag_memmap *map = bootloaderGetMemMap();                    // get the memory map
+    struct limine_memmap_response *memMap = bootloaderGetMemoryMap();
+    uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
+    struct limine_kernel_address_response *kaddr = bootloaderGetKernelAddress();
 
-#ifdef K_VMM_DEBUG
-    uint64_t a = mmGetTotal().available;
-#endif
+    // map the system tables as kernel rw
+    vmmMap(newTable, newTable, newTable, false, true);                 // page table
+    vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), false, true); // tss
+    vmmMap(newTable, (void *)gdtGet(), (void *)gdtGet(), false, true); // gdt
 
-    // map PMRs
-    for (size_t i = 0; i < pmrs->entries; i++)
+    // map memory map entries as kernel rw
+    for (size_t i = 0; i < memMap->entry_count; i++)
     {
-        register struct stivale2_pmr currentPMR = pmrs->pmrs[i];
-        for (size_t j = 0; j < currentPMR.length; j += VMM_PAGE)
-            vmmMap(newTable, (void *)currentPMR.base + j, (void *)kaddr->physical_base_address + (currentPMR.base - kaddr->virtual_base_address) + j, false, (bool)(currentPMR.permissions & STIVALE2_PMR_WRITABLE));
-    }
+        struct limine_memmap_entry *entry = memMap->entries[i];
 
-    if (full)
-    {
-        uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
+        printks("%d: %d (%x -> %x)\n\r", i, entry->type, entry->base, entry->base + entry->length);
 
-        // map all memory map entries
-        for (uint64_t i = 0; i < map->entries; i++)
+        if (entry->type == LIMINE_MEMMAP_USABLE && !full) // don't map the usable memory in non-full page tables
+            continue;
+
+        if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
         {
-            for (uint64_t j = 0; j < map->memmap[i].length; j += 4096)
-            {
-                vmmMap(newTable, (void *)map->memmap[i].base + j, (void *)map->memmap[i].base + j, false, true);
-                vmmMap(newTable, (void *)map->memmap[i].base + j + hhdm, (void *)map->memmap[i].base + j, false, true);
-            }
+            for (size_t i = 0; i < entry->length; i += 4096)
+                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), false, true);
+            continue;
+        }
+        for (size_t i = 0; i < entry->length; i += 4096)
+        {
+            vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), false, true);
+            vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), false, true);
         }
     }
-
-    vmmMap(newTable, newTable, newTable, false, true);                 // map the table
-    vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), false, true); // map the tss
-    vmmMap(newTable, (void *)gdtGet(), (void *)gdtGet(), false, true); // map the gdt
-
-#ifdef K_IDT_IST
-    vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], false, true); // kernel ist
-    vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], false, true); // user ist
-#endif
-
-#ifdef K_VMM_DEBUG
-    printks("vmm: wasted %d KB on a page table\n\r", toKB(a - mmGetTotal().available));
-#endif
 
     return newTable; // return the created table
 }
