@@ -10,7 +10,7 @@ struct mm_pool pools[0xFFFF]; // 16k pools should be enough
 struct limine_memmap_response *map;
 
 // check if a page is free
-bool optimize mmIsFreePage(struct mm_pool *pool, size_t page)
+ifunc bool optimize mmIsFreePage(struct mm_pool *pool, size_t page)
 {
     uint8_t *bitmapBase = pool->base;
     size_t bitmapByteIndex = 0, pageIndex = 0;
@@ -32,7 +32,7 @@ bool optimize mmIsFreePage(struct mm_pool *pool, size_t page)
 }
 
 // allocate a page index on a pool
-void optimize *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
+ifunc void optimize *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
 {
     uint8_t *bitmapBase = pool->base;
     size_t bitmapByteIndex = 0, pageIndex = 0;
@@ -59,7 +59,7 @@ void optimize *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page)
 }
 
 // deallocate a page address on a pool
-void optimize mmDeallocatePagePool(struct mm_pool *pool, void *address)
+ifunc void optimize mmDeallocatePagePool(struct mm_pool *pool, void *address)
 {
     uint8_t *bitmapBase = pool->base;
     size_t bitmapByteIndex = 0, pageIndex = 0;
@@ -82,7 +82,7 @@ void optimize mmDeallocatePagePool(struct mm_pool *pool, void *address)
 }
 
 // allocate a page on a pool
-void optimize *mmAllocatePagePool(struct mm_pool *pool)
+ifunc void optimize *mmAllocatePagePool(struct mm_pool *pool)
 {
     while (pool->bitmapByteIndex != pool->bitmapReserved) // loop thru each byte in the bitmap
     {
@@ -109,7 +109,7 @@ void optimize *mmAllocatePagePool(struct mm_pool *pool)
 }
 
 // allocate `pages` pages on a pool
-void optimize *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
+ifunc void optimize *mmAllocatePagesPool(struct mm_pool *pool, size_t pages)
 {
     size_t poolPageCount = pool->total / VMM_PAGE;
 

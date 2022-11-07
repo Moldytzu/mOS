@@ -17,15 +17,10 @@ struct mm_pool
     uint8_t *bitmapBase;    // base pointer of the bitmap
 };
 
-bool mmIsFreePage(struct mm_pool *pool, size_t page);
 void mmDeallocatePages(void *address, size_t pages);
 void mmDeallocatePage(void *address);
-void mmDeallocatePagePool(struct mm_pool *pool, void *address);
 void *mmAllocatePage();
 void *mmAllocatePages(size_t pages);
-void *mmAllocatePagePool(struct mm_pool *pool);
-void *mmAllocatePagePoolIndex(struct mm_pool *pool, size_t page);
-void *mmAllocatePagesPool(struct mm_pool *pool, size_t pages);
 void pmmInit();
 struct mm_pool *mmGetPools();
 struct mm_pool mmGetTotal();

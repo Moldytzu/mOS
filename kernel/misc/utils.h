@@ -17,6 +17,7 @@
 #define doptimize __attribute__((optimize("O0")))
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 #define optimize __attribute__((target("sse4.2"), optimize("O3")))
+#define pstruct  typedef struct __attribute__((__packed__))
 
 // compare memory
 ifunc int memcmp8(void *a, void *b, size_t len)

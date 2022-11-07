@@ -42,7 +42,7 @@ void _start()
     printk("Starting up mOS' kernel\n");
 
     // test for the required features
-    if(!fpuCheck())
+    if (!fpuCheck())
         panick("Unsupported CPU. SSE 4.2 isn't supported!");
 
     // display framebuffer information
@@ -93,6 +93,16 @@ void _start()
     printk("Initializing the PIT...");
     pitInit();
     printk("done\n");
+
+    // benchmark for pmm
+    int pages = (1.5 * 1024 * 1024 * 1024) / 4096;
+    pitSet(1000);
+    sti();
+    void *address = mmAllocatePages(pages);
+    cli();
+    int ms = pitGetTicks() * 1000 / pitGetScale();
+
+    printk("It took %d miliseconds. (%d MiB/s)\n", ms,  (int)(pages * 256 / ms / 1000));
 
     // initialize the scheduler
     printk("Initializing the Scheduler...");
