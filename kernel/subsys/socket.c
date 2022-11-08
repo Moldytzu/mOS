@@ -25,7 +25,7 @@ struct sock_socket *sockCreate()
     }
 
     memset64(currentSocket, 0, sizeof(struct sock_socket) / sizeof(uint64_t)); // clear the socket
-    currentSocket->buffer = mmAllocatePage();                                  // allocate the buffer
+    currentSocket->buffer = pmmPage();                                         // allocate the buffer
     memset64((void *)currentSocket->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the buffer
     currentSocket->id = lastSockID++;                                          // set the ID
 
@@ -103,7 +103,7 @@ void sockInit()
 // free the socket
 void sockDestroy(struct sock_socket *sock)
 {
-    sock->previous->next = sock->next;      // bypass this socket
-    mmDeallocatePage((void *)sock->buffer); // deallocate the buffer
-    free(sock);                             // free the socket
+    sock->previous->next = sock->next;   // bypass this socket
+    pmmDeallocate((void *)sock->buffer); // deallocate the buffer
+    free(sock);                          // free the socket
 }

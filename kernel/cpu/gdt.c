@@ -13,7 +13,7 @@ extern void tssLoad();
 void gdtInit()
 {
     // allocate the entries
-    entries = mmAllocatePage();
+    entries = pmmPage();
     memset64(entries, 0, VMM_PAGE / sizeof(uint64_t));
 
     gdtr.size = 0; // reset the size
@@ -25,7 +25,7 @@ void gdtInit()
     gdtCreateSegment(0b11110010); // user data
     gdtCreateSegment(0b11111010); // user code
 
-    tss = mmAllocatePage();                                      // allocate tss
+    tss = pmmPage();                                      // allocate tss
     memset64(tss, 0, sizeof(struct gdt_tss) / sizeof(uint64_t)); // clear it
     gdtInstallTSS((uint64_t)tss, 0b10001001);                    // install it
 

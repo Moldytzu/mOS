@@ -28,7 +28,7 @@ void expand(size_t size)
     // allocate new heap pages
     for (size_t p = 0; p < (size / VMM_PAGE) + 1; p++)
     {
-        vmmMap(vmmGetBaseTable(), end, mmAllocatePage(), false, true);
+        vmmMap(vmmGetBaseTable(), end, pmmPage(), false, true);
         end += VMM_PAGE;
     }
 

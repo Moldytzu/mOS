@@ -50,7 +50,7 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, struct sche
     if (inputPath == NULL) // if the path is null then it doesn't exist
     {
         *ret = 0; // fail
-        mmDeallocatePage(inputPath);
+        pmmDeallocate(inputPath);
         return;
     }
 
@@ -74,5 +74,5 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, struct sche
         memcpy(newTask->cwd, PHYSICAL(input->cwd), strlen(PHYSICAL(input->cwd)) + 1); // copy the initial working directory
 
     *ret = newTask->id; // set the pid
-    mmDeallocatePage(inputPath);
+    pmmDeallocate(inputPath);
 }

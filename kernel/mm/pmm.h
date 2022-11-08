@@ -2,25 +2,25 @@
 #include <misc/utils.h>
 #include <fw/bootloader.h>
 
-struct mm_pool
+pstruct
 {
-    uint64_t total;         // total memory
-    uint64_t available;     // available memory
-    uint64_t used;          // used memory
-    bool full;              // if there isn't any available memory available
-    void *base;             // base address of the physical memory in the pool
-    void *allocableBase;    // base address of the allocable memory in the pool
-    size_t pageIndex;       // page index
-    size_t bitmapReserved;  // bytes reserved for the bitmap
-    size_t bitmapByteIndex; // byte in the bitmap
-    uint8_t bitmapBitIndex; // bit in the byte in the bitmap
-    uint8_t *bitmapBase;    // base pointer of the bitmap
-};
+    void *base;               // base address of the pool
+    void *alloc;              // base address of the allocable memory
+    uint64_t available;       // available bytes
+    uint64_t used;            // used bytes
+    uint64_t bitmapBytes;     // bytes used by the bitmap
+    uint64_t lastBitmapIndex; // last bitmap index used in allocation
+    uint64_t lastPageIndex;   // last page index used in allocation
+    uint64_t lastMaskBit;     // last bit mask used in allocation
+}
+pmm_pool_t;
 
-void mmDeallocatePages(void *address, size_t pages);
-void mmDeallocatePage(void *address);
-void *mmAllocatePage();
-void *mmAllocatePages(size_t pages);
+void *pmmPage();
+void *pmmPages(uint64_t pages);
+
+void pmmDeallocate(void *page);
+void pmmDeallocatePages(void *page, uint64_t count);
+
+pmm_pool_t pmmTotal();
+
 void pmmInit();
-struct mm_pool *mmGetPools();
-struct mm_pool mmGetTotal();

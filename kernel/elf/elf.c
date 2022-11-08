@@ -27,7 +27,7 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv)
     printks("elf: found %s at 0x%p with the entry offset at 0x%p\n\r", path, elf, elf->e_entry - TASK_BASE_ADDRESS);
 #endif
 
-    void *buffer = mmAllocatePages(vfsSize(fd) / VMM_PAGE + 1); // allocate the buffer for the sections
+    void *buffer = pmmPages(vfsSize(fd) / VMM_PAGE + 1); // allocate the buffer for the sections
 
     memset64(buffer, 0, vfsSize(fd) / sizeof(uint64_t));
 

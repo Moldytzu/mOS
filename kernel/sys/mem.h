@@ -12,7 +12,7 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_
         if (!INBOUNDARIES(arg1)) // prevent crashing
             return;
 
-        void *page = mmAllocatePage();                                       // allocate a page
+        void *page = pmmPage();                                              // allocate a page
         memset64(page, 0, VMM_PAGE / sizeof(uint64_t));                      // clear it
         vmmMap(task->pageTable, task->lastVirtualAddress, page, true, true); // map it
 

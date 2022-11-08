@@ -29,10 +29,10 @@ void kmain()
 {
 #ifdef K_PMM_DEBUG
     // get the pool total values
-    struct mm_pool total = mmGetTotal();
+    pmm_pool_t total = pmmTotal();
 
     // display the memory available
-    printks("memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n\r", toMB(total.total), toMB(total.available), toMB(total.used), toKB(total.bitmapReserved), total.pageIndex);
+    printks("memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n\r", toMB(total.available + total.used), toMB(total.available), toMB(total.used), toKB(total.bitmapBytes), total.lastPageIndex);
 #endif
 
 #ifdef K_VFS_DEBUG

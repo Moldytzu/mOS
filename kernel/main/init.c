@@ -95,14 +95,16 @@ void _start()
     printk("done\n");
 
     // benchmark for pmm
-    int pages = (1.5 * 1024 * 1024 * 1024) / 4096;
-    pitSet(1000);
+    int pages = (100 * 1024 * 1024) / 4096;
+    pitSet(100);
     sti();
-    void *address = mmAllocatePages(pages);
+    void *address = pmmPages(pages);
     cli();
     int ms = pitGetTicks() * 1000 / pitGetScale();
 
     printk("It took %d miliseconds. (%d MiB/s)\n", ms,  (int)(pages * 256 / ms / 1000));
+
+    while(1);
 
     // initialize the scheduler
     printk("Initializing the Scheduler...");

@@ -26,8 +26,8 @@ struct vt_terminal *vtCreate()
     }
 
     memset64(currentTerminal, 0, sizeof(struct vt_terminal) / sizeof(uint64_t)); // clear the terminal
-    currentTerminal->buffer = mmAllocatePage();                                  // allocate the character buffer
-    currentTerminal->kbBuffer = mmAllocatePage();                                // allocate the keyboard buffer
+    currentTerminal->buffer = pmmPage();                                         // allocate the character buffer
+    currentTerminal->kbBuffer = pmmPage();                                       // allocate the keyboard buffer
     memset64((void *)currentTerminal->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the character buffer
     memset64((void *)currentTerminal->kbBuffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the keyboard buffer
     currentTerminal->id = lastID++;                                              // set the ID
@@ -129,8 +129,8 @@ uint16_t vtGetMode()
 // free the terminal
 void vtDestroy(struct vt_terminal *vt)
 {
-    vt->previous->next = vt->next;          // bypass this node
-    mmDeallocatePage((void *)vt->buffer);   // deallocate the buffer
-    mmDeallocatePage((void *)vt->kbBuffer); // deallocate the buffer
-    free(vt);                               // free the terminal
+    vt->previous->next = vt->next;       // bypass this node
+    pmmDeallocate((void *)vt->buffer);   // deallocate the buffer
+    pmmDeallocate((void *)vt->kbBuffer); // deallocate the buffer
+    free(vt);                            // free the terminal
 }

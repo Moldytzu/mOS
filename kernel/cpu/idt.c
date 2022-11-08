@@ -38,15 +38,15 @@ void idtInit()
 
 #ifdef K_IDT_IST
     // setup ist
-    tssGet()->ist[0] = (uint64_t)mmAllocatePage() + VMM_PAGE;
-    tssGet()->ist[1] = (uint64_t)mmAllocatePage() + VMM_PAGE;
+    tssGet()->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
+    tssGet()->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
 
     memset64((void *)tssGet()->ist[0] - VMM_PAGE, 0, VMM_PAGE / sizeof(uint64_t));
     memset64((void *)tssGet()->ist[1] - VMM_PAGE, 0, VMM_PAGE / sizeof(uint64_t));
 #endif
 
     // allocate the gates
-    gates = mmAllocatePage();
+    gates = pmmPage();
     memset64(gates, 0, VMM_PAGE / sizeof(uint64_t));
 
     idtr.offset = (uint64_t)gates; // set the offset to the data

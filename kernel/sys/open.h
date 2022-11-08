@@ -14,10 +14,10 @@ void open(uint64_t returnPtr, uint64_t path, uint64_t r8, uint64_t r9, struct sc
     if (input == NULL) // check if the path exists
     {
         *returnVal = 0;
-        mmDeallocatePage(input);
+        pmmDeallocate(input);
         return;
     }
 
     *returnVal = vfsOpen(input); // return the fd
-    mmDeallocatePage(input);     // deallocate the buffer
+    pmmDeallocate(input);     // deallocate the buffer
 }

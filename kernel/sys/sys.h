@@ -18,7 +18,7 @@
 ifunc char *expandPath(const char *path, struct sched_task *task)
 {
     uint64_t fd;
-    char *buffer = mmAllocatePage();
+    char *buffer = (char *)pmmPage();
 
     if (memcmp(path, "./", 2) == 0) // check if the task requests from the current directory
     {
@@ -52,7 +52,7 @@ cwd: // copy the cwd before the input
     }
 
     // fail
-    mmDeallocatePage(buffer);
+    pmmDeallocate(buffer);
     return NULL;
 }
 

@@ -9,7 +9,7 @@
 #define pack __attribute__((__packed__))
 #define toMB(x) ((x) / 1024 / 1024)
 #define toKB(x) ((x) / 1024)
-#define align(val, alg) (max(val,alg) + (alg - (max(val,alg) % alg)))
+#define align(val, alg) (max(val, alg) + (alg - (max(val, alg) % alg)))
 #define alignD(val, alg) (align(val, alg) - alg)
 #define unsafe_cast(val, type) (*(type *)&val)
 #define iasm asm volatile
@@ -17,7 +17,7 @@
 #define doptimize __attribute__((optimize("O0")))
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 #define optimize __attribute__((target("sse4.2"), optimize("O3")))
-#define pstruct  typedef struct __attribute__((__packed__))
+#define pstruct typedef struct __attribute__((__packed__))
 
 // compare memory
 ifunc int memcmp8(void *a, void *b, size_t len)
