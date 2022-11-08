@@ -11,7 +11,7 @@ pstruct
     uint64_t bitmapBytes;     // bytes used by the bitmap
     uint64_t lastBitmapIndex; // last bitmap index used in allocation
     uint64_t lastPageIndex;   // last page index used in allocation
-    uint64_t lastMaskBit;     // last bit mask used in allocation
+    uint8_t lastMaskBit;      // last bit mask used in allocation
 }
 pmm_pool_t;
 

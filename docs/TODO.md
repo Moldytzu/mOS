@@ -6,6 +6,7 @@
 
 # todo list for small/not important tasks
 ### adopt multiboot2 as a second boot protocol
+### kill the task if requested too many pages
 
 # bugs to fix
 ### init.mx crash when on kvm
