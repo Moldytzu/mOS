@@ -40,6 +40,8 @@ void *pmmPage()
         }
     }
 
+    panick("Out of memory!");
+
     return NULL;
 }
 
@@ -85,6 +87,8 @@ void *pmmPages(uint64_t pages)
         }
     }
 
+    panick("Out of memory!");
+
     return NULL;
 
 doReturn:
@@ -106,6 +110,8 @@ doReturn:
                 return base;
         }
     }
+
+    panick("Out of memory!");
 
     return NULL;
 }
