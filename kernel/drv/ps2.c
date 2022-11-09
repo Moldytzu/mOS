@@ -4,6 +4,7 @@
 #include <cpu/pic.h>
 #include <sched/scheduler.h>
 #include <subsys/input.h>
+#include <fw/acpi.h>
 
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
@@ -129,6 +130,13 @@ void ps2Port2Handler()
 // initialize the controller
 void ps2Init()
 {
+    struct acpi_fadt *fadt = (struct acpi_fadt *)acpiGet("FADT");
+    if(fadt)
+    {
+        if(!(fadt->bootFlags & 0b10)) // detect if the pic chips are missing
+            return;
+    } 
+
     // disable intrerrupts
     cli();
 

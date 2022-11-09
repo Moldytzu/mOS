@@ -10,5 +10,4 @@
 
 # bugs to fix
 ### init.mx crash when on kvm
-### long wait times when the PS/2 controller isn't present
 ### memory leaks caused by vmmDestroy
