@@ -76,6 +76,7 @@ void exceptionHandler(struct idt_intrerrupt_stack *stack)
 
 void panick(const char *msg)
 {
+    framebufferClear(0);
     printk("\n\nA kernel exception has happened.\n%s\n", msg);
     hang();
 }

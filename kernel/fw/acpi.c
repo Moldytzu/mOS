@@ -12,7 +12,7 @@ struct acpi_fadt *fadt;
 struct acpi_mcfg *mcfg;
 struct acpi_hpet *hpet;
 
-struct acpi_pci_descriptor pciFuncs[8 * 32 * 255]; // 8 functions / device, 32 devices / bus, 255 buses
+struct acpi_pci_descriptor *pciFuncs = NULL;
 uint16_t pciIndex = 0;
 
 // get a descriptor table with a signature
@@ -68,6 +68,7 @@ void enumerateFunction(uint64_t base, uint8_t function, uint8_t device, uint8_t 
     d.bus = bus, d.device = device, d.function = function, d.header = header;
 
     // put it in our list of pci functions
+    pciFuncs = realloc(pciFuncs, (pciIndex + 1) * sizeof(struct acpi_pci_descriptor));
     pciFuncs[pciIndex++] = d;
 }
 
@@ -180,7 +181,10 @@ void acpiInit()
 
     // enumerate PCI bus if MCFG is present
     if (mcfg)
-        acpiEnumeratePCI();
+    {
+        pciFuncs = malloc(sizeof(struct acpi_pci_descriptor)); // allocate the first pci function
+        acpiEnumeratePCI();                                    // do the enumeration
+    }
 
 #ifdef K_ACPI_DEBUG
     printks("acpi: found %d pci functions in total\n\r", pciIndex);
