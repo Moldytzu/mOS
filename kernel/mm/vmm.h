@@ -29,12 +29,12 @@ struct pack vmm_page_table
 };
 
 // operations on entries
-ifunc optimize bool vmmGetFlag(uint64_t *entry, uint8_t flag)
+ifunc bool vmmGetFlag(uint64_t *entry, uint8_t flag)
 {
     return *entry & (1 << flag); // get flag
 }
 
-ifunc optimize void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
+ifunc void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
 {
     if (value)
     {
@@ -46,20 +46,20 @@ ifunc optimize void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
 }
 
 // get the address of an entry
-ifunc optimize uint64_t vmmGetAddress(uint64_t *entry)
+ifunc uint64_t vmmGetAddress(uint64_t *entry)
 {
     return (*entry & 0x000FFFFFFFFFF000) >> 12; // get the address from entry
 }
 
 // set the address of an entry
-ifunc optimize void vmmSetAddress(uint64_t *entry, uint64_t address)
+ifunc void vmmSetAddress(uint64_t *entry, uint64_t address)
 {
     *entry &= 0xfff0000000000fff;             // clear address field
     *entry |= (address & 0xFFFFFFFFFF) << 12; // set the address field
 }
 
 // indexer
-ifunc optimize struct vmm_index vmmIndex(uint64_t virtualAddress)
+ifunc struct vmm_index vmmIndex(uint64_t virtualAddress)
 {
     struct vmm_index index;
     index.P = (virtualAddress & ((uint64_t)0x1FF << 12)) >> 12;

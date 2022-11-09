@@ -14,9 +14,7 @@
 #define unsafe_cast(val, type) (*(type *)&val)
 #define iasm asm volatile
 #define ifunc static inline __attribute__((always_inline))
-#define doptimize __attribute__((optimize("O0")))
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
-#define optimize /*__attribute__((target("sse4.2"), optimize("O3")))*/ // todo: remove this as it compiles to very unstable code
 #define pstruct typedef struct __attribute__((__packed__))
 
 // compare memory
@@ -46,35 +44,35 @@ ifunc uint32_t strlen(const char *str)
 }
 
 // set memory 8 bits at a time
-ifunc optimize void memset8(void *dest, uint8_t data, size_t count)
+ifunc void memset8(void *dest, uint8_t data, size_t count)
 {
     for (; count; count--, dest++)
         *(uint8_t *)dest = data;
 }
 
 // set memory 16 bits at a time
-ifunc optimize void memset16(void *dest, uint16_t data, size_t count)
+ifunc void memset16(void *dest, uint16_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint16_t))
         *(uint16_t *)dest = data;
 }
 
 // set memory 32 bits at a time
-ifunc optimize void memset32(void *dest, uint32_t data, size_t count)
+ifunc void memset32(void *dest, uint32_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint32_t))
         *(uint32_t *)dest = data;
 }
 
 // set memory 64 bits at a time
-ifunc optimize void memset64(void *dest, uint64_t data, size_t count)
+ifunc void memset64(void *dest, uint64_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint64_t))
         *(uint64_t *)dest = data;
 }
 
 // reverse a string
-ifunc optimize void strrev(char *str)
+ifunc void strrev(char *str)
 {
     size_t len = strlen(str);
     for (int i = 0, j = len - 1; i < j; i++, j--)
@@ -86,35 +84,35 @@ ifunc optimize void strrev(char *str)
 }
 
 // copy memory (8 bits)
-ifunc optimize void memcpy8(void *dest, void *src, size_t count)
+ifunc void memcpy8(void *dest, void *src, size_t count)
 {
     for (size_t i = 0; i < count; i++)
         ((uint8_t *)dest)[i] = ((uint8_t *)src)[i];
 }
 
 // copy memory (16 bits)
-ifunc optimize void memcpy16(void *dest, void *src, size_t count)
+ifunc void memcpy16(void *dest, void *src, size_t count)
 {
     for (size_t i = 0; i < count; i++)
         ((uint16_t *)dest)[i] = ((uint16_t *)src)[i];
 }
 
 // copy memory (32 bits)
-ifunc optimize void memcpy32(void *dest, void *src, size_t count)
+ifunc void memcpy32(void *dest, void *src, size_t count)
 {
     for (size_t i = 0; i < count; i++)
         ((uint32_t *)dest)[i] = ((uint32_t *)src)[i];
 }
 
 // copy memory (64 bits)
-ifunc optimize void memcpy64(void *dest, void *src, size_t count)
+ifunc void memcpy64(void *dest, void *src, size_t count)
 {
     for (size_t i = 0; i < count; i++)
         ((uint64_t *)dest)[i] = ((uint64_t *)src)[i];
 }
 
 // check if a string starts with something
-ifunc optimize bool strstarts(const char *str, const char *start)
+ifunc bool strstarts(const char *str, const char *start)
 {
     if (strlen(str) < strlen(start)) // the lenght is smaller than the start
         return false;
@@ -123,7 +121,7 @@ ifunc optimize bool strstarts(const char *str, const char *start)
 }
 
 // check if a string ends with something
-ifunc optimize bool strendss(const char *str, const char *ends)
+ifunc bool strendss(const char *str, const char *ends)
 {
     if (strlen(str) < strlen(ends)) // the lenght is smaller than the start
         return false;
@@ -132,7 +130,7 @@ ifunc optimize bool strendss(const char *str, const char *ends)
 }
 
 // compare string
-ifunc optimize int strcmp(const char *str1, const char *str2)
+ifunc int strcmp(const char *str1, const char *str2)
 {
     while (*str1)
     {
@@ -161,7 +159,7 @@ ifunc void *memset(void *dstpp, int c, size_t len)
 }
 
 // move memory
-ifunc optimize void *memmove(void *dest, const void *src, size_t n)
+ifunc void *memmove(void *dest, const void *src, size_t n)
 {
     uint8_t *from = (uint8_t *)src;
     uint8_t *to = (uint8_t *)dest;

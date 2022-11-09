@@ -9,7 +9,7 @@ extern void SyscallIntHandlerEntry();
 uint32_t count = 1;
 
 // handler called on syscall
-void optimize syscallHandler(struct idt_intrerrupt_stack *registers)
+void syscallHandler(struct idt_intrerrupt_stack *registers)
 {
     vmmSwap(vmmGetBaseTable()); // swap the page table with the base so we can access every piece of memory
 
@@ -22,10 +22,10 @@ void optimize syscallHandler(struct idt_intrerrupt_stack *registers)
     t->syscallUsage++; // increase the syscall usage
     count++;
 
-    //sti();
+    // sti();
     if (registers->rdi < (sizeof(syscallHandlers) / sizeof(void *)))                                      // check if the syscall is in range
         syscallHandlers[registers->rdi](registers->rsi, registers->rdx, registers->r8, registers->r9, t); // call the handler
-    //cli();
+    // cli();
 
     vmmSwap((void *)registers->cr3); // swap the page table back
 }

@@ -15,7 +15,7 @@ void vmmInit()
 }
 
 // set flags of some entries given by the indices
-void optimize vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw)
+void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw)
 {
     struct vmm_page_table *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
@@ -46,7 +46,7 @@ void optimize vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, 
 }
 
 // map a virtual address to a physical address in a page table
-void optimize vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
+void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     struct vmm_page_table *pml4, *pdp, *pd, *pt;
@@ -57,7 +57,7 @@ void optimize vmmMap(struct vmm_page_table *table, void *virtualAddress, void *p
     currentEntry = pml4->entries[index.PDP];           // index pdp
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pdp = pmmPage();                             // allocate table
+        pdp = pmmPage();                                    // allocate table
         memset64(pdp, 0, VMM_PAGE / sizeof(uint64_t));      // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
@@ -69,7 +69,7 @@ void optimize vmmMap(struct vmm_page_table *table, void *virtualAddress, void *p
     currentEntry = pdp->entries[index.PD];             // index pd
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pd = pmmPage();                              // allocate table
+        pd = pmmPage();                                     // allocate table
         memset64(pd, 0, VMM_PAGE / sizeof(uint64_t));       // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
@@ -81,7 +81,7 @@ void optimize vmmMap(struct vmm_page_table *table, void *virtualAddress, void *p
     currentEntry = pd->entries[index.PT];              // index pt
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pt = pmmPage();                              // allocate table
+        pt = pmmPage();                                     // allocate table
         memset64(pt, 0, VMM_PAGE / sizeof(uint64_t));       // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
@@ -99,7 +99,7 @@ void optimize vmmMap(struct vmm_page_table *table, void *virtualAddress, void *p
 }
 
 // unmap a virtual address
-void optimize vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
+void vmmUnmap(struct vmm_page_table *table, void *virtualAddress)
 {
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     struct vmm_page_table *pdp, *pd, *pt;
@@ -125,7 +125,7 @@ void *vmmGetBaseTable()
 }
 
 // get physical address of a virtual address
-void optimize *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
+void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 {
     // get physical memory address form virtual memory address
     struct vmm_index index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
@@ -145,7 +145,7 @@ void optimize *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress)
 }
 
 // create a new table
-struct pack vmm_page_table optimize *vmmCreateTable(bool full)
+struct pack vmm_page_table *vmmCreateTable(bool full)
 {
 #ifdef K_VMM_DEBUG
     uint64_t a = pmmTotal().available;
@@ -153,7 +153,7 @@ struct pack vmm_page_table optimize *vmmCreateTable(bool full)
 
     // create a new table to use as a base for everything
     register void *newTable = pmmPage(); // allocate a page for the new table
-    memset(newTable, 0, VMM_PAGE);              // clear the page table
+    memset(newTable, 0, VMM_PAGE);       // clear the page table
 
     struct limine_memmap_response *memMap = bootloaderGetMemoryMap();
     uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
@@ -197,7 +197,7 @@ struct pack vmm_page_table optimize *vmmCreateTable(bool full)
 }
 
 // free a table
-void optimize vmmDestroy(struct vmm_page_table *table)
+void vmmDestroy(struct vmm_page_table *table)
 {
 #ifdef K_VMM_DEBUG
     printks("vmm: destroying page table at 0x%p\n\r", table);

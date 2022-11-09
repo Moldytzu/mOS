@@ -31,7 +31,7 @@ struct sched_task
     uint32_t sleep;                              // ticks to sleep
     bool elf;                                    // is elf
     uint64_t elfSize;                            // size of the executable
-    void *elfBase;                            // base of the executable
+    void *elfBase;                               // base of the executable
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task
