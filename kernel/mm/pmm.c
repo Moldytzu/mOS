@@ -112,10 +112,52 @@ doReturn:
 
 void pmmDeallocate(void *page)
 {
+    for (int i = 0; i < poolCount; i++)
+    {
+        pmm_pool_t *pool = &pools[i];
+        uint64_t pageIndex = 0;
+
+        // iterate over the bitmap bytes to find an available string of pages
+        for (uint64_t b = 0; b < pool->bitmapBytes; b += sizeof(uint64_t))
+        {
+            for (uint8_t bits = 0; bits < 64; bits++, pageIndex++)
+            {
+                if ((void *)(pool->alloc + 4096 * pageIndex) != page)
+                    continue;
+
+                uint64_t mask = 0x8000000000000000 >> bits;
+                uint64_t *bytes = (uint64_t *)(pool->base + b + bits);
+                *bytes &= ~mask; // unset the byte
+                return;
+            }
+        }
+    }
 }
 
 void pmmDeallocatePages(void *page, uint64_t count)
 {
+    for (int i = 0; i < poolCount; i++)
+    {
+        pmm_pool_t *pool = &pools[i];
+        uint64_t pageIndex = 0;
+
+        // iterate over the bitmap bytes to find an available string of pages
+        for (uint64_t b = 0; b < pool->bitmapBytes; b += sizeof(uint64_t))
+        {
+            for (uint8_t bits = 0; bits < 64; bits++, pageIndex++)
+            {
+                if ((void *)(pool->alloc + 4096 * pageIndex) <= page)
+                    continue;
+
+                if(count-- == 0)
+                    return;
+
+                uint64_t mask = 0x8000000000000000 >> bits;
+                uint64_t *bytes = (uint64_t *)(pool->base + b + bits);
+                *bytes &= ~mask; // unset the byte
+            }
+        }
+    }
 }
 
 void pmmInit()

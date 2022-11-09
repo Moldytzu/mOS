@@ -82,10 +82,6 @@ void *malloc(size_t size)
         }
     }
 
-#ifdef K_HEAP_DEBUG
-    printks("heap: retrying allocating %d bytes\n\r", size);
-#endif
-
     expand(size);        // expand the heap
     return malloc(size); // retry
 }
@@ -133,4 +129,8 @@ void free(void *ptr)
         panick("Misalligned free of a heap segment!");
 
     HEADER(ptr)->free = true; // mark the segment as free
+
+#ifdef K_HEAP_DEBUG
+    printks("heap: freeing %d bytes\n\r", HEADER(ptr)->size);
+#endif
 }
