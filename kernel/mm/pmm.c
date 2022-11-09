@@ -106,6 +106,9 @@ doReturn:
             allocatedPages++;
             *(uint64_t *)(pool->base + b + bits) |= 0x8000000000000000 >> bits;
 
+            pool->available -= 4096;
+            pool->used += 4096;
+
             if (allocatedPages == string)
                 return base;
         }
@@ -134,6 +137,9 @@ void pmmDeallocate(void *page)
                 uint64_t mask = 0x8000000000000000 >> bits;
                 uint64_t *bytes = (uint64_t *)(pool->base + b + bits);
                 *bytes &= ~mask; // unset the byte
+
+                pool->available += 4096;
+                pool->used -= 4096;
                 return;
             }
         }
@@ -155,12 +161,15 @@ void pmmDeallocatePages(void *page, uint64_t count)
                 if ((void *)(pool->alloc + 4096 * pageIndex) <= page)
                     continue;
 
-                if(count-- == 0)
+                if (count-- == 0)
                     return;
 
                 uint64_t mask = 0x8000000000000000 >> bits;
                 uint64_t *bytes = (uint64_t *)(pool->base + b + bits);
                 *bytes &= ~mask; // unset the byte
+
+                pool->available += 4096;
+                pool->used -= 4096;
             }
         }
     }
@@ -207,7 +216,7 @@ pmm_pool_t pmmTotal()
         total.used += pools[i].used;
         total.bitmapBytes += pools[i].bitmapBytes;
     }
-
+    
     total.lastPageIndex = poolCount + 1; // use pageIndex to set the pool count
 
     return total; // and return the total

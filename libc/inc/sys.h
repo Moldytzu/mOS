@@ -16,6 +16,7 @@
 #define SYS_PID_SLEEP 6
 
 #define SYS_MEM_ALLOCATE 0
+#define SYS_MEM_INFO 1
 
 #define SYS_VFS_FILE_EXISTS 0
 #define SYS_VFS_DIRECTORY_EXISTS 1
