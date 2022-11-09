@@ -191,6 +191,8 @@ void pmmInit()
         pool->base = (void *)entry->base;
         pool->available = entry->length - pool->bitmapBytes;
     }
+
+    bootloaderMove();
 }
 
 pmm_pool_t pmmTotal()

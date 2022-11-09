@@ -1,4 +1,5 @@
 #include <fw/bootloader.h>
+#include <mm/pmm.h>
 
 static volatile struct limine_terminal_request terminal_request = {
     .id = LIMINE_TERMINAL_REQUEST,
@@ -54,7 +55,7 @@ struct limine_file *bootloaderGetModule(const char *name)
     {
         struct limine_file *m = module_request.response->modules[i];
 
-        if(strcmp(m->path + 1 /*ignore the first slash*/, name) == 0) // compare the path names
+        if (strcmp(m->path + 1 /*ignore the first slash*/, name) == 0) // compare the path names
             return m;
     }
 
@@ -84,4 +85,17 @@ void *bootloaderGetRSDP()
 void *bootloaderGetHHDM()
 {
     return (void *)hhdm_request.response->offset;
+}
+
+struct limine_hhdm_response hhdm;
+struct limine_kernel_address_response kaddr;
+
+void bootloaderMove()
+{
+    // move all the bootloader responses required by the vmm in bss because of an unknown bug somewhere in the vmm that I can't track down
+    memcpy(&hhdm, hhdm_request.response, sizeof(*hhdm_request.response));
+    hhdm_request.response = &hhdm;
+
+    memcpy(&kaddr, kernel_address_request.response, sizeof(*kernel_address_request.response));
+    kernel_address_request.response = &kaddr;
 }

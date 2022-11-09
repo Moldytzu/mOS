@@ -10,5 +10,4 @@
 
 # bugs to fix
 ### init.mx crash when on kvm
-### fix vmm related crash on efi
 ### memory leaks caused by vmmDestroy
