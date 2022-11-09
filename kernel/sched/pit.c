@@ -4,14 +4,14 @@
 #include <cpu/idt.h>
 #include <subsys/vt.h>
 
-struct pit_packet packet;
+pit_packet_t packet;
 
 uint32_t tickspersec = 0;
 uint64_t ticks = 0;
 
 // timer intrerrupt handler
 extern void PITHandlerEntry();
-extern void PITHandler(struct idt_intrerrupt_stack *stack)
+extern void PITHandler(idt_intrerrupt_stack_t *stack)
 {
     vmmSwap(vmmGetBaseTable()); // swap the base table
     ticks++;

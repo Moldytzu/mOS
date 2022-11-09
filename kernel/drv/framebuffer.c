@@ -2,11 +2,11 @@
 #include <drv/initrd.h>
 #include <fw/bootloader.h>
 
-struct psf1_header *font;
+psf1_header_t *font;
 struct limine_file *fontMod;
 struct limine_framebuffer *framebuffer;
 
-struct framebuffer_cursor_info cursor; // info
+framebuffer_cursor_info_t cursor; // info
 
 // init the framebuffer
 void framebufferInit()
@@ -24,14 +24,14 @@ void framebufferInit()
 // clear the framebuffer with a colour
 inline void framebufferClear(uint32_t colour)
 {
-    cursor.X = cursor.Y = 0;                                                                                                                                                     // reset cursor position
+    cursor.X = cursor.Y = 0;                                                                                                                // reset cursor position
     memset64((void *)framebuffer->address, (uint64_t)colour << 32 | colour, (framebuffer->pitch * framebuffer->height) / sizeof(uint64_t)); // clear the screen
 }
 
 // load a font
 void framebufferLoadFont(const char *name)
 {
-    font = (struct psf1_header *)initrdGet(name);
+    font = (psf1_header_t *)initrdGet(name);
 
     if (!font)
         goto error;
@@ -57,8 +57,8 @@ inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 // plot character on the framebuffer
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
-    uint8_t *character = (uint8_t *)font + sizeof(struct psf1_header) + c * font->charsize; // get the offset by skipping the header and indexing the character
-    for (size_t dy = 0; dy < font->charsize; dy++, character++)                             // loop thru each line of the character
+    uint8_t *character = (uint8_t *)font + sizeof(psf1_header_t) + c * font->charsize; // get the offset by skipping the header and indexing the character
+    for (size_t dy = 0; dy < font->charsize; dy++, character++)                        // loop thru each line of the character
     {
         for (size_t dx = 0; dx < 8; dx++) // 8 pixels wide
         {
@@ -73,7 +73,7 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
 ifunc void newline()
 {
     cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
-    cursor.X = 0; // reset cursor X
+    cursor.X = 0;                   // reset cursor X
 
     if (cursor.Y + font->charsize + 1 >= framebuffer->height)
     {
@@ -106,13 +106,13 @@ void framebufferWrite(const char *str)
 }
 
 // get cursor information
-struct framebuffer_cursor_info framebufferGetCursor()
+framebuffer_cursor_info_t framebufferGetCursor()
 {
     return cursor;
 }
 
 // overwrite cursor information
-void framebufferSetCursor(struct framebuffer_cursor_info info)
+void framebufferSetCursor(framebuffer_cursor_info_t info)
 {
     cursor = info;
 }

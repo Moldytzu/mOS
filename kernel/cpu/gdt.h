@@ -1,13 +1,14 @@
 #pragma once
 #include <misc/utils.h>
 
-struct pack gdt_descriptor
+pstruct
 {
     uint16_t size;
     uint64_t offset;
-};
+}
+gdt_descriptor_t;
 
-struct pack gdt_segment
+pstruct
 {
     uint16_t limit;
     uint16_t base;
@@ -16,9 +17,10 @@ struct pack gdt_segment
     unsigned limit2 : 4;
     unsigned flags : 4;
     uint8_t base3;
-};
+}
+gdt_segment_t;
 
-struct pack gdt_system_segment
+pstruct
 {
     uint16_t limit;
     uint16_t base;
@@ -28,9 +30,10 @@ struct pack gdt_system_segment
     uint8_t base3;
     uint32_t base4;
     uint32_t ignore;
-};
+}
+gdt_system_segment_t;
 
-struct pack gdt_tss
+pstruct
 {
     uint32_t ignore;
     uint64_t rsp[3]; // stack pointers
@@ -39,10 +42,11 @@ struct pack gdt_tss
     uint64_t ignore3;
     uint16_t ignore4;
     uint16_t iopb; // io map base address
-};
+}
+gdt_tss_t;
 
 void gdtCreateSegment(uint8_t access);
 void gdtInstallTSS(uint64_t base, uint8_t access);
 void gdtInit();
-struct gdt_segment *gdtGet();
-struct gdt_tss *tssGet();
+gdt_segment_t *gdtGet();
+gdt_tss_t *tssGet();

@@ -29,7 +29,7 @@ void idleTask()
 uint8_t simdContext[512] __attribute__((aligned(16)));
 
 // schedule the next task
-void schedulerSchedule(struct idt_intrerrupt_stack *stack)
+void schedulerSchedule(idt_intrerrupt_stack_t *stack)
 {
     if (!enabled)
         return; // don't do anything if it isn't enabled
@@ -104,7 +104,7 @@ c:
 #endif
 
     // save the registers
-    memcpy64(&currentTask->intrerruptStack, stack, sizeof(struct idt_intrerrupt_stack) / sizeof(uint64_t));
+    memcpy64(&currentTask->intrerruptStack, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
 
     // copy the simd context
     memcpy64(currentTask->simdContext, simdContext, sizeof(currentTask->simdContext) / sizeof(uint64_t));
@@ -134,7 +134,7 @@ loadnext:
 #endif
 
     // copy the new registers
-    memcpy64(stack, &currentTask->intrerruptStack, sizeof(struct idt_intrerrupt_stack) / sizeof(uint64_t));
+    memcpy64(stack, &currentTask->intrerruptStack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
 
     // copy the new simd context
     memcpy64(simdContext, currentTask->simdContext, sizeof(currentTask->simdContext) / sizeof(uint64_t));
@@ -200,7 +200,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     memcpy8(task->name, (char *)name, strlen(name)); // set the name
 
     // page table
-    struct vmm_page_table *newTable = vmmCreateTable(false); // create a new page table
+    vmm_page_table_t *newTable = vmmCreateTable(false); // create a new page table
     task->pageTable = newTable;                              // set the new page table
 
     void *stack = pmmPages(stackSize / VMM_PAGE);     // allocate stack for the task

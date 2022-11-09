@@ -130,7 +130,7 @@ void ps2Port2Handler()
 // initialize the controller
 void ps2Init()
 {
-    struct acpi_fadt *fadt = (struct acpi_fadt *)acpiGet("FADT");
+    acpi_fadt_t *fadt = (acpi_fadt_t *)acpiGet("FADT");
     if(fadt)
     {
         if(!(fadt->bootFlags & 0b10)) // detect if the pic chips are missing

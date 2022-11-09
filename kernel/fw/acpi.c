@@ -6,27 +6,27 @@
 #include <main/panic.h>
 
 uint8_t revision;
-struct acpi_rsdp *rsdp;
-struct acpi_sdt *sdt;
-struct acpi_fadt *fadt;
-struct acpi_mcfg *mcfg;
-struct acpi_hpet *hpet;
+acpi_rsdp_t *rsdp;
+acpi_sdt_t *sdt;
+acpi_fadt_t *fadt;
+acpi_mcfg_t *mcfg;
+acpi_hpet_t *hpet;
 
-struct acpi_pci_descriptor *pciFuncs = NULL;
+acpi_pci_descriptor_t *pciFuncs = NULL;
 uint16_t pciIndex = 0;
 
 // get a descriptor table with a signature
-struct acpi_sdt *acpiGet(const char *sig)
+acpi_sdt_t *acpiGet(const char *sig)
 {
     bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
-    size_t entries = sdt->length - sizeof(struct acpi_sdt);
+    size_t entries = sdt->length - sizeof(acpi_sdt_t);
 
     if (xsdt)
     { // xsdt parsing
-        struct acpi_xsdt *root = (struct acpi_xsdt *)sdt;
+        acpi_xsdt_t *root = (acpi_xsdt_t *)sdt;
         for (size_t i = 0; i < entries / sizeof(uint64_t); i++)
         {
-            struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
+            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
             printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
 #endif
@@ -36,10 +36,10 @@ struct acpi_sdt *acpiGet(const char *sig)
     }
     else
     { // rsdp parsing
-        struct acpi_rsdt *root = (struct acpi_rsdt *)sdt;
+        acpi_rsdt_t *root = (acpi_rsdt_t *)sdt;
         for (size_t i = 0; i < entries / sizeof(uint32_t); i++)
         {
-            struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
+            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
             printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
 #endif
@@ -54,7 +54,7 @@ struct acpi_sdt *acpiGet(const char *sig)
 // enumerate the pci bus using mcfg
 void acpiEnumeratePCI()
 {
-    size_t entries = (mcfg->header.length - sizeof(struct acpi_mcfg)) / sizeof(struct acpi_pci_config);
+    size_t entries = (mcfg->header.length - sizeof(acpi_mcfg_t)) / sizeof(acpi_pci_config_t);
     for (int i = 0; i < entries; i++)
     {
         // enumerate each bus
@@ -62,7 +62,7 @@ void acpiEnumeratePCI()
         {
             uint64_t base = mcfg->buses[i].base;
 
-            struct acpi_pci_header *baseHeader = (struct acpi_pci_header *)base;
+            acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)base;
 
             // non-existent bus
             if (baseHeader->device == UINT16_MAX || baseHeader->device == 0)
@@ -74,7 +74,7 @@ void acpiEnumeratePCI()
                 // enumerate each function
                 for (int function = 0; function < 8; function++)
                 {
-                    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (bus << 20 | device << 15 | function << 12));
+                    acpi_pci_header_t *header = (acpi_pci_header_t *)(base + (bus << 20 | device << 15 | function << 12));
 
                     vmmMap(vmmGetBaseTable(), header, header, false, true);
 
@@ -86,11 +86,11 @@ void acpiEnumeratePCI()
 #endif
 
                     // build the descriptor
-                    struct acpi_pci_descriptor d;
+                    acpi_pci_descriptor_t d;
                     d.bus = bus, d.device = device, d.function = function, d.header = header;
 
                     // put it in our list of pci functions
-                    pciFuncs = realloc(pciFuncs, (pciIndex + 1) * sizeof(struct acpi_pci_descriptor));
+                    pciFuncs = realloc(pciFuncs, (pciIndex + 1) * sizeof(acpi_pci_descriptor_t));
                     pciFuncs[pciIndex++] = d;
                 }
             }
@@ -130,7 +130,7 @@ triplefault:
 void acpiInit()
 {
     // get rsdp
-    rsdp = (struct acpi_rsdp *)bootloaderGetRSDP();
+    rsdp = (acpi_rsdp_t *)bootloaderGetRSDP();
 
     // parse the version field
     revision = rsdp->version;
@@ -144,29 +144,29 @@ void acpiInit()
 #ifdef K_ACPI_DEBUG
     if (revision == 0)
     {
-        struct acpi_rsdt *root = (struct acpi_rsdt *)sdt;
-        size_t entries = (sdt->length - sizeof(struct acpi_sdt)) / sizeof(uint32_t);
+        acpi_rsdt_t *root = (acpi_rsdt_t *)sdt;
+        size_t entries = (sdt->length - sizeof(acpi_sdt_t)) / sizeof(uint32_t);
         for (size_t i = 0; i < entries; i++)
         {
-            struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
+            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
             printks("acpi: found %c%c%c%c\n\r", table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
         }
     }
     else
     {
-        struct acpi_xsdt *root = (struct acpi_xsdt *)sdt;
-        size_t entries = (root->header.length - sizeof(struct acpi_sdt)) / sizeof(uint64_t);
+        acpi_xsdt_t *root = (acpi_xsdt_t *)sdt;
+        size_t entries = (root->header.length - sizeof(acpi_sdt_t)) / sizeof(uint64_t);
         for (size_t i = 0; i < entries; i++)
         {
-            struct acpi_sdt *table = (struct acpi_sdt *)root->entries[i]; // every entry in the table is an address to another table
+            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
             printks("acpi: found %c%c%c%c\n\r", table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
         }
     }
 #endif
 
     // get fadt & mcfg
-    fadt = (struct acpi_fadt *)acpiGet("FACP");
-    mcfg = (struct acpi_mcfg *)acpiGet("MCFG");
+    fadt = (acpi_fadt_t *)acpiGet("FACP");
+    mcfg = (acpi_mcfg_t *)acpiGet("MCFG");
 
     // enable ACPI mode if FADT is present
     if (fadt)
@@ -175,8 +175,8 @@ void acpiInit()
     // enumerate PCI bus if MCFG is present
     if (mcfg)
     {
-        pciFuncs = malloc(sizeof(struct acpi_pci_descriptor)); // allocate the first pci function
-        acpiEnumeratePCI();                                    // do the enumeration
+        pciFuncs = malloc(sizeof(acpi_pci_descriptor_t)); // allocate the first pci function
+        acpiEnumeratePCI();                               // do the enumeration
     }
 
 #ifdef K_ACPI_DEBUG

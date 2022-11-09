@@ -14,19 +14,21 @@
 
 #define VMM_PAGE 4096
 
-struct pack vmm_index
+pstruct
 {
     uint64_t PML4;
     uint64_t PDP;
     uint64_t PD;
     uint64_t PT;
     uint64_t P;
-};
+}
+vmm_index_t;
 
-struct pack vmm_page_table
+pstruct
 {
     uint64_t entries[512];
-};
+}
+vmm_page_table_t;
 
 // operations on entries
 ifunc bool vmmGetFlag(uint64_t *entry, uint8_t flag)
@@ -59,9 +61,9 @@ ifunc void vmmSetAddress(uint64_t *entry, uint64_t address)
 }
 
 // indexer
-ifunc struct vmm_index vmmIndex(uint64_t virtualAddress)
+ifunc vmm_index_t vmmIndex(uint64_t virtualAddress)
 {
-    struct vmm_index index;
+    vmm_index_t index;
     index.P = (virtualAddress & ((uint64_t)0x1FF << 12)) >> 12;
     index.PT = (virtualAddress & ((uint64_t)0x1FF << 21)) >> 21;
     index.PD = (virtualAddress & ((uint64_t)0x1FF << 30)) >> 30;
@@ -72,7 +74,7 @@ ifunc struct vmm_index vmmIndex(uint64_t virtualAddress)
 
 // misc
 void vmmInit();
-struct pack vmm_page_table *vmmCreateTable(bool full);
+vmm_page_table_t *vmmCreateTable(bool full);
 
 // swap the page table
 ifunc void vmmSwap(void *newTable)
@@ -81,9 +83,9 @@ ifunc void vmmSwap(void *newTable)
 }
 
 // mapping
-void vmmSetFlags(struct vmm_page_table *table, struct vmm_index index, bool user, bool rw);
-void vmmMap(struct vmm_page_table *table, void *virtualAddress, void *physicalAddress, bool user, bool rw);
-void vmmUnmap(struct vmm_page_table *table, void *virtualAddress);
+void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw);
+void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw);
+void vmmUnmap(vmm_page_table_t *table, void *virtualAddress);
 void *vmmGetBaseTable();
-void *vmmGetPhys(struct vmm_page_table *table, void *virtualAddress);
-void vmmDestroy(struct vmm_page_table *table);
+void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress);
+void vmmDestroy(vmm_page_table_t *table);

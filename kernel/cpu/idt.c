@@ -4,15 +4,15 @@
 #include <mm/vmm.h>
 #include <drv/serial.h>
 
-struct idt_descriptor idtr;
-struct idt_gate_descriptor *gates;
+idt_descriptor_t idtr;
+idt_gate_descriptor_t *gates;
 
 // change gate information
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 {
-    struct idt_gate_descriptor *gate = &gates[entry];    // select the gate
-    if (gate->segmentselector == 0)                      // detect if we didn't touch the gate
-        idtr.size += sizeof(struct idt_gate_descriptor); // if we didn't we can safely increase the size
+    idt_gate_descriptor_t *gate = &gates[entry];    // select the gate
+    if (gate->segmentselector == 0)                 // detect if we didn't touch the gate
+        idtr.size += sizeof(idt_gate_descriptor_t); // if we didn't we can safely increase the size
 
     gate->attributes = attributes;                                     // set the attributes
     gate->segmentselector = (8 * 1);                                   // set the kernel code selector from gdt

@@ -1,24 +1,27 @@
 #pragma once
 #include <misc/utils.h>
 
-struct pack dsfs_header
+pstruct
 {
     uint8_t signature[2];
     uint16_t version;
     uint32_t entries;
-};
+}
+dsfs_header_t;
 
-struct pack dsfs_entry
+pstruct
 {
     uint8_t name[56];
     uint64_t size;
-};
+}
+dsfs_entry_t;
 
-struct pack dsfs_fs
+pstruct
 {
-    struct dsfs_header header;
-    struct dsfs_entry firstEntry;
-};
+    dsfs_header_t header;
+    dsfs_entry_t firstEntry;
+}
+dsfs_fs_t;
 
 void initrdInit();
 void initrdMount();

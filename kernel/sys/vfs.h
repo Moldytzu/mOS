@@ -8,7 +8,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, struct sche
     if (!INBOUNDARIES(retVal)) // prevent crashing
         return;
 
-    struct vfs_node *currentNode;
+    struct vfs_node_t *currentNode;
     uint64_t *retAddr = PHYSICAL(retVal);
     const char *name, *tmp;
 

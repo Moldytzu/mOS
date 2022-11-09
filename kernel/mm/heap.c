@@ -3,13 +3,13 @@
 #include <mm/pmm.h>
 #include <main/panic.h>
 
-#define HEADER(segment) ((struct heap_segment *)((uint64_t)segment - sizeof(struct heap_segment)))
+#define HEADER(segment) ((struct heap_segment_t *)((uint64_t)segment - sizeof(struct heap_segment_t)))
 
-struct heap_segment *lastSegment = NULL;
+struct heap_segment_t *lastSegment = NULL;
 void *end = 0;
 
 void expand(size_t);
-void split(struct heap_segment *, size_t);
+void split(struct heap_segment_t *, size_t);
 
 // initialize the heap
 void heapInit()
@@ -27,7 +27,7 @@ void expand(size_t size)
     printks("heap: expanding by %d bytes\n\r", size);
 #endif
 
-    struct heap_segment *next = (struct heap_segment *)end; // set new segment to the last address
+    struct heap_segment_t *next = (struct heap_segment_t *)end; // set new segment to the last address
 
     // allocate new heap pages
     for (size_t p = 0; p < (size / VMM_PAGE) + 1; p++)
@@ -62,7 +62,7 @@ void *malloc(size_t size)
     printks("heap: allocating %d bytes\n\r", size);
 #endif
 
-    struct heap_segment *currentSegment = (void *)HEAP_START;
+    struct heap_segment_t *currentSegment = (void *)HEAP_START;
 
     while (currentSegment)
     {
@@ -76,13 +76,13 @@ void *malloc(size_t size)
         {
             split(currentSegment, size);                                                                      // split the segment at the required size
             currentSegment->free = false;                                                                     // mark the segment as busy
-            return (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment)); // return its content address
+            return (struct heap_segment_t *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
         }
 
         if (currentSegment->size == size)
         {
             currentSegment->free = false;                                                                     // mark the segment as busy
-            return (struct heap_segment *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment)); // return its content address
+            return (struct heap_segment_t *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
         }
     }
 
@@ -91,11 +91,11 @@ void *malloc(size_t size)
 }
 
 // split a segment
-void split(struct heap_segment *segment, size_t size)
+void split(struct heap_segment_t *segment, size_t size)
 {
-    struct heap_segment *new = (struct heap_segment *)((uint64_t)segment + sizeof(struct heap_segment) + size);
+    struct heap_segment_t *new = (struct heap_segment_t *)((uint64_t)segment + sizeof(struct heap_segment_t) + size);
     new->free = true;
-    new->size = segment->size - (size + sizeof(struct heap_segment));
+    new->size = segment->size - (size + sizeof(struct heap_segment_t));
     new->next = segment->next;
     new->signature = 0x4321;
 

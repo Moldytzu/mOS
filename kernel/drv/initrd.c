@@ -2,13 +2,13 @@
 #include <fw/bootloader.h>
 #include <fs/vfs.h>
 
-struct dsfs_fs *dsfs;
-struct vfs_fs dsfsFS;
+dsfs_fs_t *dsfs;
+vfs_fs_t dsfsFS;
 
 // initialize the initrd
 void initrdInit()
 {
-    dsfs = (struct dsfs_fs *)bootloaderGetModule("initrd.dsfs")->address; // get the begining of the file
+    dsfs = (dsfs_fs_t *)bootloaderGetModule("initrd.dsfs")->address; // get the begining of the file
 
     if (!dsfs)
     {
@@ -24,33 +24,33 @@ void initrdInit()
 }
 
 // open handler
-uint8_t dsfsFSOpen(struct vfs_node *node)
+uint8_t dsfsFSOpen(struct vfs_node_t *node)
 {
     return initrdGet(node->path) > 0; // return 1 if it is valid
 }
 
 // close handler
-void dsfsFSClose(struct vfs_node *node)
+void dsfsFSClose(struct vfs_node_t *node)
 {
     // don't do anything
 }
 
 // read handler
-void dsfsFSRead(struct vfs_node *node, void *buffer, uint64_t size, uint64_t offset)
+void dsfsFSRead(struct vfs_node_t *node, void *buffer, uint64_t size, uint64_t offset)
 {
     memset8(buffer, 0, size); // clear the buffer
     void *entry = initrdGet(node->path);
     if (entry) // copy only if the entry is present
     {
         // limit the size
-        if (size > ((struct dsfs_entry *)((uint64_t)entry - sizeof(struct dsfs_entry)))->size)
-            size = ((struct dsfs_entry *)((uint64_t)entry - sizeof(struct dsfs_entry)))->size;
+        if (size > ((dsfs_entry_t *)((uint64_t)entry - sizeof(dsfs_entry_t)))->size)
+            size = ((dsfs_entry_t *)((uint64_t)entry - sizeof(dsfs_entry_t)))->size;
         memcpy(buffer, entry + offset, size); // do the actual copy
     }
 }
 
 // write handler
-void dsfsFSWrite(struct vfs_node *node, void *buffer, uint64_t size, uint64_t offset)
+void dsfsFSWrite(struct vfs_node_t *node, void *buffer, uint64_t size, uint64_t offset)
 {
     // do nothing
 }
@@ -65,36 +65,36 @@ void initrdMount()
     dsfsFS.read = dsfsFSRead;
     dsfsFS.write = dsfsFSWrite;
 
-    struct dsfs_entry *entry = &dsfs->firstEntry; // point to the first entry
+    dsfs_entry_t *entry = &dsfs->firstEntry; // point to the first entry
 
-    struct vfs_node node;                                           // root node
-    memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
+    struct vfs_node_t node;                                           // root node
+    memset64(&node, 0, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // clear the node
     node.filesystem = &dsfsFS;                                      // set the ram filesystem
     vfsAdd(node);
 
     for (uint32_t i = 0; i < dsfs->header.entries; i++)
     {
-        memset64(&node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
+        memset64(&node, 0, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // clear the node
         node.filesystem = &dsfsFS;                                      // set the ram filesystem
         node.size = entry->size;                                        // set the size
         memcpy64(node.path, entry->name, 56 / sizeof(uint64_t));        // copy the file path
         vfsAdd(node);
 
-        entry = (struct dsfs_entry *)((uint64_t)entry + sizeof(struct dsfs_entry) + entry->size); // point to the next entry
+        entry = (dsfs_entry_t *)((uint64_t)entry + sizeof(dsfs_entry_t) + entry->size); // point to the next entry
     }
 }
 
 // get an entry from the filesystem
 void *initrdGet(const char *name)
 {
-    struct dsfs_entry *entry = &dsfs->firstEntry; // point to the first entry
+    dsfs_entry_t *entry = &dsfs->firstEntry; // point to the first entry
 
     for (uint32_t i = 0; i < dsfs->header.entries; i++)
     {
-        if (memcmp(entry->name, name, strlen(name)) == 0)                 // compare the names
-            return (void *)((uint64_t)entry + sizeof(struct dsfs_entry)); // point to the contents
+        if (memcmp(entry->name, name, strlen(name)) == 0)            // compare the names
+            return (void *)((uint64_t)entry + sizeof(dsfs_entry_t)); // point to the contents
 
-        entry = (struct dsfs_entry *)((uint64_t)entry + sizeof(struct dsfs_entry) + entry->size); // point to the next entry
+        entry = (dsfs_entry_t *)((uint64_t)entry + sizeof(dsfs_entry_t) + entry->size); // point to the next entry
     }
 
     return NULL; // return null if we don't find any entry with that name

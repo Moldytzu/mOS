@@ -3,10 +3,10 @@
 
 #define ISVALID(node) (node && node->filesystem)
 
-struct vfs_node rootNode; // root of the linked list
+struct vfs_node_t rootNode; // root of the linked list
 uint64_t lastNode = 0;
 
-struct vfs_fs rootFS;
+vfs_fs_t rootFS;
 
 // initialize the subsystem
 void vfsInit()
@@ -17,17 +17,17 @@ void vfsInit()
     rootFS.name = "rootfs";
     rootFS.mountName = "/";
 
-    memset64(&rootNode, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the root node
-    rootNode.filesystem = &rootFS;                                      // rootfs
+    memset64(&rootNode, 0, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // clear the root node
+    rootNode.filesystem = &rootFS;                                        // rootfs
 }
 
 // add a node
-void vfsAdd(struct vfs_node node)
+void vfsAdd(struct vfs_node_t node)
 {
     uint64_t id = lastNode++;
     node.id = id;
 
-    struct vfs_node *currentNode = &rootNode; // first node
+    struct vfs_node_t *currentNode = &rootNode; // first node
 
     if (currentNode->filesystem) // check if the root node is valid
     {
@@ -36,21 +36,21 @@ void vfsAdd(struct vfs_node node)
 
         if (currentNode->filesystem)
         {
-            currentNode->next = malloc(sizeof(struct vfs_node)); // allocate next node if the current node is valid
-            currentNode = currentNode->next;                     // set current node to the newly allocated node
+            currentNode->next = malloc(sizeof(struct vfs_node_t)); // allocate next node if the current node is valid
+            currentNode = currentNode->next;                       // set current node to the newly allocated node
         }
     }
-    memcpy64(currentNode, &node, sizeof(struct vfs_node) / sizeof(uint64_t)); // copy the node information
+    memcpy64(currentNode, &node, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // copy the node information
 }
 
 // remove a node
-void vfsRemove(struct vfs_node *node)
+void vfsRemove(struct vfs_node_t *node)
 {
-    memset64(node, 0, sizeof(struct vfs_node) / sizeof(uint64_t)); // clear the node
+    memset64(node, 0, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // clear the node
 }
 
 // return the nodes
-struct vfs_node *vfsNodes()
+struct vfs_node_t *vfsNodes()
 {
     return &rootNode;
 }
@@ -64,7 +64,7 @@ uint64_t vfsOpen(const char *name)
     if (*name != '/') // non-existent path
         return 0;
 
-    struct vfs_node *currentNode = &rootNode;
+    struct vfs_node_t *currentNode = &rootNode;
     const char tmp[128 /* mount name */ + 128 /* path */];
     do
     {
@@ -94,7 +94,7 @@ uint64_t vfsOpen(const char *name)
 // close a node
 void vfsClose(uint64_t fd)
 {
-    struct vfs_node *node = (struct vfs_node *)fd;
+    struct vfs_node_t *node = (struct vfs_node_t *)fd;
     if (!ISVALID(node)) // check if the node is valid
         return;
 
@@ -105,7 +105,7 @@ void vfsClose(uint64_t fd)
 // read from a node in a buffer
 void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
-    struct vfs_node *node = (struct vfs_node *)fd;
+    struct vfs_node_t *node = (struct vfs_node_t *)fd;
     if (!ISVALID(node)) // check if the node is valid
         return;
 
@@ -116,7 +116,7 @@ void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 // write to a node from a buffer
 void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 {
-    struct vfs_node *node = (struct vfs_node *)fd;
+    struct vfs_node_t *node = (struct vfs_node_t *)fd;
     if (!ISVALID(node)) // check if the node is valid
         return;
 
@@ -127,7 +127,7 @@ void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
 // return the size of a node
 uint64_t vfsSize(uint64_t fd)
 {
-    struct vfs_node *node = (struct vfs_node *)fd;
+    struct vfs_node_t *node = (struct vfs_node_t *)fd;
     if (!ISVALID(node)) // check if the node is valid
         return 0;
 

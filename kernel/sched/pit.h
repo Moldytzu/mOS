@@ -11,13 +11,13 @@
 
 #define PIT_DIV 1193182
 
-struct pack pit_packet
+pstruct 
 {
     unsigned binarymode : 1;
     unsigned operatingmode : 3;
     unsigned accessmode : 2;
     unsigned channel : 2;
-};
+} pit_packet_t;
 
 uint64_t pitGetTicks();
 uint32_t pitGetScale();

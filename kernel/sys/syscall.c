@@ -9,7 +9,7 @@ extern void SyscallIntHandlerEntry();
 uint32_t count = 1;
 
 // handler called on syscall
-void syscallHandler(struct idt_intrerrupt_stack *registers)
+void syscallHandler(idt_intrerrupt_stack_t *registers)
 {
     vmmSwap(vmmGetBaseTable()); // swap the page table with the base so we can access every piece of memory
 

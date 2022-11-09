@@ -3,12 +3,14 @@
 
 #define HEAP_START 0x9000000000
 
-struct heap_segment
+struct heap_segment_t;
+
+struct heap_segment_t
 {
     uint16_t signature;
     bool free;
     size_t size;
-    struct heap_segment *next;
+    struct heap_segment_t *next;
 };
 
 void heapInit();

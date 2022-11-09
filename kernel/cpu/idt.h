@@ -13,13 +13,14 @@
 // exceptions
 #define IDT_DE 0
 
-struct pack idt_descriptor
+pstruct
 {
     uint16_t size;
     uint64_t offset;
-};
+}
+idt_descriptor_t;
 
-struct pack idt_gate_descriptor
+pstruct
 {
     uint16_t offset;
     uint16_t segmentselector;
@@ -28,9 +29,10 @@ struct pack idt_gate_descriptor
     uint16_t offset2;
     uint32_t offset3;
     uint32_t reserved;
-};
+}
+idt_gate_descriptor_t;
 
-struct pack idt_intrerrupt_stack
+pstruct
 {
     uint64_t cr3;
     uint64_t rax;
@@ -54,7 +56,8 @@ struct pack idt_intrerrupt_stack
     uint64_t rflags;
     uint64_t rsp;
     uint64_t ss;
-};
+}
+idt_intrerrupt_stack_t;
 
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user);
 void idtInit();

@@ -8,7 +8,7 @@
 #define ACPI_HPET_GENERAL_CONFIGURATION_REGISTER 0x10
 #define ACPI_HPET_MAIN_COUNTER 0xF0
 
-struct pack acpi_rsdp
+pstruct
 {
     uint8_t signature[8];
     uint8_t checksum;
@@ -19,9 +19,10 @@ struct pack acpi_rsdp
     uint64_t xsdt;
     uint8_t echecksum;
     uint8_t reserved[3];
-};
+}
+acpi_rsdp_t;
 
-struct pack acpi_sdt
+pstruct
 {
     uint8_t signature[4];
     uint32_t length;
@@ -32,32 +33,36 @@ struct pack acpi_sdt
     uint32_t oemRevision;
     uint32_t creatorID;
     uint32_t creatorRevision;
-};
+}
+acpi_sdt_t;
 
-struct pack acpi_rsdt
+pstruct
 {
-    struct acpi_sdt header;
+    acpi_sdt_t header;
     uint32_t entries[];
-};
+}
+acpi_rsdt_t;
 
-struct pack acpi_xsdt
+pstruct
 {
-    struct acpi_sdt header;
+    acpi_sdt_t header;
     uint64_t entries[];
-};
+}
+acpi_xsdt_t;
 
-struct pack acpi_gas
+pstruct
 {
     uint8_t addressSpace;
     uint8_t bitWidth;
     uint8_t bitOffset;
     uint8_t accessSize;
     uint64_t address;
-};
+}
+acpi_gas_t;
 
-struct pack acpi_fadt
+pstruct
 {
-    struct acpi_sdt header;
+    acpi_sdt_t header;
     uint32_t FACS;
     uint32_t DSDT;
     uint8_t reserved;
@@ -96,38 +101,41 @@ struct pack acpi_fadt
     uint16_t bootFlags;
     uint8_t reserved2;
     uint32_t flags;
-    struct acpi_gas reset;
+    acpi_gas_t reset;
     uint8_t resetValue;
     uint8_t reserved3[3];
     uint64_t FACS64;
     uint64_t DSDT64;
-    struct acpi_gas PM1aEvent64;
-    struct acpi_gas PM1bEvent64;
-    struct acpi_gas PM1aControl64;
-    struct acpi_gas PM1BControl64;
-    struct acpi_gas PM2Control64;
-    struct acpi_gas PMTimer64;
-    struct acpi_gas GPE064;
-    struct acpi_gas GPE164;
-};
+    acpi_gas_t PM1aEvent64;
+    acpi_gas_t PM1bEvent64;
+    acpi_gas_t PM1aControl64;
+    acpi_gas_t PM1BControl64;
+    acpi_gas_t PM2Control64;
+    acpi_gas_t PMTimer64;
+    acpi_gas_t GPE064;
+    acpi_gas_t GPE164;
+}
+acpi_fadt_t;
 
-struct pack acpi_pci_config
+pstruct
 {
     uint64_t base;
     uint16_t pciSegment;
     uint8_t startBus;
     uint8_t endBus;
     uint32_t reserved;
-};
+}
+acpi_pci_config_t;
 
-struct pack acpi_mcfg
+pstruct
 {
-    struct acpi_sdt header;
+    acpi_sdt_t header;
     uint64_t reserved;
-    struct acpi_pci_config buses[];
-};
+    acpi_pci_config_t buses[];
+}
+acpi_mcfg_t;
 
-struct pack acpi_pci_header
+pstruct
 {
     uint16_t vendor;
     uint16_t device;
@@ -141,27 +149,30 @@ struct pack acpi_pci_header
     uint8_t latencyTimer;
     uint8_t headerType;
     uint8_t BIST;
-};
+}
+acpi_pci_header_t;
 
-struct pack acpi_pci_descriptor
+pstruct
 {
-    struct acpi_pci_header *header;
+    acpi_pci_header_t *header;
     uint8_t bus;
     uint8_t device;
     uint8_t function;
-};
+}
+acpi_pci_descriptor_t;
 
-struct pack acpi_hpet
+pstruct
 {
-    struct acpi_sdt header;
+    acpi_sdt_t header;
     uint32_t eventTimerID;
-    struct acpi_gas base;
+    acpi_gas_t base;
     uint8_t hpetNumber;
     uint16_t minimumTicks;
     uint8_t protection;
-};
+}
+acpi_hpet_t;
 
-struct acpi_sdt *acpiGet(const char *sig);
+acpi_sdt_t *acpiGet(const char *sig);
 void acpiEnumeratePCI();
 void acpiInit();
 void acpiReboot();

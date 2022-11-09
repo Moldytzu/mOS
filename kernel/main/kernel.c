@@ -37,7 +37,7 @@ void kmain()
 
 #ifdef K_VFS_DEBUG
     // get all the nodes
-    struct vfs_node *currentNode = vfsNodes();
+    struct vfs_node_t *currentNode = vfsNodes();
     do
     {
         if (currentNode->filesystem)
@@ -52,7 +52,7 @@ void kmain()
     schedulerEnable(); // enable the schduler and jump in userspace
 }
 
-void exceptionHandler(struct idt_intrerrupt_stack *stack)
+void exceptionHandler(idt_intrerrupt_stack_t *stack)
 {
     vmmSwap(vmmGetBaseTable()); // swap to the base table
     if (stack->cs == 0x23)      // userspace

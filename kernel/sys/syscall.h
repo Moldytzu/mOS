@@ -3,5 +3,5 @@
 #include <cpu/idt.h>
 
 uint32_t syscallGetCount();
-void syscallHandler(struct idt_intrerrupt_stack *registers);
+void syscallHandler(idt_intrerrupt_stack_t *registers);
 void syscallInit(uint16_t vector);
