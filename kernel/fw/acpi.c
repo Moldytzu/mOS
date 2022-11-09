@@ -51,58 +51,51 @@ struct acpi_sdt *acpiGet(const char *sig)
     return NULL; // return nothing
 }
 
-// enumerate a function
-void enumerateFunction(uint64_t base, uint8_t function, uint8_t device, uint8_t bus)
-{
-    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (function << 12));
-
-    if (header->device == UINT16_MAX || header->device == 0) // invalid function
-        return;
-
-#ifdef K_ACPI_DEBUG
-    printks("acpi: found pci function %x:%x at %d.%d.%d\n\r", header->vendor, header->device, bus, device, function);
-#endif
-
-    // build the descriptor
-    struct acpi_pci_descriptor d;
-    d.bus = bus, d.device = device, d.function = function, d.header = header;
-
-    // put it in our list of pci functions
-    pciFuncs = realloc(pciFuncs, (pciIndex + 1) * sizeof(struct acpi_pci_descriptor));
-    pciFuncs[pciIndex++] = d;
-}
-
-// enumerate a device
-void enumerateDevice(uint64_t base, uint8_t device, uint8_t bus)
-{
-    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (device << 15));
-
-    if (header->device == UINT16_MAX || header->device == 0) // invalid device
-        return;
-
-    for (int i = 0; i < 8; i++) // max 8 functions/device
-        enumerateFunction((uint64_t)header, i, device, bus);
-}
-
-// enumerate a bus
-void enumerateBus(uint64_t base, uint8_t bus)
-{
-    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (bus << 20));
-
-    if (header->device == UINT16_MAX || header->device == 0) // invalid bus
-        return;
-
-    for (int i = 0; i < 32; i++) // max 32 devices/bus
-        enumerateDevice((uint64_t)header, i, bus);
-}
-
 // enumerate the pci bus using mcfg
 void acpiEnumeratePCI()
 {
     size_t entries = (mcfg->header.length - sizeof(struct acpi_mcfg)) / sizeof(struct acpi_pci_config);
     for (int i = 0; i < entries; i++)
-        for (int j = mcfg->buses[i].startBus; j < mcfg->buses[i].endBus; j++)
-            enumerateBus(mcfg->buses[i].base, j); // enumerate every bus
+    {
+        // enumerate each bus
+        for (int bus = mcfg->buses[i].startBus; bus < mcfg->buses[i].endBus; bus++)
+        {
+            uint64_t base = mcfg->buses[i].base;
+
+            struct acpi_pci_header *baseHeader = (struct acpi_pci_header *)base;
+
+            // non-existent bus
+            if (baseHeader->device == UINT16_MAX || baseHeader->device == 0)
+                continue;
+
+            // enumerate each device
+            for (int device = 0; device < 32; device++)
+            {
+                // enumerate each function
+                for (int function = 0; function < 8; function++)
+                {
+                    struct acpi_pci_header *header = (struct acpi_pci_header *)(base + (bus << 20 | device << 15 | function << 12));
+
+                    vmmMap(vmmGetBaseTable(), header, header, false, true);
+
+                    if (header->device == UINT16_MAX || header->device == 0) // invalid function
+                        continue;
+
+#ifdef K_ACPI_DEBUG
+                    printks("acpi: found pci function %x:%x at %d.%d.%d\n\r", header->vendor, header->device, bus, device, function);
+#endif
+
+                    // build the descriptor
+                    struct acpi_pci_descriptor d;
+                    d.bus = bus, d.device = device, d.function = function, d.header = header;
+
+                    // put it in our list of pci functions
+                    pciFuncs = realloc(pciFuncs, (pciIndex + 1) * sizeof(struct acpi_pci_descriptor));
+                    pciFuncs[pciIndex++] = d;
+                }
+            }
+        }
+    }
 }
 
 // reboot using acpi

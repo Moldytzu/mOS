@@ -23,6 +23,10 @@ void expand(size_t size)
 {
     size = alignD(size, VMM_PAGE); // align the size to page boundary
 
+#ifdef K_HEAP_DEBUG
+    printks("heap: expanding by %d bytes\n\r", size);
+#endif
+
     struct heap_segment *next = (struct heap_segment *)end; // set new segment to the last address
 
     // allocate new heap pages
@@ -109,12 +113,12 @@ void *realloc(void *ptr, size_t size)
     size_t copySize = min(HEADER(ptr)->size, size); // calculate the required bytes to be copied
 
     // determine fastest safe block size
-    if (copySize % sizeof(uint64_t))
-        memcpy64(buffer, ptr, copySize);
-    else if (copySize % sizeof(uint32_t))
-        memcpy32(buffer, ptr, copySize);
-    else if (copySize % sizeof(uint16_t))
-        memcpy16(buffer, ptr, copySize);
+    if (copySize % sizeof(uint64_t) == 0)
+        memcpy64(buffer, ptr, copySize / sizeof(uint64_t));
+    else if (copySize % sizeof(uint32_t) == 0)
+        memcpy32(buffer, ptr, copySize / sizeof(uint32_t));
+    else if (copySize % sizeof(uint16_t) == 0)
+        memcpy16(buffer, ptr, copySize / sizeof(uint16_t));
     else
         memcpy8(buffer, ptr, copySize);
 
