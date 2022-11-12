@@ -49,9 +49,9 @@ void gdtCreateSegment(uint8_t access)
 void gdtInstallTSS(uint64_t base, uint8_t access)
 {
     gdt_system_segment_t *segment = (gdt_system_segment_t *)&entries[gdtr.size / sizeof(gdt_segment_t)]; // get address of the next segment
-    memset64((void *)segment, 0, sizeof(gdt_system_segment_t) / sizeof(uint64_t));                            // clear it
-    segment->access = access;                                                                                      // set the access byte
-    segment->base = base & 0x000000000000FFFF;                                                                     // set the base address of the tss
+    memset64((void *)segment, 0, sizeof(gdt_system_segment_t) / sizeof(uint64_t));                       // clear it
+    segment->access = access;                                                                            // set the access byte
+    segment->base = base & 0x000000000000FFFF;                                                           // set the base address of the tss
     segment->base2 = (base & 0x0000000000FF0000) >> 16;
     segment->base3 = (base & 0x00000000FF000000) >> 24;
     segment->base3 = (base & 0xFFFFFFFF00000000) >> 32;

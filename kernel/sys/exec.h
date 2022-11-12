@@ -4,14 +4,15 @@
 #include <subsys/vt.h>
 #include <mm/pmm.h>
 
-struct pack sys_exec_packet
+pstruct
 {
     uint8_t shouldCreateNewTerminal;
     const char *enviroment;
     const char *cwd;
     int argc;
     char **argv;
-};
+}
+sys_exec_packet_t;
 
 // exec (rsi = path, rdx = pid, r8 = packet)
 void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, struct sched_task *task)
@@ -19,60 +20,40 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, struct sche
     if (!INBOUNDARIES(path) || !INBOUNDARIES(pid) || !INBOUNDARIES(packet)) // prevent a crash
         return;
 
-    int argc = 0;
-    char **argv = NULL;
-
     uint64_t *ret = PHYSICAL(pid);
-    struct sys_exec_packet *input = PHYSICAL(packet);
+    sys_exec_packet_t *input = PHYSICAL(packet);
+    char *execPath = expandPath(PHYSICAL(path), task); // expand the path
 
-    if (input->argc)
+    if (execPath == NULL) // the path doesn't exist
     {
-        if (!INBOUNDARIES(input->argv))
-            return;
-
-        input->argv = PHYSICAL(input->argv); // get phyisical address of the argv
-
-        argc = input->argc;
-        argv = input->argv;
-
-        // convert addresses to physical
-        for (int i = 0; i < argc; i++)
-        {
-            if (!INBOUNDARIES(argv[i])) // check
-                return;
-
-            argv[i] = PHYSICAL(argv[i]);
-        }
-    }
-
-    char *inputPath = expandPath(PHYSICAL(path), task); // expand the path
-
-    if (inputPath == NULL) // if the path is null then it doesn't exist
-    {
-        *ret = 0; // fail
-        pmmDeallocate(inputPath);
+        *ret = 0;
+        pmmDeallocate(execPath);
         return;
     }
 
-    struct sched_task *newTask = elfLoad(inputPath, argc, argv); // do the loading
-
-    if (newTask == NULL) // failed to load the task
+    // convert virtual addresses to physical addresses
+    if (input->argc && INBOUNDARIES(input->argv))
     {
-        *ret = UINT64_MAX;
-        return;
+        input->argv = PHYSICAL(input->argv);
+
+        for (int i = 0; i < input->argc; i++)
+            if (INBOUNDARIES(input->argv[i]))
+                input->argv[i] = PHYSICAL(input->argv[i]);
     }
+
+    struct sched_task *newTask = elfLoad(execPath, input->argc, input->argv); // do the loading
+    *ret = newTask->id;                                                       // set the pid
 
     if (input->shouldCreateNewTerminal)
         newTask->terminal = vtCreate()->id; // create new tty and set the id to it's id
     else
         newTask->terminal = task->terminal; // set the parent's terminal id
 
-    if (input->enviroment > (char *)alignD(task->intrerruptStack.rsp, 4096) - 4096)
+    if (input->enviroment)
         memcpy(newTask->enviroment, PHYSICAL(input->enviroment), strlen(PHYSICAL(input->enviroment)) + 1); // copy the enviroment
 
-    if (input->cwd > (char *)alignD(task->intrerruptStack.rsp, 4096) - 4096)
+    if (input->cwd)
         memcpy(newTask->cwd, PHYSICAL(input->cwd), strlen(PHYSICAL(input->cwd)) + 1); // copy the initial working directory
 
-    *ret = newTask->id; // set the pid
-    pmmDeallocate(inputPath);
+    pmmDeallocate(execPath);
 }

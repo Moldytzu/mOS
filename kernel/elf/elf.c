@@ -29,9 +29,9 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv)
 
     void *buffer = pmmPages(vfsSize(fd) / VMM_PAGE + 1); // allocate the buffer for the sections
 
-    memset64(buffer, 0, vfsSize(fd) / sizeof(uint64_t));
+    memset64(buffer, 0, vfsSize(fd) / sizeof(uint64_t)); // clear the buffer
 
-    Elf64_Phdr *phdr = (Elf64_Phdr *)((uint64_t)elf + elf->e_phoff); // get the program headers from the offset
+    Elf64_Phdr *phdr = (Elf64_Phdr *)((uint64_t)elf + elf->e_phoff); // point to the first program header
 
     for (int i = 0; i < elf->e_phnum; i++, phdr++) // iterate over every program header
     {
@@ -40,7 +40,7 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv)
 #ifdef K_ELF_DEBUG
             printks("elf: phdr at virtual 0x%p (physical 0x%p) with size %d bytes\n\r", phdr->p_vaddr, phdr->p_paddr, phdr->p_memsz);
 #endif
-            memcpy64((void *)((uint64_t)buffer + phdr->p_vaddr - TASK_BASE_ADDRESS), (void *)((uint64_t)elf + phdr->p_offset), phdr->p_memsz / sizeof(uint64_t));
+            memcpy64((void *)((uint64_t)buffer + phdr->p_vaddr - TASK_BASE_ADDRESS), (void *)((uint64_t)elf + phdr->p_offset), phdr->p_memsz / sizeof(uint64_t)); // copy the program header to the buffer
         }
     }
 

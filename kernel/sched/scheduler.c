@@ -31,10 +31,10 @@ uint8_t simdContext[512] __attribute__((aligned(16)));
 // schedule the next task
 void schedulerSchedule(idt_intrerrupt_stack_t *stack)
 {
+    vmmSwap(vmmGetBaseTable()); // swap the page table
+
     if (!enabled)
         return; // don't do anything if it isn't enabled
-
-    vmmSwap(vmmGetBaseTable()); // swap the page table
 
     iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
 
@@ -201,7 +201,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 
     // page table
     vmm_page_table_t *newTable = vmmCreateTable(false); // create a new page table
-    task->pageTable = newTable;                              // set the new page table
+    task->pageTable = newTable;                         // set the new page table
 
     void *stack = pmmPages(stackSize / VMM_PAGE);     // allocate stack for the task
     memset64(stack, 0, stackSize / sizeof(uint64_t)); // clear the stack

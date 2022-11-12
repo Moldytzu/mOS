@@ -54,7 +54,7 @@ void parseCFG()
     memset(cfg, 0, 4096);               // clear the buffer
     sys_read(cfg, min(size, 4096), fd); // read the file
 
-    for(int i = 0; i < 4096; i++, cfg++)
+    for (int i = 0; i < 4096; i++, cfg++)
     {
         if (memcmp(cfg, "VERBOSE = ", strlen("VERBOSE = ")) == 0)
         {

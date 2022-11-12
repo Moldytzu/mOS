@@ -16,5 +16,5 @@ bool fpuCheck()
 {
     uint32_t versionInfo, additionalInfo, featureInfo, featureInfo2;
     __get_cpuid(1, &versionInfo, &additionalInfo, &featureInfo2, &featureInfo); // get information
-    return (featureInfo2 >> 20) & 1; // test for bit 20 in ECX (sse4.2)
+    return (featureInfo2 >> 20) & 1;                                            // test for bit 20 in ECX (sse4.2)
 }
