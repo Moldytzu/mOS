@@ -24,9 +24,8 @@ int main(int argc, char **argv)
     sys_pid(0, SYS_PID_GET, &pid);                        // get the pid
     sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
 
-    for (int i = 0; i < TESTS; i++)
-        test("/init/blank.mx"); // does nothing
+    for (int i = 0; i < TESTS; i++) // execute many programs
+        test("/init/blank.mx"); 
 
-    sys_pid(0, SYS_PID_SLEEP, (uint64_t *)(TESTS * 50)); // wait for all the pids to stop
-    puts("The system survived!\n");
+    printf("The system has survived!\n");
 }
