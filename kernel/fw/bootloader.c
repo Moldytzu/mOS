@@ -87,15 +87,11 @@ void *bootloaderGetHHDM()
     return (void *)hhdm_request.response->offset;
 }
 
-struct limine_hhdm_response hhdm;
 struct limine_kernel_address_response kaddr;
 
 void bootloaderMove()
 {
-    // move all the bootloader responses required by the vmm in bss because of an unknown bug somewhere in the vmm that I can't track down
-    memcpy(&hhdm, hhdm_request.response, sizeof(*hhdm_request.response));
-    hhdm_request.response = &hhdm;
-
+    // move the bootloader response required by the vmm in bss because of an unknown bug somewhere in the vmm that I can't track down
     memcpy(&kaddr, kernel_address_request.response, sizeof(*kernel_address_request.response));
     kernel_address_request.response = &kaddr;
 }

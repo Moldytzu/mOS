@@ -24,6 +24,9 @@ run-debug: $(OUTPUT)
 run-efi: efi
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI)
 
+run-efi-kvm: efi
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI) --enable-kvm -cpu host
+
 run-efi-debug: efi
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
