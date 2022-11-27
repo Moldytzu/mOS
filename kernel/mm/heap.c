@@ -74,15 +74,19 @@ void *malloc(size_t size)
 
         if (currentSegment->size > size)
         {
-            split(currentSegment, size);                                                                      // split the segment at the required size
-            currentSegment->free = false;                                                                     // mark the segment as busy
-            return (struct heap_segment_t *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
+            split(currentSegment, size);  // split the segment at the required size
+            currentSegment->free = false; // mark the segment as busy
+            memset8((void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)), 0, size);
+            printks("heap: %x\n", (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)));
+            return (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
         }
 
         if (currentSegment->size == size)
         {
-            currentSegment->free = false;                                                                     // mark the segment as busy
-            return (struct heap_segment_t *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
+            currentSegment->free = false; // mark the segment as busy
+            memset8((void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)), 0, size);
+            printks("heap: %x\n", (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)));
+            return (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
         }
     }
 

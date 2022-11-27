@@ -32,6 +32,8 @@ void *pmmPage()
                 pool->available -= 4096;
                 pool->used += 4096;
 
+                memset8((void *)(pool->alloc + 4096 * pool->lastPageIndex), 0, VMM_PAGE);
+                printks("pmm: %x\n", (void *)(pool->alloc + 4096 * pool->lastPageIndex));
                 return (void *)(pool->alloc + 4096 * pool->lastPageIndex);
             }
 
@@ -110,7 +112,11 @@ doReturn:
             pool->used += 4096;
 
             if (allocatedPages == string)
+            {
+                memset8((void *)base, 0, VMM_PAGE * pages);
+                printks("pages: %x\n", base);
                 return base;
+            }
         }
     }
 
@@ -199,6 +205,9 @@ void pmmInit()
         pool->alloc = (void *)align((void *)entry->base + pool->bitmapBytes, 4096);
         pool->base = (void *)entry->base;
         pool->available = entry->length - pool->bitmapBytes;
+
+        // clear the bitmap
+        memset(pool->base, 0, pool->bitmapBytes);
     }
 
     bootloaderMove();
@@ -216,7 +225,7 @@ pmm_pool_t pmmTotal()
         total.used += pools[i].used;
         total.bitmapBytes += pools[i].bitmapBytes;
     }
-    
+
     total.lastPageIndex = poolCount + 1; // use pageIndex to set the pool count
 
     return total; // and return the total
