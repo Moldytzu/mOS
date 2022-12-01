@@ -6,7 +6,7 @@
 // ==========================================
 
 // Debug
-#define K_RELEASE // generate release build of the kernel (removes all debug statements);
+//#define K_RELEASE // generate release build of the kernel (removes all debug statements);
 
 #ifndef K_RELEASE
 #define K_VT_DEBUG  // vt debug messages; If unsure: comment
@@ -27,4 +27,4 @@
 // Features
 #define K_PS2          // enable ps/2 support; If unsure: uncomment
 #define K_IDT_IST      // enable ist; If unsure: uncomment
-#define K_IDT_DIS_KIRQ // disable intrerrupts during kernel startup; If unsure: comment
+#define K_IDT_DIS_KIRQ // disable intrerrupts during kernel startup; If unsure: uncomment

@@ -204,6 +204,12 @@ void pmmInit()
         zero(pool->base, pool->bitmapBytes);
     }
 
+#ifdef K_PMM_DEBUG
+    // display the memory pools
+    for(int i = 0; i < poolCount; i++)
+        printks("pmm pool %d: %x -> %x (%d kb)\n",i,pools[i].alloc, pools[i].alloc + pools[i].available, pools[i].available / 1024);
+#endif
+
     bootloaderMove();
 }
 
@@ -220,7 +226,12 @@ pmm_pool_t pmmTotal()
         total.bitmapBytes += pools[i].bitmapBytes;
     }
 
-    total.lastPageIndex = poolCount + 1; // use pageIndex to set the pool count
+    total.lastPageIndex = poolCount; // use pageIndex to set the pool count
 
     return total; // and return the total
+}
+
+pmm_pool_t *pmmPools()
+{
+    return pools;
 }

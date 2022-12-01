@@ -22,5 +22,6 @@ void pmmDeallocate(void *page);
 void pmmDeallocatePages(void *page, uint64_t count);
 
 pmm_pool_t pmmTotal();
+pmm_pool_t *pmmPools();
 
 void pmmInit();

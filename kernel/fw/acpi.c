@@ -18,6 +18,9 @@ uint16_t pciIndex = 0;
 // get a descriptor table with a signature
 acpi_sdt_t *acpiGet(const char *sig)
 {
+    if(!sdt)
+        return NULL;
+
     bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
     size_t entries = sdt->length - sizeof(acpi_sdt_t);
 
@@ -54,6 +57,9 @@ acpi_sdt_t *acpiGet(const char *sig)
 // enumerate the pci bus using mcfg
 void acpiEnumeratePCI()
 {
+    if(!mcfg)
+        return;
+
     size_t entries = (mcfg->header.length - sizeof(acpi_mcfg_t)) / sizeof(acpi_pci_config_t);
     for (int i = 0; i < entries; i++)
     {
@@ -76,7 +82,7 @@ void acpiEnumeratePCI()
                 {
                     acpi_pci_header_t *header = (acpi_pci_header_t *)(base + (bus << 20 | device << 15 | function << 12));
 
-                    vmmMap(vmmGetBaseTable(), header, header, false, true);
+                    vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
 
                     if (header->device == UINT16_MAX || header->device == 0) // invalid function
                         continue;
