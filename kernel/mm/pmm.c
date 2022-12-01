@@ -32,8 +32,6 @@ void *pmmPage()
                 pool->available -= 4096;
                 pool->used += 4096;
 
-                memset8((void *)(pool->alloc + 4096 * pool->lastPageIndex), 0, VMM_PAGE);
-                printks("pmm: %x\n", (void *)(pool->alloc + 4096 * pool->lastPageIndex));
                 return (void *)(pool->alloc + 4096 * pool->lastPageIndex);
             }
 
@@ -112,11 +110,7 @@ doReturn:
             pool->used += 4096;
 
             if (allocatedPages == string)
-            {
-                memset8((void *)base, 0, VMM_PAGE * pages);
-                printks("pages: %x\n", base);
                 return base;
-            }
         }
     }
 
@@ -186,7 +180,7 @@ void pmmInit()
     // get the memory map
     struct limine_memmap_response *map = bootloaderGetMemoryMap();
 
-    memset(pools, 0, sizeof(pools));
+    zero(pools, sizeof(pools));
 
     // iterate over the entries
     for (int i = 0; i < map->entry_count; i++)
@@ -199,7 +193,7 @@ void pmmInit()
 
         // populate the pool metadata
         pmm_pool_t *pool = &pools[poolCount++];
-        memset(pool, 0, sizeof(pmm_pool_t));
+        zero(pool, sizeof(pmm_pool_t));
 
         pool->bitmapBytes = entry->length / 4096 / 8; // we divide the memory regions in pages (4 KiB chunks) then we will store the availability in a bit in the bitmap
         pool->alloc = (void *)align((void *)entry->base + pool->bitmapBytes, 4096);
@@ -207,7 +201,7 @@ void pmmInit()
         pool->available = entry->length - pool->bitmapBytes;
 
         // clear the bitmap
-        memset(pool->base, 0, pool->bitmapBytes);
+        zero(pool->base, pool->bitmapBytes);
     }
 
     bootloaderMove();
@@ -217,7 +211,7 @@ pmm_pool_t pmmTotal()
 {
     pmm_pool_t total;
 
-    memset(&total, 0, sizeof(pmm_pool_t));
+    zero(&total, sizeof(pmm_pool_t));
 
     for (int i = 0; pools[i].base != NULL; i++) // loop thru each pool
     {

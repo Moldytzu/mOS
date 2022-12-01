@@ -10,7 +10,8 @@ idt_gate_descriptor_t *gates;
 // change gate information
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 {
-    idt_gate_descriptor_t *gate = &gates[entry];    // select the gate
+    idt_gate_descriptor_t *gate = &gates[entry]; // select the gate
+    zero(gate, sizeof(idt_gate_descriptor_t));
     if (gate->segmentselector == 0)                 // detect if we didn't touch the gate
         idtr.size += sizeof(idt_gate_descriptor_t); // if we didn't we can safely increase the size
 
@@ -41,13 +42,13 @@ void idtInit()
     tssGet()->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
     tssGet()->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
 
-    memset64((void *)tssGet()->ist[0] - VMM_PAGE, 0, VMM_PAGE / sizeof(uint64_t));
-    memset64((void *)tssGet()->ist[1] - VMM_PAGE, 0, VMM_PAGE / sizeof(uint64_t));
+    zero((void *)tssGet()->ist[0] - VMM_PAGE, VMM_PAGE);
+    zero((void *)tssGet()->ist[1] - VMM_PAGE, VMM_PAGE);
 #endif
 
     // allocate the gates
     gates = pmmPage();
-    memset64(gates, 0, VMM_PAGE / sizeof(uint64_t));
+    zero(gates, VMM_PAGE);
 
     idtr.offset = (uint64_t)gates; // set the offset to the data
     idtr.size = 0;                 // reset the size

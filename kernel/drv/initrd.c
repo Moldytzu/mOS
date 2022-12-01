@@ -67,17 +67,17 @@ void initrdMount()
 
     dsfs_entry_t *entry = &dsfs->firstEntry; // point to the first entry
 
-    struct vfs_node_t node;                                           // root node
-    memset64(&node, 0, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // clear the node
-    node.filesystem = &dsfsFS;                                      // set the ram filesystem
+    struct vfs_node_t node; // root node
+    zero(&node, sizeof(struct vfs_node_t));
+    node.filesystem = &dsfsFS; // set the ram filesystem
     vfsAdd(node);
 
     for (uint32_t i = 0; i < dsfs->header.entries; i++)
     {
-        memset64(&node, 0, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // clear the node
-        node.filesystem = &dsfsFS;                                      // set the ram filesystem
-        node.size = entry->size;                                        // set the size
-        memcpy64(node.path, entry->name, 56 / sizeof(uint64_t));        // copy the file path
+        zero(&node, sizeof(struct vfs_node_t));
+        node.filesystem = &dsfsFS;                               // set the ram filesystem
+        node.size = entry->size;                                 // set the size
+        memcpy64(node.path, entry->name, 56 / sizeof(uint64_t)); // copy the file path
         vfsAdd(node);
 
         entry = (dsfs_entry_t *)((uint64_t)entry + sizeof(dsfs_entry_t) + entry->size); // point to the next entry

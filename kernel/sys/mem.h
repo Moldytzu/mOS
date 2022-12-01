@@ -13,7 +13,7 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_
             return;
 
         void *page = pmmPage();                                              // allocate a page
-        memset64(page, 0, VMM_PAGE / sizeof(uint64_t));                      // clear it
+        zero(page, VMM_PAGE);                                                // clear it
         vmmMap(task->pageTable, task->lastVirtualAddress, page, true, true); // map it
 
         *(uint64_t *)PHYSICAL(arg1) = (uint64_t)task->lastVirtualAddress; // give the application the virtual address
@@ -22,7 +22,7 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_
         task->allocated[task->allocatedIndex++] = page;                                                     // keep evidence of the page
         task->allocated = (void **)realloc(task->allocated, (task->allocatedIndex + 1) * sizeof(uint64_t)); // make the allocated array bigger
         break;
-    case 1:                      // mem info
+    case 1: // mem info
         pmm_pool_t total = pmmTotal();
         *(uint64_t *)PHYSICAL(arg1) = total.used;
         *(uint64_t *)PHYSICAL(arg2) = total.available;

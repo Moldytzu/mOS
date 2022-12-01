@@ -71,6 +71,19 @@ ifunc void memset64(void *dest, uint64_t data, size_t count)
         *(uint64_t *)dest = data;
 }
 
+// set memory to 0
+ifunc void zero(void *dest, size_t count)
+{
+    if (count % sizeof(uint64_t) == 0)
+        memset64(dest, 0, count / sizeof(uint64_t));
+    else if (count % sizeof(uint32_t) == 0)
+        memset32(dest, 0, count / sizeof(uint32_t));
+    else if (count % sizeof(uint16_t) == 0)
+        memset16(dest, 0, count / sizeof(uint16_t));
+    else
+        memset8(dest, 0, count);
+}
+
 // reverse a string
 ifunc void strrev(char *str)
 {

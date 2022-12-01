@@ -27,22 +27,22 @@ void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw)
     pml4->entries[index.PDP] = currentEntry;         // write the entry in the table
 
     pdp = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
-    currentEntry = pdp->entries[index.PD];                               // index further
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                         // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                     // userspace
-    pdp->entries[index.PD] = currentEntry;                               // write the entry in the table
+    currentEntry = pdp->entries[index.PD];                          // index further
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                    // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                // userspace
+    pdp->entries[index.PD] = currentEntry;                          // write the entry in the table
 
     pd = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
-    currentEntry = pd->entries[index.PT];                               // index further
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                        // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                    // userspace
-    pd->entries[index.PT] = currentEntry;                               // write the entry in the table
+    currentEntry = pd->entries[index.PT];                          // index further
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                   // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);               // userspace
+    pd->entries[index.PT] = currentEntry;                          // write the entry in the table
 
     pt = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
-    currentEntry = pt->entries[index.P];                                // index further
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                        // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                    // userspace
-    pt->entries[index.P] = currentEntry;                                // write the entry in the table
+    currentEntry = pt->entries[index.P];                           // index further
+    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                   // read-write
+    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);               // userspace
+    pt->entries[index.P] = currentEntry;                           // write the entry in the table
 }
 
 // map a virtual address to a physical address in a page table
@@ -58,7 +58,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pdp = pmmPage();                                    // allocate table
-        memset64(pdp, 0, VMM_PAGE / sizeof(uint64_t));      // clear it
+        zero(pdp, VMM_PAGE);                                // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
         pml4->entries[index.PDP] = currentEntry;            // write the entry in the table
@@ -70,7 +70,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pd = pmmPage();                                     // allocate table
-        memset64(pd, 0, VMM_PAGE / sizeof(uint64_t));       // clear it
+        zero(pd, VMM_PAGE);                                 // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
         pdp->entries[index.PD] = currentEntry;              // write the entry in the table
@@ -82,7 +82,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pt = pmmPage();                                     // allocate table
-        memset64(pt, 0, VMM_PAGE / sizeof(uint64_t));       // clear it
+        zero(pt, VMM_PAGE);                                 // clear it
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
         pd->entries[index.PT] = currentEntry;               // write the entry in the table
@@ -131,13 +131,13 @@ void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     vmm_page_table_t *pdp, *pd, *pt;
 
-    uint64_t currentEntry = table->entries[index.PDP];                   // index pdp
+    uint64_t currentEntry = table->entries[index.PDP];              // index pdp
     pdp = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pdp->entries[index.PD];                              // index pd
+    currentEntry = pdp->entries[index.PD];                         // index pd
     pd = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pd->entries[index.PT];                               // index pt
+    currentEntry = pd->entries[index.PT];                          // index pt
     pt = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
 
     currentEntry = pt->entries[index.P];                                                              // index p
@@ -153,7 +153,7 @@ vmm_page_table_t *vmmCreateTable(bool full)
 
     // create a new table to use as a base for everything
     register void *newTable = pmmPage(); // allocate a page for the new table
-    memset(newTable, 0, VMM_PAGE);       // clear the page table
+    zero(newTable, VMM_PAGE);            // clear it
 
     struct limine_memmap_response *memMap = bootloaderGetMemoryMap();
     uint64_t hhdm = (uint64_t)bootloaderGetHHDM();

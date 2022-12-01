@@ -147,10 +147,10 @@ loadnext:
 // initialize the scheduler
 void schedulerInit()
 {
-    kernelStack = pmmPage();                                              // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE;                  // set kernel stack in tss
-    memset64(&rootTask, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the root task
-    currentTask = &rootTask;                                              // set the current task
+    kernelStack = pmmPage();                             // allocate a page for the new kernel stack
+    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE; // set kernel stack in tss
+    zero(&rootTask, sizeof(struct sched_task));          // clear the root task
+    currentTask = &rootTask;                             // set the current task
 
     firstTerminal = vtCreate(); // create the first terminal
 
@@ -180,10 +180,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 
         if (task->pageTable)
         {
-            task->next = pmmPage();                                                // allocate next task if the current task is valid
-            memset64(task->next, 0, sizeof(struct sched_task) / sizeof(uint64_t)); // clear the thread
-            task->next->previous = task;                                           // set the previous task
-            task = task->next;                                                     // set current task to the newly allocated task
+            task->next = pmmPage();                      // allocate next task if the current task is valid
+            zero(task->next, sizeof(struct sched_task)); // clear the thread
+            task->next->previous = task;                 // set the previous task
+            task = task->next;                           // set current task to the newly allocated task
         }
     }
 
@@ -203,8 +203,8 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     vmm_page_table_t *newTable = vmmCreateTable(false); // create a new page table
     task->pageTable = newTable;                         // set the new page table
 
-    void *stack = pmmPages(stackSize / VMM_PAGE);     // allocate stack for the task
-    memset64(stack, 0, stackSize / sizeof(uint64_t)); // clear the stack
+    void *stack = pmmPages(stackSize / VMM_PAGE); // allocate stack for the task
+    zero(stack, stackSize);                       // clear the stack
 
     for (size_t i = 0; i < stackSize; i += VMM_PAGE) // map task stack as user, read-write
         vmmMap(newTable, (void *)stack + i, stack + i, true, true);
@@ -239,14 +239,14 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     }
 
     // memory fields
-    task->allocated = malloc(sizeof(uint64_t));                        // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
-    memset64(task->allocated, 0, sizeof(uint64_t) / sizeof(uint64_t)); // null its content
-    task->allocatedIndex = 0;                                          // the current index in the array
-    task->lastVirtualAddress = (void *)TASK_BASE_ALLOC;                // set the last address
+    task->allocated = malloc(sizeof(uint64_t));         // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    zero(task->allocated, sizeof(uint64_t));            // null its content
+    task->allocatedIndex = 0;                           // the current index in the array
+    task->lastVirtualAddress = (void *)TASK_BASE_ALLOC; // set the last address
 
     // enviroment
-    task->enviroment = pmmPage();                               // 4k should be enough for now
-    memset64(task->enviroment, 0, VMM_PAGE / sizeof(uint64_t)); // clear the enviroment
+    task->enviroment = pmmPage();     // 4k should be enough for now
+    zero(task->enviroment, VMM_PAGE); // clear the enviroment
     if (!cwd)
         task->cwd[0] = '/'; // set the current working directory to the root
     else

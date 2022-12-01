@@ -24,10 +24,10 @@ struct sock_socket *sockCreate()
         }
     }
 
-    memset64(currentSocket, 0, sizeof(struct sock_socket) / sizeof(uint64_t)); // clear the socket
-    currentSocket->buffer = pmmPage();                                         // allocate the buffer
-    memset64((void *)currentSocket->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the buffer
-    currentSocket->id = lastSockID++;                                          // set the ID
+    zero(currentSocket, sizeof(struct sock_socket)); // clear the socket
+    currentSocket->buffer = pmmPage();               // allocate the buffer
+    zero((void *)currentSocket->buffer, VMM_PAGE);   // clear the buffer
+    currentSocket->id = lastSockID++;                // set the ID
 
 #ifdef K_SOCK_DEBUG
     printks("sock: creating new socket with ID %d\n\r", currentSocket->id);
@@ -45,10 +45,10 @@ void sockAppend(struct sock_socket *sock, const char *str, size_t count)
     const char *input = str;                 // input buffer
     if (sock->bufferIdx + count >= VMM_PAGE) // check if we could overflow
     {
-        input += (sock->bufferIdx + count) - VMM_PAGE;                  // move the pointer until where it overflows
-        count -= (sock->bufferIdx + count) - VMM_PAGE;                  // decrease the count by the number of bytes where it overflows
-        memset64((void *)sock->buffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the buffer
-        sock->bufferIdx = 0;                                            // reset the index
+        input += (sock->bufferIdx + count) - VMM_PAGE; // move the pointer until where it overflows
+        count -= (sock->bufferIdx + count) - VMM_PAGE; // decrease the count by the number of bytes where it overflows
+        zero((void *)sock->buffer, VMM_PAGE);          // clear the buffer
+        sock->bufferIdx = 0;                           // reset the index
     }
 
     memcpy8((void *)((uint64_t)sock->buffer + sock->bufferIdx), (void *)input, count); // copy the buffer
@@ -67,7 +67,7 @@ void sockRead(struct sock_socket *sock, const char *str, size_t count)
 
     memcpy((void *)str, (void *)sock->buffer, count);               // copy the buffer
     memmove((void *)sock->buffer, sock->buffer + count - 1, count); // move the content after the requested count at the front
-    memset((void *)sock->buffer + count - 1, 0, 4096 - count + 1);  // clear the ghost of the content
+    zero((void *)sock->buffer + count - 1, 4096 - count + 1);       // clear the ghost of the content
     sock->bufferIdx = 0;                                            // reset the index
 }
 
@@ -96,7 +96,7 @@ struct sock_socket *sockGet(uint32_t id)
 // initialize the subsystem
 void sockInit()
 {
-    memset64(&rootSocket, 0, sizeof(struct sock_socket) / sizeof(uint64_t));
+    zero(&rootSocket, sizeof(struct sock_socket));
     sockCreate(); // create the first socket
 }
 

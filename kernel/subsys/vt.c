@@ -25,12 +25,12 @@ struct vt_terminal *vtCreate()
         }
     }
 
-    memset64(currentTerminal, 0, sizeof(struct vt_terminal) / sizeof(uint64_t)); // clear the terminal
-    currentTerminal->buffer = pmmPage();                                         // allocate the character buffer
-    currentTerminal->kbBuffer = pmmPage();                                       // allocate the keyboard buffer
-    memset64((void *)currentTerminal->buffer, 0, VMM_PAGE / sizeof(uint64_t));   // clear the character buffer
-    memset64((void *)currentTerminal->kbBuffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the keyboard buffer
-    currentTerminal->id = lastID++;                                              // set the ID
+    zero(currentTerminal, sizeof(struct vt_terminal)); // clear the terminal
+    currentTerminal->buffer = pmmPage();               // allocate the character buffer
+    currentTerminal->kbBuffer = pmmPage();             // allocate the keyboard buffer
+    zero((void *)currentTerminal->buffer, VMM_PAGE);   // clear the character buffer
+    zero((void *)currentTerminal->kbBuffer, VMM_PAGE); // clear the keyboard buffer
+    currentTerminal->id = lastID++;                    // set the ID
 
 #ifdef K_VT_DEBUG
     printks("vt: creating new terminal with ID %d\n\r", currentTerminal->id);
@@ -51,8 +51,8 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
     const char *input = str;               // input buffer
     if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow
     {
-        memset64((void *)vt->buffer, 0, VMM_PAGE / sizeof(uint64_t)); // clear the buffer
-        vt->bufferIdx = 0;                                            // reset the index
+        zero((void *)vt->buffer, VMM_PAGE); // clear the buffer
+        vt->bufferIdx = 0;                  // reset the index
     }
 
     memcpy8((void *)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer

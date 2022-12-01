@@ -11,14 +11,14 @@ vfs_fs_t rootFS;
 // initialize the subsystem
 void vfsInit()
 {
-    memset64(&rootFS, 0, sizeof(rootFS) / sizeof(uint64_t)); // clear the root filesystem
+    zero(&rootFS, sizeof(rootFS)); // clear the root filesystem
 
     // metadata of the rootfs
     rootFS.name = "rootfs";
     rootFS.mountName = "/";
 
-    memset64(&rootNode, 0, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // clear the root node
-    rootNode.filesystem = &rootFS;                                        // rootfs
+    zero(&rootNode, sizeof(rootNode)); // clear the root node
+    rootNode.filesystem = &rootFS;     // rootfs
 }
 
 // add a node
@@ -46,7 +46,9 @@ void vfsAdd(struct vfs_node_t node)
 // remove a node
 void vfsRemove(struct vfs_node_t *node)
 {
-    memset64(node, 0, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // clear the node
+    // todo: relink the nodes
+    // todo: call the filesystem
+    zero(node, sizeof(struct vfs_node_t)); // clear the node
 }
 
 // return the nodes
@@ -72,7 +74,7 @@ uint64_t vfsOpen(const char *name)
             goto next;
 
         // memory functions equivalent of sprintf("%s%s"...);
-        memset64((void *)tmp, 0, sizeof(tmp) / sizeof(uint64_t));
+        zero((void *)tmp, sizeof(tmp));
         memcpy((void *)tmp, currentNode->filesystem->mountName, strlen(currentNode->filesystem->mountName));
         memcpy((void *)(tmp + strlen(currentNode->filesystem->mountName)), currentNode->path, strlen(currentNode->path));
 
