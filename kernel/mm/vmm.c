@@ -12,6 +12,8 @@ void vmmInit()
 {
     baseTable = vmmCreateTable(true); // create the base table with hhdm
     vmmSwap(baseTable);               // swap the table
+    
+    printk("vmm: loaded a new page table\n");
 }
 
 // set flags of some entries given by the indices

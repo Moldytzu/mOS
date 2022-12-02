@@ -19,6 +19,8 @@ void vfsInit()
 
     zero(&rootNode, sizeof(rootNode)); // clear the root node
     rootNode.filesystem = &rootFS;     // rootfs
+
+    printk("vfs: rootfs mounted on %s\n", rootFS.mountName);
 }
 
 // add a node

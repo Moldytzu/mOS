@@ -131,11 +131,11 @@ void ps2Port2Handler()
 void ps2Init()
 {
     acpi_fadt_t *fadt = (acpi_fadt_t *)acpiGet("FADT");
-    if(fadt)
+    if (fadt)
     {
-        if(!(fadt->bootFlags & 0b10)) // detect if the pic chips are missing
+        if (!(fadt->bootFlags & 0b10)) // detect if the pic chips are missing
             return;
-    } 
+    }
 
     // disable intrerrupts
     cli();
@@ -282,4 +282,6 @@ void ps2Init()
 #ifdef K_PS2_DEBUG
     printks("ps2: initialized controller and detected %d port(s).\n\r", (uint8_t)(port1Present + port2Present));
 #endif
+
+    printk("ps2: detected %d ports\n", (uint8_t)(port1Present + port2Present));
 }

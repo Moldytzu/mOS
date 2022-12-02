@@ -157,6 +157,8 @@ void schedulerInit()
     void *task = pmmPage();                                                // create an empty page just for the idle task
     memcpy8(task, (void *)idleTask, VMM_PAGE);                             // copy the executable part
     schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0, 0, 0, 0); // create the idle task
+
+    printk("sched: initialised\n");
 }
 
 // enable the scheduler and then jump in the first task

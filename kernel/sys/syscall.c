@@ -41,8 +41,9 @@ uint32_t syscallGetCount()
 // init syscall handling
 void syscallInit(uint16_t vector)
 {
-    printk("Installing system call handler on vector 0x%x and enabling sysret/syscall...", vector);
     idtSetGate((void *)SyscallIntHandlerEntry, vector, IDT_InterruptGateU, true); // set up the gate
-    sysretInit();                                                                 // enable sysret/syscall capability
-    printk("done\n");
+    printk("syscall: installed syscall on 0x%x idt vector\n", vector);
+
+    sysretInit(); // enable sysret/syscall capability
+    printk("syscall: enabled syscall/sysret functionality\n");
 }

@@ -26,107 +26,49 @@ void kmain();
 // entry point of the kernel
 void _start()
 {
-    // initialize the fpu
-    fpuInit();
+    fpuInit(); // initialize the fpu
 
-    // initialize the bootloader interface
-    bootloaderInit();
+    bootloaderInit(); // initialize the bootloader interface
 
-    // initialize the initrd
-    initrdInit();
+    initrdInit(); // initialize the initrd
 
-    // initialize framebuffer
-    framebufferInit();
+    framebufferInit(); // initialize framebuffer
 
-    // display message
-    printk("Starting up mOS' kernel\n");
+    serialInit(); // initialize the serial port
 
-    // test for the required features
-    if (!fpuCheck())
-        panick("Unsupported CPU. SSE 4.2 isn't supported!");
+    pmmInit(); // initialize the physical memory manager
 
-    // display framebuffer information
-    printk("Got framebuffer with the size %dx%d.\n", bootloaderGetFramebuffer()->width, bootloaderGetFramebuffer()->height);
+    gdtInit(); // initialize the gdt
 
-    // initialize the serial port
-    printk("Initializing the Serial Port COM1...");
-    serialInit();
-    printk("done\n");
+    idtInit(); // initialize the idt
 
-    // initialize the physical memory manager
-    printk("Initializing the Physical Memory Manager...");
-    pmmInit();
-    printk("done\n");
+    vmmInit(); // initialize the virtual memory manager
 
-    // initialize the gdt
-    printk("Initializing the GDT...");
-    gdtInit();
-    printk("done\n");
+    heapInit(); // initialize the heap
 
-    // initialize the idt
-    printk("Initializing the IDT...");
-    idtInit();
-    printk("done\n");
+    vfsInit(); // initialize the virtual filesystem
 
-    // initialize the virtual memory manager
-    printk("Initializing the Virtual Memory Manager...");
-    vmmInit();
-    printk("done\n");
-
-    // initialize the heap
-    printk("Initializing the Heap...");
-    heapInit();
-    printk("done\n");
-
-    // initialize the virtual filesystem
-    printk("Initializing the Virtual Filesystem...");
-    vfsInit();
     initrdMount(); // mount the initrd
-    printk("done\n");
 
-    // initialize the pic chips
-    printk("Initializing the PICs...");
-    picInit();
-    printk("done\n");
+    picInit(); // initialize the pic chips
 
-    // initialize the timer
-    printk("Initializing the PIT...");
-    pitInit();
-    printk("done\n");
+    pitInit(); // initialize the timer
 
-    // initialize the scheduler
-    printk("Initializing the Scheduler...");
-    schedulerInit();
-    printk("done\n");
+    schedulerInit(); // initialize the scheduler
 
-    // initialize the acpi interface
-    printk("Initializing the ACPI interface...");
-    acpiInit();
-    printk("done\n");
+    acpiInit(); // initialize the acpi interface
 
-    // initialize the input subsystem
-    printk("Initializing the Input subystem...");
-    inputInit();
-    printk("done\n");
+    inputInit(); // initialize the input subsystem
 
-    // initialize the ps2 controller and devices if enabled
 #ifdef K_PS2
-    printk("Initializing the PS/2 devices...");
-    ps2Init();
-    printk("done\n");
+    ps2Init(); // initialize the ps2 controller and devices
 #endif
 
-    // initialize the ipc (sockets)
-    printk("Initializing IPC...");
-    sockInit();
-    printk("done\n");
+    sockInit(); // initialize the ipc (sockets)
 
-    // initialize system calls
-    syscallInit(0x51);
-
-    printk("Starting phase ended. Jumping in userspace.\n");
+    syscallInit(0x51); // initialize system calls
 
     kmain(); // call main
 
-    printk("Jump out of kmain.");
+    __builtin_unreachable(); // can't reach this
 }

@@ -188,4 +188,6 @@ void acpiInit()
 #ifdef K_ACPI_DEBUG
     printks("acpi: found %d pci functions in total\n\r", pciIndex);
 #endif
+
+    printk("acpi: detected %d pci functions\n", pciIndex);
 }

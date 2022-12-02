@@ -58,4 +58,6 @@ void idtInit()
     idtr.size--;                 // decrement to comply with the spec
     iasm("lidt %0" ::"m"(idtr)); // load the idtr
     sti();                       // enable intrerrupts
+
+    printk("idt: loaded size %d\n", idtr.size);
 }

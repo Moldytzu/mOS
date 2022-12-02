@@ -6,12 +6,14 @@ void serialInit()
     outb(COM1 + 1, 0);          // disable intrerrupts
     outb(COM1 + 3, 0b10000000); // enable DLAB
 
-    outb(COM1 + 0, 1); // divisor 1 (baud 115200 / 1)
+    outb(COM1 + 0, K_COM_BAUD_DIV); // set the divisor (baud = COM_BAUD_BASE / K_COM_BAUD_DIV)
     outb(COM1 + 1, 0);
 
     outb(COM1 + 3, 0b11); // line control register (8 bit character length, 1 stop bit, disable parity, disable break transmission, disable divisor latch)
 
     outb(COM1 + 2, 0b111); // fifo control register (enable fifo, clear them, disable dma ,trigger at 1 character)
+
+    printk("com1: %d bps baud\n", COM_BAUD_BASE / K_COM_BAUD_DIV);
 }
 
 // write string on the serial console

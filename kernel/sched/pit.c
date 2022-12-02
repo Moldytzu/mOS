@@ -54,6 +54,8 @@ void pitInit()
 #ifndef K_IDT_DIS_KIRQ
     sti(); // enable intrerrupts
 #endif
+
+    printk("pit: using mode 2 at %d hz\n", K_PIT_FREQ);
 }
 
 // get ticks since startup

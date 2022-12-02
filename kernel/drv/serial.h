@@ -11,6 +11,8 @@
 #define COM7 0x5E8
 #define COM8 0x4E8
 
+#define COM_BAUD_BASE 115200
+
 // write character on the serial console
 ifunc void serialWritec(char c)
 {

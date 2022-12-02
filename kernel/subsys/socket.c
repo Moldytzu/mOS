@@ -98,6 +98,8 @@ void sockInit()
 {
     zero(&rootSocket, sizeof(struct sock_socket));
     sockCreate(); // create the first socket
+
+    printk("sock: created the first socket\n");
 }
 
 // free the socket

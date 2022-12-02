@@ -19,6 +19,8 @@ void framebufferInit()
 
     cursor.colour = 0xFFFFFF; // white cursor
     cursor.X = cursor.Y = 0;  // upper left corner
+
+    printk("fb: display resolution is %dx%d\n", framebuffer->width, framebuffer->height);
 }
 
 // clear the framebuffer with a colour
@@ -42,7 +44,7 @@ void framebufferLoadFont(const char *name)
     return;
 
 error: // show an error message
-    bootloaderWrite("Failed to load font \"");
+    bootloaderWrite("fb: failed to load font \"");
     bootloaderWrite(name);
     bootloaderWrite("\" from the initrd.\n");
     hang();

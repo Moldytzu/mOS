@@ -210,6 +210,8 @@ void pmmInit()
         printks("pmm pool %d: %x -> %x (%d kb)\n",i,pools[i].alloc, pools[i].alloc + pools[i].available, pools[i].available / 1024);
 #endif
 
+    printk("pmm: %d mb available ram\n", pmmTotal().available / 1024 / 1024);
+
     bootloaderMove();
 }
 

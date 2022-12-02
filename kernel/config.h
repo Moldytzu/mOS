@@ -28,3 +28,9 @@
 #define K_PS2          // enable ps/2 support; If unsure: uncomment
 #define K_IDT_IST      // enable ist; If unsure: uncomment
 #define K_IDT_DIS_KIRQ // disable intrerrupts during kernel startup; If unsure: uncomment
+
+// Serial
+#define K_COM_BAUD_DIV 1 // divisor of the baud rate (base is 115200)
+
+// PIT
+#define K_PIT_FREQ 200 // frequency in hz of the pit

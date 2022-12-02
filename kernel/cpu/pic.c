@@ -28,4 +28,6 @@ void picInit()
 #ifndef K_IDT_DIS_KIRQ
     sti(); // enable intrerrupts
 #endif
+
+    printk("pic: irq base %d\n", PIC_IRQ_BASE);
 }

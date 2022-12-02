@@ -12,13 +12,13 @@ void initrdInit()
 
     if (!dsfs)
     {
-        bootloaderWrite("Failed to load the initrd from \"initrd.dsfs\".\nMake sure the file is in the root of the boot device.\n");
+        bootloaderWrite("dsfs: failed to load the initrd from \"initrd.dsfs\".\nmake sure the file is in the root of the boot device\n");
         hang();
     }
 
     if (dsfs->header.signature[0] != 'D' && dsfs->header.signature[1] != 'D')
     {
-        bootloaderWrite("Failed to verify the signature of the initrd.\n");
+        bootloaderWrite("dsfs: failed to verify the signature\n");
         hang();
     }
 }

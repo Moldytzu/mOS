@@ -32,6 +32,8 @@ void gdtInit()
     gdtr.size--;    // decrement size
     gdtLoad(&gdtr); // load gdt and flush segments
     tssLoad();      // load tss
+
+    printk("gdt: loaded cs 0x%x, ss 0x%x and tss 0x%x\n", 8, 8 * 2, 8 * 5);
 }
 
 // create a new segment in the table

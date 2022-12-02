@@ -16,6 +16,8 @@ void heapInit()
 {
     end = (void *)HEAP_START;
     expand(1); // create first segment
+
+    printk("heap: size %d kb\n", ((uint64_t)end - HEAP_START) / 1024);
 }
 
 // expand the heap
@@ -74,14 +76,14 @@ void *malloc(size_t size)
 
         if (currentSegment->size > size)
         {
-            split(currentSegment, size);  // split the segment at the required size
-            currentSegment->free = false; // mark the segment as busy
+            split(currentSegment, size);                                                         // split the segment at the required size
+            currentSegment->free = false;                                                        // mark the segment as busy
             return (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
         }
 
         if (currentSegment->size == size)
         {
-            currentSegment->free = false; // mark the segment as busy
+            currentSegment->free = false;                                                        // mark the segment as busy
             return (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
         }
     }
