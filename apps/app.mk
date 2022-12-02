@@ -16,13 +16,9 @@ INTERNALCFLAGS :=   		 \
 	-mno-red-zone        	 \
 	-Werror 			     \
 	-mcmodel=large           \
-	-msse                    \
-	-msse2                   \
-	-msse3                   \
-	-msse4                   \
-	-msse4.1                 \
-	-msse4.2                 \
-	-O2
+	-march=nocona            \
+	-O2                      \
+	-MMD
 
 # Internal linker flags that should not be changed by the user.
 INTERNALLDFLAGS :=         \

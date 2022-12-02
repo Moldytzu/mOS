@@ -30,12 +30,7 @@ INTERNALCFLAGS :=   		 \
 	-mcmodel=kernel      	 \
 	-Werror 			     \
 	-Wno-int-to-pointer-cast \
-	-msse                    \
-	-msse2                   \
-	-msse3                   \
-	-msse4                   \
-	-msse4.1                 \
-	-msse4.2                 \
+	-march=nocona            \
 	-MMD
 
 # Internal linker flags that should not be changed by the user.
