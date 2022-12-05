@@ -9,5 +9,4 @@
 ### kill the task if requested too many pages
 
 # bugs to fix
-### init.mx crash when on kvm
 ### memory leaks caused by vmmDestroy

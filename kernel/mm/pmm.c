@@ -17,12 +17,12 @@ void *pmmPage()
         pmm_pool_t *pool = &pools[i];
 
         // iterate over the bitmap bytes to find an available page
-        for (; pool->lastBitmapIndex < pool->bitmapBytes; pool->lastBitmapIndex += sizeof(uint64_t))
+        for (; pool->lastBitmapIndex < pool->bitmapBytes; pool->lastBitmapIndex++)
         {
-            for (; pool->lastMaskBit < 64; pool->lastMaskBit++, pool->lastPageIndex++)
+            for (; pool->lastMaskBit < 8; pool->lastMaskBit++, pool->lastPageIndex++)
             {
-                uint64_t mask = 0x8000000000000000 >> pool->lastMaskBit;
-                uint64_t *bytes = (uint64_t *)(pool->base + pool->bitmapBytes + pool->lastBitmapIndex);
+                uint8_t mask = 0b10000000 >> pool->lastMaskBit;
+                uint8_t *bytes = (uint8_t *)(pool->base + pool->lastBitmapIndex);
 
                 if (*bytes & mask) // check against the mask to see if the bit is set
                     continue;
@@ -34,9 +34,8 @@ void *pmmPage()
 
                 return (void *)(pool->alloc + 4096 * pool->lastPageIndex);
             }
-
-            if (pool->lastMaskBit == 64)
-                pool->lastMaskBit = 0;
+            
+            pool->lastMaskBit = 0;
         }
     }
 
@@ -62,12 +61,12 @@ void *pmmPages(uint64_t pages)
         pool = &pools[i];
 
         // iterate over the bitmap bytes to find an available string of pages
-        for (uint64_t b = 0; b < pool->bitmapBytes; b += sizeof(uint64_t))
+        for (uint64_t b = 0; b < pool->bitmapBytes; b++)
         {
-            for (uint8_t bits = 0; bits < 64; bits++, pageIndex++)
+            for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
             {
-                uint64_t mask = 0x8000000000000000 >> bits;
-                uint64_t *bytes = (uint64_t *)(pool->base + b + bits);
+                uint8_t mask = 0b10000000 >> bits;
+                uint8_t *bytes = (uint8_t *)(pool->base + b);
 
                 if (*bytes & mask) // check against the mask to see if the page is occupied
                 {
@@ -76,13 +75,12 @@ void *pmmPages(uint64_t pages)
                     continue;
                 }
 
-                if (base == NULL)
+                if(base == NULL)
                     base = (void *)(pool->alloc + 4096 * pageIndex);
 
-                if (string == pages)
+                if (++string == pages)
                     goto doReturn;
 
-                string++;
             }
         }
     }
@@ -95,21 +93,22 @@ doReturn:
     pageIndex = 0;
 
     // set the bits of the bitmap where necessary
-    for (volatile uint64_t b = 0; b < pool->bitmapBytes; b += sizeof(uint64_t))
+    for (uint64_t b = 0; b < pool->bitmapBytes; b++)
     {
-        for (volatile uint8_t bits = 0; bits < 64; bits++, pageIndex++)
+        for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
         {
+            uint8_t mask = 0b10000000 >> bits;
+            uint8_t *bytes = (uint8_t *)(pool->base + b);
+
             // check if we are in the region
-            if ((void *)(pool->alloc + 4096 * pageIndex) <= base)
+            if ((void *)(pool->alloc + 4096 * pageIndex) < base)
                 continue;
 
-            allocatedPages++;
-            *(uint64_t *)(pool->base + b + bits) |= 0x8000000000000000 >> bits;
-
+            *bytes |= mask;
             pool->available -= 4096;
             pool->used += 4096;
 
-            if (allocatedPages == string)
+            if (allocatedPages++ == string)
                 return base;
         }
     }
@@ -127,15 +126,15 @@ void pmmDeallocate(void *page)
         uint64_t pageIndex = 0;
 
         // iterate over the bitmap bytes to find an available string of pages
-        for (uint64_t b = 0; b < pool->bitmapBytes; b += sizeof(uint64_t))
+        for (uint64_t b = 0; b < pool->bitmapBytes; b++)
         {
-            for (uint8_t bits = 0; bits < 64; bits++, pageIndex++)
+            for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
             {
                 if ((void *)(pool->alloc + 4096 * pageIndex) != page)
                     continue;
 
-                uint64_t mask = 0x8000000000000000 >> bits;
-                uint64_t *bytes = (uint64_t *)(pool->base + b + bits);
+                uint64_t mask = 0b10000000 >> bits;
+                uint8_t *bytes = (uint8_t *)(pool->base + b);
                 *bytes &= ~mask; // unset the byte
 
                 pool->available += 4096;
@@ -154,18 +153,18 @@ void pmmDeallocatePages(void *page, uint64_t count)
         uint64_t pageIndex = 0;
 
         // iterate over the bitmap bytes to find an available string of pages
-        for (uint64_t b = 0; b < pool->bitmapBytes; b += sizeof(uint64_t))
+        for (uint64_t b = 0; b < pool->bitmapBytes; b++)
         {
-            for (uint8_t bits = 0; bits < 64; bits++, pageIndex++)
+            for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
             {
-                if ((void *)(pool->alloc + 4096 * pageIndex) <= page)
+                if ((void *)(pool->alloc + 4096 * pageIndex) < page)
                     continue;
 
                 if (count-- == 0)
                     return;
 
-                uint64_t mask = 0x8000000000000000 >> bits;
-                uint64_t *bytes = (uint64_t *)(pool->base + b + bits);
+                uint64_t mask = 0b10000000 >> bits;
+                uint8_t *bytes = (uint8_t *)(pool->base + b);
                 *bytes &= ~mask; // unset the byte
 
                 pool->available += 4096;
@@ -190,6 +189,9 @@ void pmmInit()
         // find the usable memory regions
         if (entry->type != LIMINE_MEMMAP_USABLE)
             continue;
+
+         if (entry->length < 1 * 1024 * 1024) // ignore entries lower than 1 mb to ignore legacy real mode ram
+             continue;
 
         // populate the pool metadata
         pmm_pool_t *pool = &pools[poolCount++];

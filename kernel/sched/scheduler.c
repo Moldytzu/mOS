@@ -17,7 +17,7 @@ bool enabled = false;              // enabled
 bool taskKilled = false;           // flag that indicates if task was killed
 bool skipSaving = false;           // flag that indicates if we should skip saving registers next tick
 
-extern void userspaceJump(uint64_t rip, uint64_t stack);
+extern void userspaceJump(uint64_t rip, uint64_t stack, uint64_t pagetable);
 
 // idle task
 void idleTask()
@@ -39,7 +39,7 @@ void schedulerSchedule(idt_intrerrupt_stack_t *stack)
     iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
 
     if (currentTask->sleep)
-        pitSet(200); // reset the timings
+        pitSet(K_PIT_FREQ); // reset the timings
 
     // handle vt mode and calculate cpu time only after switching the idle task
     if (currentTask->id != 0)
@@ -164,10 +164,9 @@ void schedulerInit()
 // enable the scheduler and then jump in the first task
 void schedulerEnable()
 {
-    cli();                                                          // disable intrerrupts, those will be enabled using the rflags
-    enabled = true;                                                 // enable the scheduler
-    vmmSwap(rootTask.pageTable);                                    // swap the page table
-    userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp); // jump in userspace
+    cli();                                                                                        // disable intrerrupts, those will be enabled using the rflags
+    enabled = true;                                                                               // enable the scheduler
+    userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp, (uint64_t)rootTask.pageTable); // jump in userspace
 }
 
 // add new task in the queue
