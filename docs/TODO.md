@@ -9,4 +9,4 @@
 ### kill the task if requested too many pages
 
 # bugs to fix
-### memory leaks when killing tasks
+### memory leaks when killing tasks (8 kb wasted)

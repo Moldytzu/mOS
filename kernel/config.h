@@ -24,6 +24,9 @@
 #define K_SOCK_DEBUG    // socket debug messages; If unsure: comment
 #endif
 
+// Constants
+#define K_STACK_SIZE 64 * 1024 // userspace stack size
+
 // Features
 #define K_PS2 // enable ps/2 support; If unsure: uncomment
 

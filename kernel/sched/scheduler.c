@@ -172,6 +172,9 @@ void schedulerEnable()
 // add new task in the queue
 struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf)
 {
+#ifdef K_SCHED_DEBUG
+    uint64_t a = pmmTotal().available;
+#endif
     struct sched_task *task = &rootTask; // first task
 
     if (task->pageTable) // check if the root task is valid
@@ -259,7 +262,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->syscallUsage = 1;
 
 #ifdef K_SCHED_DEBUG
-    printks("sched: added %s\n\r", name);
+    printks("sched: added %s and wasted %d KB\n\r", name, toKB(a - pmmTotal().available));
 #endif
 
     return task;
@@ -322,6 +325,10 @@ struct sched_task *schedulerGet(uint32_t tid)
 // kill the task with the id
 void schedulerKill(uint32_t tid)
 {
+#ifdef K_SCHED_DEBUG
+    uint64_t a = pmmTotal().available;
+#endif
+
     if (tid == 1)
         panick("Attempt to kill the init system.");
 
@@ -332,7 +339,7 @@ void schedulerKill(uint32_t tid)
 
     // deallocate some fields
     pmmDeallocatePages(task->stackBase, task->stackSize / VMM_PAGE); // stack
-    pmmDeallocate(task->enviroment); // enviroment
+    pmmDeallocate(task->enviroment);                                 // enviroment
 
     // deallocate the terminal if it's not used by another task
     uint64_t found = 0;
@@ -365,6 +372,10 @@ void schedulerKill(uint32_t tid)
     pmmDeallocate(task);         // free the task
 
     taskKilled = true;
+
+#ifdef K_SCHED_DEBUG
+    printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
+#endif
 
     // halt until next intrerrupt fires
     sti();
