@@ -31,7 +31,7 @@ ifunc uint8_t output()
 // wait for response
 ifunc void waitResponse()
 {
-    for (uint32_t timeout = 0; timeout < 0xFFFFF; timeout++) // wait for the output bit to be set in the status register
+    for (uint32_t timeout = 0; timeout < 0xFFFF; timeout++) // wait for the output bit to be set in the status register
         if (status() & 1)
             break;
 }
@@ -39,7 +39,7 @@ ifunc void waitResponse()
 // wait for input ready
 ifunc void waitInput()
 {
-    for (uint32_t timeout = 0; timeout < 0xFFFFF; timeout++) // wait for the input bit to not be set in the status register
+    for (uint32_t timeout = 0; timeout < 0xFFFF; timeout++) // wait for the input bit to not be set in the status register
         if (!(status() & 2))
             break;
 }
