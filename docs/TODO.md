@@ -9,4 +9,4 @@
 ### kill the task if requested too many pages
 
 # bugs to fix
-### memory leaks caused by vmmDestroy
+### memory leaks when killing tasks

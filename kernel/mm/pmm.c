@@ -34,7 +34,7 @@ void *pmmPage()
 
                 return (void *)(pool->alloc + 4096 * pool->lastPageIndex);
             }
-            
+
             pool->lastMaskBit = 0;
         }
     }
@@ -75,12 +75,11 @@ void *pmmPages(uint64_t pages)
                     continue;
                 }
 
-                if(base == NULL)
+                if (base == NULL)
                     base = (void *)(pool->alloc + 4096 * pageIndex);
 
                 if (++string == pages)
                     goto doReturn;
-
             }
         }
     }
@@ -190,8 +189,8 @@ void pmmInit()
         if (entry->type != LIMINE_MEMMAP_USABLE)
             continue;
 
-         if (entry->length < 1 * 1024 * 1024) // ignore entries lower than 1 mb to ignore legacy real mode ram
-             continue;
+        if (entry->length < 1 * 1024 * 1024) // ignore entries lower than 1 mb (don't mess with legacy real mode ram)
+            continue;
 
         // populate the pool metadata
         pmm_pool_t *pool = &pools[poolCount++];
@@ -208,8 +207,8 @@ void pmmInit()
 
 #ifdef K_PMM_DEBUG
     // display the memory pools
-    for(int i = 0; i < poolCount; i++)
-        printks("pmm pool %d: %x -> %x (%d kb)\n",i,pools[i].alloc, pools[i].alloc + pools[i].available, pools[i].available / 1024);
+    for (int i = 0; i < poolCount; i++)
+        printks("pmm pool %d: %x -> %x (%d kb)\n", i, pools[i].alloc, pools[i].alloc + pools[i].available, pools[i].available / 1024);
 #endif
 
     printk("pmm: %d mb available ram\n", pmmTotal().available / 1024 / 1024);
@@ -223,7 +222,7 @@ pmm_pool_t pmmTotal()
 
     zero(&total, sizeof(pmm_pool_t));
 
-    for (int i = 0; pools[i].base != NULL; i++) // loop thru each pool
+    for (int i = 0; i < poolCount; i++) // loop thru each pool
     {
         total.available += pools[i].available; // add each useful property
         total.used += pools[i].used;

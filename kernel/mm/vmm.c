@@ -12,7 +12,7 @@ void vmmInit()
 {
     baseTable = vmmCreateTable(true); // create the base table with hhdm
     vmmSwap(baseTable);               // swap the table
-    
+
     printk("vmm: loaded a new page table\n");
 }
 
@@ -192,7 +192,7 @@ vmm_page_table_t *vmmCreateTable(bool full)
     }
 
 #ifdef K_VMM_DEBUG
-    printks("vmm: wasted %d KB on a page table\n\r", toKB(a - pmmTotal().available));
+    printks("vmm: wasted %d KB on a new page table\n\r", toKB(a - pmmTotal().available));
 #endif
 
     return newTable; // return the created table
@@ -201,9 +201,13 @@ vmm_page_table_t *vmmCreateTable(bool full)
 // free a table
 void vmmDestroy(vmm_page_table_t *table)
 {
+    // fixme: this function deallocates one page more than needed?
+
 #ifdef K_VMM_DEBUG
-    printks("vmm: destroying page table at 0x%p\n\r", table);
+    uint64_t a = pmmTotal().available;
 #endif
+
+    // follow the top 3 levels of the page table
     for (int i = 0; i < 512; i++)
     {
         uint64_t address = table->entries[i];
@@ -211,8 +215,45 @@ void vmmDestroy(vmm_page_table_t *table)
         if (!vmmGetFlag(&address, VMM_ENTRY_PRESENT)) // we look for the present entries only
             continue;
 
-        pmmDeallocate((void *)vmmGetAddress(&address)); // deallocate it
+        // look deeper
+        for (int j = 0; j < 512; j++)
+        {
+            uint64_t a = ((vmm_page_table_t *)(vmmGetAddress(&address) << 12))->entries[j];
+
+            if (!a) // non-existent
+                continue;
+
+            if (!vmmGetFlag(&a, VMM_ENTRY_PRESENT)) // we look for the present entries only
+                continue;
+
+            for (int k = 0; k < 512; k++)
+            {
+                uint64_t b = ((vmm_page_table_t *)(vmmGetAddress(&a) << 12))->entries[k];
+
+                if (!b) // non-existent
+                    continue;
+
+                if (!vmmGetFlag(&b, VMM_ENTRY_PRESENT)) // we look for the present entries only
+                    continue;
+
+                b = align(b, 4096) + 4096; // round it down
+
+                pmmDeallocate((void *)b); // deallocate it
+            }
+
+            a = align(a, 4096) + 4096; // round it down
+
+            pmmDeallocate((void *)a); // deallocate it
+        }
+
+        address = align(address, 4096) + 4096; // round it down
+
+        pmmDeallocate((void *)address); // deallocate it
     }
 
     pmmDeallocate(table);
+
+#ifdef K_VMM_DEBUG
+    printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, toKB(pmmTotal().available - a));
+#endif
 }
