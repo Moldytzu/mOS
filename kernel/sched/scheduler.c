@@ -207,6 +207,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     void *stack = pmmPages(stackSize / VMM_PAGE); // allocate stack for the task
     zero(stack, stackSize);                       // clear the stack
 
+    // set the data in the structure
+    task->stackBase = stack;
+    task->stackSize = stackSize;
+
     for (size_t i = 0; i < stackSize; i += VMM_PAGE) // map task stack as user, read-write
         vmmMap(newTable, (void *)stack + i, stack + i, true, true);
 
@@ -325,6 +329,10 @@ void schedulerKill(uint32_t tid)
 
     if (!task)
         return;
+
+    // deallocate some fields
+    pmmDeallocatePages(task->stackBase, task->stackSize / VMM_PAGE); // stack
+    pmmDeallocate(task->enviroment); // enviroment
 
     // deallocate the terminal if it's not used by another task
     uint64_t found = 0;

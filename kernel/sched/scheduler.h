@@ -32,6 +32,8 @@ struct sched_task
     bool elf;                               // is elf
     uint64_t elfSize;                       // size of the executable
     void *elfBase;                          // base of the executable
+    void *stackBase;                        // base of the stack
+    uint64_t stackSize;                     // size of the stack
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task
