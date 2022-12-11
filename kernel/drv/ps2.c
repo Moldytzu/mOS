@@ -130,6 +130,8 @@ void ps2Port2Handler()
 // initialize the controller
 void ps2Init()
 {
+    // todo: interract with the mouse
+
     acpi_fadt_t *fadt = (acpi_fadt_t *)acpiGet("FADT");
     if (fadt)
     {

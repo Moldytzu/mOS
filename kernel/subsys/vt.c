@@ -94,6 +94,8 @@ void vtkbAppend(struct vt_terminal *vt, char c)
 // pop a key from the keyboard buffer
 char vtkbGet(struct vt_terminal *vt)
 {
+    // todo: return the lastly typed key
+
     char last = vt->kbBuffer[vt->kbBufferIdx];
     vt->kbBuffer[vt->kbBufferIdx--] = '\0'; // clear the character
 

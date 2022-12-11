@@ -37,5 +37,5 @@
 #define K_PIT_FREQ 200 // frequency in hz of the pit
 
 // IDT
-#define K_IDT_IST                       // enable ist; If unsure: uncomment
-#define K_IDT_DIS_KIRQ                  // disable intrerrupts during kernel startup; If unsure: uncomment
+#define K_IDT_IST      // enable ist; If unsure: uncomment
+#define K_IDT_DIS_KIRQ // disable intrerrupts during kernel startup; If unsure: uncomment

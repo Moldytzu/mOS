@@ -131,6 +131,8 @@ void *realloc(void *ptr, size_t size)
 // free a segment
 void free(void *ptr)
 {
+    // todo: merge the old segment if possible
+
     if (HEADER(ptr)->signature != 0x4321)
         panick("Misalligned free of a heap segment!");
 

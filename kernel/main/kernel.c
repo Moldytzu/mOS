@@ -54,6 +54,7 @@ void kmain()
 
 void exceptionHandler(idt_intrerrupt_stack_t *stack)
 {
+    // todo: move this in the idt
     vmmSwap(vmmGetBaseTable()); // swap to the base table
     if (stack->cs == 0x23)      // userspace
     {

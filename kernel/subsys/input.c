@@ -4,6 +4,8 @@
 
 struct vt_terminal *startTerminal, *currentTerminal;
 
+// todo: implement mouse support
+
 // append a char on the buffers
 void kbAppendChar(char c)
 {

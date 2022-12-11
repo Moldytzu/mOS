@@ -6,6 +6,8 @@
 struct sock_socket rootSocket;
 uint32_t lastSockID = 0;
 
+// todo: negociate the buffer size
+
 // create new socket and return it's address
 struct sock_socket *sockCreate()
 {
