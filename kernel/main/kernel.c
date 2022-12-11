@@ -59,12 +59,25 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack)
     if (stack->cs == 0x23)      // userspace
     {
         struct sock_socket *initSocket = sockGet(1);
+
+        const char *name = schedulerGetCurrent()->name;
+
+        printks("%s has crashed! Terminating it.\n\r", name);
+
+        if (initSocket)
+        {
+            char *str = malloc(8 + strlen(name));
+            zero(str, 6 + strlen(name));
+         
+            // construct a string based on the format "crash %s", name
+            memcpy(str, "crash ", 6);
+            memcpy(str + 6, name, strlen(name));
+
+            sockAppend(initSocket, str, strlen(str)); // announce that the application has crashed
         
-        if(initSocket == NULL)
-            printks("\n\r%s crashed! Terminating it.\n\r", schedulerGetCurrent()->name);
-        else 
-            sockAppend(initSocket, "crash <apllication>", strlen("crash <apllication>")); // announce that the application has crashed
-        
+            free(str);
+        }
+
         schedulerKill(schedulerGetCurrent()->id); // terminate the task
         schedulerSchedule(stack);                 // schedule next task
         return;

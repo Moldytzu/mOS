@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <string.h>
 
-#define SOCKET_SIZE (4096 - 24)
+#define SOCKET_SIZE 4096
 
 uint64_t sockID = 0;
 void *sockBuffer = NULL;
