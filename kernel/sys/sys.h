@@ -69,6 +69,7 @@ cwd: // copy the cwd before the input
 #include <sys/close.h>
 #include <sys/socket.h>
 #include <sys/power.h>
+#include <sys/driver.h>
 
-void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, struct sched_task *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power};
-const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power"};
+void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, struct sched_task *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver};
+const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver"};

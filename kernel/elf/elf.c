@@ -7,7 +7,7 @@
 #include <sched/scheduler.h>
 
 // load an elf
-struct sched_task *elfLoad(const char *path, int argc, char **argv)
+struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver)
 {
     uint64_t fd = vfsOpen(path);      // open the file
     uint64_t fdSize = vfsSize(fd);    // get the size
@@ -55,7 +55,7 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv)
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter
 
-    struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true); // add the task
-    free(cwd);                                                                                                                                      // free
-    return task;                                                                                                                                    // return the task
+    struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true, driver); // add the task
+    free(cwd);                                                                                                                                              // free
+    return task;                                                                                                                                            // return the task
 }

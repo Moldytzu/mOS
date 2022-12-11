@@ -5,6 +5,7 @@ GDBFLAGS ?= -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui
 QEMUFLAGS ?= -M smm=off -m 2G -cpu Icelake-Server -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga std -global VGA.vgamem_mb=32
 QEMUDEBUG = -no-reboot -no-shutdown -s -S &
 APPS = $(wildcard ./apps/*/.)
+DRIVERS = $(wildcard ./drivers/*/.)
 
 .PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps initrd libc
 
@@ -41,8 +42,11 @@ initrd:
 
 FORCE:
 
-# run make in every folder from apps
+# run make in every folder from apps and drivers
 $(APPS): FORCE
+	$(MAKE) -C $@ 
+
+$(DRIVERS): FORCE
 	$(MAKE) -C $@ 
 
 # make the libc
@@ -54,7 +58,7 @@ kernel:
 	$(MAKE) -C kernel setup
 	$(MAKE) -C kernel -j$(CORES)
 
-$(OUTPUT): limine kernel libc $(APPS) initrd 
+$(OUTPUT): limine kernel libc $(APPS) $(DRIVERS) initrd 
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
@@ -67,7 +71,7 @@ $(OUTPUT): limine kernel libc $(APPS) initrd
 	limine/limine-deploy $(OUTPUT)
 	rm -rf iso_root
 
-efi: limine kernel initrd $(APPS)
+efi: limine kernel initrd $(APPS) $(DRIVERS)
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf limine/limine.sys limine/limine-cd-efi.bin iso_root/

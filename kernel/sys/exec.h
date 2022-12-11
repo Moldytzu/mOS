@@ -41,8 +41,8 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, struct sche
                 input->argv[i] = PHYSICAL(input->argv[i]);
     }
 
-    struct sched_task *newTask = elfLoad(execPath, input->argc, input->argv); // do the loading
-    *ret = newTask->id;                                                       // set the pid
+    struct sched_task *newTask = elfLoad(execPath, input->argc, input->argv, 0); // do the loading
+    *ret = newTask->id;                                                          // set the pid
 
     if (input->shouldCreateNewTerminal)
         newTask->terminal = vtCreate()->id; // create new tty and set the id to it's id

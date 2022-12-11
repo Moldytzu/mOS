@@ -46,7 +46,7 @@ void kmain()
     } while (currentNode);
 #endif
 
-    if (!elfLoad("/init/init.mx", 0, 0)) // load the init executable
+    if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
 
     schedulerEnable(); // enable the schduler and jump in userspace
@@ -68,13 +68,13 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack)
         {
             char *str = malloc(8 + strlen(name));
             zero(str, 6 + strlen(name));
-         
+
             // construct a string based on the format "crash %s", name
             memcpy(str, "crash ", 6);
             memcpy(str + 6, name, strlen(name));
 
             sockAppend(initSocket, str, strlen(str)); // announce that the application has crashed
-        
+
             free(str);
         }
 

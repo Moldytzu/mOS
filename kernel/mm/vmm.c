@@ -10,8 +10,8 @@ vmm_page_table_t *baseTable;
 // initialize the virtual memory manager
 void vmmInit()
 {
-    baseTable = vmmCreateTable(true); // create the base table with hhdm
-    vmmSwap(baseTable);               // swap the table
+    baseTable = vmmCreateTable(true, false); // create the base table with hhdm
+    vmmSwap(baseTable);                      // swap the table
 
     printk("vmm: loaded a new page table\n");
 }
@@ -147,7 +147,7 @@ void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
 }
 
 // create a new table
-vmm_page_table_t *vmmCreateTable(bool full)
+vmm_page_table_t *vmmCreateTable(bool full, bool driver)
 {
 #ifdef K_VMM_DEBUG
     uint64_t a = pmmTotal().available;
@@ -162,13 +162,13 @@ vmm_page_table_t *vmmCreateTable(bool full)
     struct limine_kernel_address_response *kaddr = bootloaderGetKernelAddress();
 
     // map the system tables as kernel rw
-    vmmMap(newTable, newTable, newTable, false, true);                 // page table
-    vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), false, true); // tss
-    vmmMap(newTable, (void *)gdtGet(), (void *)gdtGet(), false, true); // gdt
+    vmmMap(newTable, newTable, newTable, driver, true);                 // page table
+    vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), driver, true); // tss
+    vmmMap(newTable, (void *)gdtGet(), (void *)gdtGet(), driver, true); // gdt
 
 #ifdef K_IDT_IST
-    vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], false, true); // kernel ist
-    vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], false, true); // user ist
+    vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], driver, true); // kernel ist
+    vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], driver, true); // user ist
 #endif
 
     // map memory map entries as kernel rw
@@ -182,12 +182,12 @@ vmm_page_table_t *vmmCreateTable(bool full)
         if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
         {
             for (size_t i = 0; i < entry->length; i += 4096)
-                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), false, true);
+                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), driver, true);
         }
         for (size_t i = 0; i < entry->length; i += 4096)
         {
-            vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), false, true);
-            vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), false, true);
+            vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), driver, true);
+            vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), driver, true);
         }
     }
 

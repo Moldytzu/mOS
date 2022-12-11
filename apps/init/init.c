@@ -64,6 +64,14 @@ void parseCFG()
     }
 }
 
+void startDrivers()
+{
+    // todo: load the driver list from the config
+
+    uint64_t pid = 0;
+    sys_driver(SYS_DRIVER_START, (uint64_t)(void *)"/init/test.drv", (uint64_t)&pid); // start a test driver
+}
+
 int main(int argc, char **argv)
 {
     // ensure that the pid is 1
@@ -79,7 +87,8 @@ int main(int argc, char **argv)
     // set tty display mode
     sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0);
 
-    parseCFG(); // parse config file
+    // parse the config
+    parseCFG();
 
     if (verbose)
         puts("m Init System is setting up your enviroment\n"); // display a welcome screen
@@ -92,6 +101,10 @@ int main(int argc, char **argv)
     sockBuffer = malloc(SOCKET_SIZE);
     assert(sockBuffer != NULL); // assert that the socket buffer is valid
 
+    // initialize the drivers
+    startDrivers();
+
+    // start a shell
     const char *enviroment = "PATH=/init/|"; // the basic enviroment
 
     while (1)

@@ -154,9 +154,9 @@ void schedulerInit()
 
     firstTerminal = vtCreate(); // create the first terminal
 
-    void *task = pmmPage();                                                // create an empty page just for the idle task
-    memcpy8(task, (void *)idleTask, VMM_PAGE);                             // copy the executable part
-    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0, 0, 0, 0); // create the idle task
+    void *task = pmmPage();                                                   // create an empty page just for the idle task
+    memcpy8(task, (void *)idleTask, VMM_PAGE);                                // copy the executable part
+    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0, 0, 0, 0, 0); // create the idle task
 
     printk("sched: initialised\n");
 }
@@ -170,7 +170,7 @@ void schedulerEnable()
 }
 
 // add new task in the queue
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf)
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
 {
 #ifdef K_SCHED_DEBUG
     uint64_t a = pmmTotal().available;
@@ -201,11 +201,12 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->elf = elf;                                 // elf status
     task->elfBase = execBase;                        // base of elf
     task->elfSize = execSize;                        // size of elf
+    task->isDriver = driver;                         // driver
     memcpy8(task->name, (char *)name, strlen(name)); // set the name
 
     // page table
-    vmm_page_table_t *newTable = vmmCreateTable(false); // create a new page table
-    task->pageTable = newTable;                         // set the new page table
+    vmm_page_table_t *newTable = vmmCreateTable(driver, driver); // create a new page table
+    task->pageTable = newTable;                                  // set the new page table
 
     void *stack = pmmPages(stackSize / VMM_PAGE); // allocate stack for the task
     zero(stack, stackSize);                       // clear the stack
@@ -222,28 +223,37 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 
     // initial registers
     task->intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
-    task->intrerruptStack.rflags = 0x202;                            // rflags, enable intrerrupts
     task->intrerruptStack.rsp = (uint64_t)stack + stackSize;         // task stack pointer
     task->intrerruptStack.rbp = task->intrerruptStack.rsp;           // stack frame pointer
-    task->intrerruptStack.cs = 0x23;                                 // code segment for user
-    task->intrerruptStack.ss = 0x1B;                                 // data segment for user
-    task->intrerruptStack.cr3 = (uint64_t)task->pageTable;           // page table
+
+    task->intrerruptStack.cs = (8 * 4) | 3; // code segment for user
+    task->intrerruptStack.ss = (8 * 3) | 3; // data segment for user
+
+    task->intrerruptStack.cr3 = (uint64_t)task->pageTable; // page table
+
+    if (driver)
+        task->intrerruptStack.rflags = 0b11001000000010; // enable intrerrupts and iopl
+    else
+        task->intrerruptStack.rflags = 0b1000000010; // enable intrerrupts
 
     // arguments
-    task->intrerruptStack.rdi = 1 + argc;        // arguments count (1, the name)
-    task->intrerruptStack.rsi = (uint64_t)stack; // the stack contains the array
-
-    uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
-
-    memcpy(stack + offset, name, strlen(name));        // copy the name
-    *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
-    offset += strlen(name) + 1;                        // move the offset after the name
-
-    for (int i = 0; i < argc; i++)
+    if (argv)
     {
-        memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
-        *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
-        offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
+        task->intrerruptStack.rdi = 1 + argc;        // arguments count (1, the name)
+        task->intrerruptStack.rsi = (uint64_t)stack; // the stack contains the array
+
+        uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
+
+        memcpy(stack + offset, name, strlen(name));        // copy the name
+        *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
+        offset += strlen(name) + 1;                        // move the offset after the name
+
+        for (int i = 0; i < argc; i++)
+        {
+            memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
+            *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
+            offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
+        }
     }
 
     // memory fields

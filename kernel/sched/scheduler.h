@@ -34,6 +34,7 @@ struct sched_task
     void *elfBase;                          // base of the executable
     void *stackBase;                        // base of the stack
     uint64_t stackSize;                     // size of the stack
+    bool isDriver;                          // is driver
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task
@@ -48,6 +49,6 @@ void schedulerPrioritize(uint32_t tid, uint8_t priority);
 void schedulerSetTerminal(uint32_t tid, uint32_t terminal);
 void schedulerKill(uint32_t tid);
 uint32_t schedulerGetLastID();
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf);
+struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
 struct sched_task *schedulerGet(uint32_t tid);
 struct sched_task *schedulerGetCurrent();

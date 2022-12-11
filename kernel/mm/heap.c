@@ -145,18 +145,6 @@ void free(void *ptr)
 
     segment->free = true; // mark the segment as free
 
-    if (segment->next != NULL && segment->next->free) // merge forward
-    {
-        segment->size += segment->next->size;
-        segment->next = segment->next->next; // bypass the node from the list
-    }
-
-    if (segment->prev != NULL && segment->prev->free) // merge backward
-    {
-        segment->prev->size += segment->size;
-        segment->prev->next = segment->next; // bypass the node from the list
-    }
-
 #ifdef K_HEAP_DEBUG
     printks("heap: freeing %d bytes\n\r", HEADER(ptr)->size);
 #endif

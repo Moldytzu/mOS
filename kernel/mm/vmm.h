@@ -74,7 +74,7 @@ ifunc vmm_index_t vmmIndex(uint64_t virtualAddress)
 
 // misc
 void vmmInit();
-vmm_page_table_t *vmmCreateTable(bool full);
+vmm_page_table_t *vmmCreateTable(bool full, bool user);
 
 // swap the page table
 ifunc void vmmSwap(void *newTable)
