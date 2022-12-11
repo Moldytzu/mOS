@@ -103,6 +103,8 @@ void framebufferWritec(char c)
 // write a string
 void framebufferWrite(const char *str)
 {
+    if(!str) return;
+
     for (int i = 0; str[i]; i++)
         framebufferWritec(str[i]); // write characters
 }

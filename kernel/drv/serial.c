@@ -19,6 +19,8 @@ void serialInit()
 // write string on the serial console
 void serialWrite(const char *str)
 {
+    if(!str) return;
+
     while (*str) // loop thru every character
     {
         if (*str == '\n')

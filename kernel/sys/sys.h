@@ -10,7 +10,7 @@
 #define PHYSICAL(virtual) ((void *)(vmmGetPhys(task->pageTable, (void *)(virtual))))
 
 #define STACK alignD(task->intrerruptStack.rsp, 4096)
-#define INSTACK(address) between(address, STACK - 4096, STACK + 4096)
+#define INSTACK(address) between(address, STACK - K_STACK_SIZE, STACK + K_STACK_SIZE)
 #define INAPPLICATION(address) between(address, TASK_BASE_ADDRESS, task->lastVirtualAddress + 4096)
 #define INBOUNDARIES(address) (INSTACK(((uint64_t)address)) || INAPPLICATION(((uint64_t)address)))
 

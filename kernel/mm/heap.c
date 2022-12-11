@@ -77,21 +77,22 @@ void *malloc(size_t size)
             continue;
         }
 
+        void *ptr = (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t));
+
         if (currentSegment->size > size)
         {
-            split(currentSegment, size);                                                         // split the segment at the required size
-            currentSegment->free = false;                                                        // mark the segment as busy
-            return (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
+            split(currentSegment, size);  // split the segment at the required size
+            currentSegment->free = false; // mark the segment as busy
+            return ptr;                   // return its content address
         }
 
         if (currentSegment->size == size)
         {
-            currentSegment->free = false;                                                        // mark the segment as busy
-            return (void *)((uint64_t)currentSegment + (uint64_t)sizeof(struct heap_segment_t)); // return its content address
+            currentSegment->free = false; // mark the segment as busy
+            zero(ptr, size);              // zero the contents to prevent old memory contents leaks
+            return ptr;                   // return its content address
         }
     }
-
-    // todo: corrupt the data in the segment to prevent leaking potential old memory contents
 
     expand(size);        // expand the heap
     return malloc(size); // retry
