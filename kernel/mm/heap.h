@@ -11,6 +11,7 @@ struct heap_segment_t
     bool free;
     size_t size;
     struct heap_segment_t *next;
+    struct heap_segment_t *prev;
 };
 
 void heapInit();

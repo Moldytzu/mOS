@@ -49,7 +49,10 @@ void expand(size_t size)
     else if (lastSegment->free == true) // if the last segment is free then extend it's size
         lastSegment->size += size;
     else // else link the segments together
+    {
+        next->prev = lastSegment;
         lastSegment->next = next;
+    }
 }
 
 // allocate on the heap
@@ -88,6 +91,8 @@ void *malloc(size_t size)
         }
     }
 
+    // todo: corrupt the data in the segment to prevent leaking potential old memory contents
+
     expand(size);        // expand the heap
     return malloc(size); // retry
 }
@@ -99,6 +104,7 @@ void split(struct heap_segment_t *segment, size_t size)
     new->free = true;
     new->size = segment->size - (size + sizeof(struct heap_segment_t));
     new->next = segment->next;
+    new->prev = segment->prev;
     new->signature = 0x4321;
 
     if (segment->next == NULL) // link the segment if the chain is over
@@ -131,12 +137,24 @@ void *realloc(void *ptr, size_t size)
 // free a segment
 void free(void *ptr)
 {
-    // todo: merge the old segment if possible
+    struct heap_segment_t *segment = HEADER(ptr);
 
-    if (HEADER(ptr)->signature != 0x4321)
+    if (segment->signature != 0x4321) // check the signature
         panick("Misalligned free of a heap segment!");
 
-    HEADER(ptr)->free = true; // mark the segment as free
+    segment->free = true; // mark the segment as free
+
+    if (segment->next != NULL && segment->next->free) // merge forward
+    {
+        segment->size += segment->next->size;
+        segment->next = segment->next->next; // bypass the node from the list
+    }
+
+    if (segment->prev != NULL && segment->prev->free) // merge backward
+    {
+        segment->prev->size += segment->size;
+        segment->prev->next = segment->next; // bypass the node from the list
+    }
 
 #ifdef K_HEAP_DEBUG
     printks("heap: freeing %d bytes\n\r", HEADER(ptr)->size);
