@@ -5,7 +5,6 @@
 #include <sched/scheduler.h>
 
 extern void sysretInit();
-extern void SyscallIntHandlerEntry();
 uint32_t count = 1;
 
 // handler called on syscall
@@ -41,9 +40,6 @@ uint32_t syscallGetCount()
 // init syscall handling
 void syscallInit(uint16_t vector)
 {
-    idtSetGate((void *)SyscallIntHandlerEntry, vector, IDT_InterruptGateU, true); // set up the gate
-    printk("syscall: installed syscall on 0x%x idt vector\n", vector);
-
     sysretInit(); // enable sysret/syscall capability
     printk("syscall: enabled syscall/sysret functionality\n");
 }

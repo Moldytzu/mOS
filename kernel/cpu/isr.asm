@@ -40,7 +40,7 @@ bits 64
     pop r15
 %endmacro
 
-global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, SyscallIntHandlerEntry, PS2Port1HandlerEntry, PS2Port2HandlerEntry
+global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, PS2Port1HandlerEntry, PS2Port2HandlerEntry
 extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler, exceptionHandler
 
 BaseHandlerEntry:
@@ -69,13 +69,6 @@ SyscallHandlerEntry:
     POP_REG
     add rsp, 8 ; hide that push
     o64 sysret ; return to userspace
-
-SyscallIntHandlerEntry:
-    cli
-    PUSH_REG
-    call syscallHandler ; call the syscall handler
-    POP_REG
-    iretq ; terminate intrerrupt and return to userspace
 
 PS2Port1HandlerEntry:
     PUSH_REG
