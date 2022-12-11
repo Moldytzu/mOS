@@ -93,7 +93,7 @@ void framebufferWritec(char c)
         return;
     }
 
-    if (cursor.X > framebuffer->width)
+    if (cursor.X + 8 > framebuffer->width)
         newline();
 
     framebufferPlotc(c, cursor.X, cursor.Y);

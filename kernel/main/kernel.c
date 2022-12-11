@@ -83,6 +83,8 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack)
         return;
     }
 
+    framebufferClear(0);
+
     printk("\nCATCHED EXCEPTION. INFORMATION:\n");
     printk("RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p", stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss);
     panick("Generic x86_64 exception catched.");
