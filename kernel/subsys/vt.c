@@ -91,18 +91,16 @@ void vtkbAppend(struct vt_terminal *vt, char c)
         vt->kbBufferIdx = 0;
 }
 
-// pop a key from the keyboard buffer
+// get firstly typed key from the keyboard buffer
 char vtkbGet(struct vt_terminal *vt)
 {
-    // todo: return the lastly typed key
+    if (!vt->kbBufferIdx) // we don't have anything to return
+        return 0;
 
-    char last = vt->kbBuffer[vt->kbBufferIdx];
-    vt->kbBuffer[vt->kbBufferIdx--] = '\0'; // clear the character
+    char first = vt->kbBuffer[0];                             // get the key
+    memmove(vt->kbBuffer, vt->kbBuffer + 1, vt->kbBufferIdx); // shift the buffer to the left
 
-    if (vt->kbBufferIdx < 0) // prevent buffer underflow
-        vt->kbBufferIdx = 0;
-
-    return last;
+    return first;
 }
 
 uint16_t mode;
