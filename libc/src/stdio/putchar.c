@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys.h>
+#include <mos/sys.h>
 #include <string.h>
 
 void putchar(int c)

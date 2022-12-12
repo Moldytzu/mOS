@@ -1,4 +1,4 @@
-#include <sys.h>
+#include <mos/sys.h>
 
 extern int main(int argc, char **argv);
 

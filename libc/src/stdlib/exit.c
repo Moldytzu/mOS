@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <sys.h>
+#include <mos/sys.h>
 
 void exit(int status)
 {

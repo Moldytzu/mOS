@@ -1,4 +1,4 @@
-#include <sys.h>
+#include <mos/sys.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -124,7 +124,7 @@ execute:
     argumentsCount = min(30, argumentsCount); // clamp the value to 30 arguments
     for (int i = 0; i < argumentsCount; i++)
         argv[i] = arguments[i + 1];
-    struct sys_exec_packet p = {0, enviroment, cwdBuffer, argumentsCount, argv};
+    sys_exec_packet_t p = {0, enviroment, cwdBuffer, argumentsCount, argv};
     sys_exec(cmdBuffer, &newPid, &p);
     do
     {

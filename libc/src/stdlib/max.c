@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <sys.h>
+#include <mos/sys.h>
 
 int max(int a, int b)
 {

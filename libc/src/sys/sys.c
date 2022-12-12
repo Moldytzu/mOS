@@ -1,4 +1,4 @@
-#include <sys.h>
+#include <mos/sys.h>
 
 void sys_exit(uint64_t status)
 {
@@ -25,7 +25,7 @@ void sys_display(uint8_t call, uint64_t arg1, uint64_t arg2)
     _syscall(SYS_DISPLAY, call, arg1, arg2, 0, 0);
 }
 
-void sys_exec(const char *path, uint64_t *pid, struct sys_exec_packet *packet)
+void sys_exec(const char *path, uint64_t *pid, sys_exec_packet_t *packet)
 {
     _syscall(SYS_EXEC, (uint64_t)path, (uint64_t)pid, (uint64_t)packet, 0, 0);
 }

@@ -1,4 +1,5 @@
-#include <sys.h>
+#include <mos/sys.h>
+#include <mos/drv.h>
 #include <stdlib.h>
 
 void _mdrvmain()

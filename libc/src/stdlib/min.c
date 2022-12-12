@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <sys.h>
+#include <mos/sys.h>
 
 int min(int a, int b)
 {

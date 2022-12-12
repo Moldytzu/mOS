@@ -1,4 +1,4 @@
-#include <sys.h>
+#include <mos/sys.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
             puts("Launching msh from /init/msh.mx\n");
 
         uint64_t pid, status;
-        struct sys_exec_packet p = {0, enviroment, "/init/", 0, 0};
+        sys_exec_packet_t p = {0, enviroment, "/init/", 0, 0};
         sys_exec("/init/msh.mx", &pid, &p);
 
         do

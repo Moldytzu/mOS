@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <sys.h>
+#include <mos/sys.h>
 #include <assert.h>
 #include <stdlib.h>
 

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys.h>
+#include <mos/sys.h>
 #include <string.h>
 
 int main(int argc, char **argv)

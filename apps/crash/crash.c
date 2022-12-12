@@ -1,4 +1,4 @@
-#include <sys.h>
+#include <mos/sys.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv)
