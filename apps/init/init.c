@@ -69,7 +69,7 @@ void startDrivers()
     // todo: load the driver list from the config
 
     uint64_t pid = 0;
-    sys_driver(SYS_DRIVER_START, (uint64_t)(void *)"/init/test.drv", (uint64_t)&pid); // start a test driver
+    sys_driver(SYS_DRIVER_START, (uint64_t)(void *)"/init/ps2.drv", (uint64_t)&pid); // start the ps2 driver
 }
 
 int main(int argc, char **argv)

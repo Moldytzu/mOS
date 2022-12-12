@@ -1,7 +1,7 @@
 include ../app.mk
 
 # append the output filename
-OUTFILE = $(OUTFOLDER)test.drv
+OUTFILE = $(OUTFOLDER)ps2.drv
 
 # the C sources
 CFILES := $(shell find . -type f -name '*.c')

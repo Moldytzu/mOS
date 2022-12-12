@@ -1,9 +1,9 @@
 #include <drv/ps2.h>
+#include <drv/input.h>
 #include <cpu/io.h>
 #include <cpu/idt.h>
 #include <cpu/pic.h>
 #include <sched/scheduler.h>
-#include <subsys/input.h>
 #include <fw/acpi.h>
 
 // translation table for the scan code set 1

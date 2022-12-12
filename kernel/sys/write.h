@@ -10,6 +10,13 @@ void write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, struct sch
 
     const char *charBuffer = (const char *)PHYSICAL(buffer); // get physical address of the buffer
 
+    if (task->isDriver)
+    {
+        // todo: use the kernel logger that doesn't exist
+        printks("%s", charBuffer);
+        return;
+    }
+
     if (fd == SYS_STDIN)
     {
         struct vt_terminal *t = vtGet(task->terminal); // terminal of the task

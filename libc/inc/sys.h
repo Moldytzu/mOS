@@ -33,6 +33,10 @@
 #define SYS_POWER_UPTIME 2
 
 #define SYS_DRIVER_START 0
+#define SYS_DRIVER_ANNOUNCE 1
+#define SYS_DRIVER_FLUSH 2
+
+#define SYS_DRIVER_TYPE_INPUT 1
 
 #define SYS_EXIT 0
 #define SYS_WRITE 1
