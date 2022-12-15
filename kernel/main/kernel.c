@@ -5,7 +5,6 @@
 #include <cpu/pic.h>
 #include <cpu/control.h>
 #include <drv/serial.h>
-#include <drv/ps2.h>
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
 #include <drv/input.h>

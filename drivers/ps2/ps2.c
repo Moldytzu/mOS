@@ -26,7 +26,6 @@ bool port2Present = false;
 uint8_t port2Type = PS2_TYPE_INVALID;
 
 drv_type_input_t *contextStruct;
-uint64_t pageTable = 0;
 
 // get status register of the controller
 ifunc uint8_t status()
