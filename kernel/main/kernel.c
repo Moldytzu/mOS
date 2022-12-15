@@ -5,7 +5,6 @@
 #include <cpu/pic.h>
 #include <cpu/control.h>
 #include <drv/serial.h>
-#include <drv/ps2.h>
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
 #include <drv/input.h>
@@ -52,47 +51,8 @@ void kmain()
     schedulerEnable(); // enable the schduler and jump in userspace
 }
 
-void exceptionHandler(idt_intrerrupt_stack_t *stack)
-{
-    // todo: move this in the idt
-    vmmSwap(vmmGetBaseTable()); // swap to the base table
-    if (stack->cs == 0x23)      // userspace
-    {
-        struct sock_socket *initSocket = sockGet(1);
-
-        const char *name = schedulerGetCurrent()->name;
-
-        printks("%s has crashed! Terminating it.\n\r", name);
-
-        if (initSocket)
-        {
-            char *str = malloc(8 + strlen(name));
-            zero(str, 6 + strlen(name));
-
-            // construct a string based on the format "crash %s", name
-            memcpy(str, "crash ", 6);
-            memcpy(str + 6, name, strlen(name));
-
-            sockAppend(initSocket, str, strlen(str)); // announce that the application has crashed
-
-            free(str);
-        }
-
-        schedulerKill(schedulerGetCurrent()->id); // terminate the task
-        schedulerSchedule(stack);                 // schedule next task
-        return;
-    }
-
-    framebufferClear(0);
-
-    printk("\nCATCHED EXCEPTION. INFORMATION:\n");
-    printk("RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p", stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss);
-    panick("Generic x86_64 exception catched.");
-}
-
 void panick(const char *msg)
 {
-    framebufferClear(0);
     printk("\n\nA kernel exception has happened.\n%s\n", msg);
     hang();
 }

@@ -64,6 +64,18 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
 
         break;
 
+    case 3: // redirect idt gate
+        if (!INBOUNDARIES(arg1))
+            return;
+
+        idtRedirect((void *)arg1, arg2, task->id);
+
+        break;
+    case 4: // reset idt gate
+
+        // todo: disable the idt redirection
+        break;
+
     default:
         break;
     }

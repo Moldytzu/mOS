@@ -12,3 +12,11 @@ ifunc void controlLoadCR3(uint64_t value)
 {
     iasm("mov %0, %%cr3" ::"r"(value));
 }
+
+// read cr2
+ifunc uint64_t controlReadCR2()
+{
+    uint64_t value;
+    iasm("mov %%cr2, %0" ::"r"(value));
+    return value;
+}

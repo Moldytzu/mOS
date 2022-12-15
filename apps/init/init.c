@@ -1,4 +1,5 @@
 #include <mos/sys.h>
+#include <mos/drv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -68,8 +69,7 @@ void startDrivers()
 {
     // todo: load the driver list from the config
 
-    uint64_t pid = 0;
-    sys_driver(SYS_DRIVER_START, (uint64_t)(void *)"/init/ps2.drv", (uint64_t)&pid); // start the ps2 driver
+    uint64_t pid = sys_drv_start("/init/ps2.drv"); // start the ps2 driver
 }
 
 int main(int argc, char **argv)

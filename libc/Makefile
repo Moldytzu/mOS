@@ -21,8 +21,8 @@ INTERNALCFLAGS :=   		 \
 	-mno-red-zone        	 \
 	-Werror 			     \
 	-mcmodel=large           \
-	-march=nocona            \
-	-O2
+	-O2                      \
+	-march=nocona            
 
 # Internal ASM flags that should not be changed by the user.
 INTERNALASMFLAGS := \

@@ -19,7 +19,6 @@
 #define K_VMM_DEBUG     // virtual memory manager debug messages; If unsure: comment
 #define K_PMM_DEBUG     // physical memory manager debug messages; If unsure: comment
 #define K_HEAP_DEBUG    // heap debug messages; If unsure: comment
-#define K_PS2_DEBUG     // ps/2 debug messages; If unsure: comment
 #define K_BLDR_DEBUG    // bootloader debug messages; If unsure: comment
 #define K_SOCK_DEBUG    // socket debug messages; If unsure: comment
 #endif
@@ -27,8 +26,6 @@
 // Constants
 #define K_STACK_SIZE 64 * 1024 // userspace stack size
 
-// Features
-#define K_PS2 // enable ps/2 support; If unsure: uncomment
 
 // Serial
 #define K_COM_BAUD_DIV 1 // divisor of the baud rate (base is 115200)

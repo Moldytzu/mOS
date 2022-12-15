@@ -45,7 +45,7 @@ void inputFlush()
     for (int i = 0; i < min(strlen(drv_type_input_s.keys), 16); i++)
     {
         char c = drv_type_input_s.keys[i];
-        
+
         // append the key to every terminal in a loop
         currentTerminal = startTerminal;
         while (currentTerminal)
@@ -54,4 +54,6 @@ void inputFlush()
             currentTerminal = currentTerminal->next;
         }
     }
+
+    zero(drv_type_input_s.keys, 16); // clear the buffer
 }

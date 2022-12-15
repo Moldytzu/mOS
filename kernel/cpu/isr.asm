@@ -40,17 +40,27 @@ bits 64
     pop r15
 %endmacro
 
-global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, PS2Port1HandlerEntry, PS2Port2HandlerEntry
-extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler, exceptionHandler
+%macro GEN_HANDLER 1
+global BaseHandlerEntry%1
 
-BaseHandlerEntry:
+BaseHandlerEntry%1:
     cli ; disable intrerrupts
     PUSH_REG
     mov rdi, rsp ; give the handler the stack frame
+    mov rsi, %1 ; give the intrerrupt number
     call exceptionHandler
     POP_REG
-    add rsp, 8 ; cancel the error code
     iretq
+%endmacro
+
+global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, PS2Port1HandlerEntry, PS2Port2HandlerEntry
+extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler, exceptionHandler
+
+%assign i 0
+%rep 256
+GEN_HANDLER i
+%assign i i+1
+%endrep
 
 PITHandlerEntry:
     push rax ; simulate error push
@@ -70,14 +80,11 @@ SyscallHandlerEntry:
     add rsp, 8 ; hide that push
     o64 sysret ; return to userspace
 
-PS2Port1HandlerEntry:
-    PUSH_REG
-    call ps2Port1Handler
-    POP_REG
-    iretq
-
-PS2Port2HandlerEntry:
-    PUSH_REG
-    call ps2Port2Handler
-    POP_REG
-    iretq
+section .data
+int_table:
+%assign i 0
+%rep 256
+    dq BaseHandlerEntry%+i
+%assign i i+1
+%endrep
+[GLOBAL int_table]
