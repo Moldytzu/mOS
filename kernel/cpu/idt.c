@@ -73,9 +73,20 @@ void idtInit()
 
 void idtRedirect(void *handler, uint8_t entry, uint32_t tid)
 {
+    if (tid != redirectTableMeta[entry] && tid != 0 && redirectTableMeta[entry] != 0) // don't allow to overwrite another driver's redirect
+        return;
+
     redirectTable[entry] = handler;
     redirectTableMeta[entry] = tid;
 }
+
+void idtClearRedirect(uint32_t tid)
+{
+    for (int i = 0; i < 256; i++)
+        if (redirectTableMeta[i] == tid)
+            redirectTable[i] = NULL;
+}
+
 extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
 
 const char *exceptions[] = {

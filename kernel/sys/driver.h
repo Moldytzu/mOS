@@ -11,7 +11,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
     if (!task->isDriver && task->id != 1) // unprivileged
         return;
 
-    if(!firstTime)
+    if (!firstTime)
     {
         // clear the context structures
         zero(&drv_type_input_s, sizeof(drv_type_input_s));
@@ -35,7 +35,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
         break;
 
     case 1: // driver announce
-        if(!INBOUNDARIES(arg2))
+        if (!INBOUNDARIES(arg2))
             return;
 
         uint64_t *retStruct = PHYSICAL(arg2);
@@ -45,7 +45,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
         case 1: // input
             *retStruct = (uint64_t)&drv_type_input_s;
             break;
-        
+
         default:
             *retStruct = 0;
             break;
@@ -53,7 +53,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
 
         break;
 
-    case 2: // flush struct updates
+    case 2:           // flush struct updates
         switch (arg1) // type
         {
         case 1: // input
@@ -68,12 +68,13 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
         if (!INBOUNDARIES(arg1))
             return;
 
-        idtRedirect((void *)arg1, arg2, task->id);
+        idtRedirect((void *)arg1, arg2, task->id); // redirect int arg2 to arg1
 
         break;
     case 4: // reset idt gate
 
-        // todo: disable the idt redirection
+        idtRedirect(NULL, arg1, task->id); // nullify
+
         break;
 
     default:

@@ -32,11 +32,13 @@ void expand(size_t size)
     struct heap_segment_t *next = (struct heap_segment_t *)end; // set new segment to the last address
 
     // allocate new heap pages
-    for (size_t p = 0; p < (size / VMM_PAGE) + 1; p++)
+    for (size_t p = 0; p < (size / VMM_PAGE) + 8; p++)
     {
         vmmMap(vmmGetBaseTable(), end, pmmPage(), false, true);
         end += VMM_PAGE;
     }
+
+    end -= VMM_PAGE * 8;
 
     // generate required metadata
     next->free = true;

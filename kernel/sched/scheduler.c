@@ -387,7 +387,8 @@ void schedulerKill(uint32_t tid)
     printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
 #endif
 
-    // todo: remove the idt redirections for drivers
+    // remove idt redirections
+    idtClearRedirect(tid);
 
     // halt until next intrerrupt fires
     sti();
