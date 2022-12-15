@@ -68,7 +68,15 @@ void kbInit()
 void kbHandle(uint8_t scancode)
 {
     if (scancode <= sizeof(scanCodeSet1))
-        contextStruct->keys[0] = scanCodeSet1[scancode - 1]; // set the key; todo: also fill the rest of the buffer
+    {
+        // find the first empty in the buffer
+        int i = 0;
+        for (; i < 16; i++)
+            if (!contextStruct->keys[i])
+                break;
+            
+        contextStruct->keys[i] = scanCodeSet1[scancode - 1]; // set the key at that index
+    }
 }
 
 void ps2Port1Handler()
