@@ -3,10 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-/*
-EXPERIMENTAL CODE! DONT TOUCH IF YOU DONT KNOW WHAT ARE YOU DOING (says moldu to moldu)
-*/
-
 // ports
 #define PS2_DATA 0x60
 #define PS2_STATUS 0x64
@@ -18,8 +14,6 @@ EXPERIMENTAL CODE! DONT TOUCH IF YOU DONT KNOW WHAT ARE YOU DOING (says moldu to
 #define PS2_TYPE_MOUSE_SCROLL 0x01
 #define PS2_TYPE_MOUSE_5BTN 0x2
 #define PS2_TYPE_KEYBOARD 0x3
-
-// commands
 
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
@@ -108,18 +102,15 @@ void kbInit()
 // keyboard scancode handler
 void kbHandle(uint8_t scancode)
 {
-    serialWritec(scancode);
-    // if (scancode <= sizeof(scanCodeSet1))
-    //    contextStruct->keys[0] = scanCodeSet1[scancode - 1]; // set the key; todo: also fill the rest of the buffer
+    if (scancode <= sizeof(scanCodeSet1))
+        contextStruct->keys[0] = scanCodeSet1[scancode - 1]; // set the key; todo: also fill the rest of the buffer
 }
 
 void ps2Port1Handler()
 {
     uint8_t data = inb(PS2_DATA);
-    while (1)
-        ;
-    // if (port1Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
-    //     kbHandle(data);
+    if (port1Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
+        kbHandle(data);
 
     picEOI();
 }
@@ -127,8 +118,8 @@ void ps2Port1Handler()
 void ps2Port2Handler()
 {
     uint8_t data = inb(PS2_DATA);
-    // if (port2Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
-    //     kbHandle(data);
+    if (port2Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
+        kbHandle(data);
 
     picEOI();
 }
@@ -138,9 +129,6 @@ const char *lookup[] = {"mouse", "mouse w/ scroll", "5 button mouse", "keyboard"
 bool initController()
 {
     // todo: interract with the mouse
-
-    // disable intrerrupts
-    // cli();
 
     // disable the devices
     command(0xAD);
@@ -268,9 +256,6 @@ bool initController()
     if (port2Present)
         outb(PIC_SLAVE_DAT, 0b11101111); // IRQ 12 (PS/2 port 2)
 
-    // enable intrerrupts
-    // sti();
-
     // initialize the keyboard
     kbInit();
 
@@ -280,22 +265,20 @@ bool initController()
 
 void _mdrvmain()
 {
-    printf("started experimental ps2 driver!\n");
+    printf("ps2: started experimental ps2 driver!\n");
 
     contextStruct = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT); // announce that we are an input-related driver
 
-    if (!initController())
+    if (!initController()) // initialise the controller
         return;
 
-    // some trickery to simulate some key presses until we implement the actual driver code
-    const char *toWrite = "ls\n";
-
-    for (int i = 0; i < strlen(toWrite); i++)
-        contextStruct->keys[i] = toWrite[i];
-
-    // flush the context
-    sys_drv_flush(SYS_DRIVER_TYPE_INPUT);
-
+    // flush the context endlessly
     while (1)
-        ;
+    {
+        // flush the context
+        sys_drv_flush(SYS_DRIVER_TYPE_INPUT);
+
+        for (int i = 0; i < 0xFFFFFF; i++) // todo: replace this with yield
+            ;
+    }
 }

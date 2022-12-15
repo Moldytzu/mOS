@@ -96,7 +96,7 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
             goto cnt;
         }
 
-        printks("redirecting %x to %x (requested by task %d with stack %x)\n", int_num, redirectTable[int_num], redirectTableMeta[int_num], task->intrerruptStack.rsp);
+        // printks("redirecting %x to %x (requested by task %d with stack %x)\n", int_num, redirectTable[int_num], redirectTableMeta[int_num], task->intrerruptStack.rsp);
 
         // this line gives the control to the driver
         callWithPageTable((uint64_t)redirectTable[int_num], (uint64_t)task->pageTable);
@@ -145,6 +145,9 @@ cnt:
     if (int_num < sizeof(exceptions) / 8)
         message = exceptions[int_num];
 
-    printk("RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p", stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss);
+    if (int_num == 0xE) // when a page fault occurs the faulting address is set in cr2
+        printk("CR2=0x%p ", controlReadCR2());
+
+    printk("RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p ERR=0x%p", stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss, stack->error);
     panick(message);
 }
