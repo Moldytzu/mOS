@@ -74,7 +74,7 @@ void kbHandle(uint8_t scancode)
         for (; i < 16; i++)
             if (!contextStruct->keys[i])
                 break;
-            
+
         contextStruct->keys[i] = scanCodeSet1[scancode - 1]; // set the key at that index
     }
 }
@@ -224,10 +224,7 @@ void _mdrvmain()
     // flush the context endlessly
     while (1)
     {
-        // flush the context
-        sys_drv_flush(SYS_DRIVER_TYPE_INPUT);
-
-        for (int i = 0; i < 0xFFFFFF; i++) // todo: replace this with yield
-            ;
+        sys_drv_flush(SYS_DRIVER_TYPE_INPUT); // flush the context
+        sys_yield();                          // yield
     }
 }

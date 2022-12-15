@@ -21,10 +21,8 @@ void syscallHandler(idt_intrerrupt_stack_t *registers)
     t->syscallUsage++; // increase the syscall usage
     count++;
 
-    // sti();
     if (registers->rdi < (sizeof(syscallHandlers) / sizeof(void *)))                                      // check if the syscall is in range
         syscallHandlers[registers->rdi](registers->rsi, registers->rdx, registers->r8, registers->r9, t); // call the handler
-    // cli();
 
     vmmSwap((void *)registers->cr3); // swap the page table back
 }

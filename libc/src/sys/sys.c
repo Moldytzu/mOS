@@ -69,3 +69,8 @@ void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2)
 {
     _syscall(SYS_DRIVER, call, arg1, arg2, 0, 0);
 }
+
+void sys_yield()
+{
+    asm volatile("int $0x20"); // simulate timer intrerrupt
+}
