@@ -18,7 +18,7 @@ uint16_t pciIndex = 0;
 // get a descriptor table with a signature
 acpi_sdt_t *acpiGet(const char *sig)
 {
-    if(!sdt)
+    if (!sdt)
         return NULL;
 
     bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
@@ -57,7 +57,7 @@ acpi_sdt_t *acpiGet(const char *sig)
 // enumerate the pci bus using mcfg
 void acpiEnumeratePCI()
 {
-    if(!mcfg)
+    if (!mcfg)
         return;
 
     size_t entries = (mcfg->header.length - sizeof(acpi_mcfg_t)) / sizeof(acpi_pci_config_t);
@@ -102,6 +102,16 @@ void acpiEnumeratePCI()
             }
         }
     }
+}
+
+acpi_pci_descriptor_t *pciGetFunctions()
+{
+    return pciFuncs;
+}
+
+uint64_t pciGetFunctionsNum()
+{
+    return pciIndex;
 }
 
 // reboot using acpi

@@ -172,6 +172,9 @@ pstruct
 }
 acpi_hpet_t;
 
+acpi_pci_descriptor_t *pciGetFunctions();
+uint64_t pciGetFunctionsNum();
+
 acpi_sdt_t *acpiGet(const char *sig);
 void acpiEnumeratePCI();
 void acpiInit();

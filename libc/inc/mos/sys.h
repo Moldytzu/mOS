@@ -4,7 +4,9 @@
 
 #define SYS_INPUT_KEYBOARD 0
 
-#define SYS_DISPLAY_CALL_SET 0
+#define SYS_DISPLAY_MODE 0
+#define SYS_DISPLAY_SET 1
+
 #define SYS_DISPLAY_TTY 1
 #define SYS_DISPLAY_FB 2
 
@@ -71,5 +73,5 @@ void sys_open(const char *path, uint64_t *fd);
 void sys_close(uint64_t fd);
 void sys_socket(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 void sys_power(uint8_t call, uint64_t arg1, uint64_t arg2);
-void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2);
+void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 void sys_yield();

@@ -15,3 +15,17 @@ ifunc uint8_t inb(uint16_t port) // in byte
          : "d"(port));
     return val;
 }
+
+ifunc void outw(uint16_t port, uint16_t val) // out byte
+{
+    iasm("outw %0, %1" ::"a"(val), "Nd"(port));
+}
+
+ifunc uint16_t inw(uint16_t port) // in byte
+{
+    uint16_t val;
+    iasm("inw %%dx,%%ax"
+         : "=a"(val)
+         : "d"(port));
+    return val;
+}

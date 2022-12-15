@@ -214,12 +214,12 @@ bool initController()
 
 void _mdrvmain()
 {
-    printf("ps2: started experimental ps2 driver!\n");
-
     contextStruct = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT); // announce that we are an input-related driver
 
     if (!initController()) // initialise the controller
         return;
+
+    printf("ps2: started ps2 driver!\n");
 
     // flush the context endlessly
     while (1)

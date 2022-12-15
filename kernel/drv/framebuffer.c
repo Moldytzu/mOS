@@ -4,14 +4,15 @@
 
 psf1_header_t *font;
 struct limine_file *fontMod;
-struct limine_framebuffer *framebuffer;
+struct limine_framebuffer framebuffer;
 
-framebuffer_cursor_info_t cursor; // info
+framebuffer_cursor_info_t cursor;              // info
+drv_type_framebuffer_t drv_type_framebuffer_s; // driver structure
 
 // init the framebuffer
 void framebufferInit()
 {
-    framebuffer = bootloaderGetFramebuffer(); // get the tag
+    memcpy(&framebuffer, bootloaderGetFramebuffer(), sizeof(struct limine_framebuffer)); // get the tag
 
     framebufferLoadFont("font-8x16.psf"); // load default font
 
@@ -20,14 +21,29 @@ void framebufferInit()
     cursor.colour = 0xFFFFFF; // white cursor
     cursor.X = cursor.Y = 0;  // upper left corner
 
-    printk("fb: display resolution is %dx%d\n", framebuffer->width, framebuffer->height);
+    // set in the context
+    drv_type_framebuffer_s.base = framebuffer.address;
+    drv_type_framebuffer_s.currentXres = drv_type_framebuffer_s.requestedXres = framebuffer.width;
+    drv_type_framebuffer_s.currentYres = drv_type_framebuffer_s.requestedYres = framebuffer.height;
+
+    printk("fb: display resolution is %dx%d\n", framebuffer.width, framebuffer.height);
+}
+
+void framebufferFlush()
+{
+    cursor.colour = 0xFFFFFF; // white cursor
+    cursor.X = cursor.Y = 0;  // upper left corner
+    framebuffer.address = drv_type_framebuffer_s.base;
+    framebuffer.width = drv_type_framebuffer_s.currentXres;
+    framebuffer.height = drv_type_framebuffer_s.currentYres;
+    framebuffer.pitch = drv_type_framebuffer_s.currentXres * 4;
 }
 
 // clear the framebuffer with a colour
 inline void framebufferClear(uint32_t colour)
 {
-    cursor.X = cursor.Y = 0;                                                                                                                // reset cursor position
-    memset64((void *)framebuffer->address, (uint64_t)colour << 32 | colour, (framebuffer->pitch * framebuffer->height) / sizeof(uint64_t)); // clear the screen
+    cursor.X = cursor.Y = 0;                                                                                                             // reset cursor position
+    memset64((void *)framebuffer.address, (uint64_t)colour << 32 | colour, (framebuffer.pitch * framebuffer.height) / sizeof(uint64_t)); // clear the screen
 }
 
 // load a font
@@ -53,7 +69,7 @@ error: // show an error message
 // plot pixel on the framebuffer
 inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {
-    *(uint32_t *)((uint64_t)framebuffer->address + x * framebuffer->bpp / 8 + y * framebuffer->pitch) = colour; // set the pixel to colour
+    *(uint32_t *)((uint64_t)framebuffer.address + x * framebuffer.bpp / 8 + y * framebuffer.pitch) = colour; // set the pixel to colour
 }
 
 // plot character on the framebuffer
@@ -77,7 +93,7 @@ ifunc void newline()
     cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
     cursor.X = 0;                   // reset cursor X
 
-    if (cursor.Y + font->charsize + 1 >= framebuffer->height)
+    if (cursor.Y + font->charsize + 1 >= framebuffer.height)
     {
         cursor.Y = 0;
         framebufferClear(0);
@@ -93,7 +109,7 @@ void framebufferWritec(char c)
         return;
     }
 
-    if (cursor.X + 8 > framebuffer->width)
+    if (cursor.X + 8 > framebuffer.width)
         newline();
 
     framebufferPlotc(c, cursor.X, cursor.Y);
@@ -103,7 +119,8 @@ void framebufferWritec(char c)
 // write a string
 void framebufferWrite(const char *str)
 {
-    if(!str) return;
+    if (!str)
+        return;
 
     for (int i = 0; str[i]; i++)
         framebufferWritec(str[i]); // write characters

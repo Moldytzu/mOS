@@ -14,7 +14,6 @@ void write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, struct sch
     {
         // todo: use the kernel logger that doesn't exist
         printks("%s", charBuffer);
-        return;
     }
 
     if (fd == SYS_STDIN)

@@ -65,9 +65,9 @@ void sys_power(uint8_t call, uint64_t arg1, uint64_t arg2)
     _syscall(SYS_POWER, call, arg1, arg2, 0, 0);
 }
 
-void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2)
+void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 {
-    _syscall(SYS_DRIVER, call, arg1, arg2, 0, 0);
+    _syscall(SYS_DRIVER, call, arg1, arg2, arg3, 0);
 }
 
 void sys_yield()

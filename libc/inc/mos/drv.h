@@ -15,16 +15,16 @@ struct stack_frame;
 #define ifunc static inline __attribute__((always_inline))
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 #define pstruct typedef struct __attribute__((__packed__))
-#define ISR(name) __attribute__((interrupt)) __attribute__((optimize("O0"))) __attribute__((__target__("no-sse"))) __attribute__((__target__("no-mmx"))) __attribute__((__target__("no-avx"))) void name(struct stack_frame *frame)
 
 #define SYS_DRIVER_START 0
 #define SYS_DRIVER_ANNOUNCE 1
 #define SYS_DRIVER_FLUSH 2
 #define SYS_DRIVER_IDT_SET 3
 #define SYS_DRIVER_IDT_RESET 4
-#define SYS_DRIVER_GET_PAGE_TABLE 5
+#define SYS_DRIVER_GET_PCI_DEVICE 5
 
 #define SYS_DRIVER_TYPE_INPUT 1
+#define SYS_DRIVER_TYPE_FRAMEBUFFER 2
 
 #define PIC_EOI_CMD 0x20
 #define PIC_INIT_CMD 0x11
@@ -50,20 +50,83 @@ struct stack_frame;
 #define PIC_IRQ_12 (PIC_IRQ_BASE + 12)
 #define PIC_IRQ_13 (PIC_IRQ_BASE + 13)
 
-typedef struct
+pstruct
 {
     uint8_t keys[16];        // key buffers
     uint16_t mouseX, mouseY; // mouse coordonates
-} drv_type_input_t;
+}
+drv_type_input_t;
+
+pstruct
+{
+    void *base; // base address
+    uint32_t currentXres, currentYres;
+    uint32_t requestedXres, requestedYres;
+}
+drv_type_framebuffer_t;
+
+pstruct
+{
+    uint16_t vendor;
+    uint16_t device;
+    uint16_t command;
+    uint16_t status;
+    uint8_t revision;
+    uint8_t programInterface;
+    uint8_t subclass;
+    uint8_t class;
+    uint8_t cacheLineSize;
+    uint8_t latencyTimer;
+    uint8_t headerType;
+    uint8_t BIST;
+}
+drv_pci_header_t;
+
+pstruct
+{
+    uint16_t VendorID;
+    uint16_t DeviceID;
+    uint16_t Command;
+    uint16_t Status;
+    uint8_t RevisionID;
+    uint8_t ProgramInterface;
+    uint8_t Subclass;
+    uint8_t Class;
+    uint8_t CacheLineSize;
+    uint8_t LatencyTimer;
+    uint8_t HeaderType;
+    uint8_t BIST;
+    uint32_t BAR0;
+    uint32_t BAR1;
+    uint32_t BAR2;
+    uint32_t BAR3;
+    uint32_t BAR4;
+    uint32_t BAR5;
+    uint32_t CardBusCISPtr;
+    uint16_t SubsystemVendorID;
+    uint16_t SubsystemID;
+    uint16_t ExpansionRomBaseAddr;
+    uint16_t CapabilitiesPtr;
+    uint16_t Rsv0;
+    uint16_t Rsv1;
+    uint16_t Rsv2;
+    uint8_t IntreruptLine;
+    uint8_t IntreruptPin;
+    uint8_t MinGrant;
+    uint8_t MaxLatency;
+}
+drv_pci_header0_t;
 
 uint64_t *sys_drv_announce(uint64_t type);
 uint64_t sys_drv_start(char *path);
-uint64_t sys_drv_page_table();
+drv_pci_header_t *sys_pci_get(uint32_t vendor, uint32_t device);
 void sys_drv_set_page_table(uint64_t);
 void sys_drv_flush(uint64_t type);
 void sys_idt_set(void *handler, uint64_t vector);
 void sys_idt_reset(uint64_t vector);
 void outb(uint16_t port, uint8_t val);
 uint8_t inb(uint16_t port);
+void outw(uint16_t port, uint16_t val);
+uint16_t inw(uint16_t port);
 void picEOI();
 void serialWritec(char c);

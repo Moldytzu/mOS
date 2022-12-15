@@ -36,6 +36,8 @@ char *kbGetBuffer()
 void inputInit()
 {
     startTerminal = vtGet(0);
+
+    zero(&drv_type_input_s, sizeof(drv_type_input_s)); // clear the context
 }
 
 // flush struct changes

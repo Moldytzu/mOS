@@ -24,14 +24,14 @@ void eventLoop()
 
     if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
     {
-        sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0); // set mode to tty
+        sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Shutdowning...");
         sys_power(SYS_POWER_SHUTDOWN, 0, 0);
     }
 
     if (strcmp(sockBuffer, "reboot") == 0) // shutdown command
     {
-        sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0); // set mode to tty
+        sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Rebooting...");
         sys_power(SYS_POWER_REBOOT, 0, 0);
     }
@@ -69,7 +69,8 @@ void startDrivers()
 {
     // todo: load the driver list from the config
 
-    uint64_t pid = sys_drv_start("/init/ps2.drv"); // start the ps2 driver
+    sys_drv_start("/init/ps2.drv"); // start the ps2 driver
+    sys_drv_start("/init/bga.drv"); // start the bga driver
 }
 
 int main(int argc, char **argv)
@@ -85,7 +86,10 @@ int main(int argc, char **argv)
     }
 
     // set tty display mode
-    sys_display(SYS_DISPLAY_CALL_SET, SYS_DISPLAY_TTY, 0);
+    sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
+
+    // set screen resolution to 1280x720
+    sys_display(SYS_DISPLAY_SET, 1280, 720);
 
     // parse the config
     parseCFG();

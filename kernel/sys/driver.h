@@ -2,22 +2,14 @@
 #include <sys/sys.h>
 #include <mm/pmm.h>
 #include <mm/heap.h>
+#include <drv/framebuffer.h>
+#include <fw/acpi.h>
 
-static bool firstTime = false;
-
-// driver (rsi = call, rdx = arg1, r8 = arg2)
-void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_task *task)
+// driver (rsi = call, rdx = arg1, r8 = arg2, r9 = arg3)
+void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct sched_task *task)
 {
     if (!task->isDriver && task->id != 1) // unprivileged
         return;
-
-    if (!firstTime)
-    {
-        // clear the context structures
-        zero(&drv_type_input_s, sizeof(drv_type_input_s));
-
-        firstTime = !firstTime;
-    }
 
     switch (call)
     {
@@ -46,6 +38,10 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
             *retStruct = (uint64_t)&drv_type_input_s;
             break;
 
+        case 2: // framebuffer
+            *retStruct = (uint64_t)&drv_type_framebuffer_s;
+            break;
+
         default:
             *retStruct = 0;
             break;
@@ -58,6 +54,10 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
         {
         case 1: // input
             inputFlush();
+            break;
+        case 2: // framebuffer
+            framebufferFlush();
+            break;
         default:
             break;
         }
@@ -71,9 +71,33 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sch
         idtRedirect((void *)arg1, arg2, task->id); // redirect int arg2 to arg1
 
         break;
-    case 4: // reset idt gate
-
+    case 4:                                // reset idt gate
         idtRedirect(NULL, arg1, task->id); // nullify
+        break;
+
+    case 5: // get pci header
+        if (!INBOUNDARIES(arg1))
+            return;
+
+        acpi_pci_header_t **header = (acpi_pci_header_t **)PHYSICAL(arg1);
+
+        volatile acpi_pci_descriptor_t *functions = pciGetFunctions();
+        volatile uint64_t num = pciGetFunctionsNum();
+
+        // search for the pci device
+        for (int i = 0; i < num; i++)
+        {
+            if (!functions[i].header)
+                continue;
+
+            if (functions[i].header->vendor == arg2 && functions[i].header->device == arg3)
+            {
+                vmmMap(task->pageTable, functions[i].header, functions[i].header, true, true); // map it
+                *header = functions[i].header;                                                 // pass the header
+
+                return;
+            }
+        }
 
         break;
 
