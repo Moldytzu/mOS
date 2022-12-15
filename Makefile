@@ -2,7 +2,7 @@ OUTPUT = out/dvd.iso
 OUTPUTEFI = out/efi.iso
 CORES = $(shell nproc)
 GDBFLAGS ?= -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue"
-QEMUFLAGS ?= -M smm=off -m 2G -cpu Icelake-Server -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga std -global VGA.vgamem_mb=32
+QEMUFLAGS ?= -M q35,smm=off -m 2G -cpu Icelake-Server -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga std -global VGA.vgamem_mb=32
 QEMUDEBUG = -no-reboot -no-shutdown -s -S &
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)

@@ -15,6 +15,19 @@
 #define PS2_TYPE_MOUSE_5BTN 0x2
 #define PS2_TYPE_KEYBOARD 0x3
 
+// commands
+#define PS2_CTRL_READ_CFG 0x20
+#define PS2_CTRL_WRITE_CFG 0x60
+#define PS2_CTRL_DISABLE_P2 0xA7
+#define PS2_CTRL_ENABLE_P2 0xA8
+#define PS2_CTRL_TEST_P2 0xA9
+#define PS2_CTRL_TEST_P1 0xAB
+#define PS2_CTRL_TEST_CTRL 0xAA
+#define PS2_CTRL_ENABLE_P1 0xAE
+#define PS2_CTRL_DISABLE_P1 0xAD
+#define PS2_CTRL_READ_OUTPUT 0xD0
+#define PS2_CTRL_WRITE_P2 0xD4
+
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
 bool controllerPresent = false;
@@ -27,63 +40,17 @@ uint8_t port2Type = PS2_TYPE_INVALID;
 
 drv_type_input_t *contextStruct;
 
-// get status register of the controller
-ifunc uint8_t status()
-{
-    return inb(PS2_STATUS);
-}
-
-// get output buffer of the controller
-ifunc uint8_t output()
-{
-    return inb(PS2_DATA);
-}
-
-// wait for response
-ifunc void waitResponse()
-{
-    for (uint32_t timeout = 0; timeout < 0xFFFF; timeout++) // wait for the output bit to be set in the status register
-        if (status() & 1)
-            break;
-}
-
-// wait for input ready
-ifunc void waitInput()
-{
-    for (uint32_t timeout = 0; timeout < 0xFFFF; timeout++) // wait for the input bit to not be set in the status register
-        if (!(status() & 2))
-            break;
-}
-
-// send data to the controller
-ifunc void write(uint8_t data)
-{
-    outb(PS2_DATA, data);
-}
-
-// send command to the controller
-ifunc void command(uint8_t cmd)
-{
-    outb(PS2_COMMAND, cmd);
-}
-
-// send data to the first port
-ifunc void port1Write(uint8_t data)
-{
-    waitInput();
-    // send data to the port
-    write(data);
-}
-
-// send data to the second port
-ifunc void port2Write(uint8_t data)
-{
-    // tell the controller that we're sending data to the second port
-    command(0xD4);
-    waitInput();
-    // send data to the port
-    write(data);
-}
+// macro functions
+#define status() inb(PS2_STATUS)
+#define output() inb(PS2_DATA)
+#define write(data) outb(PS2_DATA, data)
+#define command(cmd) outb(PS2_COMMAND, cmd)
+#define port1Write(data) write(data)
+#define port2Write(data)            \
+    {                               \
+        command(PS2_CTRL_WRITE_P2); \
+        write(data);                \
+    }
 
 // initialize the keyboard
 void kbInit()
@@ -94,8 +61,7 @@ void kbInit()
     else if (port2Type == PS2_TYPE_KEYBOARD)
         port2Write(0xF6); // set default parameters
 
-    waitResponse(); // wait for the reply
-    output();       // flush the buffer
+    output(); // flush the buffer
 }
 
 // keyboard scancode handler
@@ -124,6 +90,7 @@ void ps2Port2Handler()
 }
 
 const char *lookup[] = {"mouse", "mouse w/ scroll", "5 button mouse", "keyboard"};
+
 // initialize the controller
 bool initController()
 {
@@ -131,29 +98,23 @@ bool initController()
 
     // disable the devices
     command(0xAD);
-    waitInput();
-
     command(0xA7);
-    waitInput();
 
     // flush the output buffer
     output();
 
     // perform self-test
     command(0xAA);
-    waitResponse();
 
     if (output() != 0x55) // if the controller didn't reply with OK it means that it isn't present
         return false;
 
     // test the first port
-    command(0xAB);
-    waitResponse();
+    command(PS2_CTRL_TEST_P1);
     port1Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
 
     // test the second port
-    command(0xA9);
-    waitResponse();
+    command(PS2_CTRL_TEST_P2);
     port2Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
 
     if (!port1Present && !port2Present) // give up if there aren't any port present
@@ -162,21 +123,15 @@ bool initController()
     // enable the devices
     if (port1Present)
     {
-        command(0xAE); // enable the first port if it's present
-        waitResponse();
-
-        port1Write(0xFF); // reset device
-        waitResponse();
+        command(PS2_CTRL_ENABLE_P1);     // enable the first port if it's present
+        port1Write(0xFF);                // reset device
         port1Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
     }
 
     if (port2Present)
     {
-        command(0xA8); // enable the second port if it's present
-        waitResponse();
-
-        port2Write(0xFF); // reset device
-        waitResponse();
+        command(PS2_CTRL_ENABLE_P2);     // enable the second port if it's present
+        port2Write(0xFF);                // reset device
         port2Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
     }
 
@@ -184,27 +139,20 @@ bool initController()
     if (port1Present)
     {
         port1Write(0xF5); // send disable scanning
-        waitResponse();   // wait for acknoledgement
-        output();         // flush the buffer
         port1Write(0xF2); // send identify
-        waitResponse();   // wait for acknoledgement
-        output();         // flush the buffer
 
         uint8_t reply[2] = {0, 0};
-        waitResponse();      // wait for the reply
         reply[0] = output(); // flush the buffer
-        waitResponse();      // wait for the reply
         reply[1] = output(); // flush the buffer
 
         port1Write(0xF4); // send enable scanning
-        waitResponse();   // wait for acknoledgement
 
         // decode the reply bytes
-        if (reply[0] == 0x00 && reply[1] == 0x00)
+        if (reply[1] == 0x00)
             port1Type = PS2_TYPE_MOUSE;
-        else if (reply[0] == 0x03 && reply[1] == 0x00)
+        else if (reply[1] == 0x03)
             port1Type = PS2_TYPE_MOUSE_SCROLL;
-        else if (reply[0] == 0x04 && reply[1] == 0x00)
+        else if (reply[1] == 0x04)
             port1Type = PS2_TYPE_MOUSE_5BTN;
         else
             port1Type = PS2_TYPE_KEYBOARD;
@@ -215,27 +163,21 @@ bool initController()
     if (port2Present)
     {
         port2Write(0xF5); // send disable scanning
-        waitResponse();   // wait for acknoledgement
-        output();         // flush the buffer
         port2Write(0xF2); // send identify
-        waitResponse();   // wait for acknoledgement
-        output();         // flush the buffer
 
         uint8_t reply[2] = {0, 0};
-        waitResponse();      // wait for the reply
+
         reply[0] = output(); // flush the buffer
-        waitResponse();      // wait for the reply
         reply[1] = output(); // flush the buffer
 
         port2Write(0xF4); // send enable scanning
-        waitResponse();   // wait for acknoledgement
 
         // decode the reply bytes
-        if (reply[0] == 0x00 && reply[1] == 0x00)
+        if (reply[1] == 0x00)
             port2Type = PS2_TYPE_MOUSE;
-        else if (reply[0] == 0x03 && reply[1] == 0x00)
+        else if (reply[1] == 0x03)
             port2Type = PS2_TYPE_MOUSE_SCROLL;
-        else if (reply[0] == 0x04 && reply[1] == 0x00)
+        else if (reply[1] == 0x04)
             port2Type = PS2_TYPE_MOUSE_5BTN;
         else
             port2Type = PS2_TYPE_KEYBOARD;
