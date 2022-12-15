@@ -16,7 +16,7 @@ CFLAGS ?= -O2 -g
 LDFLAGS ?=
 
 # User controllable ASMFLAGS
-ASMFLAGS ?=
+ASMFLAGS ?= -gdwarf
 
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS :=   		 \

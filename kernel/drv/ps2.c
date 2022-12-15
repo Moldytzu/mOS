@@ -5,6 +5,7 @@
 #include <cpu/pic.h>
 #include <sched/scheduler.h>
 #include <fw/acpi.h>
+/*
 
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
@@ -287,3 +288,5 @@ void ps2Init()
 
     printk("ps2: detected %d ports\n", (uint8_t)(port1Present + port2Present));
 }
+
+*/

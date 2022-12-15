@@ -28,7 +28,7 @@
 #define K_STACK_SIZE 64 * 1024 // userspace stack size
 
 // Features
-#define K_PS2 // enable ps/2 support; If unsure: uncomment
+//#define K_PS2 // enable ps/2 support; If unsure: uncomment
 
 // Serial
 #define K_COM_BAUD_DIV 1 // divisor of the baud rate (base is 115200)
