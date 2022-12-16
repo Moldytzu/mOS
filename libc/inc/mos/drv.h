@@ -22,6 +22,7 @@ struct stack_frame;
 #define SYS_DRIVER_IDT_SET 3
 #define SYS_DRIVER_IDT_RESET 4
 #define SYS_DRIVER_GET_PCI_DEVICE 5
+#define SYS_DRIVER_IDENTITY_MAP 6
 
 #define SYS_DRIVER_TYPE_INPUT 1
 #define SYS_DRIVER_TYPE_FRAMEBUFFER 2
@@ -120,13 +121,15 @@ drv_pci_header0_t;
 uint64_t *sys_drv_announce(uint64_t type);
 uint64_t sys_drv_start(char *path);
 drv_pci_header_t *sys_pci_get(uint32_t vendor, uint32_t device);
-void sys_drv_set_page_table(uint64_t);
 void sys_drv_flush(uint64_t type);
 void sys_idt_set(void *handler, uint64_t vector);
 void sys_idt_reset(uint64_t vector);
+void sys_identity_map(void *address);
 void outb(uint16_t port, uint8_t val);
 uint8_t inb(uint16_t port);
 void outw(uint16_t port, uint16_t val);
 uint16_t inw(uint16_t port);
+void outl(uint16_t port, uint32_t val);
+uint32_t inl(uint16_t port);
 void picEOI();
 void serialWritec(char c);

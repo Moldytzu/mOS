@@ -96,6 +96,7 @@ void acpiEnumeratePCI()
                     d.bus = bus, d.device = device, d.function = function, d.header = header;
 
                     // put it in our list of pci functions
+                    // fixme: prevent overflowing by reallocating the buffer. it can only hold 4096 bytes (372 max pci functions that probably isn't a problem on standard systems)
                     pciFuncs[pciIndex++] = d;
                 }
             }

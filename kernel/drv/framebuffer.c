@@ -1,6 +1,7 @@
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
 #include <fw/bootloader.h>
+#include <mm/vmm.h>
 
 psf1_header_t *font;
 struct limine_file *fontMod;
@@ -33,10 +34,13 @@ void framebufferFlush()
 {
     cursor.colour = 0xFFFFFF; // white cursor
     cursor.X = cursor.Y = 0;  // upper left corner
+
     framebuffer.address = drv_type_framebuffer_s.base;
     framebuffer.width = drv_type_framebuffer_s.currentXres;
     framebuffer.height = drv_type_framebuffer_s.currentYres;
     framebuffer.pitch = drv_type_framebuffer_s.currentXres * 4;
+
+    vmmMap(vmmGetBaseTable(), framebuffer.address, framebuffer.address, false, true);
 }
 
 // clear the framebuffer with a colour

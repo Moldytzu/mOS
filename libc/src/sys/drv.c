@@ -2,7 +2,7 @@
 
 void outb(uint16_t port, uint8_t val) // out byte
 {
-    asm volatile("outb %0, %1" ::"a"(val), "Nd"(port));
+    iasm("outb %0, %1" ::"a"(val), "Nd"(port));
 }
 
 uint8_t inb(uint16_t port) // in byte
@@ -23,6 +23,20 @@ uint16_t inw(uint16_t port) // in word
 {
     uint16_t val;
     iasm("inw %%dx,%%ax"
+         : "=a"(val)
+         : "d"(port));
+    return val;
+}
+
+void outl(uint16_t port, uint32_t val)
+{
+    iasm("outl %0, %1" ::"a"(val), "d"(port));
+}
+
+uint32_t inl(uint16_t port)
+{
+    uint32_t val;
+    iasm("inl %1,%0"
          : "=a"(val)
          : "d"(port));
     return val;
@@ -64,9 +78,9 @@ drv_pci_header_t *sys_pci_get(uint32_t vendor, uint32_t device)
     return (drv_pci_header_t *)header;
 }
 
-void sys_drv_set_page_table(uint64_t table)
+void sys_identity_map(void *address)
 {
-    iasm("mov %0, %%cr3" ::"r"(table));
+    sys_driver(SYS_DRIVER_IDENTITY_MAP, (uint64_t)address, 0, 0);
 }
 
 void picEOI()

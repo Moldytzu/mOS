@@ -101,6 +101,10 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
 
         break;
 
+    case 6: // identity map
+        vmmMap(task->pageTable, (void *)arg1, (void *)arg1, true, true);
+        break;
+
     default:
         break;
     }
