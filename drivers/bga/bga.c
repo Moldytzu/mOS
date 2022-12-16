@@ -67,9 +67,6 @@ void enableVBE()
 
 bool detectBGA()
 {
-    if(sys_pci_get(0x1234, 0x1111) == NULL)
-        return false;
-
     device = (drv_pci_header0_t *)sys_pci_get(0x1234, 0x1111);
     return device != NULL; // if the adapter is present on the pci bus then it's present
 }
@@ -115,7 +112,7 @@ void _mdrvmain()
     fb = (drv_type_framebuffer_t *)sys_drv_announce(SYS_DRIVER_TYPE_FRAMEBUFFER); // announce that we are a framebuffer
 
     if (!detectBGA())
-        return;
+        abort();
 
     printf("bga: initialised\n");
 

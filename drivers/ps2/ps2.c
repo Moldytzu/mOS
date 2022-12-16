@@ -165,7 +165,7 @@ bool initController()
         else
             port1Type = PS2_TYPE_KEYBOARD;
 
-        printf("ps2: detected %s in port 1\n\r", lookup[port1Type]);
+        printf("ps2: detected %s in port 1\n", lookup[port1Type]);
     }
 
     if (port2Present)
@@ -190,7 +190,7 @@ bool initController()
         else
             port2Type = PS2_TYPE_KEYBOARD;
 
-        printf("ps2: detected %s in port 2\n\r", lookup[port2Type]);
+        printf("ps2: detected %s in port 2\n", lookup[port2Type]);
     }
 
     // set the intrerrupt handlers
