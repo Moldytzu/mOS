@@ -16,6 +16,8 @@ uint32_t lastTID = 0;              // last task ID
 bool enabled = false;              // enabled
 bool taskKilled = false;           // flag that indicates if task was killed
 bool skipSaving = false;           // flag that indicates if we should skip saving registers next tick
+void *toHandle = NULL;
+uint32_t toHandleID = 0;
 
 extern void userspaceJump(uint64_t rip, uint64_t stack, uint64_t pagetable);
 
@@ -27,6 +29,8 @@ void idleTask()
 }
 
 uint8_t simdContext[512] __attribute__((aligned(16)));
+
+extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
 
 // schedule the next task
 void schedulerSchedule(idt_intrerrupt_stack_t *stack)
@@ -44,6 +48,12 @@ void schedulerSchedule(idt_intrerrupt_stack_t *stack)
     // handle vt mode and calculate cpu time only after switching the idle task
     if (currentTask->id != 0)
         goto c;
+
+    if (toHandle)
+    {
+        struct sched_task *task = schedulerGet(toHandleID);
+        callWithPageTable((uint64_t)toHandle, (uint64_t)task->pageTable);
+    }
 
     switch (vtGetMode())
     {
@@ -396,6 +406,12 @@ void schedulerKill(uint32_t tid)
 
     while (1)
         ; // prevent returning back
+}
+
+void schedulerHandleDriver(void *handler, uint32_t tid)
+{
+    toHandle = handler;
+    toHandleID = tid;
 }
 
 // get last id

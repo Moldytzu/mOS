@@ -68,6 +68,12 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
         if (!INBOUNDARIES(arg1))
             return;
 
+        if (arg2 == 0xF00) // scheduler int
+        {
+            schedulerHandleDriver((void *)arg1, task->id);
+            return;
+        }
+
         idtRedirect((void *)arg1, arg2, task->id); // redirect int arg2 to arg1
 
         break;
