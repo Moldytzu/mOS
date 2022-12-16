@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
+// ids
+#define BGA_PCI_VENDOR 0x1234
+#define BGA_PCI_DEVICE 0x1111
+
 // ports
 #define BGA_INDEX 0x1CE
 #define BGA_DATA 0x1CF
@@ -67,7 +71,7 @@ void enableVBE()
 
 bool detectBGA()
 {
-    device = (drv_pci_header0_t *)sys_pci_get(0x1234, 0x1111);
+    device = (drv_pci_header0_t *)sys_pci_get(BGA_PCI_VENDOR, BGA_PCI_DEVICE);
     return device != NULL; // if the adapter is present on the pci bus then it's present
 }
 

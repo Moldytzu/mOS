@@ -1,7 +1,7 @@
 #include <fw/acpi.h>
 #include <fw/bootloader.h>
-#include <mm/heap.h>
 #include <mm/vmm.h>
+#include <mm/pmm.h>
 #include <cpu/io.h>
 #include <main/panic.h>
 
@@ -96,7 +96,6 @@ void acpiEnumeratePCI()
                     d.bus = bus, d.device = device, d.function = function, d.header = header;
 
                     // put it in our list of pci functions
-                    pciFuncs = realloc(pciFuncs, (pciIndex + 1) * sizeof(acpi_pci_descriptor_t));
                     pciFuncs[pciIndex++] = d;
                 }
             }
@@ -191,8 +190,8 @@ void acpiInit()
     // enumerate PCI bus if MCFG is present
     if (mcfg)
     {
-        pciFuncs = malloc(sizeof(acpi_pci_descriptor_t)); // allocate the first pci function
-        acpiEnumeratePCI();                               // do the enumeration
+        pciFuncs = pmmPage(); // allocate a buffer hold the functions
+        acpiEnumeratePCI();   // do the enumeration
     }
 
 #ifdef K_ACPI_DEBUG

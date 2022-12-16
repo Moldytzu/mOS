@@ -14,8 +14,6 @@ void display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sc
     case 1: // display set resolution
         drv_type_framebuffer_s.requestedXres = arg1;
         drv_type_framebuffer_s.requestedYres = arg2;
-
-        printks("set resolution to %d %d\n", drv_type_framebuffer_s.requestedXres, drv_type_framebuffer_s.requestedYres);
         break;
     default:
         break;

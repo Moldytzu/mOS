@@ -69,8 +69,9 @@ void startDrivers()
 {
     // todo: load the driver list from the config
 
-    sys_drv_start("/init/ps2.drv"); // start the ps2 driver
-    sys_drv_start("/init/bga.drv"); // start the bga driver
+    sys_drv_start("/init/ps2.drv");    // start the ps2 driver
+    sys_drv_start("/init/bga.drv");    // start the bga driver
+    sys_drv_start("/init/vmsvga.drv"); // start the vmware svga driver
 }
 
 int main(int argc, char **argv)
