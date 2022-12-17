@@ -143,54 +143,72 @@ bool initController()
         port2Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
     }
 
+    // fixme: device identifying is broken
+
     // detect the device types
     if (port1Present)
     {
+        // reset device
+        port1Write(0xFF);
+        output();
+        output();
+
         port1Write(0xF5); // send disable scanning
         port1Write(0xF2); // send identify
+        output();
+        output();
 
         uint8_t reply[2] = {0, 0};
-        reply[0] = output(); // flush the buffer
+        while((reply[0] = output()) == 0);
+        //reply[0] = output(); // flush the buffer
         reply[1] = output(); // flush the buffer
 
         port1Write(0xF4); // send enable scanning
 
         // decode the reply bytes
-        if (reply[1] == 0x00)
+        if (reply[0] == 0x00)
             port1Type = PS2_TYPE_MOUSE;
-        else if (reply[1] == 0x03)
+        else if (reply[0] == 0x03)
             port1Type = PS2_TYPE_MOUSE_SCROLL;
-        else if (reply[1] == 0x04)
+        else if (reply[0] == 0x04)
             port1Type = PS2_TYPE_MOUSE_5BTN;
-        else
+        else if (reply[0] == 0xAB)
             port1Type = PS2_TYPE_KEYBOARD;
 
-        printf("ps2: detected %s in port 1\n", lookup[port1Type]);
+        printf("ps2: detected %s in port 1 (%x %x)\n", lookup[port1Type], reply[0], reply[1]);
     }
 
     if (port2Present)
     {
+        // reset device
+        port2Write(0xFF);
+        output();
+        output();
+
         port2Write(0xF5); // send disable scanning
         port2Write(0xF2); // send identify
+        output();
+        output();
 
         uint8_t reply[2] = {0, 0};
-
-        reply[0] = output(); // flush the buffer
+        while((reply[0] = output()) == 0);
+        //reply[0] = output(); // flush the buffer
         reply[1] = output(); // flush the buffer
 
         port2Write(0xF4); // send enable scanning
 
         // decode the reply bytes
-        if (reply[1] == 0x00)
+        if (reply[0] == 0x00)
             port2Type = PS2_TYPE_MOUSE;
-        else if (reply[1] == 0x03)
+        else if (reply[0] == 0x03)
             port2Type = PS2_TYPE_MOUSE_SCROLL;
-        else if (reply[1] == 0x04)
+        else if (reply[0] == 0x04)
             port2Type = PS2_TYPE_MOUSE_5BTN;
-        else
+        else if (reply[0] == 0xAB)
             port2Type = PS2_TYPE_KEYBOARD;
 
-        printf("ps2: detected %s in port 2\n", lookup[port2Type]);
+         printf("ps2: detected %s in port 2 (%x %x)\n", lookup[port2Type], reply[0], reply[1]);
+
     }
 
     // set the intrerrupt handlers
