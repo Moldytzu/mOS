@@ -118,7 +118,7 @@ void updateScreen()
 
 bool setResolution(uint32_t xres, uint32_t yres)
 {
-    if (xres > maxWidth || yres > maxHeight) // invalid resolution
+    if ((xres > maxWidth || yres > maxHeight) || (yres == 0 || xres == 0)) // invalid resolution
         return false;
 
     writeRegister(SVGA_REG_WIDTH, xres);
@@ -188,6 +188,10 @@ void _mdrvmain()
 
     if (!initVMSVGA()) // try to initialise the device
         abort();
+
+    setResolution(640, 480); // set a default resolution
+
+    sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
     printf("vmsvga: initialised\n");
 
