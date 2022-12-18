@@ -15,6 +15,12 @@ void display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sc
         drv_type_framebuffer_s.requestedXres = arg1;
         drv_type_framebuffer_s.requestedYres = arg2;
         break;
+    case 2: // display get resolution
+        if(!INBOUNDARIES(arg1) || !INBOUNDARIES(arg2))
+            return;
+
+        *(uint64_t *)PHYSICAL(arg1) = drv_type_framebuffer_s.currentXres;
+        *(uint64_t *)PHYSICAL(arg2) = drv_type_framebuffer_s.currentYres;
     default:
         break;
     }

@@ -6,6 +6,7 @@
 
 #define SYS_DISPLAY_MODE 0
 #define SYS_DISPLAY_SET 1
+#define SYS_DISPLAY_GET 2
 
 #define SYS_DISPLAY_TTY 1
 #define SYS_DISPLAY_FB 2
