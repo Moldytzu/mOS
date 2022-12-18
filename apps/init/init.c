@@ -89,8 +89,8 @@ int main(int argc, char **argv)
     // set tty display mode
     sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
 
-    // set screen resolution to 800x600
-    sys_display(SYS_DISPLAY_SET, 800, 600);
+    // set screen resolution to 1024x768
+    sys_display(SYS_DISPLAY_SET, 1024, 768);
 
     // parse the config
     parseCFG();
