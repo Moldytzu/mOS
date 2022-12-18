@@ -22,21 +22,16 @@
 #define SVGA_REG_MAX_WIDTH 4
 #define SVGA_REG_MAX_HEIGHT 5
 #define SVGA_REG_BPP 7
+#define SVGA_REG_FB_START 13
 #define SVGA_REG_FB_OFFSET 14
 #define SVGA_REG_VRAM_SIZE 15
 #define SVGA_REG_FB_SIZE 16
+#define SVGA_REG_FIFO_START 18
 #define SVGA_REG_FIFO_SIZE 19
 #define SVGA_REG_CONFIG_DONE 20
 #define SVGA_REG_SYNC 21
 #define SVGA_REG_BUSY 22
-
-// fifo offsets
-#define SVGA_FIFO_MIN 0
-#define SVGA_FIFO_MAX 1
-#define SVGA_FIFO_NEXT 2
-#define SVGA_FIFO_STOP 3
-#define SVGA_FIFO_RESERVED 14
-#define SVGA_FIFO_NUM_REGS 16
+#define SVGA_REG_CAPABILITIES 17
 
 // fifo commands
 #define SVGA_CMD_UPDATE 1
@@ -45,12 +40,18 @@
 #define SVGA_ID_MAGIC 0x900000
 #define SVGA_GEN_ID(ver) (SVGA_ID_MAGIC << 8 | (ver))
 
+// fifo registers
+#define SVGA_FIFO_MIN 0
+#define SVGA_FIFO_MAX 1
+#define SVGA_FIFO_NEXT_CMD 2
+#define SVGA_FIFO_STOP 3
+
 drv_type_framebuffer_t *fb;
 drv_pci_header0_t *device;
 
 uint8_t version = 2;
 uint16_t ioBase = 0;
-
+uint32_t capabilites = 0;
 uint32_t maxWidth = 0;
 uint32_t maxHeight = 0;
 
@@ -78,45 +79,59 @@ void writeRegister(uint32_t reg, uint32_t value)
 
 void waitFIFO()
 {
-    writeRegister(SVGA_REG_SYNC, 1);    // enter syncronisation
-    while (readRegister(SVGA_REG_BUSY)) // wait for the busy flag to be clear
-        sys_yield();
+    writeRegister(SVGA_REG_SYNC, 1); // enter syncronisation
+    while (readRegister(SVGA_REG_BUSY))
+        ; // wait for the busy flag to be clear
 }
 
 void resetFIFO()
 {
     // reset fifo to some default values
     fifo = (uint32_t *)(uint64_t)fifoAddr;
-    fifo[SVGA_FIFO_MIN] = 293 * sizeof(uint32_t); // number of registers
-    fifo[SVGA_FIFO_MAX] = fifoSize;               // size
-    fifo[SVGA_FIFO_NEXT] = fifo[SVGA_FIFO_MIN];   // next command
-    fifo[SVGA_FIFO_STOP] = fifo[SVGA_FIFO_MIN];   // stop at command
+    fifo[SVGA_FIFO_MIN] = 293 * sizeof(uint32_t);   // number of registers
+    fifo[SVGA_FIFO_MAX] = fifoSize;                 // size
+    fifo[SVGA_FIFO_NEXT_CMD] = fifo[SVGA_FIFO_MIN]; // next command
+    fifo[SVGA_FIFO_STOP] = fifo[SVGA_FIFO_MIN];     // stop at command
 
     writeRegister(SVGA_REG_CONFIG_DONE, 1);
 }
 
-void writeFIFO(uint16_t data)
+// todo: fix this function
+void writeFIFO(uint32_t data)
 {
-    if (((fifo[SVGA_FIFO_NEXT] == fifo[SVGA_FIFO_MAX] - 4) && fifo[SVGA_FIFO_STOP] == fifo[SVGA_FIFO_MIN]) ||
-        (fifo[SVGA_FIFO_NEXT] + 4 == fifo[SVGA_FIFO_STOP]))
+    if (((fifo[SVGA_FIFO_NEXT_CMD] == fifo[SVGA_FIFO_MAX] - 4) && fifo[SVGA_FIFO_STOP] == fifo[SVGA_FIFO_MIN]) ||
+        (fifo[SVGA_FIFO_NEXT_CMD] + 4 == fifo[SVGA_FIFO_STOP]))
         waitFIFO();
 
-    fifo[fifo[SVGA_FIFO_NEXT]] = data;
-    fifo[SVGA_FIFO_NEXT] += 4;
+    fifo[fifo[SVGA_FIFO_NEXT_CMD]] = data;
+    fifo[SVGA_FIFO_NEXT_CMD] += 4;
 
-    if (fifo[SVGA_FIFO_NEXT] == fifo[SVGA_FIFO_MAX])
-        fifo[SVGA_FIFO_NEXT] = fifo[SVGA_FIFO_MIN];
+    if (fifo[SVGA_FIFO_NEXT_CMD] >= fifo[SVGA_FIFO_MAX])
+        fifo[SVGA_FIFO_NEXT_CMD] = fifo[SVGA_FIFO_MIN];
+}
+
+void forceUpdate()
+{
+    resetFIFO();
+    writeRegister(SVGA_REG_CONFIG_DONE, 0);
+
+    writeFIFO(SVGA_CMD_UPDATE);
+    writeFIFO(0);
+    writeFIFO(0);
+    writeFIFO(fb->currentXres);
+    writeFIFO(fb->currentYres);
+
+    writeRegister(SVGA_REG_CONFIG_DONE, 1);
+    waitFIFO();
 }
 
 bool setResolution(uint32_t xres, uint32_t yres)
 {
-    writeRegister(SVGA_REG_ENABLE, 0); // disable the output
     writeRegister(SVGA_REG_WIDTH, xres);
     writeRegister(SVGA_REG_HEIGHT, yres);
     writeRegister(SVGA_REG_BPP, 32);   // 32 bits per pixel (4 bytes per pixel as the kernel is using)
-    writeRegister(SVGA_REG_ENABLE, 1); // enable it back
+    writeRegister(SVGA_REG_ENABLE, 1); // make sure the device is enabled
     resetFIFO();
-    waitFIFO();
 
     // update the metadata
     fbOffset = readRegister(SVGA_REG_FB_OFFSET);      // read the offset to the guest buffer
@@ -125,16 +140,6 @@ bool setResolution(uint32_t xres, uint32_t yres)
     fb->currentYres = yres;
 
     return true;
-}
-
-void forceUpdate()
-{
-    writeFIFO(SVGA_CMD_UPDATE);
-    writeFIFO(0);
-    writeFIFO(0);
-    writeFIFO(fb->currentXres);
-    writeFIFO(fb->currentYres);
-    waitFIFO();
 }
 
 bool initVMSVGA()
@@ -146,28 +151,18 @@ bool initVMSVGA()
 
     device->Command |= 0x7; // enable memory space, io space and bus mastering
 
-    ioBase = device->BAR0 - 1;                   // set the io port base
-    fbAddr = device->BAR1;                       // get the framebuffer address
-    fifoAddr = device->BAR2;                     // get the fifo address
-    fbOffset = readRegister(SVGA_REG_FB_OFFSET); // read the offset to the guest buffer
+    ioBase = device->BAR0 - 1;                         // set the io port base; (for some reason you have to substract 1 otherwise it points to another register)
+    fbAddr = readRegister(SVGA_REG_FB_START);          // get the framebuffer address
+    fifoAddr = readRegister(SVGA_REG_FIFO_START);      // get the fifo address
+    fbOffset = readRegister(SVGA_REG_FB_OFFSET);       // read the offset to the guest buffer
+    capabilites = readRegister(SVGA_REG_CAPABILITIES); // read the capabilites
 
     printf("vmsvga: ioBase is %x, the fb is at %x and the fifo is at %x\n", ioBase, fbAddr + fbOffset, fifoAddr);
 
-    // check for the highest supported version
-    for (; version; version--)
-    {
-        writeRegister(SVGA_REG_ID, SVGA_GEN_ID(version));      // tell the device that we support the version
-        if (SVGA_GEN_ID(version) == readRegister(SVGA_REG_ID)) // check if the device supports it
-            break;
-
-        if (!version) // failed to negociate the version
-        {
-            printf("vmsvga: failed to negociate version\n");
-            return false;
-        }
-    }
-
-    printf("vmsvga: using version %d\n", version);
+    // check for the highest version
+    writeRegister(SVGA_REG_ID, SVGA_GEN_ID(version));      // tell the device that we support the version
+    if (SVGA_GEN_ID(version) != readRegister(SVGA_REG_ID)) // check if the device supports it
+        return false;
 
     // read max resolution
     maxWidth = readRegister(SVGA_REG_MAX_WIDTH);
@@ -182,8 +177,8 @@ bool initVMSVGA()
 
     printf("vmsvga: the fifo is %d kb, fb is %d kb and vram is %d kb\n", fifoSize / 1024, fbSize / 1024, vramSize / 1024);
 
-    // map and clear the fifo
-    for (int i = 0; i < fifoSize; i += 4096)
+    // map the fifo
+    for (int i = 0; i <= fifoSize; i += 4096)
         sys_identity_map((void *)(uint64_t)(fifoAddr + i)); // ask the kernel to map the address
 
     resetFIFO();
@@ -203,12 +198,13 @@ void _mdrvmain()
 
     printf("vmsvga: initialised\n");
 
-    setResolution(1024, 768);
+    setResolution(640, 480);
 
     sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER);
 
-    sys_idt_set(forceUpdate, 0xF00); // update on idle task
+    forceUpdate();
 
     while (1)
-        sys_yield(); // don't consume cpu time for nothing
+    {
+    }
 }

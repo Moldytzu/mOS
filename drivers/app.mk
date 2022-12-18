@@ -18,6 +18,7 @@ INTERNALCFLAGS :=   		 \
 	-mcmodel=large           \
 	-march=nocona            \
 	-O2                      \
+	-g                       \
 	-MMD
 
 # Internal linker flags that should not be changed by the user.
