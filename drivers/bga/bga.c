@@ -35,9 +35,7 @@
 
 // constants
 #define BGA_MAX_XRES 1280
-#define BGA_MAX_YRES 720
-
-// todo: fix higher resolutions than 720p result in a black screen
+#define BGA_MAX_YRES 768
 
 typedef struct
 {
@@ -66,7 +64,7 @@ void disableVBE()
 
 void enableVBE()
 {
-    writeRegister(BGA_REG_VBE_ENABLE, VBE_ENABLED | VBE_LFB_ENABLED); // enable vbe and the linear framebuffer
+    writeRegister(BGA_REG_VBE_ENABLE, VBE_ENABLED | VBE_LFB_ENABLED | VBE_NOCLEARMEM); // enable vbe and the linear framebuffer
 }
 
 bool detectBGA()
@@ -117,6 +115,10 @@ void _mdrvmain()
 
     if (!detectBGA())
         abort();
+
+    setResolution(640, 480); // set a default resolution
+
+    sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
     printf("bga: initialised\n");
 
