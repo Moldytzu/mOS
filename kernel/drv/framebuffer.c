@@ -40,14 +40,20 @@ void framebufferFlush()
     framebuffer.height = drv_type_framebuffer_s.currentYres;
     framebuffer.pitch = drv_type_framebuffer_s.currentXres * 4;
 
-    vmmMap(vmmGetBaseTable(), framebuffer.address, framebuffer.address, false, true);
+    // map the framebuffer
+    for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
+        vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, false, true);
 }
 
 // clear the framebuffer with a colour
 inline void framebufferClear(uint32_t colour)
 {
-    cursor.X = cursor.Y = 0;                                                                                                             // reset cursor position
-    memset64((void *)framebuffer.address, (uint64_t)colour << 32 | colour, (framebuffer.pitch * framebuffer.height) / sizeof(uint64_t)); // clear the screen
+    cursor.X = cursor.Y = 0; // reset cursor position
+
+    if (!colour) // if the colour is null then we want everything to be zeroed out
+        zero(framebuffer.address, framebuffer.pitch * framebuffer.height);
+    else
+        memset(framebuffer.address, colour, framebuffer.pitch * framebuffer.height); // todo: optimise this even though we don't clear with colour
 }
 
 // load a font
