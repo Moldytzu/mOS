@@ -96,32 +96,23 @@ void resetFIFO()
     writeRegister(SVGA_REG_CONFIG_DONE, 1);
 }
 
-// todo: fix this function
 void writeFIFO(uint32_t data)
 {
-    if (((fifo[SVGA_FIFO_NEXT_CMD] == fifo[SVGA_FIFO_MAX] - 4) && fifo[SVGA_FIFO_STOP] == fifo[SVGA_FIFO_MIN]) ||
-        (fifo[SVGA_FIFO_NEXT_CMD] + 4 == fifo[SVGA_FIFO_STOP]))
-        waitFIFO();
+    fifo[fifo[SVGA_FIFO_NEXT_CMD] / sizeof(uint32_t)] = data;
+    fifo[SVGA_FIFO_NEXT_CMD] += sizeof(uint32_t);
 
-    fifo[fifo[SVGA_FIFO_NEXT_CMD]] = data;
-    fifo[SVGA_FIFO_NEXT_CMD] += 4;
-
-    if (fifo[SVGA_FIFO_NEXT_CMD] >= fifo[SVGA_FIFO_MAX])
+    if (fifo[SVGA_FIFO_NEXT_CMD] >= fifo[SVGA_FIFO_MAX]) // wrap arround
         fifo[SVGA_FIFO_NEXT_CMD] = fifo[SVGA_FIFO_MIN];
 }
 
 void forceUpdate()
 {
-    resetFIFO();
-    writeRegister(SVGA_REG_CONFIG_DONE, 0);
-
     writeFIFO(SVGA_CMD_UPDATE);
     writeFIFO(0);
     writeFIFO(0);
     writeFIFO(fb->currentXres);
     writeFIFO(fb->currentYres);
 
-    writeRegister(SVGA_REG_CONFIG_DONE, 1);
     waitFIFO();
 }
 
@@ -202,9 +193,9 @@ void _mdrvmain()
 
     sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER);
 
-    forceUpdate();
-
     while (1)
     {
+        forceUpdate();
+        waitFIFO();
     }
 }
