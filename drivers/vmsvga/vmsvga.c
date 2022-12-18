@@ -105,7 +105,7 @@ void writeFIFO(uint32_t data)
         fifo[SVGA_FIFO_NEXT_CMD] = fifo[SVGA_FIFO_MIN];
 }
 
-void forceUpdate()
+void updateScreen()
 {
     writeFIFO(SVGA_CMD_UPDATE);
     writeFIFO(0);
@@ -118,11 +118,13 @@ void forceUpdate()
 
 bool setResolution(uint32_t xres, uint32_t yres)
 {
+    if (xres > maxWidth || yres > maxHeight) // invalid resolution
+        return false;
+
     writeRegister(SVGA_REG_WIDTH, xres);
     writeRegister(SVGA_REG_HEIGHT, yres);
     writeRegister(SVGA_REG_BPP, 32);   // 32 bits per pixel (4 bytes per pixel as the kernel is using)
     writeRegister(SVGA_REG_ENABLE, 1); // make sure the device is enabled
-    resetFIFO();
 
     // update the metadata
     fbOffset = readRegister(SVGA_REG_FB_OFFSET);      // read the offset to the guest buffer
@@ -189,13 +191,24 @@ void _mdrvmain()
 
     printf("vmsvga: initialised\n");
 
-    setResolution(640, 480);
-
-    sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER);
-
     while (1)
     {
-        forceUpdate();
-        waitFIFO();
+        updateScreen(); // send command to the device that we want the screen to be updated
+        waitFIFO();     // wait for the command to be processed
+
+        // wait for the kernel to request another resolution
+        if (fb->requestedXres && fb->requestedXres && fb->currentXres == fb->requestedXres && fb->currentYres == fb->requestedYres)
+            continue;
+
+        if (!setResolution(fb->requestedXres, fb->requestedYres)) // try to change the resolution
+        {
+            printf("vmsvga: failed to set %dx%d\n", fb->requestedXres, fb->requestedYres);
+            fb->requestedXres = fb->currentXres;
+            fb->requestedYres = fb->currentYres;
+        }
+
+        sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
+
+        printf("vmsvga: new resolution %dx%d\n", fb->currentXres, fb->currentYres);
     }
 }
