@@ -1,5 +1,5 @@
 #include <cpu/gdt.h>
-#include <mm/pmm.h>
+#include <mm/blk.h>
 #include <mm/vmm.h>
 
 gdt_tss_t *tss;
@@ -13,7 +13,7 @@ extern void tssLoad();
 void gdtInit()
 {
     // allocate the entries
-    entries = pmmPage();
+    entries = blkBlock(sizeof(gdt_system_segment_t) + 5 * sizeof(gdt_segment_t));
     zero(entries, VMM_PAGE);
 
     gdtr.size = 0; // reset the size
@@ -25,7 +25,7 @@ void gdtInit()
     gdtCreateSegment(0b11110010); // user data
     gdtCreateSegment(0b11111010); // user code
 
-    tss = pmmPage();                          // allocate tss
+    tss = blkBlock(sizeof(gdt_tss_t));        // allocate tss
     zero(tss, sizeof(gdt_tss_t));             // clear it
     gdtInstallTSS((uint64_t)tss, 0b10001001); // install it
 

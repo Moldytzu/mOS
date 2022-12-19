@@ -37,13 +37,13 @@ void _start()
 
     pmmInit(); // initialize the physical memory manager
 
+    blkInit(); // initialize the block allocator
+
     gdtInit(); // initialize the gdt
 
     idtInit(); // initialize the idt
 
     vmmInit(); // initialize the virtual memory manager
-
-    blkInit(); // initialize the block allocator
 
     vfsInit(); // initialize the virtual filesystem
 

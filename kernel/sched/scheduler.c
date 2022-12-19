@@ -194,10 +194,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 
         if (task->pageTable)
         {
-            task->next = pmmPage();                      // allocate next task if the current task is valid
-            zero(task->next, sizeof(struct sched_task)); // clear the thread
-            task->next->previous = task;                 // set the previous task
-            task = task->next;                           // set current task to the newly allocated task
+            task->next = blkBlock(sizeof(struct sched_task)); // allocate next task if the current task is valid
+            zero(task->next, sizeof(struct sched_task));      // clear the thread
+            task->next->previous = task;                      // set the previous task
+            task = task->next;                                // set current task to the newly allocated task
         }
     }
 
@@ -387,9 +387,9 @@ void schedulerKill(uint32_t tid)
 
     // deallocate the task
     struct sched_task *prev = task->previous;
-    prev->next = task->next;     // bypass this node
-    vmmDestroy(task->pageTable); // destroy the page table
-    pmmDeallocate(task);         // free the task
+    prev->next = task->next;                        // bypass this node
+    vmmDestroy(task->pageTable);                    // destroy the page table
+    blkDeallocate(task, sizeof(struct sched_task)); // free the task
 
     taskKilled = true;
 
