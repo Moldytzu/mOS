@@ -9,7 +9,7 @@
 #define PS2_COMMAND 0x64
 
 // types
-#define PS2_TYPE_INVALID 0xFF
+#define PS2_TYPE_INVALID 0x4
 #define PS2_TYPE_MOUSE 0x00
 #define PS2_TYPE_MOUSE_SCROLL 0x01
 #define PS2_TYPE_MOUSE_5BTN 0x2
@@ -27,6 +27,9 @@
 #define PS2_CTRL_DISABLE_P1 0xAD
 #define PS2_CTRL_READ_OUTPUT 0xD0
 #define PS2_CTRL_WRITE_P2 0xD4
+
+// constants
+#define PS2_TIMEOUT_YIELDS 10
 
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
@@ -97,7 +100,7 @@ void ps2Port2Handler()
     picEOI();
 }
 
-const char *lookup[] = {"mouse", "mouse w/ scroll", "5 button mouse", "keyboard"};
+const char *lookup[] = {"mouse", "mouse w/ scroll", "5 button mouse", "keyboard", "unknown"};
 
 // initialize the controller
 bool initController()
@@ -105,14 +108,27 @@ bool initController()
     // todo: interract with the mouse
 
     // disable the devices
-    command(0xAD);
-    command(0xA7);
+    command(PS2_CTRL_DISABLE_P1);
+    command(PS2_CTRL_DISABLE_P2);
 
     // flush the output buffer
     output();
 
+    // disable irqs in config byte
+    {
+        command(PS2_CTRL_READ_CFG);
+        uint8_t cfg = output();
+        cfg &= ~(0b11);   // disable IRQ
+        cfg |= 0b1000000; // enable translation
+        command(PS2_CTRL_WRITE_CFG);
+        write(cfg);
+    }
+
     // perform self-test
     command(0xAA);
+
+    for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++) // wait for the device to do it
+        sys_yield();
 
     if (output() != 0x55) // if the controller didn't reply with OK it means that it isn't present
         return false;
@@ -131,39 +147,58 @@ bool initController()
     // enable the devices
     if (port1Present)
     {
-        command(PS2_CTRL_ENABLE_P1);     // enable the first port if it's present
-        port1Write(0xFF);                // reset device
+        command(PS2_CTRL_ENABLE_P1); // enable the first port if it's present
+        port1Write(0xFF);            // reset device
+        sys_yield();
         port1Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
     }
 
     if (port2Present)
     {
-        command(PS2_CTRL_ENABLE_P2);     // enable the second port if it's present
-        port2Write(0xFF);                // reset device
+        command(PS2_CTRL_ENABLE_P2); // enable the second port if it's present
+        port2Write(0xFF);            // reset device
+        sys_yield();
         port2Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
     }
-
-    // fixme: device identifying is broken
 
     // detect the device types
     if (port1Present)
     {
-        // reset device
-        port1Write(0xFF);
-        output();
-        output();
-
         port1Write(0xF5); // send disable scanning
+
+        for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++) // wait for the device to do it
+        {
+            if (output() == 0xFA)
+                break;
+            else
+                sys_yield();
+        }
+
         port1Write(0xF2); // send identify
-        output();
-        output();
+
+        for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++) // wait for the device to do it
+        {
+            if (output() == 0xFA)
+                break;
+            else
+                sys_yield();
+        }
 
         uint8_t reply[2] = {0, 0};
-        while((reply[0] = output()) == 0);
-        //reply[0] = output(); // flush the buffer
-        reply[1] = output(); // flush the buffer
+        output();
+        sys_yield();
+        reply[0] = output(); // fill the buffer with the response word
+        reply[1] = output();
 
         port1Write(0xF4); // send enable scanning
+
+        for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++) // wait for the device to do it
+        {
+            if (output() == 0xFA)
+                break;
+            else
+                sys_yield();
+        }
 
         // decode the reply bytes
         if (reply[0] == 0x00)
@@ -174,28 +209,49 @@ bool initController()
             port1Type = PS2_TYPE_MOUSE_5BTN;
         else if (reply[0] == 0xAB)
             port1Type = PS2_TYPE_KEYBOARD;
+        else
+            port1Type = PS2_TYPE_INVALID;
 
-        printf("ps2: detected %s in port 1 (%x %x)\n", lookup[port1Type], reply[0], reply[1]);
+        printf("ps2: detected type %x %x in port 1\n", reply[0], reply[1]);
     }
 
     if (port2Present)
     {
-        // reset device
-        port2Write(0xFF);
-        output();
-        output();
-
         port2Write(0xF5); // send disable scanning
+
+        for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++) // wait for the device to do it
+        {
+            if (output() == 0xFA)
+                break;
+            else
+                sys_yield();
+        }
+
         port2Write(0xF2); // send identify
-        output();
-        output();
+
+        for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++) // wait for the device to do it
+        {
+            if (output() == 0xFA)
+                break;
+            else
+                sys_yield();
+        }
 
         uint8_t reply[2] = {0, 0};
-        while((reply[0] = output()) == 0);
-        //reply[0] = output(); // flush the buffer
-        reply[1] = output(); // flush the buffer
+        output();
+        sys_yield();
+        reply[0] = output(); // fill the buffer with the response word
+        reply[1] = output();
 
         port2Write(0xF4); // send enable scanning
+
+        for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++) // wait for the device to do it
+        {
+            if (output() == 0xFA)
+                break;
+            else
+                sys_yield();
+        }
 
         // decode the reply bytes
         if (reply[0] == 0x00)
@@ -206,9 +262,26 @@ bool initController()
             port2Type = PS2_TYPE_MOUSE_5BTN;
         else if (reply[0] == 0xAB)
             port2Type = PS2_TYPE_KEYBOARD;
+        else
+            port2Type = PS2_TYPE_INVALID;
 
-         printf("ps2: detected %s in port 2 (%x %x)\n", lookup[port2Type], reply[0], reply[1]);
+        printf("ps2: detected type %x %x in port 2\n", reply[0], reply[1]);
+    }
 
+    // enable irqs in config byte for the detected devices
+    {
+        command(PS2_CTRL_READ_CFG);
+        uint8_t cfg = output();
+
+        // enable irqs for the detected ports
+        if (port1Present)
+            cfg |= 0b1;
+
+        if (port2Present)
+            cfg |= 0b10;
+
+        command(PS2_CTRL_WRITE_CFG);
+        write(cfg);
     }
 
     // set the intrerrupt handlers
