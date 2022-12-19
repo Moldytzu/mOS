@@ -1,5 +1,5 @@
 #include <subsys/vt.h>
-#include <mm/heap.h>
+#include <mm/blk.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 
@@ -19,9 +19,9 @@ struct vt_terminal *vtCreate()
 
         if (currentTerminal->buffer)
         {
-            currentTerminal->next = malloc(sizeof(struct vt_terminal)); // allocate next terminal if the current terminal is valid
-            currentTerminal->next->previous = currentTerminal;          // set the previous terminal
-            currentTerminal = currentTerminal->next;                    // set current terminal to the newly allocated terminal
+            currentTerminal->next = blkBlock(sizeof(struct vt_terminal)); // allocate next terminal if the current terminal is valid
+            currentTerminal->next->previous = currentTerminal;            // set the previous terminal
+            currentTerminal = currentTerminal->next;                      // set current terminal to the newly allocated terminal
         }
     }
 
@@ -129,8 +129,8 @@ uint16_t vtGetMode()
 // free the terminal
 void vtDestroy(struct vt_terminal *vt)
 {
-    vt->previous->next = vt->next;       // bypass this node
-    pmmDeallocate((void *)vt->buffer);   // deallocate the buffer
-    pmmDeallocate((void *)vt->kbBuffer); // deallocate the buffer
-    free(vt);                            // free the terminal
+    vt->previous->next = vt->next;                 // bypass this node
+    pmmDeallocate((void *)vt->buffer);             // deallocate the buffer
+    pmmDeallocate((void *)vt->kbBuffer);           // deallocate the buffer
+    blkDeallocate(vt, sizeof(struct vt_terminal)); // free the terminal
 }

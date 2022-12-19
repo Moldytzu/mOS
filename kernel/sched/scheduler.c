@@ -1,7 +1,7 @@
 #include <sched/scheduler.h>
 #include <sched/pit.h>
 #include <mm/pmm.h>
-#include <mm/heap.h>
+#include <mm/blk.h>
 #include <cpu/gdt.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
@@ -267,7 +267,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     }
 
     // memory fields
-    task->allocated = malloc(sizeof(uint64_t));         // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    task->allocated = blkBlock(sizeof(uint64_t));       // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
     zero(task->allocated, sizeof(uint64_t));            // null its content
     task->allocatedIndex = 0;                           // the current index in the array
     task->lastVirtualAddress = (void *)TASK_BASE_ALLOC; // set the last address
@@ -379,7 +379,7 @@ void schedulerKill(uint32_t tid)
         if (task->allocated[i] != NULL)
             pmmDeallocate(task->allocated[i]);
 
-    free(task->allocated);
+    blkDeallocate(task->allocated, task->allocatedIndex * sizeof(uint64_t));
 
     // deallocate the elf (if present)
     if (task->elf)

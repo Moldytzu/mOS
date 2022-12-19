@@ -1,7 +1,7 @@
 #include <subsys/socket.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
-#include <mm/heap.h>
+#include <mm/blk.h>
 
 struct sock_socket rootSocket;
 uint32_t lastSockID = 0;
@@ -20,9 +20,9 @@ struct sock_socket *sockCreate()
 
         if (currentSocket->buffer)
         {
-            currentSocket->next = malloc(sizeof(struct sock_socket)); // allocate next socket if the current socket is valid
-            currentSocket->next->previous = currentSocket;            // set the previous socket
-            currentSocket = currentSocket->next;                      // set current socket to the newly allocated socket
+            currentSocket->next = blkBlock(sizeof(struct sock_socket)); // allocate next socket if the current socket is valid
+            currentSocket->next->previous = currentSocket;              // set the previous socket
+            currentSocket = currentSocket->next;                        // set current socket to the newly allocated socket
         }
     }
 
@@ -107,7 +107,7 @@ void sockInit()
 // free the socket
 void sockDestroy(struct sock_socket *sock)
 {
-    sock->previous->next = sock->next;   // bypass this socket
-    pmmDeallocate((void *)sock->buffer); // deallocate the buffer
-    free(sock);                          // free the socket
+    sock->previous->next = sock->next;               // bypass this socket
+    pmmDeallocate((void *)sock->buffer);             // deallocate the buffer
+    blkDeallocate(sock, sizeof(struct sock_socket)); // free the socket
 }

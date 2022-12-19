@@ -10,7 +10,6 @@
 #include <drv/input.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
-#include <mm/heap.h>
 #include <sched/pit.h>
 #include <sched/scheduler.h>
 #include <sys/syscall.h>

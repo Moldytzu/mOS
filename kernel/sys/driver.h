@@ -1,7 +1,6 @@
 #pragma once
 #include <sys/sys.h>
 #include <mm/pmm.h>
-#include <mm/heap.h>
 #include <drv/framebuffer.h>
 #include <fw/acpi.h>
 

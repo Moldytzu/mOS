@@ -1,5 +1,5 @@
 #include <fs/vfs.h>
-#include <mm/heap.h>
+#include <mm/blk.h>
 
 #define ISVALID(node) (node && node->filesystem)
 
@@ -38,8 +38,8 @@ void vfsAdd(struct vfs_node_t node)
 
         if (currentNode->filesystem)
         {
-            currentNode->next = malloc(sizeof(struct vfs_node_t)); // allocate next node if the current node is valid
-            currentNode = currentNode->next;                       // set current node to the newly allocated node
+            currentNode->next = blkBlock(sizeof(struct vfs_node_t)); // allocate next node if the current node is valid
+            currentNode = currentNode->next;                         // set current node to the newly allocated node
         }
     }
     memcpy64(currentNode, &node, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // copy the node information
