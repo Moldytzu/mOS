@@ -11,7 +11,7 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver)
 {
     uint64_t fd = vfsOpen(path);      // open the file
     uint64_t fdSize = vfsSize(fd);    // get the size
-    Elf64_Ehdr *elf = malloc(fdSize); // allocate the raw elf
+    Elf64_Ehdr *elf = pmmPages(fdSize / 4096 + 1); // allocate the raw elf
     if (!elf)                         // return if we didn't get the header
     {
         free(elf); // free it
@@ -47,7 +47,7 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver)
         }
     }
 
-    free(elf); // free the elf
+    pmmDeallocatePages(elf, fdSize / 4096 + 1); // free the elf
 
     char *cwd = malloc(strlen(path));
     zero(cwd, strlen(path)); // clear the string

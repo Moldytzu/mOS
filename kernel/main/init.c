@@ -11,6 +11,7 @@
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <mm/heap.h>
+#include <mm/blk.h>
 #include <sched/pit.h>
 #include <sched/scheduler.h>
 #include <sys/syscall.h>
@@ -42,6 +43,8 @@ void _start()
     idtInit(); // initialize the idt
 
     vmmInit(); // initialize the virtual memory manager
+
+    blkInit(); // initialize the block allocator
 
     heapInit(); // initialize the heap
 
