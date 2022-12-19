@@ -70,6 +70,8 @@ void acpiEnumeratePCI()
 
             acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)base;
 
+            vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, false, true); // map the header
+
             // non-existent bus
             if (baseHeader->device == UINT16_MAX || baseHeader->device == 0)
                 continue;
