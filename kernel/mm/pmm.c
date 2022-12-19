@@ -159,15 +159,15 @@ void pmmDeallocatePages(void *page, uint64_t count)
                 if ((void *)(pool->alloc + 4096 * pageIndex) < page)
                     continue;
 
-                if (count-- == 0)
-                    return;
-
                 uint64_t mask = 0b10000000 >> bits;
                 uint8_t *bytes = (uint8_t *)(pool->base + b);
                 *bytes &= ~mask; // unset the byte
 
                 pool->available += 4096;
                 pool->used -= 4096;
+
+                if (count-- == 0)
+                    return;
             }
         }
     }
