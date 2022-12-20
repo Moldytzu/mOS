@@ -49,6 +49,8 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver)
         vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff + i); // read next program header
     }
 
+    blkDeallocate(phdr, elf->e_ehsize); // clean up
+
     char *cwd = blkBlock(strlen(path));
     zero(cwd, strlen(path)); // clear the string
     memcpy(cwd, path, strlen(path));
