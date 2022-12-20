@@ -3,23 +3,31 @@ include ../app.mk
 # append the output filename
 OUTFILE = $(OUTFOLDER)cat.mx
 
-# the C sources
-CFILES := $(shell find . -type f -name '*.c')
+SRCDIR := src
+OBJDIR := obj
 
-# the object files
-OBJ := $(CFILES:.c=.o)
+rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
-# the header deps
-HEADER_DEPS := $(CFILES:.c=.d)
+SRCC = $(call rwildcard,$(SRCDIR),*.c)  
+ASMSRC = $(call rwildcard,$(SRCDIR),*.asm)  
+OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCC))
+OBJS += $(patsubst $(SRCDIR)/%.asm, $(OBJDIR)/%_asm.o, $(ASMSRC))
+DIRS = $(wildcard $(SRCDIR)/*)
 
 .PHONY: app
 
 # link the app
-app: $(OBJ)
-	cd obj && $(LD) $(OBJ) $(INTERNALLDFLAGS) -o $(OUTFILE)
+app: $(OBJS)
+	$(LD) $(OBJS) $(INTERNALLDFLAGS) -o $(OUTFILE)
 
-# the actual compilation rule
--include $(HEADER_DEPS)
-%.o: %.c
-	@ mkdir -p $(dir obj/$@)
-	$(CC) $(INTERNALCFLAGS) -c $< -o obj/$@
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	@ mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $^ -o $@
+
+# Compilation rules for *.asm files.
+$(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
+	@ mkdir -p $(dir $@)
+	$(ASM) $(ASMFLAGS) $(INTERNALASMFLAGS) $^ -o $@
+		
+clean:
+	rm -rf $(OUTFILE)

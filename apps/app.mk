@@ -22,11 +22,11 @@ INTERNALCFLAGS :=   		 \
 
 # Internal linker flags that should not be changed by the user.
 INTERNALLDFLAGS :=         \
-	-T../../app.ld         \
+	-T../app.ld            \
 	-nostdlib              \
 	-zmax-page-size=0x1000 \
 	-static                \
-	../../../libc/libc.a
+	../../libc.a
 
 # default output path of the app
-OUTFOLDER := ../../../roots/initrd/
+OUTFOLDER := ../../roots/initrd/

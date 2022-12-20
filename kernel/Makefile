@@ -1,4 +1,4 @@
-KERNEL := ../../out/kernel.elf
+KERNEL := ../out/kernel.elf
 
 # use cross c compiler
 CC := ~/cross_compiler/bin/x86_64-elf-gcc
@@ -20,7 +20,7 @@ ASMFLAGS ?= -gdwarf
 
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS :=   		 \
-	-I.                  	 \
+	-I./src/                 \
 	-std=gnu11           	 \
 	-ffreestanding       	 \
 	-fno-stack-protector 	 \
@@ -35,7 +35,7 @@ INTERNALCFLAGS :=   		 \
 
 # Internal linker flags that should not be changed by the user.
 INTERNALLDFLAGS :=         \
-	-T../linker.ld         \
+	-Tlinker.ld         \
 	-nostdlib              \
 	-zmax-page-size=0x1000 \
 	-static
@@ -45,40 +45,42 @@ INTERNALASMFLAGS := \
 	-felf64
 
 # Use find to glob all *.c files in the directory and extract the object names.
-CFILES := $(shell find . -type f -name '*.c')
-ASMFILES := $(shell find . -type f -name '*.asm')
-OBJ := $(CFILES:.c=.o)
-OBJ += $(ASMFILES:.asm=.o)
-HEADER_DEPS := $(CFILES:.c=.d)
-HEADER_DEPS += $(ASMFILES:.asm=.d)
+SRCDIR := src
+OBJDIR := obj
+
+rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+
+SRCC = $(call rwildcard,$(SRCDIR),*.c)  
+ASMSRC = $(call rwildcard,$(SRCDIR),*.asm)  
+OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCC))
+OBJS += $(patsubst $(SRCDIR)/%.asm, $(OBJDIR)/%_asm.o, $(ASMSRC))
+DIRS = $(wildcard $(SRCDIR)/*)
 
 # Default target.
 .PHONY: all
 all: $(KERNEL)
 
-limine.h:
+src/limine.h:
 	curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o $@
 
 # Link rules for the final kernel executable.
-$(KERNEL): $(OBJ)
-	cd obj && $(LD) $(OBJ) $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
+$(KERNEL): $(OBJS) 
+	$(LD) $(OBJS) $(LDFLAGS) $(INTERNALLDFLAGS) -o $(KERNEL)
 
 # Compilation rules for *.c files.
--include $(HEADER_DEPS)
-%.o: %.c
-	@ mkdir -p $(dir obj/$@)
-	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o obj/$@
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	@ mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $^ -o $@
 
 # Compilation rules for *.asm files.
--include $(HEADER_DEPS)
-%.o: %.asm
-	@ mkdir -p $(dir obj/$@)
-	$(ASM) $(ASMFLAGS) $(INTERNALASMFLAGS) $< -o obj/$@
+$(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
+	@ mkdir -p $(dir $@)
+	$(ASM) $(ASMFLAGS) $(INTERNALASMFLAGS) $^ -o $@
 
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS) limine.h
+	rm -rf $(KERNEL) $(OBJS) src/limine.h
 
 .PHONY: setup
-setup: limine.h
+setup: src/limine.h

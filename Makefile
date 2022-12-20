@@ -80,8 +80,8 @@ efi: limine kernel initrd $(APPS) $(DRIVERS)
 	rm -rf iso_root
 
 clean:
-	rm -rf iso_root $(OUTPUT) cross-compiler-builder limine out roots/img/initrd.dsfs roots/initrd/*.mx
-	$(MAKE) -C kernel clean
+	chmod +x ./clean.sh
+	bash ./clean.sh
 
 apt:
 	sudo apt update

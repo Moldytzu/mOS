@@ -29,29 +29,34 @@ INTERNALASMFLAGS := \
 	-felf64
 
 # Use find to glob all *.c files in the directory and extract the object names.
-CFILES := $(shell find . -type f -name '*.c')
-ASMFILES := $(shell find . -type f -name '*.asm')
-OBJ := $(CFILES:.c=.o)
-OBJ += $(ASMFILES:.asm=.o)
-HEADER_DEPS := $(CFILES:.c=.d)
-HEADER_DEPS += $(ASMFILES:.asm=.d)
+SRCDIR := src
+OBJDIR := obj
+
+rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+
+SRCC = $(call rwildcard,$(SRCDIR),*.c)  
+ASMSRC = $(call rwildcard,$(SRCDIR),*.asm)  
+OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCC))
+OBJS += $(patsubst $(SRCDIR)/%.asm, $(OBJDIR)/%_asm.o, $(ASMSRC))
+DIRS = $(wildcard $(SRCDIR)/*)
 
 # Default target.
 .PHONY: all
 all: $(LIB)
 
 # Link rules for the final libc
-$(LIB): $(OBJ)
-	cd obj && $(AR) -crs $@ $(OBJ)
+$(LIB): $(OBJS)
+	$(AR) -crs $@ $(OBJS)
 
 # Compilation rules for *.c files.
--include $(HEADER_DEPS)
-%.o: %.c
-	@ mkdir -p $(dir obj/$@)
-	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o obj/$@
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	@ mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $^ -o $@
 
 # Compilation rules for *.asm files.
--include $(HEADER_DEPS)
-%.o: %.asm
-	@ mkdir -p $(dir obj/$@)
-	$(ASM) $(ASMFLAGS) $(INTERNALASMFLAGS) $< -o obj/$@
+$(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
+	@ mkdir -p $(dir $@)
+	$(ASM) $(ASMFLAGS) $(INTERNALASMFLAGS) $^ -o $@
+
+clean:
+	rm -rf $(LIB)
