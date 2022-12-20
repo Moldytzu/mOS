@@ -194,8 +194,8 @@ void acpiInit()
     // enumerate PCI bus if MCFG is present
     if (mcfg)
     {
-        pciFuncs = pmmPage(); // allocate a buffer hold the functions
-        acpiEnumeratePCI();   // do the enumeration
+        pciFuncs = blkBlock(sizeof(acpi_pci_descriptor_t)); // allocate a buffer hold the functions
+        acpiEnumeratePCI();                                 // do the enumeration
     }
 
 #ifdef K_ACPI_DEBUG
