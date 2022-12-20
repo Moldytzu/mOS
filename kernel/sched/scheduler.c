@@ -383,7 +383,7 @@ void schedulerKill(uint32_t tid)
 
     // deallocate the elf (if present)
     if (task->elf)
-        pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE + 1);
+        pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
 
     // deallocate the task
     struct sched_task *prev = task->previous;

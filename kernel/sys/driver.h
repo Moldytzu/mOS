@@ -95,11 +95,13 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
             if (!functions[i].header)
                 continue;
 
+            // map it
+            vmmMap(vmmGetBaseTable(), functions[i].header, functions[i].header, true, true);
+            vmmMap(task->pageTable, functions[i].header, functions[i].header, true, true);
+
             if (functions[i].header->vendor == arg2 && functions[i].header->device == arg3)
             {
-                vmmMap(task->pageTable, functions[i].header, functions[i].header, true, true); // map it
-                *header = functions[i].header;                                                 // pass the header
-
+                *header = functions[i].header; // pass the header
                 return;
             }
         }
