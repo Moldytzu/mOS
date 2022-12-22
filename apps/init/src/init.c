@@ -11,6 +11,7 @@ uint64_t sockID = 0;
 void *sockBuffer = NULL;
 bool verbose = true;
 bool safe = false;
+char *shell;
 char *cfg;
 char *drivers[512]; // 512 max drivers should be enough for now
 uint8_t driverIdx = 0;
@@ -61,6 +62,9 @@ void parseCFG()
 
     memset(drivers, 0, sizeof(drivers)); // clear the driver addresses
 
+    shell = "/init/msh.sh"; // set a default hard-coded shell location
+
+    // todo: make this code easier to read
     for (int i = 0; i < 4096; i++)
     {
         // check for verbose flag
@@ -92,6 +96,23 @@ void parseCFG()
             drivers[driverIdx++] = cfg + strlen("DRIVER \"") + i;
 
             i += strlen("DRIVER \"") + len;
+        }
+
+        // check for driver path
+        if (memcmp(cfg + i, "SHELL \"", strlen("SHELL \"")) == 0)
+        {
+            // calculate length of the driver path
+            size_t len = 0;
+            for (; cfg[i + strlen("SHELL \"") + len] != '\"'; len++)
+                ;
+
+            // terminate the string
+            cfg[i + strlen("SHELL \"") + len] = '\0';
+
+            // set the pointer
+            shell = cfg + strlen("SHELL \"") + i;
+
+            i += strlen("SHELL \"") + len;
         }
     }
 
@@ -150,11 +171,11 @@ int main(int argc, char **argv)
     {
         // launch the shell
         if (verbose)
-            puts("Launching msh from /init/msh.mx\n");
+            printf("Launching a shell from %s\n", shell);
 
         uint64_t pid, status;
         sys_exec_packet_t p = {0, enviroment, "/init/", 0, 0};
-        sys_exec("/init/msh.mx", &pid, &p);
+        sys_exec(shell, &pid, &p);
 
         do
         {
@@ -164,7 +185,7 @@ int main(int argc, char **argv)
         } while (status == 0);                     // wait for the pid to be stopped
 
         if (verbose)
-            puts("The shell stopped. Relaunching it.\n");
+            puts("The shell has stopped. Relaunching it.\n");
     }
 
     while (1) // the init system never returns
