@@ -10,6 +10,7 @@
 uint64_t sockID = 0;
 void *sockBuffer = NULL;
 bool verbose = true;
+bool safe = false;
 char *cfg;
 char *drivers[512]; // 512 max drivers should be enough for now
 uint8_t driverIdx = 0;
@@ -69,6 +70,13 @@ void parseCFG()
             i += strlen("VERBOSE = ");
         }
 
+        // check for safe flag
+        if (memcmp(cfg + i, "SAFE = ", strlen("SAFE = ")) == 0)
+        {
+            safe = cfg[i + strlen("SAFE = ")] == '1';
+            i += strlen("SAFE = ");
+        }
+
         // check for driver path
         if (memcmp(cfg + i, "DRIVER \"", strlen("DRIVER \"")) == 0)
         {
@@ -87,10 +95,16 @@ void parseCFG()
         }
     }
 
+    if (safe)
+        verbose = true; // force verbose to true if we're in safe mode
+
     if (verbose)
         puts("m Init System is setting up your enviroment\n"); // display a welcome screen
 
-    // start the drivers
+    // start the drivers if safe mode isn't enabled
+    if (safe)
+        return;
+
     for (int i = 0; i < driverIdx; i++)
     {
         if (verbose)
@@ -115,11 +129,11 @@ int main(int argc, char **argv)
     // set tty display mode
     sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
 
-    // set screen resolution to 1024x768
-    sys_display(SYS_DISPLAY_SET, 1024, 768);
-
     // parse the config
     parseCFG();
+
+    if (!safe)
+        sys_display(SYS_DISPLAY_SET, 1024, 768); // set screen resolution to 1024x768
 
     // create a socket for ipc
     sys_socket(SYS_SOCKET_CREATE, (uint64_t)&sockID, 0, 0);
