@@ -10,6 +10,9 @@
 uint64_t sockID = 0;
 void *sockBuffer = NULL;
 bool verbose = true;
+char *cfg;
+char *drivers[512]; // 512 max drivers should be enough for now
+uint8_t driverIdx = 0;
 
 void eventLoop()
 {
@@ -41,9 +44,9 @@ void eventLoop()
 
 void parseCFG()
 {
-    // config file
+    // buffer for config file
     uint64_t fd, size;
-    void *cfg = malloc(4096);
+    cfg = malloc(4096);
     assert(cfg != NULL);
 
     sys_open("/init/init.cfg", &fd); // open the file
@@ -55,23 +58,46 @@ void parseCFG()
     memset(cfg, 0, 4096);               // clear the buffer
     sys_read(cfg, min(size, 4096), fd); // read the file
 
-    for (int i = 0; i < 4096; i++, cfg++)
+    memset(drivers, 0, sizeof(drivers)); // clear the driver addresses
+
+    for (int i = 0; i < 4096; i++)
     {
-        if (memcmp(cfg, "VERBOSE = ", strlen("VERBOSE = ")) == 0)
+        // check for verbose flag
+        if (memcmp(cfg + i, "VERBOSE = ", strlen("VERBOSE = ")) == 0)
         {
-            cfg += strlen("VERBOSE = ");
-            verbose = *(uint8_t *)cfg == '1';
+            verbose = cfg[i + strlen("VERBOSE = ")] == '1';
+            i += strlen("VERBOSE = ");
+        }
+
+        // check for driver path
+        if (memcmp(cfg + i, "DRIVER \"", strlen("DRIVER \"")) == 0)
+        {
+            // calculate length of the driver path
+            size_t len = 0;
+            for (; cfg[i + strlen("DRIVER \"") + len] != '\"'; len++)
+                ;
+
+            // terminate the string
+            cfg[i + strlen("DRIVER \"") + len] = '\0';
+
+            // set the pointer
+            drivers[driverIdx++] = cfg + strlen("DRIVER \"") + i;
+
+            i += strlen("DRIVER \"") + len;
         }
     }
-}
 
-void startDrivers()
-{
-    // todo: load the driver list from the config
+    if (verbose)
+        puts("m Init System is setting up your enviroment\n"); // display a welcome screen
 
-    sys_drv_start("/init/ps2.drv");    // start the ps2 driver
-    sys_drv_start("/init/bga.drv");    // start the bga driver
-    sys_drv_start("/init/vmsvga.drv"); // start the vmware svga driver
+    // start the drivers
+    for (int i = 0; i < driverIdx; i++)
+    {
+        if (verbose)
+            printf("Starting driver from %s\n", drivers[i]); // for some reason it shows null
+
+        sys_driver(SYS_DRIVER_START, (uint64_t)(drivers[i]), 0, 0);
+    }
 }
 
 int main(int argc, char **argv)
@@ -95,9 +121,6 @@ int main(int argc, char **argv)
     // parse the config
     parseCFG();
 
-    if (verbose)
-        puts("m Init System is setting up your enviroment\n"); // display a welcome screen
-
     // create a socket for ipc
     sys_socket(SYS_SOCKET_CREATE, (uint64_t)&sockID, 0, 0);
 
@@ -105,9 +128,6 @@ int main(int argc, char **argv)
 
     sockBuffer = malloc(SOCKET_SIZE);
     assert(sockBuffer != NULL); // assert that the socket buffer is valid
-
-    // initialize the drivers
-    startDrivers();
 
     // start a shell
     const char *enviroment = "PATH=/init/|"; // the basic enviroment
@@ -132,6 +152,7 @@ int main(int argc, char **argv)
         if (verbose)
             puts("The shell stopped. Relaunching it.\n");
     }
-    while (1)
-        ; // the init system never returns
+
+    while (1) // the init system never returns
+        sys_yield();
 }
