@@ -71,7 +71,7 @@ $(OUTPUT): limine kernel libc $(APPS) $(DRIVERS) initrd
 	limine/limine-deploy $(OUTPUT)
 	rm -rf iso_root
 
-efi: limine kernel initrd $(APPS) $(DRIVERS)
+efi: limine kernel libc $(APPS) $(DRIVERS) initrd 
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp out/kernel.elf limine/limine.sys limine/limine-cd-efi.bin iso_root/
