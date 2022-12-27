@@ -4,6 +4,7 @@
 #include <mm/pmm.h>
 #include <mm/blk.h>
 #include <cpu/io.h>
+#include <cpu/idt.h>
 #include <main/panic.h>
 
 uint8_t revision;
@@ -140,9 +141,10 @@ void acpiReboot()
 
 triplefault:
 #ifdef K_ACPI_DEBUG
-    printks("acpi: reboot unsupported. triple faulting.\n\r");
+    printks("acpi: reboot unsupported. resetting the cpu using the i8042.\n\r");
 #endif
-    iasm("lidt %0" ::"m"(pciFuncs)); // load an invalid IDT => triple fault / reboot
+
+    outb(0x64, 0xFE); // cpu reset using the keyboard controller
 }
 
 // initialize the acpi subsystem
