@@ -3,7 +3,6 @@
 #include <limine.h>
 
 void bootloaderInit();
-void bootloaderMove();
 
 void bootloaderWrite(const char *str);
 

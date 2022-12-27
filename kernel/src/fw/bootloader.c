@@ -86,12 +86,3 @@ void *bootloaderGetHHDM()
 {
     return (void *)hhdm_request.response->offset;
 }
-
-struct limine_kernel_address_response kaddr;
-
-void bootloaderMove()
-{
-    // move the bootloader response required by the vmm in bss because of an unknown bug somewhere in the vmm that I can't track down
-    memcpy(&kaddr, kernel_address_request.response, sizeof(*kernel_address_request.response));
-    kernel_address_request.response = &kaddr;
-}

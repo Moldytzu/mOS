@@ -212,8 +212,6 @@ void pmmInit()
 #endif
 
     printk("pmm: %d mb available ram\n", pmmTotal().available / 1024 / 1024);
-
-    bootloaderMove();
 }
 
 pmm_pool_t pmmTotal()
