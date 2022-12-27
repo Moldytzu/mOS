@@ -53,5 +53,13 @@ void kmain()
 void panick(const char *msg)
 {
     printk("\n\nA kernel exception has happened.\n%s\n", msg);
+
+#ifdef K_PANIC_REBOOT
+    for (volatile size_t i = 0; i < 0xFFFFFFF; i++)
+        ; // wait a bit
+
+    acpiReboot();
+#endif
+
     hang();
 }
