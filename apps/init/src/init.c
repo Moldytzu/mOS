@@ -150,6 +150,8 @@ int main(int argc, char **argv)
     // set tty display mode
     sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
 
+    puts("Attention! mOS is an FOSS operating system (licensed under the MIT license) that doesn't gurantee any compatibility with existing software nor stability as it is in a pre-alpha stage. We strongly advise to test this OS only in virtual machines.\n"); // display a disclaimer
+
     // parse the config
     parseCFG();
 
