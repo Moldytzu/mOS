@@ -15,6 +15,8 @@ pstruct
 }
 pmm_pool_t;
 
+
+void pmmDbgDump();
 void *pmmPage();
 void *pmmPages(uint64_t pages);
 

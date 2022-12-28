@@ -6,6 +6,35 @@
 uint8_t poolCount = 0;
 pmm_pool_t pools[256]; // 256 pools should be enough
 
+void pmmDbgDump()
+{
+    // display all bits in the bitmaps
+    for (int i = 0; i < poolCount; i++)
+    {
+        pmm_pool_t *pool = &pools[i];
+        uint64_t string = 0;
+        uint64_t pageIndex = 0;
+        uint64_t allocatedPages = 0;
+        void *base = NULL;
+
+        printks("pool %d: ", i);
+
+        // iterate over the bitmap bytes to display the status of the bits
+        for (uint64_t b = 0; b < pool->bitmapBytes; b++)
+        {
+            for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
+            {
+                uint8_t mask = 0b10000000 >> bits;
+                uint8_t *bytes = (uint8_t *)(pool->base + b);
+
+                printks("%d", *bytes & mask ? 1 : 0);
+            }
+        }
+
+        printks("\n");
+    }
+}
+
 void *pmmPage()
 {
     for (int i = 0; i < poolCount; i++)
