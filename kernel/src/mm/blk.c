@@ -1,18 +1,19 @@
 #include <mm/blk.h>
+#include <main/panic.h>
 
-uint64_t *pages[8192]; // make it so we can hold a maximum ~32 mb of ram (should be enough, increase this value if necessary)
+uint64_t *pages[32768]; // make it so we can hold a maximum ~1,2 gb of ram (should be enough, increase this value if necessary)
 size_t index = 0;
+
+void dbgBMP();
 
 ifunc void expand() // expand with a page
 {
     size_t newIndex = index++;
+    if (newIndex >= 32768)
+        panick("Failed to increase blk pages!");
+
     pages[newIndex] = pmmPage(); // allocate new page
     zero(pages[newIndex], 16);   // clear the bitmap
-}
-
-void blkInit()
-{
-    expand(); // expand with a page
 }
 
 void setBitmap(uint64_t *bmp, uint8_t idx, bool value)
@@ -50,7 +51,7 @@ bool getBitmap(uint64_t *bmp, uint8_t idx)
 
 void *blkBlock(size_t size)
 {
-    if (size >= 4064) // return a page allocated by the pmm
+    if (size >= BLK_ALLOCABLE) // return a page allocated by the pmm
         return pmmPages(size / 4096 + 1);
 
     size = max(size, 32); // make sure we don't allocate a block smaller than 32
@@ -61,38 +62,62 @@ void *blkBlock(size_t size)
     for (int i = 0; i < index; i++)
     {
         uint64_t *page = pages[i];
+        if (!page)
+            continue;
+
         uint8_t blocks = size / BLK_SIZE;
+        uint8_t largest = 0;
+        uint8_t start = 255;
+
+        if (blocks == 1) // no need for a fancy loop for one block
+            goto allocOne;
 
         // compute largest contiguous area
-        uint8_t largest = 0;
-        uint8_t start = 0;
-        for (int j = 0; j < 127; j++)
+        for (int j = 0; j < BLK_MAX_BLOCKS; j++)
         {
             if (getBitmap(page, j))
             {
                 largest = 0;
-                start = 0;
+                start = 255;
                 continue;
             }
 
-            if (!start)
+            if (start == 255)
                 start = j;
 
-            if (largest == blocks) // we found it
+            if (largest++ == blocks) // we found it
             {
-                // set bits in the bitmap
+                // mark blocks as busy
                 for (int k = start; k < start + blocks; k++)
-                    setBitmap(page, k, true);
+                    setBitmap(page, k, BLK_BUSY);
 
                 break;
             }
-
-            largest++;
         }
 
         if (largest < blocks) // we have to find another
             continue;
 
+        goto doReturn;
+
+    allocOne:
+        bool found = false;
+        for (int j = 0; j < BLK_MAX_BLOCKS; j++)
+        {
+            if (getBitmap(page, j)) // find a free block
+                continue;
+
+            found = true;
+            start = j;
+            break;
+        }
+
+        if (!found)
+            continue;
+
+        setBitmap(page, start, BLK_BUSY); // mark it as busy
+
+    doReturn:
         return (void *)((uint64_t)page + 32 + start * BLK_SIZE); // skip the bitmap, padding bytes and the bytes that we shouldn't return now
     }
 
@@ -118,9 +143,28 @@ void blkDeallocate(void *address, size_t size)
     uint8_t blocks = size / BLK_SIZE;
     uint16_t startIdx = (((uint64_t)address & 0xfff) - 32) / BLK_SIZE; // get start index by reversing the algorith used in blkBlock to get the new block address
 
-    // free the bits
+    // free the blocks
     for (int i = startIdx; i < startIdx + blocks; i++)
-        setBitmap(parentPage, i, false);
+        setBitmap(parentPage, i, BLK_FREE);
+
+    // deallocate the parent page if empty
+    int free = 0;
+    for (int j = 0; j < BLK_MAX_BLOCKS; j++)
+        free += getBitmap(parentPage, j) ? 0 : 1;
+
+    if (free != BLK_MAX_BLOCKS) // not empty
+        return;
+
+    for (int i = 0; i < index; i++) // null the entry in the array
+    {
+        if (pages[index] == parentPage)
+        {
+            pages[index] = NULL;
+            return;
+        }
+    }
+
+    pmmDeallocate(parentPage); // deallocate
 }
 
 void *blkReblock(void *page, size_t oldSize, size_t newSize)
@@ -130,4 +174,20 @@ void *blkReblock(void *page, size_t oldSize, size_t newSize)
 
     blkDeallocate(page, oldSize);
     return new;
+}
+
+void dbgBMP()
+{
+    // display each bitmap bit from every single allocated page
+    for (int i = 0; i < index; i++)
+    {
+        for (int j = 0; j < BLK_MAX_BLOCKS; j++)
+            printks("%d", getBitmap(pages[i], j) ? 1 : 0);
+        printks("_");
+    }
+}
+
+void blkInit()
+{
+    expand(); // expand with a page
 }
