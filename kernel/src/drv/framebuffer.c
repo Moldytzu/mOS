@@ -122,6 +122,9 @@ void framebufferWritec(char c)
     if (cursor.X + 8 > framebuffer.width)
         newline();
 
+    if (c == ' ' && cursor.X == 0)
+        return;
+
     framebufferPlotc(c, cursor.X, cursor.Y);
     cursor.X += 8 + 1; // add character's width and a 1 px padding
 }
