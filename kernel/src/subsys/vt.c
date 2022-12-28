@@ -85,6 +85,9 @@ struct vt_terminal *vtGet(uint32_t id)
 // append a key to the keyboard buffer
 void vtkbAppend(struct vt_terminal *vt, char c)
 {
+    if (!vt)
+        return;
+
     vt->kbBuffer[vt->kbBufferIdx++] = c; // append the character
 
     if (vt->kbBufferIdx == 4096) // prevent buffer overflow
@@ -94,7 +97,7 @@ void vtkbAppend(struct vt_terminal *vt, char c)
 // get firstly typed key from the keyboard buffer
 char vtkbGet(struct vt_terminal *vt)
 {
-    if (!vt->kbBufferIdx) // we don't have anything to return
+    if (!vt->kbBufferIdx || !vt) // we don't have anything to return
         return 0;
 
     char first = vt->kbBuffer[0];                             // get the key
@@ -129,7 +132,12 @@ uint16_t vtGetMode()
 // free the terminal
 void vtDestroy(struct vt_terminal *vt)
 {
-    vt->previous->next = vt->next;                 // bypass this node
+    if (!vt)
+        return;
+
+    if (vt->previous)
+        vt->previous->next = vt->next; // bypass this node (if we can)
+        
     pmmDeallocate((void *)vt->buffer);             // deallocate the buffer
     pmmDeallocate((void *)vt->kbBuffer);           // deallocate the buffer
     blkDeallocate(vt, sizeof(struct vt_terminal)); // free the terminal
