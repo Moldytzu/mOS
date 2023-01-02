@@ -13,6 +13,8 @@
 #define VMM_ENTRY_NO_EXECUTE 63
 
 #define VMM_PAGE 4096
+#define VMM_TABLE_MAX_PAGES 1023
+#define VMM_TABLE_REQUIRED_PAGES (1 + (((VMM_TABLE_MAX_PAGES + 1 /* 8 bytes used for idx */) * 8) / VMM_PAGE))
 
 pstruct
 {
@@ -27,6 +29,8 @@ vmm_index_t;
 pstruct
 {
     uint64_t entries[512];
+    uint64_t pages[VMM_TABLE_MAX_PAGES];
+    uint64_t idx;
 }
 vmm_page_table_t;
 
