@@ -5,6 +5,17 @@
 
 uint8_t poolCount = 0;
 pmm_pool_t pools[256]; // 256 pools should be enough
+bool debug = false;
+
+void pmmEnableDBG()
+{
+    debug = true;
+}
+
+void pmmDisableDBG()
+{
+    debug = false;
+}
 
 void pmmDbgDump()
 {
@@ -61,6 +72,9 @@ void *pmmPage()
                 pool->available -= 4096;
                 pool->used += 4096;
 
+                if (debug)
+                    printks("pmm allocate: %x\n", (void *)(pool->alloc + 4096 * pool->lastPageIndex));
+
                 return (void *)(pool->alloc + 4096 * pool->lastPageIndex);
             }
 
@@ -107,7 +121,7 @@ void *pmmPages(uint64_t pages)
                 if (base == NULL)
                     base = (void *)(pool->alloc + 4096 * pageIndex);
 
-                if (++string == pages)
+                if (string++ == pages)
                     goto doReturn;
             }
         }
@@ -137,7 +151,11 @@ doReturn:
             pool->used += 4096;
 
             if (allocatedPages++ == string)
+            {
+                if (debug)
+                    printks("pmm allocate: %x (%d)\n", base, string);
                 return base;
+            }
         }
     }
 
@@ -163,10 +181,22 @@ void pmmDeallocate(void *page)
 
                 uint64_t mask = 0b10000000 >> bits;
                 uint8_t *bytes = (uint8_t *)(pool->base + b);
+
+                if (!(*bytes & mask))
+                {
+                    printks("pmm: deallocating second time %x\n", page);
+                    pool->available -= 4096;
+                    pool->used += 4096;
+                }
+
                 *bytes &= ~mask; // unset the byte
 
                 pool->available += 4096;
                 pool->used -= 4096;
+
+                if (debug)
+                    printks("pmm deallocate: %x\n", page);
+
                 return;
             }
         }
@@ -175,6 +205,8 @@ void pmmDeallocate(void *page)
 
 void pmmDeallocatePages(void *page, uint64_t count)
 {
+    count++;
+    uint64_t tmp = count;
     for (int i = 0; i < poolCount; i++)
     {
         pmm_pool_t *pool = &pools[i];
@@ -190,13 +222,25 @@ void pmmDeallocatePages(void *page, uint64_t count)
 
                 uint64_t mask = 0b10000000 >> bits;
                 uint8_t *bytes = (uint8_t *)(pool->base + b);
+
+                if (!(*bytes & mask))
+                {
+                    printks("pmm: deallocating second time %x\n", page);
+                    pool->available -= 4096;
+                    pool->used += 4096;
+                }
+
                 *bytes &= ~mask; // unset the byte
 
                 pool->available += 4096;
                 pool->used -= 4096;
 
                 if (count-- == 0)
+                {
+                    if (debug)
+                        printks("pmm deallocate: %x (%d)\n", page, tmp);
                     return;
+                }
             }
         }
     }
