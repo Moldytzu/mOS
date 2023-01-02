@@ -194,6 +194,10 @@ void pmmDeallocate(void *page)
                 pool->available += 4096;
                 pool->used -= 4096;
 
+                pool->lastBitmapIndex = 0;
+                pool->lastMaskBit = 0;
+                pool->lastPageIndex = 0;
+
                 if (debug)
                     printks("pmm deallocate: %x\n", page);
 
