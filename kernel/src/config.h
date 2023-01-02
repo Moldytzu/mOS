@@ -1,9 +1,10 @@
 #pragma once
 
-// ==========================================
+// ========================================================
 // mOS Kernel configuration
 // Uncomment to enable, comment to disable
-// ==========================================
+// Be sure to perform a full rebuild when changing settings
+// ========================================================
 
 // Debug
 #define K_RELEASE // generate release build of the kernel (removes all debug statements);
