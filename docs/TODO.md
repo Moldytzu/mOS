@@ -6,10 +6,8 @@
 
 # todo list for small/not important tasks
 ### kill the task if requested too many pages
-### improve the build system
 ### colour full screen terminal
 ### proper kernel logger
 
 # bugs to fix
-### memory leaks when killing tasks (8 kb wasted)
 ### sleep function in scheduler doesn't work properly
