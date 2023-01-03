@@ -378,7 +378,7 @@ void schedulerKill(uint32_t tid)
     for (int i = 0; i < task->allocatedIndex; i++)
         if (task->allocated[i] != NULL)
             pmmDeallocate(task->allocated[i]);
-
+  
     blkDeallocate(task->allocated, task->allocatedIndex * sizeof(uint64_t));
 
     // deallocate the elf (if present)
@@ -387,7 +387,9 @@ void schedulerKill(uint32_t tid)
 
     // deallocate the task
     struct sched_task *prev = task->previous;
-    prev->next = task->next;                        // bypass this node
+    if (prev->next) // bypass this node if possible
+        prev->next = task->next;
+
     vmmDestroy(task->pageTable);                    // destroy the page table
     blkDeallocate(task, sizeof(struct sched_task)); // free the task
 
