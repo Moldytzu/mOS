@@ -100,7 +100,9 @@ void acpiEnumeratePCI()
                     d.bus = bus, d.device = device, d.function = function, d.header = header;
 
                     // put it in our list of pci functions
-                    pciFuncs = blkReblock(pciFuncs, pciIndex * sizeof(acpi_pci_descriptor_t), (pciIndex + 1) * sizeof(acpi_pci_descriptor_t));
+                    if(pciIndex > 4096 / sizeof(acpi_pci_descriptor_t)) // very unlikely
+                        panick("Can't hold that many PCI descriptors!");
+
                     pciFuncs[pciIndex++] = d;
                 }
             }
@@ -196,8 +198,8 @@ void acpiInit()
     // enumerate PCI bus if MCFG is present
     if (mcfg)
     {
-        pciFuncs = blkBlock(sizeof(acpi_pci_descriptor_t)); // allocate a buffer hold the functions
-        acpiEnumeratePCI();                                 // do the enumeration
+        pciFuncs = pmmPage(); // allocate a buffer hold the functions
+        acpiEnumeratePCI();   // do the enumeration
     }
 
 #ifdef K_ACPI_DEBUG
