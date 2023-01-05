@@ -21,6 +21,7 @@ run-debug: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) $(QEMUDEBUG)
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
+	reset
 
 run-efi: efi
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI)
@@ -32,6 +33,7 @@ run-efi-debug: efi
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
+	reset
 
 limine:
 	-git clone https://github.com/limine-bootloader/limine.git --branch=v4.x-branch-binary --depth=1
