@@ -20,6 +20,7 @@ void pmmDisableDBG();
 void pmmDbgDump();
 void *pmmPage();
 void *pmmPages(uint64_t pages);
+void *pmmReallocate(void *ptr, uint64_t old, uint64_t new);
 
 void pmmDeallocate(void *page);
 void pmmDeallocatePages(void *page, uint64_t count);

@@ -250,6 +250,31 @@ void pmmDeallocatePages(void *page, uint64_t count)
     }
 }
 
+void *pmmReallocate(void *ptr, uint64_t old, uint64_t new)
+{
+    // make sure we don't have null values
+    if(!old)
+        old++;
+    
+    if(!new)
+        new++;
+        
+    // allocate a new area
+    void *newPages = pmmPages(new);
+
+    // copy the contents
+    memcpy8(newPages, ptr, old * 4096);
+
+    // deallocate old page
+    if(old > 1)
+        pmmDeallocatePages(ptr, old);
+    else
+        pmmDeallocate(ptr);
+
+    // return new page
+    return newPages;
+}
+
 void pmmInit()
 {
     // get the memory map
