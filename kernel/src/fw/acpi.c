@@ -2,7 +2,6 @@
 #include <fw/bootloader.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
-#include <mm/blk.h>
 #include <cpu/io.h>
 #include <cpu/idt.h>
 #include <main/panic.h>

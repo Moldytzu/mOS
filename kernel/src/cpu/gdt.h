@@ -46,7 +46,6 @@ pstruct
 gdt_tss_t;
 
 void gdtCreateSegment(uint8_t access);
-void gdtInstallTSS(uint64_t base, uint8_t access);
 void gdtInit();
 gdt_segment_t *gdtGet();
 gdt_tss_t *tssGet();

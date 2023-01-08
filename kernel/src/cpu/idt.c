@@ -2,7 +2,6 @@
 #include <cpu/gdt.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
-#include <mm/blk.h>
 #include <drv/serial.h>
 #include <sched/scheduler.h>
 #include <subsys/socket.h>
@@ -132,7 +131,7 @@ cnt:
 
         if (initSocket)
         {
-            char *str = blkBlock(8 + strlen(name));
+            char *str = pmmPage();
             zero(str, 6 + strlen(name));
 
             // construct a string based on the format "crash %s", name
@@ -141,7 +140,7 @@ cnt:
 
             sockAppend(initSocket, str, strlen(str)); // announce that the application has crashed
 
-            blkDeallocate(str, 8 + strlen(name));
+            pmmDeallocate(str);
         }
 
         schedulerKill(schedulerGetCurrent()->id); // terminate the task

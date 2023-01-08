@@ -1,5 +1,5 @@
 #include <cpu/gdt.h>
-#include <mm/blk.h>
+#include <mm/pmm.h>
 #include <mm/vmm.h>
 
 gdt_tss_t *tss;
@@ -9,11 +9,13 @@ gdt_segment_t *entries;
 extern void gdtLoad(gdt_descriptor_t *);
 extern void tssLoad();
 
+void gdtInstallTSS();
+
 // initialize the global descriptor table
 void gdtInit()
 {
     // allocate the entries
-    entries = blkBlock(sizeof(gdt_system_segment_t) + 5 * sizeof(gdt_segment_t));
+    entries = pmmPage();
     zero(entries, VMM_PAGE);
 
     gdtr.size = 0; // reset the size
@@ -25,9 +27,7 @@ void gdtInit()
     gdtCreateSegment(0b11110010); // user data
     gdtCreateSegment(0b11111010); // user code
 
-    tss = blkBlock(sizeof(gdt_tss_t));        // allocate tss
-    zero(tss, sizeof(gdt_tss_t));             // clear it
-    gdtInstallTSS((uint64_t)tss, 0b10001001); // install it
+    gdtInstallTSS(); // install a tss
 
     gdtr.size--;    // decrement size
     gdtLoad(&gdtr); // load gdt and flush segments
@@ -48,15 +48,21 @@ void gdtCreateSegment(uint8_t access)
 }
 
 // create a new segment and install the tss on it
-void gdtInstallTSS(uint64_t base, uint8_t access)
+void gdtInstallTSS()
 {
+    tss = pmmPage();              // allocate tss
+    zero(tss, sizeof(gdt_tss_t)); // clear it
+
     gdt_system_segment_t *segment = (gdt_system_segment_t *)&entries[gdtr.size / sizeof(gdt_segment_t)]; // get address of the next segment
     zero(segment, sizeof(gdt_system_segment_t));                                                         // clear the segment
-    segment->access = access;                                                                            // set the access byte
-    segment->base = base & 0x000000000000FFFF;                                                           // set the base address of the tss
-    segment->base2 = (base & 0x0000000000FF0000) >> 16;
-    segment->base3 = (base & 0x00000000FF000000) >> 24;
-    segment->base3 = (base & 0xFFFFFFFF00000000) >> 32;
+
+    segment->access = 0b10001001; // set the access byte
+
+    segment->base = (uint64_t)tss & 0x000000000000FFFF; // set the base address of the tss
+    segment->base2 = ((uint64_t)tss & 0x0000000000FF0000) >> 16;
+    segment->base3 = ((uint64_t)tss & 0x00000000FF000000) >> 24;
+    segment->base3 = ((uint64_t)tss & 0xFFFFFFFF00000000) >> 32;
+
     segment->limit = sizeof(gdt_tss_t) & 0xFFFF; // set the limit of the tss
     segment->limit2 = (sizeof(gdt_tss_t) & 0xF000) >> 16;
 

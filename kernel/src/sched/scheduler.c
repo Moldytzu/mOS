@@ -1,7 +1,6 @@
 #include <sched/scheduler.h>
 #include <sched/pit.h>
 #include <mm/pmm.h>
-#include <mm/blk.h>
 #include <cpu/gdt.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
@@ -28,7 +27,7 @@ void idleTask()
         ;
 }
 
-uint8_t simdContext[512] __attribute__((aligned(16)));
+uint8_t simdContext[512] align_addr(16);
 
 extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
 
@@ -194,10 +193,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 
         if (task->pageTable)
         {
-            task->next = blkBlock(sizeof(struct sched_task)); // allocate next task if the current task is valid
-            zero(task->next, sizeof(struct sched_task));      // clear the thread
-            task->next->previous = task;                      // set the previous task
-            task = task->next;                                // set current task to the newly allocated task
+            task->next = pmmPage();                      // allocate next task if the current task is valid
+            zero(task->next, sizeof(struct sched_task)); // clear the thread
+            task->next->previous = task;                 // set the previous task
+            task = task->next;                           // set current task to the newly allocated task
         }
     }
 
@@ -267,7 +266,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     }
 
     // memory fields
-    task->allocated = blkBlock(sizeof(uint64_t));       // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    task->allocated = pmmPage();                        // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
     zero(task->allocated, sizeof(uint64_t));            // null its content
     task->allocatedIndex = 0;                           // the current index in the array
     task->lastVirtualAddress = (void *)TASK_BASE_ALLOC; // set the last address
@@ -378,8 +377,8 @@ void schedulerKill(uint32_t tid)
     for (int i = 0; i < task->allocatedIndex; i++)
         if (task->allocated[i] != NULL)
             pmmDeallocate(task->allocated[i]);
-  
-    blkDeallocate(task->allocated, task->allocatedIndex * sizeof(uint64_t));
+
+    pmmDeallocate(task->allocated);
 
     // deallocate the elf (if present)
     if (task->elf)
@@ -390,8 +389,8 @@ void schedulerKill(uint32_t tid)
     if (prev->next) // bypass this node if possible
         prev->next = task->next;
 
-    vmmDestroy(task->pageTable);                    // destroy the page table
-    blkDeallocate(task, sizeof(struct sched_task)); // free the task
+    vmmDestroy(task->pageTable); // destroy the page table
+    pmmDeallocate(task);         // free the task
 
     taskKilled = true;
 

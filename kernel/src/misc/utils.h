@@ -16,6 +16,7 @@
 #define ifunc static inline __attribute__((always_inline))
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 #define pstruct typedef struct __attribute__((__packed__))
+#define align_addr(al) __attribute__((aligned(al)))
 
 // compare memory
 ifunc int memcmp8(void *a, void *b, size_t len)

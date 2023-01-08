@@ -1,5 +1,5 @@
 #include <fs/vfs.h>
-#include <mm/blk.h>
+#include <mm/pmm.h>
 
 #define ISVALID(node) (node && node->filesystem)
 
@@ -38,7 +38,7 @@ void vfsAdd(struct vfs_node_t node)
 
         if (currentNode->filesystem)
         {
-            currentNode->next = blkBlock(sizeof(struct vfs_node_t)); // allocate next node if the current node is valid
+            currentNode->next = pmmPage(sizeof(struct vfs_node_t)); // allocate next node if the current node is valid
             currentNode = currentNode->next;                         // set current node to the newly allocated node
         }
     }

@@ -10,7 +10,6 @@
 #include <drv/input.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
-#include <mm/blk.h>
 #include <sched/pit.h>
 #include <sched/scheduler.h>
 #include <sys/syscall.h>
@@ -36,8 +35,6 @@ void _start()
     serialInit(); // initialize the serial port
 
     pmmInit(); // initialize the physical memory manager
-
-    blkInit(); // initialize the block allocator
 
     gdtInit(); // initialize the gdt
 
