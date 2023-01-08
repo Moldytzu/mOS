@@ -197,13 +197,13 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     // create a new table to use as a base for everything
     vmm_page_table_t *newTable;
 
-    newTable->full = full | driver;
-
     // allocate a new table based on the dimensions
-    if (newTable->full)
+    if (full | driver)
         newTable = (vmm_page_table_t *)pmmPages(requiredPagesFull);
     else
         newTable = (vmm_page_table_t *)pmmPages(requiredPages);
+
+    newTable->full = full | driver;
 
     zero(newTable, VMM_PAGE + 16); // zero out the table and the metadata
 
