@@ -269,6 +269,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->allocated = pmmPage();                        // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
     zero(task->allocated, sizeof(uint64_t));            // null its content
     task->allocatedIndex = 0;                           // the current index in the array
+    task->allocatedBufferPages++;                       // we have one page already allocated
     task->lastVirtualAddress = (void *)TASK_BASE_ALLOC; // set the last address
 
     // enviroment
@@ -378,7 +379,7 @@ void schedulerKill(uint32_t tid)
         if (task->allocated[i] != NULL)
             pmmDeallocate(task->allocated[i]);
 
-    pmmDeallocate(task->allocated);
+    pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
 
     // deallocate the elf (if present)
     if (task->elf)

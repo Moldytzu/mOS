@@ -22,8 +22,6 @@ struct sched_task
     idt_intrerrupt_stack_t intrerruptStack; // the last intrerrupt stack
     uint8_t simdContext[512];               // simd context (contains sse and fpu information)
     uint32_t terminal;                      // task terminal
-    void **allocated;                       // allocated pages
-    uint32_t allocatedIndex;                // current index
     void *lastVirtualAddress;               // last virtual address of the allocation
     char *enviroment;                       // enviroment variables
     uint32_t syscallUsage;                  // the count of syscalls issued by the task in a cycle
@@ -35,6 +33,10 @@ struct sched_task
     void *stackBase;                        // base of the stack
     uint64_t stackSize;                     // size of the stack
     bool isDriver;                          // is driver
+
+    void **allocated;              // allocated pages
+    uint32_t allocatedIndex;       // current index
+    uint32_t allocatedBufferPages; // pages used by the buffer
 
     struct sched_task *previous; // previous task
     struct sched_task *next;     // next task
