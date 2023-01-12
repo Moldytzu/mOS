@@ -62,35 +62,6 @@ void pmmDbgDump()
     }
 }
 
-void *pmmPage()
-{
-    for (int i = 0; i < poolCount; i++)
-    {
-        // find an available pool
-        if (pools[i].available < 4096)
-            continue;
-
-        pmm_pool_t *pool = &pools[i];
-
-        for (; pool->lastAllocIdx < pool->bitmapBytes * 8; pool->lastAllocIdx++)
-        {
-            if (get(pool, pool->lastAllocIdx)) // find first available index
-                continue;
-
-            // update metadata
-            pool->available -= 4096;
-            pool->used += 4096;
-
-            set(pool, pool->lastAllocIdx, true);                                // set the bit
-            return (void *)((uint64_t)pool->alloc + pool->lastAllocIdx * 4096); // return the page address
-        }
-    }
-
-    panick("Out of memory!");
-
-    return NULL;
-}
-
 void *pmmPages(uint64_t pages)
 {
     for (int i = 0; i < poolCount; i++)
@@ -136,6 +107,11 @@ void *pmmPages(uint64_t pages)
     panick("Out of memory!");
 
     return NULL;
+}
+
+void *pmmPage()
+{
+    return pmmPages(1);
 }
 
 void pmmDeallocate(void *page)
@@ -256,8 +232,6 @@ pmm_pool_t pmmTotal()
         total.used += pools[i].used;
         total.bitmapBytes += pools[i].bitmapBytes;
     }
-
-    total.lastAllocIdx = poolCount; // use last allocation index to set the pool count
 
     return total; // and return the total
 }

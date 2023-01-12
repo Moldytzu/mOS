@@ -9,7 +9,6 @@ pstruct
     uint64_t available;    // available bytes
     uint64_t used;         // used bytes
     uint64_t bitmapBytes;  // bytes used by the bitmap
-    uint64_t lastAllocIdx; // last allocated index
 }
 pmm_pool_t;
 
