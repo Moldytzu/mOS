@@ -142,7 +142,7 @@ void pmmDeallocate(void *page)
 
 void pmmDeallocatePages(void *page, uint64_t count)
 {
-    for (size_t i = 0; i <= count; i++)
+    for (size_t i = 0; i < count; i++)
         pmmDeallocate((void *)((uint64_t)page + i * 4096));
 }
 
@@ -155,24 +155,14 @@ void *pmmReallocate(void *ptr, uint64_t oldSize, uint64_t newSize)
     if (!newSize)
         newSize++;
 
-    printks("%d -> %d\n", oldSize, newSize);
-
     // allocate a new area
-    void *newPages;
-
-    if (newSize > 1)
-        newPages = pmmPages(newSize);
-    else
-        newPages = pmmPage();
+    void *newPages = pmmPages(newSize);
 
     // copy the contents
     memcpy8(newPages, ptr, min(oldSize, newSize) * 4096);
 
     // deallocate old page
-    if (oldSize > 1)
-        pmmDeallocatePages(ptr, oldSize);
-    else
-        pmmDeallocate(ptr);
+    pmmDeallocatePages(ptr, oldSize);
 
     // return new page
     return newPages;

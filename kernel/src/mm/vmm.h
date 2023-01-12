@@ -26,10 +26,16 @@ vmm_index_t;
 
 pstruct
 {
+    uint64_t page[1];
+}
+vmm_meta_t;
+
+pstruct
+{
     uint64_t entries[512];
+    uint32_t allocated;
     uint32_t idx;
-    uint32_t full;
-    uint64_t pages[1];
+    vmm_meta_t *pages;
 }
 vmm_page_table_t;
 

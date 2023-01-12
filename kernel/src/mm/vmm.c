@@ -6,27 +6,11 @@
 #include <cpu/gdt.h>
 #include <main/panic.h>
 
-// todo: make this less wasteful
-uint64_t requiredPagesFull = 0;
-uint64_t maxPagesFull = 0;
-
-uint64_t requiredPages = 0;
-uint64_t maxPages = 0;
-
 vmm_page_table_t *baseTable;
 
 // initialize the virtual memory manager
 void vmmInit()
 {
-    // pre-calculate required pages to store metadata
-    requiredPagesFull = (((pmmTotal().used + pmmTotal().available) / (128 * 1024 * 1024)) * 3) + 1; // we need ~3 pages per 128 megs of ram
-    requiredPagesFull += 2;                                                                         // table structure + 1 padding
-
-    maxPagesFull = (((requiredPagesFull - 2) * 4096) - 8) / 8;
-
-    requiredPages = requiredPages / 8 + 2;
-    maxPages = (((requiredPages - 2) * 4096) - 8) / 8;
-
     baseTable = vmmCreateTable(true, false); // create the base table with hhdm
     vmmSwap(baseTable);                      // swap the table
 
@@ -76,14 +60,14 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pml4->entries[index.PDP];           // index pdp
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pdp = pmmPage();                            // allocate table
-        zero(pdp, VMM_PAGE);                        // clear it
-        table->pages[table->idx++] = (uint64_t)pdp; // set page address
+        pdp = pmmPage();                                  // allocate table
+        zero(pdp, VMM_PAGE);                              // clear it
+        table->pages->page[table->idx++] = (uint64_t)pdp; // set page address
 
-        if (!table->full)
+        if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
         {
-            if (table->idx == maxPages) // very unlikely
-                panick("Failed to map address! Too big page table.");
+            table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
+            table->allocated++;
         }
 
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
@@ -96,14 +80,14 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pdp->entries[index.PD];             // index pd
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pd = pmmPage();                            // allocate table
-        zero(pd, VMM_PAGE);                        // clear it
-        table->pages[table->idx++] = (uint64_t)pd; // set page address
+        pd = pmmPage();                                  // allocate table
+        zero(pd, VMM_PAGE);                              // clear it
+        table->pages->page[table->idx++] = (uint64_t)pd; // set page address
 
-        if (!table->full)
+        if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
         {
-            if (table->idx == maxPages) // very unlikely
-                panick("Failed to map address! Too big page table.");
+            table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
+            table->allocated++;
         }
 
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);   // set it's address
@@ -116,14 +100,14 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pd->entries[index.PT];              // index pt
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pt = pmmPage();                            // allocate table
-        zero(pt, VMM_PAGE);                        // clear it
-        table->pages[table->idx++] = (uint64_t)pt; // set page address
+        pt = pmmPage();                                  // allocate table
+        zero(pt, VMM_PAGE);                              // clear it
+        table->pages->page[table->idx++] = (uint64_t)pt; // set page address
 
-        if (!table->full)
+        if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
         {
-            if (table->idx == maxPages) // very unlikely
-                panick("Failed to map address! Too big page table.");
+            table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
+            table->allocated++;
         }
 
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);   // set it's address
@@ -195,17 +179,13 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
 #endif
 
     // create a new table to use as a base for everything
-    vmm_page_table_t *newTable;
-
-    // allocate a new table based on the dimensions
-    if (full | driver)
-        newTable = (vmm_page_table_t *)pmmPages(requiredPagesFull);
-    else
-        newTable = (vmm_page_table_t *)pmmPages(requiredPages);
-
-    newTable->full = full | driver;
+    vmm_page_table_t *newTable = (vmm_page_table_t *)pmmPages(2);
 
     zero(newTable, VMM_PAGE + 16); // zero out the table and the metadata
+
+    // allocate first metadata page
+    newTable->pages = pmmPage();
+    newTable->allocated++;
 
     struct limine_memmap_response *memMap = bootloaderGetMemoryMap();
     uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
@@ -251,19 +231,16 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
 // free a table
 void vmmDestroy(vmm_page_table_t *table)
 {
-
 #ifdef K_VMM_DEBUG
     uint64_t a = pmmTotal().available;
 #endif
 
     // deallocate all the used pages
     for (int i = 0; i < table->idx; i++)
-        pmmDeallocate((void *)table->pages[i]);
+        pmmDeallocate((void *)table->pages->page[i]);
 
-    if (table->full)
-        pmmDeallocatePages(table, requiredPagesFull);
-    else
-        pmmDeallocatePages(table, requiredPages);
+    pmmDeallocatePages(table->pages, table->allocated);
+    pmmDeallocatePages(table, 2);
 
 #ifdef K_VMM_DEBUG
     printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, toKB(pmmTotal().available - a));
