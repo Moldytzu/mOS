@@ -17,30 +17,46 @@ void pmmDisableDBG()
     debug = false;
 }
 
+ifunc bool get(pmm_pool_t *pool, size_t idx)
+{
+    size_t arrIdx = idx / sizeof(size_t); // gives the index of the 64-bit bytes we need
+    size_t offset = idx % sizeof(size_t); // offset in bits
+
+    size_t mask = 1; // create a bit mask
+    mask <<= offset;
+
+    uint64_t *bmp = (uint64_t *)pool->base;
+    return bmp[arrIdx] & mask; // get the bit
+}
+
+ifunc void set(pmm_pool_t *pool, size_t idx, bool value)
+{
+    size_t arrIdx = idx / sizeof(size_t); // gives the index of the 64-bit bytes we need
+    size_t offset = idx % sizeof(size_t); // offset in bits
+
+    size_t mask = 1; // create a bit mask
+    mask <<= offset;
+
+    uint64_t *bmp = (uint64_t *)pool->base;
+
+    if (value)
+        bmp[arrIdx] |= mask; // set the bit
+    else
+        bmp[arrIdx] &= ~mask; // unset the bit
+}
+
 void pmmDbgDump()
 {
     // display all bits in the bitmaps
     for (int i = 0; i < poolCount; i++)
     {
         pmm_pool_t *pool = &pools[i];
-        uint64_t string = 0;
-        uint64_t pageIndex = 0;
-        uint64_t allocatedPages = 0;
-        void *base = NULL;
 
         printks("pool %d: ", i);
 
         // iterate over the bitmap bytes to display the status of the bits
-        for (uint64_t b = 0; b < pool->bitmapBytes; b++)
-        {
-            for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
-            {
-                uint8_t mask = 0b10000000 >> bits;
-                uint8_t *bytes = (uint8_t *)(pool->base + b);
-
-                printks("%d", *bytes & mask ? 1 : 0);
-            }
-        }
+        for (uint64_t b = 0; b < pool->bitmapBytes * 8; b++)
+            printks("%d", get(pool, b) ? 1 : 0);
 
         printks("\n");
     }
@@ -56,29 +72,17 @@ void *pmmPage()
 
         pmm_pool_t *pool = &pools[i];
 
-        // iterate over the bitmap bytes to find an available page
-        for (; pool->lastBitmapIndex < pool->bitmapBytes; pool->lastBitmapIndex++)
+        for (; pool->lastAllocIdx < pool->bitmapBytes * 8; pool->lastAllocIdx++)
         {
-            for (; pool->lastMaskBit < 8; pool->lastMaskBit++, pool->lastPageIndex++)
-            {
-                uint8_t mask = 0b10000000 >> pool->lastMaskBit;
-                uint8_t *bytes = (uint8_t *)(pool->base + pool->lastBitmapIndex);
+            if (get(pool, pool->lastAllocIdx)) // find first available index
+                continue;
 
-                if (*bytes & mask) // check against the mask to see if the bit is set
-                    continue;
+            // update metadata
+            pool->available -= 4096;
+            pool->used += 4096;
 
-                *bytes |= mask; // set the bit to mark the page as used
-
-                pool->available -= 4096;
-                pool->used += 4096;
-
-                if (debug)
-                    printks("pmm allocate: %x\n", (void *)(pool->alloc + 4096 * pool->lastPageIndex));
-
-                return (void *)(pool->alloc + 4096 * pool->lastPageIndex);
-            }
-
-            pool->lastMaskBit = 0;
+            set(pool, pool->lastAllocIdx, true);                                // set the bit
+            return (void *)((uint64_t)pool->alloc + pool->lastAllocIdx * 4096); // return the page address
         }
     }
 
@@ -89,73 +93,43 @@ void *pmmPage()
 
 void *pmmPages(uint64_t pages)
 {
-    uint64_t string = 0;
-    uint64_t pageIndex = 0;
-    uint64_t allocatedPages = 0;
-    void *base = NULL;
-    pmm_pool_t *pool;
-
     for (int i = 0; i < poolCount; i++)
     {
         // find an available pool
-        if (pools[i].available < 4096 * pages)
+        if (pools[i].available < 4096)
             continue;
 
-        pool = &pools[i];
+        pmm_pool_t *pool = &pools[i];
 
-        // iterate over the bitmap bytes to find an available string of pages
-        for (uint64_t b = 0; b < pool->bitmapBytes; b++)
+        for (size_t i = 0; i < pool->bitmapBytes * 8; i++)
         {
-            for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
-            {
-                uint8_t mask = 0b10000000 >> bits;
-                uint8_t *bytes = (uint8_t *)(pool->base + b);
-
-                if (*bytes & mask) // check against the mask to see if the page is occupied
-                {
-                    base = NULL;
-                    string = 0;
-                    continue;
-                }
-
-                if (base == NULL)
-                    base = (void *)(pool->alloc + 4096 * pageIndex);
-
-                if (string++ == pages)
-                    goto doReturn;
-            }
-        }
-    }
-
-    panick("Out of memory!");
-
-    return NULL;
-
-doReturn:
-    pageIndex = 0;
-
-    // set the bits of the bitmap where necessary
-    for (uint64_t b = 0; b < pool->bitmapBytes; b++)
-    {
-        for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
-        {
-            uint8_t mask = 0b10000000 >> bits;
-            uint8_t *bytes = (uint8_t *)(pool->base + b);
-
-            // check if we are in the region
-            if ((void *)(pool->alloc + 4096 * pageIndex) < base)
+            if (get(pool, i)) // find first available index
                 continue;
 
-            *bytes |= mask;
-            pool->available -= 4096;
-            pool->used += 4096;
+            // todo: optimize this even further by counting the number of empty spaces then adding it to i thus skipping some bitmap checking
 
-            if (allocatedPages++ == string)
+            bool found = true;
+            for (size_t k = i; k < i + pages; k++)
             {
-                if (debug)
-                    printks("pmm allocate: %x (%d)\n", base, string);
-                return base;
+                if (get(pool, k)) // we didn't find what we need
+                {
+                    found = false;
+                    break;
+                }
             }
+
+            if (!found) // nah
+                continue;
+
+            // set the needed bits
+            for (size_t k = i; k < i + pages; k++)
+                set(pool, k, true);
+
+            // update metadata
+            pool->available -= 4096 * pages;
+            pool->used += 4096 * pages;
+
+            return (void *)((uint64_t)pool->alloc + i * 4096);
         }
     }
 
@@ -169,105 +143,58 @@ void pmmDeallocate(void *page)
     for (int i = 0; i < poolCount; i++)
     {
         pmm_pool_t *pool = &pools[i];
-        uint64_t pageIndex = 0;
 
-        // iterate over the bitmap bytes to find an available string of pages
-        for (uint64_t b = 0; b < pool->bitmapBytes; b++)
+        // find the parent pool of the page
+        if ((uint64_t)page < (uint64_t)pool->alloc)
+            continue;
+
+        uint64_t addressOffset = (uint64_t)page - (uint64_t)pool->alloc; // offset from the base allocation address
+        uint64_t index = addressOffset / 4096;                           // calculate the bitmap offset
+
+        if (get(pool, index) == 0) // don't deallocate second time
         {
-            for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
-            {
-                if ((void *)(pool->alloc + 4096 * pageIndex) != page)
-                    continue;
-
-                uint64_t mask = 0b10000000 >> bits;
-                uint8_t *bytes = (uint8_t *)(pool->base + b);
-
-                if (!(*bytes & mask))
-                {
-                    printks("pmm: deallocating second time %x\n", page);
-                    pool->available -= 4096;
-                    pool->used += 4096;
-                }
-
-                *bytes &= ~mask; // unset the byte
-
-                pool->available += 4096;
-                pool->used -= 4096;
-
-                pool->lastBitmapIndex = 0;
-                pool->lastMaskBit = 0;
-                pool->lastPageIndex = 0;
-
-                if (debug)
-                    printks("pmm deallocate: %x\n", page);
-
-                return;
-            }
+            printks("pmm: deallocating second time %x\n", page);
+            return;
         }
+
+        pool->available += 4096;
+        pool->used -= 4096;
+
+        set(pool, index, false); // unset bit
     }
 }
 
 void pmmDeallocatePages(void *page, uint64_t count)
 {
-    count++;
-    uint64_t tmp = count;
-    for (int i = 0; i < poolCount; i++)
-    {
-        pmm_pool_t *pool = &pools[i];
-        uint64_t pageIndex = 0;
-
-        // iterate over the bitmap bytes to find an available string of pages
-        for (uint64_t b = 0; b < pool->bitmapBytes; b++)
-        {
-            for (uint8_t bits = 0; bits < 8; bits++, pageIndex++)
-            {
-                if ((void *)(pool->alloc + 4096 * pageIndex) < page)
-                    continue;
-
-                uint64_t mask = 0b10000000 >> bits;
-                uint8_t *bytes = (uint8_t *)(pool->base + b);
-
-                if (!(*bytes & mask))
-                {
-                    printks("pmm: deallocating second time %x\n", page);
-                    pool->available -= 4096;
-                    pool->used += 4096;
-                }
-
-                *bytes &= ~mask; // unset the byte
-
-                pool->available += 4096;
-                pool->used -= 4096;
-
-                if (count-- == 0)
-                {
-                    if (debug)
-                        printks("pmm deallocate: %x (%d)\n", page, tmp);
-                    return;
-                }
-            }
-        }
-    }
+    for (size_t i = 0; i <= count; i++)
+        pmmDeallocate((void *)((uint64_t)page + i * 4096));
 }
 
-void *pmmReallocate(void *ptr, uint64_t old, uint64_t new)
+void *pmmReallocate(void *ptr, uint64_t oldSize, uint64_t newSize)
 {
     // make sure we don't have null values
-    if(!old)
-        old++;
-    
-    if(!new)
-        new++;
-        
+    if (!oldSize)
+        oldSize++;
+
+    if (!newSize)
+        newSize++;
+
+    printks("%d -> %d\n", oldSize, newSize);
+
     // allocate a new area
-    void *newPages = pmmPages(new);
+    void *newPages;
+
+    if (newSize > 1)
+        newPages = pmmPages(newSize);
+    else
+        newPages = pmmPage();
 
     // copy the contents
-    memcpy8(newPages, ptr, old * 4096);
+    memcpy8(newPages, ptr, min(oldSize, newSize) * 4096);
 
     // deallocate old page
-    if(old > 1)
-        pmmDeallocatePages(ptr, old);
+    if (oldSize > 1)
+        pmmDeallocatePages(ptr, oldSize);
     else
         pmmDeallocate(ptr);
 
@@ -316,6 +243,7 @@ void pmmInit()
     printk("pmm: %d mb available ram\n", pmmTotal().available / 1024 / 1024);
 }
 
+// todo: make this function return a dedicated structure and not reuse the internal one
 pmm_pool_t pmmTotal()
 {
     pmm_pool_t total;
@@ -329,7 +257,7 @@ pmm_pool_t pmmTotal()
         total.bitmapBytes += pools[i].bitmapBytes;
     }
 
-    total.lastPageIndex = poolCount; // use pageIndex to set the pool count
+    total.lastAllocIdx = poolCount; // use last allocation index to set the pool count
 
     return total; // and return the total
 }
