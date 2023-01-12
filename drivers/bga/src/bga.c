@@ -70,7 +70,8 @@ void enableVBE()
 bool detectBGA()
 {
     device = (drv_pci_header0_t *)sys_pci_get(BGA_PCI_VENDOR, BGA_PCI_DEVICE);
-    return device != NULL; // if the adapter is present on the pci bus then it's present
+    uint32_t id = readRegister(BGA_REG_ID);
+    return device != NULL | id >= 0xB0C0; // if the adapter is present on the pci bus then it's present
 }
 
 bool setResolution(uint32_t xres, uint32_t yres)
@@ -88,7 +89,11 @@ bool setResolution(uint32_t xres, uint32_t yres)
     sys_yield(); // wait for the emulator to do its thing
 
     // update the metadata
-    fb->base = (void *)(uint64_t)device->BAR0; // set the base address
+    if(device)
+        fb->base = (void *)(uint64_t)device->BAR0; // set the base address
+    else
+        fb->base = (void *)0xE0000000;
+
     fb->currentXres = xres;
     fb->currentYres = yres;
 
