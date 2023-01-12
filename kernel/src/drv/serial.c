@@ -3,6 +3,7 @@
 // initialize serial controller
 void serialInit()
 {
+#ifdef K_COM_ENABLE
     outb(COM1 + 1, 0);          // disable intrerrupts
     outb(COM1 + 3, 0b10000000); // enable DLAB
 
@@ -14,12 +15,15 @@ void serialInit()
     outb(COM1 + 2, 0b111); // fifo control register (enable fifo, clear them, disable dma ,trigger at 1 character)
 
     printk("com1: %d bps baud\n", COM_BAUD_BASE / K_COM_BAUD_DIV);
+#endif
 }
 
 // write string on the serial console
 void serialWrite(const char *str)
 {
-    if(!str) return;
+#ifdef K_COM_ENABLE
+    if (!str)
+        return;
 
     while (*str) // loop thru every character
     {
@@ -27,4 +31,5 @@ void serialWrite(const char *str)
             serialWritec('\r'); // the serial console uses the CRLF end line method and we don't
         serialWritec(*str++);
     }
+#endif
 }

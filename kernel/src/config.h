@@ -28,6 +28,7 @@
 #define K_STACK_SIZE 64 * 1024 // userspace stack size
 
 // Serial
+#define K_COM_ENABLE     // enable support for serial
 #define K_COM_BAUD_DIV 1 // divisor of the baud rate (base is 115200)
 
 // PIT
