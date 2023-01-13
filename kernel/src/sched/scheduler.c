@@ -1,6 +1,7 @@
 #include <sched/scheduler.h>
 #include <sched/pit.h>
 #include <mm/pmm.h>
+#include <mm/blk.h>
 #include <cpu/gdt.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
@@ -193,10 +194,10 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 
         if (task->pageTable)
         {
-            task->next = pmmPage();                      // allocate next task if the current task is valid
-            zero(task->next, sizeof(struct sched_task)); // clear the thread
-            task->next->previous = task;                 // set the previous task
-            task = task->next;                           // set current task to the newly allocated task
+            task->next = blkBlock(sizeof(struct sched_task)); // allocate next task if the current task is valid
+            zero(task->next, sizeof(struct sched_task));      // clear the thread
+            task->next->previous = task;                      // set the previous task
+            task = task->next;                                // set current task to the newly allocated task
         }
     }
 
@@ -391,7 +392,7 @@ void schedulerKill(uint32_t tid)
         prev->next = task->next;
 
     vmmDestroy(task->pageTable); // destroy the page table
-    pmmDeallocate(task);         // free the task
+    blkDeallocate(task);         // free the task
 
     taskKilled = true;
 

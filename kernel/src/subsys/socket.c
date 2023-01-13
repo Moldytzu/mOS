@@ -1,12 +1,14 @@
 #include <subsys/socket.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
-#include <mm/pmm.h>
+#include <mm/blk.h>
 
 struct sock_socket rootSocket;
 uint32_t lastSockID = 0;
 
-// todo: negociate the buffer size
+// todo: permission system (the socket creator can chose which pids can read/write from the socket)
+// adjustable buffer size (dynamically allocate buffer size)
+// master-slave system (multiple connections on the same socket, create a buffer for each connection)
 
 // create new socket and return it's address
 struct sock_socket *sockCreate()
@@ -20,9 +22,9 @@ struct sock_socket *sockCreate()
 
         if (currentSocket->buffer)
         {
-            currentSocket->next = pmmPage(sizeof(struct sock_socket)); // allocate next socket if the current socket is valid
-            currentSocket->next->previous = currentSocket;             // set the previous socket
-            currentSocket = currentSocket->next;                       // set current socket to the newly allocated socket
+            currentSocket->next = blkBlock(sizeof(struct sock_socket)); // allocate next socket if the current socket is valid
+            currentSocket->next->previous = currentSocket;              // set the previous socket
+            currentSocket = currentSocket->next;                        // set current socket to the newly allocated socket
         }
     }
 
@@ -109,5 +111,5 @@ void sockDestroy(struct sock_socket *sock)
 {
     sock->previous->next = sock->next;   // bypass this socket
     pmmDeallocate((void *)sock->buffer); // deallocate the buffer
-    pmmDeallocate(sock);                 // free the socket
+    blkDeallocate(sock);                 // free the socket
 }
