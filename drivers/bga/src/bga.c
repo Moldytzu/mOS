@@ -71,7 +71,11 @@ bool detectBGA()
 {
     device = (drv_pci_header0_t *)sys_pci_get(BGA_PCI_VENDOR, BGA_PCI_DEVICE);
     uint32_t id = readRegister(BGA_REG_ID);
-    return device != NULL | id >= 0xB0C0; // if the adapter is present on the pci bus then it's present
+    
+    if(device)
+        printf("bga: detected version %d", id - 0xB0C0);
+    
+    return device != NULL; // if the adapter is present on the pci bus then it's present
 }
 
 bool setResolution(uint32_t xres, uint32_t yres)

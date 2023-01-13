@@ -199,6 +199,7 @@ void _mdrvmain()
     while (1)
     {
         updateScreen(); // send command to the device that we want the screen to be updated
+        sys_yield();
 
         // wait for the kernel to request another resolution
         if (fb->requestedXres && fb->requestedXres && fb->currentXres == fb->requestedXres && fb->currentYres == fb->requestedYres)
