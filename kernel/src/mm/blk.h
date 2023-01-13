@@ -1,6 +1,8 @@
 #pragma once
 #include <misc/utils.h>
 
+#define BLK_ALIGNMENT 16
+
 pstruct
 {
     uint16_t size;
