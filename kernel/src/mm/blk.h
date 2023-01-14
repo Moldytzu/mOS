@@ -15,4 +15,5 @@ blk_header_t;
 void blkInit();
 void *blkBlock(size_t size);
 void blkDeallocate(void *blk);
+void *blkReallocate(void *blk, size_t size);
 void blkMerge();

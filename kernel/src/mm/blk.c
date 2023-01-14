@@ -18,13 +18,13 @@ blk_header_t *last()
     return current;
 }
 
-void expand()
+void expand(uint16_t pages)
 {
     // allocate a new block
-    blk_header_t *newBlock = (blk_header_t *)pmmPage();
-    zero(newBlock, 4096);
+    blk_header_t *newBlock = (blk_header_t *)pmmPages(pages);
+    zero(newBlock, 4096 * pages);
     newBlock->free = true;
-    newBlock->size = 4096 - sizeof(blk_header_t);
+    newBlock->size = (4096 * pages) - sizeof(blk_header_t);
     newBlock->prev = last();
 
     // add it in the chain
@@ -57,8 +57,6 @@ void blkInit()
     zero(start, 4096);
     start->free = true;
     start->size = 4096 - sizeof(blk_header_t);
-
-    printk("blk: initialised!\n");
 }
 
 void *blkBlock(size_t size)
@@ -67,10 +65,6 @@ void *blkBlock(size_t size)
         size += size % BLK_ALIGNMENT;
 
     size += BLK_ALIGNMENT; // padding
-
-    // todo: handle this in another way. maybe wrap the pmm?
-    if (size >= 4096 - BLK_ALIGNMENT)
-        panick("Failed to allocate a block! Too big.");
 
     size_t internalSize = size + sizeof(blk_header_t);
 
@@ -104,8 +98,19 @@ void *blkBlock(size_t size)
     }
 
     // expand then try again
-    expand();
+    expand(size / 4096 + 1);
     return blkBlock(size - BLK_ALIGNMENT); // also remove the padding
+}
+
+void *blkReallocate(void *blk, size_t size)
+{
+    if (!blk)
+        return blkBlock(size);
+
+    void *newBlock = blkBlock(size);
+    memcpy(newBlock, blk, HEADER_OF(blk)->size > size ? size : HEADER_OF(blk)->size);
+    blkDeallocate(blk);
+    return newBlock;
 }
 
 void blkDeallocate(void *blk)
