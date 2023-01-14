@@ -4,10 +4,6 @@
 #define ACPI_GAS_SYSMEM 0
 #define ACPI_GAS_SYSIO 1
 
-#define ACPI_HPET_GENERAL_CAPABILITIES_REGISTER_COUNTER 0x0
-#define ACPI_HPET_GENERAL_CONFIGURATION_REGISTER 0x10
-#define ACPI_HPET_MAIN_COUNTER 0xF0
-
 pstruct
 {
     uint8_t signature[8];
@@ -164,11 +160,16 @@ acpi_pci_descriptor_t;
 pstruct
 {
     acpi_sdt_t header;
-    uint32_t eventTimerID;
+    uint8_t revision;
+    uint8_t comparators : 5;
+    uint8_t counterSize : 1;
+    uint8_t padding : 1;
+    uint8_t replaceLegacy : 1;
+    uint16_t pciVendor;
     acpi_gas_t base;
     uint8_t hpetNumber;
-    uint16_t minimumTicks;
-    uint8_t protection;
+    uint16_t minimumTick;
+    uint8_t pageProtection;
 }
 acpi_hpet_t;
 

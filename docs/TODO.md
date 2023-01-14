@@ -11,3 +11,4 @@
 
 # bugs to fix
 ### sleep function in scheduler doesn't work properly
+### invalid opcode when doing cat on the font file

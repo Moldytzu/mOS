@@ -11,7 +11,6 @@ acpi_rsdp_t *rsdp;
 acpi_sdt_t *sdt;
 acpi_fadt_t *fadt;
 acpi_mcfg_t *mcfg;
-acpi_hpet_t *hpet;
 
 acpi_pci_descriptor_t *pciFuncs = NULL;
 uint16_t pciIndex = 0;
@@ -99,7 +98,7 @@ void acpiEnumeratePCI()
                     d.bus = bus, d.device = device, d.function = function, d.header = header;
 
                     // put it in our list of pci functions
-                    if(pciIndex > 4096 / sizeof(acpi_pci_descriptor_t)) // very unlikely
+                    if (pciIndex > 4096 / sizeof(acpi_pci_descriptor_t)) // very unlikely
                         panick("Can't hold that many PCI descriptors!");
 
                     pciFuncs[pciIndex++] = d;

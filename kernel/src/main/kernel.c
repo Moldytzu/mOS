@@ -20,8 +20,6 @@
 #include <main/panic.h>
 #include <elf/elf.h>
 
-void panick(const char *);
-
 // kernel main, called after init
 void kmain()
 {
@@ -50,9 +48,9 @@ void kmain()
     schedulerEnable(); // enable the schduler and jump in userspace
 }
 
-void panick(const char *msg)
+void panick_impl(const char *file, size_t line, const char *msg)
 {
-    printk("\n\nA kernel exception has happened.\n%s\n", msg);
+    printk("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
 
 #ifdef K_PANIC_REBOOT
     for (volatile size_t i = 0; i < 0xFFFFFFF; i++)
