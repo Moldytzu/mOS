@@ -31,13 +31,13 @@ void _start()
 
     initrdInit(); // initialize the initrd
 
-    framebufferInit(); // initialize framebuffer
-
     serialInit(); // initialize the serial port
 
     pmmInit(); // initialize the physical memory manager
 
     blkInit(); // initialize the block allocator
+
+    framebufferInit(); // initialize framebuffer
 
     gdtInit(); // initialize the gdt
 
