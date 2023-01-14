@@ -3,7 +3,7 @@
 #include <fw/bootloader.h>
 #include <mm/vmm.h>
 
-psf1_header_t *font;
+psf2_header_t *font;
 struct limine_file *fontMod;
 struct limine_framebuffer framebuffer;
 
@@ -15,7 +15,7 @@ void framebufferInit()
 {
     memcpy(&framebuffer, bootloaderGetFramebuffer(), sizeof(struct limine_framebuffer)); // get the tag
 
-    framebufferLoadFont("font-8x16.psf"); // load default font
+    framebufferLoadFont("consola.psf"); // load default font
 
     framebufferClear(0x000000); // clear framebuffer
 
@@ -59,12 +59,12 @@ inline void framebufferClear(uint32_t colour)
 // load a font
 void framebufferLoadFont(const char *name)
 {
-    font = (psf1_header_t *)initrdGet(name);
+    font = (psf2_header_t *)initrdGet(name);
 
     if (!font)
         goto error;
 
-    if (font->magic[0] != PSF1_MAGIC0 && font->magic[0] != PSF1_MAGIC1) // if the psf1's magic isn't the one we expect, just fail
+    if (font->magic[0] != PSF2_MAGIC0 || font->magic[1] != PSF2_MAGIC1 || font->magic[2] != PSF2_MAGIC2 || font->magic[3] != PSF2_MAGIC3)
         goto error;
 
     return;
@@ -85,13 +85,14 @@ inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 // plot character on the framebuffer
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
-    uint8_t *character = (uint8_t *)font + sizeof(psf1_header_t) + c * font->charsize; // get the offset by skipping the header and indexing the character
-    for (size_t dy = 0; dy < font->charsize; dy++, character++)                        // loop thru each line of the character
+    uint8_t *character = (uint8_t *)font + font->headersize + c * font->charsize; // get the offset by skipping the header and indexing the character
+    for (size_t dy = 0; dy < font->height; dy++)                                  // loop thru each line of the character
     {
-        for (size_t dx = 0; dx < 8; dx++) // 8 pixels wide
+        for (size_t dx = 0; dx < font->width; dx++) // 8 pixels wide
         {
-            uint8_t mask = 0b10000000 >> dx; // create a bitmask that shifts based on which pixel from the line we're indexing
-            if (*character & mask)           // and the mask with the line
+            uint8_t bits = character[dy * (font->charsize / font->height) + dx / 8];
+            uint8_t bit = bits >> (7 - dx % 8) & 1;
+            if (bit) // and the mask with the line
                 framebufferPlotp(dx + x, dy + y, cursor.colour);
         }
     }
@@ -100,10 +101,10 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
 // create a new line
 ifunc void newline()
 {
-    cursor.Y += font->charsize + 1; // add character's height and a 1 px padding
-    cursor.X = 0;                   // reset cursor X
+    cursor.Y += font->height + 1; // add character's height and a 1 px padding
+    cursor.X = 0;                 // reset cursor X
 
-    if (cursor.Y + font->charsize + 1 >= framebuffer.height)
+    if (cursor.Y + font->height + 1 >= framebuffer.height)
     {
         cursor.Y = 0;
         framebufferClear(0);
@@ -119,14 +120,14 @@ void framebufferWritec(char c)
         return;
     }
 
-    if (cursor.X + 8 > framebuffer.width)
+    if (cursor.X + font->width > framebuffer.width)
         newline();
 
     if (c == ' ' && cursor.X == 0)
         return;
 
     framebufferPlotc(c, cursor.X, cursor.Y);
-    cursor.X += 8 + 1; // add character's width and a 1 px padding
+    cursor.X += font->width + 1; // add character's width and a 1 px padding
 }
 
 // write a string
