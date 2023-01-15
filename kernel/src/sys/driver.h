@@ -2,6 +2,7 @@
 #include <sys/sys.h>
 #include <mm/pmm.h>
 #include <drv/framebuffer.h>
+#include <drv/drv.h>
 #include <fw/acpi.h>
 
 // driver (rsi = call, rdx = arg1, r8 = arg2, r9 = arg3)
@@ -28,6 +29,8 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
     case 1: // driver announce
         if (!INBOUNDARIES(arg2))
             return;
+
+        drvRegister(task->id, arg1);
 
         uint64_t *retStruct = PHYSICAL(arg2);
 

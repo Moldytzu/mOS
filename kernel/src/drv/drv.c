@@ -1,4 +1,5 @@
 #include <drv/drv.h>
+#include <cpu/idt.h>
 #include <mm/blk.h>
 #include <sched/scheduler.h>
 
@@ -22,12 +23,15 @@ void drvExit(uint32_t drv)
             zero(&fb[i], sizeof(drv_context_fb_t));
     }
 
-    printk("drv: %s exits\n", schedulerGet(drv));
+    idtClearRedirect(drv);
+    printk("drv: %s exits\n", schedulerGet(drv)->name);
 }
 
 void *drvRegister(uint32_t drv, uint32_t type)
 {
     // return a new context
+    printk("drv: %s registred as type %d driver\n", schedulerGet(drv)->name, type);
+ 
     switch (type)
     {
 

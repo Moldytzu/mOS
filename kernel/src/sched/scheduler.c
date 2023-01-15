@@ -5,6 +5,7 @@
 #include <cpu/gdt.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
+#include <drv/drv.h>
 #include <main/panic.h>
 #include <sys/syscall.h>
 
@@ -358,6 +359,10 @@ void schedulerKill(uint32_t tid)
     if (!task)
         return;
 
+    // clear driver contexts
+    if(task->isDriver)
+        drvExit(tid);
+
     // deallocate some fields
     pmmDeallocatePages(task->stackBase, task->stackSize / VMM_PAGE); // stack
     pmmDeallocate(task->enviroment);                                 // enviroment
@@ -399,9 +404,6 @@ void schedulerKill(uint32_t tid)
 #ifdef K_SCHED_DEBUG
     printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
 #endif
-
-    // remove idt redirections
-    idtClearRedirect(tid);
 
     // halt until next intrerrupt fires
     sti();

@@ -10,6 +10,7 @@
 #include <drv/input.h>
 #include <mm/pmm.h>
 #include <mm/blk.h>
+#include <drv/drv.h>
 #include <mm/vmm.h>
 #include <sched/pit.h>
 #include <sched/scheduler.h>
@@ -54,6 +55,8 @@ void _start()
     pitInit(); // initialize the timer
 
     schedulerInit(); // initialize the scheduler
+
+    drvInit(); // initialize the driver manager
 
     acpiInit(); // initialize the acpi interface
 
