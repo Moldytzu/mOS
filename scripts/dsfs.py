@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# utility to create a dsfs image file from a folder
+
 import os, sys
 
 inputFolder = ''
