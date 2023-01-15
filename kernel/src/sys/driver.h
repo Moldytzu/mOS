@@ -30,24 +30,11 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
         if (!INBOUNDARIES(arg2))
             return;
 
-        drvRegister(task->id, arg1);
+        uint64_t *ret = PHYSICAL(arg2);
 
-        uint64_t *retStruct = PHYSICAL(arg2);
+        *ret = (uint64_t)drvRegister(task->id, arg1);
 
-        switch (arg1)
-        {
-        case 1: // input
-            *retStruct = (uint64_t)&drv_type_input_s;
-            break;
-
-        case 2: // framebuffer
-            *retStruct = (uint64_t)&drv_type_framebuffer_s;
-            break;
-
-        default:
-            *retStruct = 0;
-            break;
-        }
+        printks("%p\n", *ret);
 
         break;
 

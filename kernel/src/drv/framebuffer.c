@@ -1,14 +1,13 @@
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
+#include <drv/drv.h>
 #include <fw/bootloader.h>
 #include <mm/vmm.h>
 
 psf2_header_t *font;
-struct limine_file *fontMod;
 struct limine_framebuffer framebuffer;
 
-framebuffer_cursor_info_t cursor;              // info
-drv_type_framebuffer_t drv_type_framebuffer_s; // driver structure
+framebuffer_cursor_info_t cursor; // info
 
 // init the framebuffer
 void framebufferInit()
@@ -22,11 +21,6 @@ void framebufferInit()
     cursor.colour = 0xFFFFFF; // white cursor
     cursor.X = cursor.Y = 0;  // upper left corner
 
-    // set in the context
-    drv_type_framebuffer_s.base = framebuffer.address;
-    drv_type_framebuffer_s.currentXres = drv_type_framebuffer_s.requestedXres = framebuffer.width;
-    drv_type_framebuffer_s.currentYres = drv_type_framebuffer_s.requestedYres = framebuffer.height;
-
     printk("fb: display resolution is %dx%d\n", framebuffer.width, framebuffer.height);
 }
 
@@ -35,10 +29,15 @@ void framebufferFlush()
     cursor.colour = 0xFFFFFF; // white cursor
     cursor.X = cursor.Y = 0;  // upper left corner
 
-    framebuffer.address = drv_type_framebuffer_s.base;
-    framebuffer.width = drv_type_framebuffer_s.currentXres;
-    framebuffer.height = drv_type_framebuffer_s.currentYres;
-    framebuffer.pitch = drv_type_framebuffer_s.currentXres * 4;
+    drv_context_fb_t *ctx = (drv_context_fb_t *)drvQueryActive(DRV_TYPE_FB);
+
+    if (!ctx || !ctx->base)
+        return;
+
+    framebuffer.address = ctx->base;
+    framebuffer.width = ctx->currentXres;
+    framebuffer.height = ctx->currentYres;
+    framebuffer.pitch = ctx->currentXres * 4;
 
     // map the framebuffer
     for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)

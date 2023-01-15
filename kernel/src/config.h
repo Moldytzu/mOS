@@ -39,4 +39,4 @@
 #define K_IDT_DIS_KIRQ // disable intrerrupts during kernel startup
 
 // Panic
-#define K_PANIC_REBOOT // reboot on kernel panic
+//#define K_PANIC_REBOOT // reboot on kernel panic

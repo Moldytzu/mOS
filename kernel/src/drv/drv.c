@@ -12,6 +12,8 @@ void drvInit()
     // allocate the contexts
     fb = blkBlock(sizeof(drv_context_fb_t) * DRV_MAX_CONTEXTS);
     zero(fb, sizeof(drv_context_fb_t) * DRV_MAX_CONTEXTS);
+
+    fbIdx = 0;
 }
 
 void drvExit(uint32_t drv)
@@ -24,14 +26,33 @@ void drvExit(uint32_t drv)
     }
 
     idtClearRedirect(drv);
-    printk("drv: %s exits\n", schedulerGet(drv)->name);
+    printks("drv: %s exits\n", schedulerGet(drv)->name);
+}
+
+void drvUpdateReference(uint32_t type, void *context)
+{
+    switch (type)
+    {
+    case DRV_TYPE_FB:
+        memcpy(&fbRef, context, sizeof(drv_context_fb_t));
+        for (int i = 0; i < fbIdx; i++)
+        {
+            fb[i].requestedXres = fbRef.requestedXres;
+            fb[i].requestedYres = fbRef.requestedYres;
+        }
+
+        break;
+
+    default:
+        break;
+    }
 }
 
 void *drvRegister(uint32_t drv, uint32_t type)
 {
     // return a new context
-    printk("drv: %s registred as type %d driver\n", schedulerGet(drv)->name, type);
- 
+    printks("drv: %s registred as type %d driver\n", schedulerGet(drv)->name, type);
+
     switch (type)
     {
 
@@ -49,7 +70,9 @@ void *drvRegister(uint32_t drv, uint32_t type)
             fb[fbIdx].requestedYres = active->requestedYres;
         }
 
-        return &fb[fbIdx++];
+        fbIdx++;
+
+        return &fb[fbIdx - 1];
     }
 
     default:
@@ -67,18 +90,20 @@ void *drvQueryActive(uint32_t type)
     case DRV_TYPE_FB:
         for (int i = 0; i < fbIdx; i++)
         {
-            if(fb[fbIdx].requestedXres == fbRef.requestedXres && fb[fbIdx].requestedYres == fbRef.requestedYres)
+            if (fb[fbIdx].currentXres == fbRef.requestedXres && fb[fbIdx].currentYres == fbRef.requestedYres)
                 return &fb[fbIdx];
         }
 
+        if (fbIdx) // return first as a fallback
+            return &fb[0];
+
         break;
-    
+
     default:
         break;
     }
 
     return NULL;
-    
 }
 
 void drvSocketCreate(uint32_t drv, uint32_t sockID)

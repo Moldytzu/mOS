@@ -24,8 +24,8 @@ struct stack_frame;
 #define SYS_DRIVER_GET_PCI_DEVICE 5
 #define SYS_DRIVER_IDENTITY_MAP 6
 
-#define SYS_DRIVER_TYPE_INPUT 1
-#define SYS_DRIVER_TYPE_FRAMEBUFFER 2
+#define SYS_DRIVER_TYPE_FRAMEBUFFER 1
+#define SYS_DRIVER_TYPE_INPUT 2
 
 #define PIC_EOI_CMD 0x20
 #define PIC_INIT_CMD 0x11
@@ -60,6 +60,7 @@ drv_type_input_t;
 
 pstruct
 {
+    uint32_t pid;
     void *base; // base address
     uint32_t currentXres, currentYres;
     uint32_t requestedXres, requestedYres;

@@ -24,16 +24,6 @@ pstruct
 }
 framebuffer_cursor_info_t;
 
-pstruct
-{
-    void *base; // base address
-    uint32_t currentXres, currentYres;
-    uint32_t requestedXres, requestedYres;
-}
-drv_type_framebuffer_t;
-
-extern drv_type_framebuffer_t drv_type_framebuffer_s;
-
 void framebufferInit();
 void framebufferFlush();
 void framebufferClear(uint32_t colour);
