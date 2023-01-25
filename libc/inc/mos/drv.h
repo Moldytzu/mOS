@@ -53,6 +53,7 @@ struct stack_frame;
 
 pstruct
 {
+    uint32_t pid;
     uint8_t keys[16];        // key buffers
     uint16_t mouseX, mouseY; // mouse coordonates
 }

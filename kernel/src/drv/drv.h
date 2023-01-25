@@ -8,6 +8,14 @@
 
 pstruct
 {
+    uint32_t pid;            // driver pid
+    uint8_t keys[16];        // key buffers
+    uint16_t mouseX, mouseY; // mouse coordonates
+}
+drv_context_input_t;
+
+pstruct
+{
     uint32_t pid; // driver pid
     void *base;   // base address
     uint32_t currentXres, currentYres;
@@ -21,5 +29,5 @@ void *drvRegister(uint32_t drv, uint32_t type);
 void drvUpdateReference(uint32_t type, void *context);
 void drvSocketCreate(uint32_t drv, uint32_t sockID);
 void drvQuerySockets(uint32_t drv, uint32_t *sockets);
-void drvQueryContexts(uint32_t type, void **contexts);
+void drvQueryContexts(uint32_t type, void **contexts, uint32_t *size);
 void *drvQueryActive(uint32_t type);

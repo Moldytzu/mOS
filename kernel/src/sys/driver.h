@@ -5,6 +5,9 @@
 #include <drv/drv.h>
 #include <fw/acpi.h>
 
+#define SYS_DRIVER_TYPE_FRAMEBUFFER 1
+#define SYS_DRIVER_TYPE_INPUT 2
+
 // driver (rsi = call, rdx = arg1, r8 = arg2, r9 = arg3)
 void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct sched_task *task)
 {
@@ -41,10 +44,10 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
     case 2:           // flush struct updates
         switch (arg1) // type
         {
-        case 1: // input
+        case SYS_DRIVER_TYPE_INPUT: // input
             inputFlush();
             break;
-        case 2: // framebuffer
+        case SYS_DRIVER_TYPE_FRAMEBUFFER: // framebuffer
             framebufferFlush();
             break;
         default:
