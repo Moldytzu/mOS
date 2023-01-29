@@ -35,7 +35,6 @@ void inputFlush()
 
     for (size_t i = 0; i < idx; i++)
     {
-        printks(inputs[i].keys);
         for (int j = 0; j < min(strlen(inputs[i].keys), 16); j++)
         {
             char c = inputs[i].keys[j];

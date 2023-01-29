@@ -55,6 +55,7 @@ void blkInit()
     // create first block
     start = (blk_header_t *)pmmPage();
     zero(start, 4096);
+    start->signature = BLK_HEADER_SIGNATURE;
     start->free = true;
     start->size = 4096 - sizeof(blk_header_t);
 }
@@ -86,6 +87,7 @@ void *blkBlock(size_t size)
             newBlock->free = true;
             newBlock->next = current->next;
             newBlock->prev = current;
+            newBlock->signature = BLK_HEADER_SIGNATURE;
 
             current->next = newBlock;
             current->free = false;
@@ -115,6 +117,12 @@ void *blkReallocate(void *blk, size_t size)
 
 void blkDeallocate(void *blk)
 {
+    if (!blk || HEADER_OF(blk)->signature != BLK_HEADER_SIGNATURE)
+    {
+        printks("blk: invalid deallocation at %x\n", blk);
+        return;
+    }
+
     blk_header_t *header = HEADER_OF(blk);
     header->free = true;
 
