@@ -1,7 +1,8 @@
 # mOS
 ![Lines of code](https://img.shields.io/tokei/lines/github/Moldytzu/mOS?style=for-the-badge) 
-### x86_64 operating system written in C11. Uses limine as the bootloader and as the boot protocol.
+### Hobby operating system written in C that targets 1st gen x86_64 Nocona Xeon Intel CPUs and low RAM requirements
 ### Features
+    - Monolithic kernel design
     - 32 bpp linear frame buffer support
     - Custom initrd support
     - Serial console support
