@@ -36,6 +36,11 @@ extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
 // schedule the next task
 void schedulerSchedule(idt_intrerrupt_stack_t *stack)
 {
+    // todo: rewrite this function
+    // todo: use cpu time for usage calculation
+    // todo: remove priority (adds unnecessary complexity)
+    // todo: redo the sleep functionality (it's very broken)
+
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
     if (!enabled)
@@ -350,6 +355,8 @@ void schedulerKill(uint32_t tid)
 #ifdef K_SCHED_DEBUG
     uint64_t a = pmmTotal().available;
 #endif
+
+    // todo: set task's status to KILL and clean up after it only when found by the schedule function
 
     if (tid == 1)
         panick("Attempt to kill the init system.");

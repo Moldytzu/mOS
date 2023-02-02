@@ -37,8 +37,6 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
 
         *ret = (uint64_t)drvRegister(task->id, arg1);
 
-        printks("%p\n", *ret);
-
         break;
 
     case 2:           // flush struct updates
