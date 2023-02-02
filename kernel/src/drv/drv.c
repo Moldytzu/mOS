@@ -106,14 +106,21 @@ void *drvQueryActive(uint32_t type)
     switch (type)
     {
     case DRV_TYPE_FB:
+        // search the one that's valid (has a pid set) and that which has the up to date resolution set
         for (int i = 0; i < fbIdx; i++)
         {
-            if (fbCtx[fbIdx].currentXres == fbRef.requestedXres && fbCtx[fbIdx].currentYres == fbRef.requestedYres)
-                return &fbCtx[fbIdx];
+            if (fbCtx[i].pid && fbCtx[i].currentXres == fbRef.requestedXres && fbCtx[i].currentYres == fbRef.requestedYres)
+                return &fbCtx[i];
         }
 
-        if (fbIdx) // return first as a fallback
-            return &fbCtx[0];
+        // return first valid if we didn't find one
+        for (int i = 0; i < fbIdx; i++)
+        {
+            if (fbCtx[i].pid)
+                return &fbCtx[i];
+        }
+
+        return NULL; // we don't have any active context
 
         break;
 
