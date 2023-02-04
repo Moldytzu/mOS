@@ -11,6 +11,9 @@ DRIVERS = $(wildcard ./drivers/*/.)
 
 all: $(OUTPUT)
 
+update-ovmf:
+	wget https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd -O ovmf/ovmf.fd
+
 run: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT)
 
