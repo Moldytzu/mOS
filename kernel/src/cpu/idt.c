@@ -61,8 +61,7 @@ void idtInit()
         idtSetGate((void *)int_table[i], i, IDT_InterruptGateU, true);
 
     idtr.size--;                 // decrement to comply with the spec
-    iasm("lidt %0" ::"m"(idtr)); // load the idtr
-    sti();                       // enable intrerrupts
+    iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 
     // clear the redirection table
     zero(redirectTable, sizeof(redirectTable));

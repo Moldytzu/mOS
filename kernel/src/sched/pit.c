@@ -51,10 +51,6 @@ void pitInit()
     // unmask IRQ 0 on PIC
     outb(PIC_MASTER_DAT, inb(PIC_MASTER_DAT) & ~0b00000001);
 
-#ifndef K_IDT_DIS_KIRQ
-    sti(); // enable intrerrupts
-#endif
-
     printk("pit: using mode 2 at %d hz\n", K_PIT_FREQ);
 }
 

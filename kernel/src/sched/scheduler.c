@@ -9,16 +9,12 @@
 #include <main/panic.h>
 #include <sys/syscall.h>
 
-void *kernelStack;
-struct vt_terminal *firstTerminal; // first usable terminal
-struct sched_task rootTask;        // root of the tasks list
-struct sched_task *currentTask;    // current task in the tasks list
-uint32_t lastTID = 0;              // last task ID
-bool enabled = false;              // enabled
-bool taskKilled = false;           // flag that indicates if task was killed
-bool skipSaving = false;           // flag that indicates if we should skip saving registers next tick
-void *toHandle = NULL;
-uint32_t toHandleID = 0;
+struct sched_task rootTask;     // root of the tasks list
+struct sched_task *currentTask; // current task in the tasks list
+uint32_t lastTID = 0;           // last task ID
+bool enabled = false;           // enabled
+bool taskKilled = false;        // flag that indicates if task was killed
+bool skipSaving = false;        // flag that indicates if we should skip saving registers next tick
 
 extern void userspaceJump(uint64_t rip, uint64_t stack, uint64_t pagetable);
 
@@ -37,14 +33,12 @@ extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
 void schedulerSchedule(idt_intrerrupt_stack_t *stack)
 {
     // todo: rewrite this function
-    // todo: use cpu time for usage calculation
+    // todo: use cpu time for usage calculation (also export the calculated values to the user space)
     // todo: remove priority (adds unnecessary complexity)
-    // todo: redo the sleep functionality (it's very broken)
+    // todo: redo the sleep functionality (it's very broken, maybe remove it completly and force the userspace programs to grab the time and yield)
+    // todo: split the cpu time equaly among the tasks (set the timer frequency to the number of tasks maybe??)
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
-
-    if (!enabled)
-        return; // don't do anything if it isn't enabled
 
     iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
 
@@ -54,12 +48,6 @@ void schedulerSchedule(idt_intrerrupt_stack_t *stack)
     // handle vt mode and calculate cpu time only after switching the idle task
     if (currentTask->id != 0)
         goto c;
-
-    if (toHandle)
-    {
-        struct sched_task *task = schedulerGet(toHandleID);
-        callWithPageTable((uint64_t)toHandle, (uint64_t)task->pageTable);
-    }
 
     switch (vtGetMode())
     {
@@ -163,12 +151,12 @@ loadnext:
 // initialize the scheduler
 void schedulerInit()
 {
-    kernelStack = pmmPage();                             // allocate a page for the new kernel stack
+    void *kernelStack = pmmPage();                       // allocate a page for the new kernel stack
     tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE; // set kernel stack in tss
     zero(&rootTask, sizeof(struct sched_task));          // clear the root task
     currentTask = &rootTask;                             // set the current task
 
-    firstTerminal = vtCreate(); // create the first terminal
+    vtCreate(); // create the first terminal
 
     void *task = pmmPage();                                                   // create an empty page just for the idle task
     memcpy8(task, (void *)idleTask, VMM_PAGE);                                // copy the executable part
@@ -301,12 +289,6 @@ struct sched_task *schedulerGetCurrent()
     return currentTask;
 }
 
-// return enabled status
-bool schedulerEnabled()
-{
-    return enabled;
-}
-
 // set priority to a task
 void schedulerPrioritize(uint32_t tid, uint8_t priority)
 {
@@ -367,7 +349,7 @@ void schedulerKill(uint32_t tid)
         return;
 
     // clear driver contexts
-    if(task->isDriver)
+    if (task->isDriver)
         drvExit(tid);
 
     // deallocate some fields
@@ -418,12 +400,6 @@ void schedulerKill(uint32_t tid)
 
     while (1)
         ; // prevent returning back
-}
-
-void schedulerHandleDriver(void *handler, uint32_t tid)
-{
-    toHandle = handler;
-    toHandleID = tid;
 }
 
 // get last id

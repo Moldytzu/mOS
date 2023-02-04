@@ -36,6 +36,7 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver)
     Elf64_Phdr *phdr = blkBlock(elf->e_ehsize);     // buffer to store information about the current program header
     vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff); // read first header
 
+    // todo: if we find the .bss section zero it to gurantee the app that it's clear
     for (int i = 0; i < elf->e_phnum; i++) // iterate over every program header
     {
         if (phdr->p_type == PT_LOAD) // section to be loaded

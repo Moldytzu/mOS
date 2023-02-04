@@ -25,9 +25,5 @@ void picInit()
     outb(PIC_MASTER_DAT, 0b11111111);
     outb(PIC_SLAVE_DAT, 0b11111111);
 
-#ifndef K_IDT_DIS_KIRQ
-    sti(); // enable intrerrupts
-#endif
-
     printk("pic: irq base %d\n", PIC_IRQ_BASE);
 }
