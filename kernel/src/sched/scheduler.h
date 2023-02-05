@@ -5,7 +5,6 @@
 #include <subsys/vt.h>
 
 #define TASK_STATE_RUNNING 0
-#define TASK_STATE_PAUSED 1
 
 #define TASK_BASE_ADDRESS 0xA000000000
 #define TASK_BASE_ALLOC 0xB000000000
