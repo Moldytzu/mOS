@@ -20,8 +20,8 @@ extern void userspaceJump(uint64_t rip, uint64_t stack, uint64_t pagetable);
 // idle task
 void idleTask()
 {
-    while (1)
-        ;
+    while (true)
+        asm volatile("int $0x20"); // yield instantly
 }
 
 uint8_t simdContext[512] align_addr(16);
@@ -40,40 +40,37 @@ void schedulerSchedule(idt_intrerrupt_stack_t *stack)
     iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
 
     // handle vt mode and calculate cpu time only after switching the idle task
-    if (currentTask->id != 0)
-        goto c;
-
-    switch (vtGetMode())
+    if (currentTask->id == 0)
     {
-    case VT_DISPLAY_KERNEL:
-        // do nothing
-        break;
-    case VT_DISPLAY_FB:
-        // todo: copy the user display framebuffer to the global framebuffer
-        break;
-    case VT_DISPLAY_TTY0:
-        framebufferClear(0);
-        framebufferWrite(vtGet(0)->buffer);
-        break;
-    default:
-        break;
-    }
+        switch (vtGetMode())
+        {
+        case VT_DISPLAY_FB:
+            // todo: copy the user display framebuffer to the global framebuffer
+            break;
+        case VT_DISPLAY_TTY0:
+            framebufferClear(0);
+            framebufferWrite(vtGet(0)->buffer);
+            break;
+        case VT_DISPLAY_KERNEL:
+        default: // doesn't update the framebuffer and lets the kernel write things to it
+            break;
+        }
 
-    register uint32_t syscalls = syscallGetCount(); // get the overall syscall usage
+        uint32_t syscalls = syscallGetCount(); // get the overall syscall usage
 
-    // calculate the percents for each task
-    struct sched_task *task = rootTask.next; // second task
-    while (task)
-    {
-        task->overallCPUpercent = (task->syscallUsage * 100) / syscalls; // multiply everything by 100 so we don't use expensive floating point math
-        task->syscallUsage = 1;                                          // reset the counter at one so we don't divide by zero, will be incremented when the task uses any syscall
+        // calculate the percents for each task
+        struct sched_task *task = rootTask.next; // second task
+        while (task)
+        {
+            task->overallCPUpercent = (task->syscallUsage * 100) / syscalls; // multiply everything by 100 so we don't use expensive floating point math
+            task->syscallUsage = 1;                                          // reset the counter at one so we don't divide by zero, will be incremented when the task uses any syscall
 #ifdef K_SCHED_DEBUG
-        printks("sched: %s used %d percent of the total CPU time\n\r", task->name, task->overallCPUpercent);
+            printks("sched: %s used %d percent of the total CPU time\n\r", task->name, task->overallCPUpercent);
 #endif
-        task = task->next;
+            task = task->next;
+        }
     }
 
-c:
     if (taskKilled)
     {
         taskKilled = false;

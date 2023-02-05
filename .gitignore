@@ -1,4 +1,4 @@
-kernel/limine.h
+kernel/src/limine.h
 obj
 limine
 cross-compiler-builder
