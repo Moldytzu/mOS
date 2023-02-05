@@ -29,6 +29,9 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_
         task->allocated[task->allocatedIndex++] = page; // keep evidence of the page
         break;
     case 1: // mem info
+        if (!INBOUNDARIES(arg1) || !INBOUNDARIES(arg2))
+            return;
+
         pmm_pool_t total = pmmTotal();
         *(uint64_t *)PHYSICAL(arg1) = total.used;
         *(uint64_t *)PHYSICAL(arg2) = total.available;

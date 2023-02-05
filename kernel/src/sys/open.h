@@ -19,5 +19,5 @@ void open(uint64_t returnPtr, uint64_t path, uint64_t r8, uint64_t r9, struct sc
     }
 
     *returnVal = vfsOpen(input); // return the fd
-    pmmDeallocate(input);     // deallocate the buffer
+    pmmDeallocate(input);        // deallocate the buffer
 }
