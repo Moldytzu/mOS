@@ -43,9 +43,6 @@ void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, struct sched
             break;
         memcpy(task->cwd, PHYSICAL(retVal), 512); // copy the buffer
         break;
-    case 6:                                                                  // sleep for miliseconds
-        task->sleep = (uint32_t)((retVal * 1000 / 1000000) * pitGetScale()); // convert ms to seconds then seconds to ticks
-        pitSet(0xFFFF);                                                      // create intrerrupt imediately
     default:
         break;
     }

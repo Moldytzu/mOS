@@ -12,7 +12,6 @@
 struct sched_task rootTask;     // root of the tasks list
 struct sched_task *currentTask; // current task in the tasks list
 uint32_t lastTID = 0;           // last task ID
-bool enabled = false;           // enabled
 bool taskKilled = false;        // flag that indicates if task was killed
 bool skipSaving = false;        // flag that indicates if we should skip saving registers next tick
 
@@ -34,16 +33,11 @@ void schedulerSchedule(idt_intrerrupt_stack_t *stack)
 {
     // todo: rewrite this function
     // todo: use cpu time for usage calculation (also export the calculated values to the user space)
-    // todo: remove priority (adds unnecessary complexity)
-    // todo: redo the sleep functionality (it's very broken, maybe remove it completly and force the userspace programs to grab the time and yield)
     // todo: split the cpu time equaly among the tasks (set the timer frequency to the number of tasks maybe??)
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
     iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
-
-    if (currentTask->sleep)
-        pitSet(K_PIT_FREQ); // reset the timings
 
     // handle vt mode and calculate cpu time only after switching the idle task
     if (currentTask->id != 0)
@@ -87,16 +81,6 @@ c:
         goto loadnext;           // bypass the saving algorithm and directly load the next task
     }
 
-    if (currentTask->priorityCounter--) // check if the priority counter is over
-    {
-#ifdef K_SCHED_DEBUG
-        printks("sched: %s still has %d ticks left. doing nothing\n\r", currentTask->name, currentTask->priorityCounter + 1);
-#endif
-        vmmSwap(currentTask->pageTable); // swap the page table
-        return;
-    }
-    currentTask->priorityCounter = currentTask->priority; // reset counter
-
     if (skipSaving)
     {
         skipSaving = false;
@@ -121,15 +105,6 @@ loadnext:
             currentTask = &rootTask;
         else
             currentTask = currentTask->next;
-
-        if (currentTask->sleep) // if the task is in sleep
-        {
-#ifdef K_SCHED_DEBUG
-            printks("sched: %s is sleeping for %d ticks\n\r", currentTask->name, currentTask->sleep);
-#endif
-            currentTask->sleep--; // decrement the counter
-            goto loadnext;        // skip
-        }
 
     } while (currentTask->state != 0);
 
@@ -168,8 +143,6 @@ void schedulerInit()
 // enable the scheduler and then jump in the first task
 void schedulerEnable()
 {
-    cli();                                                                                        // disable intrerrupts, those will be enabled using the rflags
-    enabled = true;                                                                               // enable the scheduler
     userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp, (uint64_t)rootTask.pageTable); // jump in userspace
 }
 
@@ -198,9 +171,7 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     uint16_t index = lastTID++;
 
     // metadata
-    task->priorityCounter = 0;                       // reset counter
     task->id = index;                                // set the task ID
-    task->priority = 0;                              // switch imediately
     task->terminal = terminal;                       // terminal
     task->elf = elf;                                 // elf status
     task->elfBase = execBase;                        // base of elf
@@ -287,20 +258,6 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
 struct sched_task *schedulerGetCurrent()
 {
     return currentTask;
-}
-
-// set priority to a task
-void schedulerPrioritize(uint32_t tid, uint8_t priority)
-{
-    if (lastTID - 1 < tid) // out of bounds
-        return;
-
-    if (priority == 0) // minimum ticks until switching is 1
-        priority = 1;
-
-    struct sched_task *task = schedulerGet(tid);
-    task->priority = priority;              // set new priority level
-    task->priorityCounter = task->priority; // reset counter
 }
 
 // set terminal to a task
@@ -400,16 +357,4 @@ void schedulerKill(uint32_t tid)
 
     while (1)
         ; // prevent returning back
-}
-
-// get last id
-uint32_t schedulerGetLastID()
-{
-    return lastTID;
-}
-
-// skip saving registers next cycle
-void schedulerSkipNextSaving()
-{
-    skipSaving = true;
 }
