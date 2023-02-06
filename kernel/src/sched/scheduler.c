@@ -13,7 +13,6 @@ struct sched_task rootTask;     // root of the tasks list
 struct sched_task *currentTask; // current task in the tasks list
 uint32_t lastTID = 0;           // last task ID
 bool taskKilled = false;        // flag that indicates if task was killed
-bool skipSaving = false;        // flag that indicates if we should skip saving registers next tick
 
 extern void userspaceJump(uint64_t rip, uint64_t stack, uint64_t pagetable);
 
@@ -72,29 +71,20 @@ void schedulerSchedule(idt_intrerrupt_stack_t *stack)
     }
 
     if (taskKilled)
-    {
         taskKilled = false;
-        currentTask = &rootTask; // jump back to the first task
-        goto loadnext;           // bypass the saving algorithm and directly load the next task
-    }
-
-    if (skipSaving)
+    else
     {
-        skipSaving = false;
-        goto loadnext;
-    }
-
 #ifdef K_SCHED_DEBUG
-    printks("sched: saving %s\n\r", currentTask->name);
+        printks("sched: saving %s\n\r", currentTask->name);
 #endif
 
-    // save the registers
-    memcpy64(&currentTask->intrerruptStack, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
+        // save the registers
+        memcpy64(&currentTask->intrerruptStack, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
 
-    // copy the simd context
-    memcpy64(currentTask->simdContext, simdContext, sizeof(currentTask->simdContext) / sizeof(uint64_t));
+        // copy the simd context
+        memcpy64(currentTask->simdContext, simdContext, sizeof(currentTask->simdContext) / sizeof(uint64_t));
+    }
 
-loadnext:
     // load the next task
     do
     {
