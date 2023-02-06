@@ -29,7 +29,7 @@
 #define PS2_CTRL_WRITE_P2 0xD4
 
 // constants
-#define PS2_TIMEOUT_YIELDS 10
+#define PS2_TIMEOUT_YIELDS 5
 
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
@@ -48,12 +48,21 @@ drv_type_input_t *contextStruct;
 #define output() inb(PS2_DATA)
 #define write(data) outb(PS2_DATA, data)
 #define command(cmd) outb(PS2_COMMAND, cmd)
-#define waitOutput() for (int i = 0; i < 100 && status() & 0b1; i++)
+#define waitOutput()                                               \
+    for (int i = 0; i < PS2_TIMEOUT_YIELDS && status() & 0b1; i++) \
+    {                                                              \
+        sys_yield();                                               \
+    }
 #define port1Write(data) write(data)
 #define port2Write(data)            \
     {                               \
         command(PS2_CTRL_WRITE_P2); \
         write(data);                \
+    }
+#define flush()       \
+    {                 \
+        waitOutput(); \
+        output();     \
     }
 
 // initialize the keyboard
@@ -61,11 +70,37 @@ void kbInit()
 {
     // write to the right port
     if (port1Type == PS2_TYPE_KEYBOARD)
+    {
         port1Write(0xF6); // set default parameters
+
+        // flush the buffer
+        flush();
+
+        port1Write(0xF0); // set scan code set 1
+
+        for (int i = 0; i < 2; i++) // wait for the keyboard to send 0xFA 0xFA
+            flush();
+
+        port1Write(0xF3);       // set typematic rate
+        sys_yield();            // wait for response (switch this with another function)
+        port1Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
+    }
     else if (port2Type == PS2_TYPE_KEYBOARD)
+    {
         port2Write(0xF6); // set default parameters
 
-    output(); // flush the buffer
+        // flush the buffer
+        flush();
+
+        port2Write(0xF0); // set scan code set 1
+
+        for (int i = 0; i < 2; i++) // wait for the keyboard to send 0xFA 0xFA
+            flush();
+
+        port2Write(0xF3);       // set typematic rate
+        sys_yield();            // wait for response
+        port2Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
+    }
 }
 
 // keyboard scancode handler
@@ -202,6 +237,12 @@ bool initController()
         port1Type = ps2DecodeBytes(reply);
 
         printf("ps2: detected type %s (%x %x) in port 1\n", lookup[port1Type], reply[0], reply[1]);
+
+        if (port1Type == PS2_TYPE_INVALID)
+        {
+            printf("ps2: guessing keyboard\n");
+            port1Type = PS2_TYPE_KEYBOARD;
+        }
     }
 
     if (port2Present)
@@ -227,6 +268,12 @@ bool initController()
         port2Type = ps2DecodeBytes(reply);
 
         printf("ps2: detected type %s (%x %x) in port 2\n", lookup[port2Type], reply[0], reply[1]);
+
+        if (port2Type == PS2_TYPE_INVALID)
+        {
+            printf("ps2: guessing keyboard\n");
+            port2Type = PS2_TYPE_KEYBOARD;
+        }
     }
 
     // enable irqs in config byte for the detected devices
