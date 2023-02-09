@@ -153,6 +153,8 @@ void acpiInit()
     // get rsdp
     rsdp = (acpi_rsdp_t *)bootloaderGetRSDP();
 
+    vmmMap(vmmGetBaseTable(), rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), false, true); // properly map the rsdp
+
     // parse the version field
     revision = rsdp->version;
 
