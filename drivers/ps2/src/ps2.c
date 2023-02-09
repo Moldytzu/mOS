@@ -44,10 +44,6 @@ uint8_t port2Type = PS2_TYPE_INVALID;
 drv_type_input_t *contextStruct;
 
 // macro functions
-#define status() inb(PS2_STATUS)
-#define output() inb(PS2_DATA)
-#define write(data) outb(PS2_DATA, data)
-#define command(cmd) outb(PS2_COMMAND, cmd)
 #define waitOutput()                                               \
     for (int i = 0; i < PS2_TIMEOUT_YIELDS && status() & 0b1; i++) \
     {                                                              \
@@ -57,6 +53,18 @@ drv_type_input_t *contextStruct;
     for (int i = 0; i < PS2_TIMEOUT_YIELDS && status() & 0b10; i++) \
     {                                                               \
         sys_yield();                                                \
+    }
+#define status() inb(PS2_STATUS)
+#define output() inb(PS2_DATA)
+#define write(data)           \
+    {                         \
+        waitInput();          \
+        outb(PS2_DATA, data); \
+    }
+#define command(cmd)            \
+    {                           \
+        waitInput();            \
+        outb(PS2_COMMAND, cmd); \
     }
 #define port1Write(data) write(data)
 #define port2Write(data)            \
