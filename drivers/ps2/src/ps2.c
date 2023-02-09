@@ -53,6 +53,11 @@ drv_type_input_t *contextStruct;
     {                                                              \
         sys_yield();                                               \
     }
+#define waitInput()                                                 \
+    for (int i = 0; i < PS2_TIMEOUT_YIELDS && status() & 0b10; i++) \
+    {                                                               \
+        sys_yield();                                                \
+    }
 #define port1Write(data) write(data)
 #define port2Write(data)            \
     {                               \
@@ -71,35 +76,57 @@ void kbInit()
     // write to the right port
     if (port1Type == PS2_TYPE_KEYBOARD)
     {
+        waitInput();
         port1Write(0xF6); // set default parameters
 
         // flush the buffer
+        waitOutput();
         flush();
 
         port1Write(0xF0); // set scan code set 1
 
         for (int i = 0; i < 2; i++) // wait for the keyboard to send 0xFA 0xFA
+        {
+            waitOutput();
             flush();
+        }
 
-        port1Write(0xF3);       // set typematic rate
-        sys_yield();            // wait for response (switch this with another function)
+        waitInput();
+        port1Write(0xF3); // set typematic rate
+        waitOutput();
+        flush();
+
+        waitInput();
         port1Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
+        waitOutput();
+        flush();
     }
     else if (port2Type == PS2_TYPE_KEYBOARD)
     {
+        waitInput();
         port2Write(0xF6); // set default parameters
 
         // flush the buffer
+        waitOutput();
         flush();
 
         port2Write(0xF0); // set scan code set 1
 
         for (int i = 0; i < 2; i++) // wait for the keyboard to send 0xFA 0xFA
+        {
+            waitOutput();
             flush();
+        }
 
-        port2Write(0xF3);       // set typematic rate
-        sys_yield();            // wait for response
+        waitInput();
+        port2Write(0xF3); // set typematic rate
+        waitOutput();
+        flush();
+
+        waitInput();
         port2Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
+        waitOutput();
+        flush();
     }
 }
 
