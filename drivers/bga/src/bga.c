@@ -8,6 +8,9 @@
 #define BGA_PCI_VENDOR 0x1234
 #define BGA_PCI_DEVICE 0x1111
 
+#define VBOX_PCI_VENDOR 0x80EE
+#define VBOX_PCI_DEVICE 0xBEEF
+
 // ports
 #define BGA_INDEX 0x1CE
 #define BGA_DATA 0x1CF
@@ -69,13 +72,23 @@ void enableVBE()
 
 bool detectBGA()
 {
+    // search for qemu/bochs device
     device = (drv_pci_header0_t *)sys_pci_get(BGA_PCI_VENDOR, BGA_PCI_DEVICE);
+
+    // search for vbox device
+    if (!device)
+        device = (drv_pci_header0_t *)sys_pci_get(VBOX_PCI_VENDOR, VBOX_PCI_DEVICE);
+
+    // nah
+    if (!device)
+        return false;
+
+    // detect version
     uint32_t version = readRegister(BGA_REG_ID);
 
-    if (device)
-        printf("bga: detected version %d", version - 0xB0C0);
+    printf("bga: detected version %d", version - 0xB0C0);
 
-    return device && version >= 0xB0C2; // if the adapter is present on the pci bus then it's present
+    return version >= 0xB0C2; // we want a new version
 }
 
 bool setResolution(uint32_t xres, uint32_t yres)
