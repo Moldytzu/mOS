@@ -64,7 +64,7 @@ void _start()
 
     sockInit(); // initialize the ipc (sockets)
 
-    syscallInit(0x51); // initialize system calls
+    syscallInit(); // initialize system calls
 
     kmain(); // call main
 

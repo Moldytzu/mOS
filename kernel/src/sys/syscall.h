@@ -4,4 +4,4 @@
 
 uint32_t syscallGetCount();
 void syscallHandler(idt_intrerrupt_stack_t *registers);
-void syscallInit(uint16_t vector);
+void syscallInit();

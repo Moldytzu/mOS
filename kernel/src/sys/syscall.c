@@ -36,7 +36,7 @@ uint32_t syscallGetCount()
 }
 
 // init syscall handling
-void syscallInit(uint16_t vector)
+void syscallInit()
 {
     sysretInit(); // enable sysret/syscall capability
     printk("syscall: enabled syscall/sysret functionality\n");
