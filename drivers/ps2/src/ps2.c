@@ -69,6 +69,7 @@ drv_type_input_t *contextStruct;
 #define port1Write(data) write(data)
 #define port2Write(data)            \
     {                               \
+        waitInput();                \
         command(PS2_CTRL_WRITE_P2); \
         write(data);                \
     }
@@ -252,12 +253,10 @@ bool initController()
     if (port1Present)
     {
         port1Write(0xF5); // send disable scanning
-        waitOutput();
-        output();
+        flush();
 
         port1Write(0xF2); // send identify
-        waitOutput();
-        output();
+        flush();
 
         uint8_t reply[2] = {0, 0};
         reply[0] = output(); // fill the buffer with the response word
@@ -265,8 +264,7 @@ bool initController()
         reply[1] = output();
 
         port1Write(0xF4); // send enable scanning
-        waitOutput();
-        output();
+        flush();
 
         // decode the reply bytes
         port1Type = ps2DecodeBytes(reply);
@@ -283,12 +281,10 @@ bool initController()
     if (port2Present)
     {
         port2Write(0xF5); // send disable scanning
-        waitOutput();
-        output();
+        flush();
 
         port2Write(0xF2); // send identify
-        waitOutput();
-        output();
+        flush();
 
         uint8_t reply[2] = {0, 0};
         reply[0] = output(); // fill the buffer with the response word
@@ -296,8 +292,7 @@ bool initController()
         reply[1] = output();
 
         port2Write(0xF4); // send enable scanning
-        waitOutput();
-        output();
+        flush();
 
         // decode the reply bytes
         port2Type = ps2DecodeBytes(reply);
@@ -314,6 +309,7 @@ bool initController()
     // enable irqs in config byte for the detected devices
     {
         command(PS2_CTRL_READ_CFG);
+        waitOutput();
         uint8_t cfg = output();
 
         // enable irqs for the detected ports
@@ -324,6 +320,7 @@ bool initController()
             cfg |= 0b10;
 
         command(PS2_CTRL_WRITE_CFG);
+        waitOutput();
         write(cfg);
     }
 
