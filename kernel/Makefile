@@ -1,54 +1,21 @@
+include ../compile.mk
+
 KERNEL := ../out/kernel.elf
 
-# use cross c compiler
-CC := ~/cross_compiler/bin/x86_64-elf-gcc
-
-# use cross linker
-LD := ~/cross_compiler/bin/x86_64-elf-ld
-
-# use nasm
-ASM := nasm
-
-# User controllable CFLAGS.
-CFLAGS ?= -O2 -g
-
-# User controllable LDFLAGS
-LDFLAGS ?=
-
-# User controllable ASMFLAGS
-ASMFLAGS ?= -gdwarf
-
-# Internal C flags that should not be changed by the user.
-INTERNALCFLAGS :=   		 \
+# c compiler flags particular for the kernel
+INTERNALCFLAGS :=            \
 	-I./src/                 \
-	-std=gnu11           	 \
-	-ffreestanding       	 \
-	-fno-stack-protector 	 \
-	-fno-pic             	 \
-	-mabi=sysv           	 \
-	-mno-red-zone        	 \
-	-mcmodel=kernel      	 \
-	-Werror 			     \
 	-Wno-int-to-pointer-cast \
-	-march=nocona            \
-	-MMD
 
-# Internal linker flags that should not be changed by the user.
+# linker flags particular for the kernel
 INTERNALLDFLAGS :=         \
-	-Tlinker.ld         \
+	-Tlinker.ld            \
 	-nostdlib              \
-	-zmax-page-size=0x1000 \
 	-static
-
-# Internal ASM flags that should not be changed by the user.
-INTERNALASMFLAGS := \
-	-felf64
 
 # Use find to glob all *.c files in the directory and extract the object names.
 SRCDIR := src
 OBJDIR := obj
-
-rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
 SRCC = $(call rwildcard,$(SRCDIR),*.c)  
 ASMSRC = $(call rwildcard,$(SRCDIR),*.asm)  

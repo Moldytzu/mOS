@@ -3,11 +3,6 @@ include ../app.mk
 # append the output filename
 OUTFILE = $(OUTFOLDER)ctest.mx
 
-SRCDIR := src
-OBJDIR := obj
-
-rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
-
 SRCC = $(call rwildcard,$(SRCDIR),*.c)  
 ASMSRC = $(call rwildcard,$(SRCDIR),*.asm)  
 OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCC))
