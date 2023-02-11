@@ -13,7 +13,7 @@ DIRS = $(wildcard $(SRCDIR)/*)
 
 # link the app
 app: $(OBJS)
-	$(LD) $(OBJS) $(INTERNALLDFLAGS) -o $(OUTFILE)
+	$(LD) $(OBJS) $(LDFLAGS) $(INTERNALLDFLAGS) -o $(OUTFILE)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@ mkdir -p $(dir $@)
