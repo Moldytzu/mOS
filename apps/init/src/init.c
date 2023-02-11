@@ -156,7 +156,22 @@ int main(int argc, char **argv)
     parseCFG();
 
     if (!safe)
+    {
         sys_display(SYS_DISPLAY_SET, 1024, 768); // set screen resolution to 1024x768
+        sys_yield();
+
+        // wait for the change to happen
+        for (int i = 0; i < 5; i++)
+        {
+            uint64_t width, height;
+            sys_display(SYS_DISPLAY_GET, (uint64_t)&width, (uint64_t)&height); // get old resolution
+
+            if (width == 1024 && height == 768)
+                break;
+
+            sys_yield();
+        }
+    }
 
     // create a socket for ipc
     sys_socket(SYS_SOCKET_CREATE, (uint64_t)&sockID, 0, 0);
