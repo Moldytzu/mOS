@@ -16,7 +16,12 @@
 // write character on the serial console
 ifunc void serialWritec(char c)
 {
+#ifdef K_COM_ENABLE
+    while (!(inb(COM1 + 5) & 0b100000))
+        ;
+
     outb(COM1, c); // output the character on the serial console
+#endif
 }
 
 void serialInit();
