@@ -13,13 +13,14 @@ Make sure you're in the root of the source tree (the folder containing the licen
 Run `make toolchain` and expect to wait at least half a hour. When done you will have it installed in your home folder at ~/cross_compiler/. Don't worry, you don't have to add anything to path because the build system will automatically pick the binaries from that folder.
 
 ## Actually building the system
-You simply have to do `make`. That's all. The kernel will be compiled to out/kernel.elf and an iso to out/dvd.iso.
+You simply have to do `make`. That's all. No need to pass the `-j` flag to it because it is automatically done inside the makefile. The kernel will be compiled to out/kernel.elf and an iso to out/dvd.iso.
 
-## Testing in QEmu
-There are multiple targets that can used to test the operating system in QEmu:
+## Testing in a virtual machine
+There are multiple targets that can used to test the operating system right away:
     - run  -> runs QEmu with TCG
     - run-efi  -> runs QEmu with TCG and UEFI support
-    - run-kvm  -> runs QEmu with KVM support (only on x86_64 hosts)
-    - run-efi-kvm  -> runs QEmu with KVM and UEFI support (only on x86_64 hosts)
+    - run-kvm  -> runs QEmu with KVM acceleration (only on x86_64 hosts)
+    - run-efi-kvm  -> runs QEmu with KVM acceleration and UEFI support (only on x86_64 hosts)
+    - run-bochs  -> runs Bochs (very slow and unstable, fresh build of bochs is recommended with x86_64 support, smp and long physical address)
     - run-debug  -> runs QEMU with TCG and gdb attached
     - run-efi-debug  -> runs QEMU with UEFI support and gdb attached
