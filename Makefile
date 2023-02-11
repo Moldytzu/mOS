@@ -17,6 +17,9 @@ update-ovmf:
 run: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT)
 
+run-bochs: $(OUTPUT)
+	bochs
+
 run-kvm: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) --enable-kvm -cpu host
 
