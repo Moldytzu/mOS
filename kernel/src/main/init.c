@@ -3,6 +3,7 @@
 #include <cpu/gdt.h>
 #include <cpu/fpu.h>
 #include <cpu/pic.h>
+#include <cpu/smp.h>
 #include <cpu/control.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
@@ -53,6 +54,10 @@ void _start()
     picInit(); // initialize the pic chips
 
     pitInit(); // initialize the timer
+
+    smpBootstrap(); // bootstrap the other cpus
+
+    while(1);
 
     schedulerInit(); // initialize the scheduler
 

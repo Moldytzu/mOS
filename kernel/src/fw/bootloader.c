@@ -29,6 +29,10 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
     .revision = 0};
 
+static volatile struct limine_smp_request smp_request = {
+    .id = LIMINE_SMP_REQUEST,
+    .revision = 0};
+
 static volatile struct limine_stack_size_request stack_request = {
     .id = LIMINE_STACK_SIZE_REQUEST,
     .revision = 0,
@@ -75,6 +79,11 @@ struct limine_memmap_response *bootloaderGetMemoryMap()
 struct limine_kernel_address_response *bootloaderGetKernelAddress()
 {
     return kernel_address_request.response;
+}
+
+struct limine_smp_response *bootloaderGetSMP()
+{
+    return smp_request.response;
 }
 
 void *bootloaderGetRSDP()
