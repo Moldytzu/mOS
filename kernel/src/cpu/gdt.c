@@ -1,10 +1,12 @@
 #include <cpu/gdt.h>
+#include <cpu/atomic.h>
 #include <mm/blk.h>
 #include <mm/vmm.h>
 
 gdt_tss_t *tss;
 gdt_descriptor_t gdtr;
 gdt_segment_t *entries;
+locker_t gdtLock;
 
 extern void gdtLoad(gdt_descriptor_t *);
 extern void tssLoad();
@@ -29,11 +31,19 @@ void gdtInit()
 
     gdtInstallTSS(); // install a tss
 
-    gdtr.size--;    // decrement size
-    gdtLoad(&gdtr); // load gdt and flush segments
-    tssLoad();      // load tss
+    gdtr.size--;  // decrement size
+    gdtReplace(); // replace
 
     printk("gdt: loaded cs 0x%x, ss 0x%x and tss 0x%x\n", 8, 8 * 2, 8 * 5);
+}
+
+// replace the old gdt with the new one
+void gdtReplace()
+{
+    atomicAquire(&gdtLock);
+    gdtLoad(&gdtr); // load gdt and flush segments
+    // tssLoad();      // load tss
+    atomicRelease(&gdtLock);
 }
 
 // create a new segment in the table

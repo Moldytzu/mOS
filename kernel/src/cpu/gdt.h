@@ -47,5 +47,6 @@ gdt_tss_t;
 
 void gdtCreateSegment(uint8_t access);
 void gdtInit();
+void gdtReplace();
 gdt_segment_t *gdtGet();
 gdt_tss_t *tssGet();
