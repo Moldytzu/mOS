@@ -18,7 +18,7 @@ void vmmInit()
 }
 
 // set flags of some entries given by the indices
-void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw)
+inline __attribute__((always_inline)) void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw)
 {
     vmm_page_table_t *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;

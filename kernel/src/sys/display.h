@@ -13,7 +13,9 @@ void display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sc
             vtSetMode(arg1); // set vt mode
         break;
     case 1: // display set resolution
-        drv_context_fb_t newCtx = {.requestedXres = arg1, .requestedYres = arg2};
+        drv_context_fb_t newCtx;
+        newCtx.requestedXres = arg1;
+        newCtx.requestedYres = arg2;
         drvUpdateReference(DRV_TYPE_FB, &newCtx);
         break;
     case 2: // display get resolution
