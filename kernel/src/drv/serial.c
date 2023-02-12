@@ -1,4 +1,7 @@
 #include <drv/serial.h>
+#include <cpu/atomic.h>
+
+locker_t serialLock;
 
 // initialize serial controller
 void serialInit()
@@ -13,6 +16,8 @@ void serialInit()
     outb(COM1 + 3, 0b11); // line control register (8 bit character length, 1 stop bit, disable parity, disable break transmission, disable divisor latch)
 
     outb(COM1 + 2, 0b111); // fifo control register (enable fifo, clear them, disable dma ,trigger at 1 character)
+
+    atomicClearLock(&serialLock);
 #endif
 }
 
@@ -20,6 +25,8 @@ void serialInit()
 void serialWrite(const char *str)
 {
 #ifdef K_COM_ENABLE
+    atomicAquire(&serialLock);
+
     if (!str)
         return;
 
@@ -29,5 +36,7 @@ void serialWrite(const char *str)
             serialWritec('\r'); // the serial console uses the CRLF end line method and we don't
         serialWritec(*str++);
     }
+
+    atomicRelease(&serialLock);
 #endif
 }
