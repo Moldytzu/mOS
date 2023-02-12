@@ -31,7 +31,7 @@ void gdtInstall(uint16_t procID)
     gdtr[procID].size--; // decrement size
 
     gdtLoad(&gdtr[procID]); // load gdt and flush segments
-    // tssLoad();      // load tss
+    tssLoad();              // load tss
 }
 
 // create a new segment in the table

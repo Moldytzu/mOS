@@ -10,6 +10,7 @@ void cpuStart(struct limine_smp_info *cpu)
     cli();
     serialWrite("hey!\n");
     gdtInstall(cpu->lapic_id);
+    serialWrite("done!\n");
     while (1)
         ;
 }
