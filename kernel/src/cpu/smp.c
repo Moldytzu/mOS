@@ -9,7 +9,7 @@ void cpuStart(struct limine_smp_info *cpu)
 {
     cli();
     serialWrite("hey!\n");
-    gdtReplace(); // load the gdt
+    gdtInstall(cpu->lapic_id);
     while (1)
         ;
 }
@@ -17,14 +17,23 @@ void cpuStart(struct limine_smp_info *cpu)
 void smpBootstrap()
 {
     struct limine_smp_response *smp = bootloaderGetSMP();
-    printk("smp: detected %d cores and we are %d\n", smp->cpu_count, smp->bsp_lapic_id);
+    printk("smp: we are core %d\n", smp->bsp_lapic_id);
+
+    // load apropiate tables
+    gdtInstall(smp->bsp_lapic_id);
+
+    if (smp->cpu_count == 1) // we are alone
+        return;
 
     for (size_t i = 0; i < smp->cpu_count; i++)
     {
         struct limine_smp_info *cpu = smp->cpus[i];
 
+        if (cpu->lapic_id == smp->bsp_lapic_id) // don't unpark the bootstrap processor (we are it.)
+            continue;
+
         atomicWrite((void *)&cpu->goto_address, (uint64_t)cpuStart);
     }
 
-    printk("smp: started all cores\n");
+    printk("smp: started %d cores\n", smp->cpu_count - 1);
 }

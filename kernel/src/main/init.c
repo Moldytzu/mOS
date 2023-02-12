@@ -41,7 +41,10 @@ void _start()
 
     framebufferInit(); // initialize framebuffer
 
-    gdtInit(); // initialize the gdt
+    smpBootstrap(); // bootstrap the cpus
+
+    while (1)
+        ;
 
     idtInit(); // initialize the idt
 
@@ -54,10 +57,6 @@ void _start()
     picInit(); // initialize the pic chips
 
     pitInit(); // initialize the timer
-
-    smpBootstrap(); // bootstrap the other cpus
-
-    while(1);
 
     schedulerInit(); // initialize the scheduler
 

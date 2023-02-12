@@ -3,13 +3,6 @@
 
 pstruct
 {
-    uint16_t size;
-    uint64_t offset;
-}
-gdt_descriptor_t;
-
-pstruct
-{
     uint16_t limit;
     uint16_t base;
     uint8_t base2;
@@ -45,8 +38,14 @@ pstruct
 }
 gdt_tss_t;
 
-void gdtCreateSegment(uint8_t access);
-void gdtInit();
-void gdtReplace();
+pstruct
+{
+    uint16_t size;
+    gdt_segment_t *entries;
+    void *tss;
+}
+gdt_descriptor_t;
+
+void gdtInstall(uint16_t procID);
 gdt_segment_t *gdtGet();
 gdt_tss_t *tssGet();
