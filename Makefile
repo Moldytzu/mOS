@@ -3,7 +3,7 @@ OUTPUTEFI = out/efi.iso
 CORES = $(shell nproc)
 GDBFLAGS ?= -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue"
 QEMUFLAGS ?= -M q35,smm=off -m 512M -smp 4 -cpu core2duo -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
-QEMUDEBUG = -no-reboot -no-shutdown -s -S &
+QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S &
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)
 
