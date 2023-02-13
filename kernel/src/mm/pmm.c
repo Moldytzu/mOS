@@ -7,7 +7,7 @@
 uint8_t poolCount = 0;
 pmm_pool_t pools[256]; // 256 pools should be enough
 bool debug = false;
-locker_t pmmLock;
+locker_t pmmLock; // todo: replace this with a per-pool lock
 
 void pmmEnableDBG()
 {

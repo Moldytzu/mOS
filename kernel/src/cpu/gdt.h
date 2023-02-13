@@ -43,6 +43,11 @@ pstruct
     uint16_t size;
     gdt_segment_t *entries;
     void *tss;
+
+    /*
+    NOTE: this is a non-standard structure.
+    The cpu accesses only first two fields and we use a third for convenience of packing together both the gdt and the tss.
+    */
 }
 gdt_descriptor_t;
 

@@ -26,6 +26,7 @@
 
 // Constants
 #define K_STACK_SIZE 64 * 1024 // userspace stack size
+#define K_MAX_CORES 128        // maximum cores
 
 // Serial
 #define K_COM_ENABLE     // enable support for serial

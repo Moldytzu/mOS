@@ -3,7 +3,7 @@
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 
-gdt_descriptor_t gdtr[128];
+gdt_descriptor_t gdtr[K_MAX_CORES];
 
 extern void gdtLoad(gdt_descriptor_t *);
 extern void tssLoad();

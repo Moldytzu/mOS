@@ -48,8 +48,6 @@ void _start()
 
     idtInit(); // initialize the idt
 
-    vmmInit(); // initialize the virtual memory manager
-
     vfsInit(); // initialize the virtual filesystem
 
     initrdMount(); // mount the initrd

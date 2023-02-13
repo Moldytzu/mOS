@@ -4,8 +4,10 @@
 #include <fw/bootloader.h>
 #include <cpu/idt.h>
 #include <cpu/gdt.h>
+#include <cpu/atomic.h>
 #include <main/panic.h>
 
+locker_t vmmLock; // todo: replace this with a per-table lock
 vmm_page_table_t *baseTable;
 
 // initialize the virtual memory manager
@@ -51,6 +53,7 @@ inline __attribute__((always_inline)) void vmmSetFlags(vmm_page_table_t *table, 
 // map a virtual address to a physical address in a page table
 void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
 {
+    atomicAquire(&vmmLock);
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     vmm_page_table_t *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
@@ -123,6 +126,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     pt->entries[index.P] = currentEntry;                           // write the entry in the table
 
     vmmSetFlags(table, index, user, rw); // set the flags
+    atomicRelease(&vmmLock);
 }
 
 // unmap a virtual address
@@ -167,7 +171,8 @@ void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
     currentEntry = pd->entries[index.PT];                          // index pt
     pt = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pt->entries[index.P];                                                              // index p
+    currentEntry = pt->entries[index.P]; // index p
+
     return (void *)(vmmGetAddress(&currentEntry) * VMM_PAGE + ((uint64_t)virtualAddress % VMM_PAGE)); // get the address
 }
 
@@ -192,14 +197,14 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     struct limine_kernel_address_response *kaddr = bootloaderGetKernelAddress();
 
     // map the system tables as kernel rw
-    vmmMap(newTable, newTable, newTable, driver, true);                 // page table
-    vmmMap(newTable, (void *)tssGet(), (void *)tssGet(), driver, true); // tss
-    vmmMap(newTable, (void *)gdtGet(), (void *)gdtGet(), driver, true); // gdt
+    vmmMap(newTable, newTable, newTable, driver, true); // page table
 
-#ifdef K_IDT_IST
-    vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], driver, true); // kernel ist
-    vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], driver, true); // user ist
-#endif
+    /* todo: map the ists after we enable the intrerrupts
+    #ifdef K_IDT_IST
+        vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], driver, true); // kernel ist
+        vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], driver, true); // user ist
+    #endif
+    */
 
     // map memory map entries as kernel rw
     for (size_t i = 0; i < memMap->entry_count; i++)
@@ -235,12 +240,14 @@ void vmmDestroy(vmm_page_table_t *table)
     uint64_t a = pmmTotal().available;
 #endif
 
-    // deallocate all the used pages
-    for (int i = 0; i < table->idx; i++)
-        pmmDeallocate((void *)table->pages->page[i]);
+    lock(vmmLock, {
+        // deallocate all the used pages
+        for (int i = 0; i < table->idx; i++)
+            pmmDeallocate((void *)table->pages->page[i]);
 
-    pmmDeallocatePages(table->pages, table->allocated);
-    pmmDeallocatePages(table, 2);
+        pmmDeallocatePages(table->pages, table->allocated);
+        pmmDeallocatePages(table, 2);
+    });
 
 #ifdef K_VMM_DEBUG
     printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, toKB(pmmTotal().available - a));
