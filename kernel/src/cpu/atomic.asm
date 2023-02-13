@@ -4,7 +4,7 @@ global atomicWrite, atomicClearLock, atomicLock, atomicRelease, atomicAquire, at
 
 ; writes atomically to address; rdi=address, rsi=value
 atomicWrite:
-    lock mov [rdi], rsi
+    mov QWORD [rdi], rsi
     ret
 
 %macro	CF_RESULT	0

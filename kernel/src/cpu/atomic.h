@@ -1,11 +1,10 @@
 #pragma once
-#include <misc/utils.h>
+#include <stdbool.h>
 
-pstruct
+typedef struct __attribute__((__packed__))
 {
     uint64_t mutex;
-}
-locker_t;
+} locker_t;
 
 void atomicWrite(void *address, uint64_t val);
 bool atomicClearLock(locker_t *locker);
