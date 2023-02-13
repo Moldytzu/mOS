@@ -1,16 +1,9 @@
 #include <cpu/smp.h>
 #include <cpu/atomic.h>
 #include <cpu/gdt.h>
-#include <cpu/segments.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
 #include <mm/vmm.h>
-
-// read the gs segment which is used to store the lapic id
-uint16_t smpID()
-{
-    return segmentReadGS();
-}
 
 uint16_t smpGetCores()
 {
@@ -21,14 +14,15 @@ uint16_t smpGetCores()
 void cpuStart(struct limine_smp_info *cpu)
 {
     cli();
-    segmentLoadGS(cpu->lapic_id); // save lapic id in gs which is not used for anything else
 
-    printks("we're %d!\n", smpID());
+    uint16_t id = smpID();
 
-    gdtInstall(smpID());
+    printks("we're %d!\n", id);
+
+    gdtInstall(id);
     vmmSwap(vmmGetBaseTable());
 
-    printks("done %d\n", smpID());
+    printks("done %d\n", id);
     hang();
 }
 
