@@ -3,7 +3,7 @@
 
 typedef struct __attribute__((__packed__))
 {
-    uint64_t mutex;
+    uint8_t mutex;
 } locker_t;
 
 void atomicWrite(void *address, uint64_t val);
