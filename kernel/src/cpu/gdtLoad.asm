@@ -9,7 +9,6 @@ gdtLoad:
     mov ds, ax
     mov es, ax
     mov fs, ax
-    mov gs, ax
     mov ss, ax
     pop rdi
     mov rax, (8*1) ; 1st segment, kernel code

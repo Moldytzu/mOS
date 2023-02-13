@@ -1,9 +1,16 @@
 #include <cpu/smp.h>
 #include <cpu/atomic.h>
 #include <cpu/gdt.h>
+#include <cpu/segments.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
 #include <mm/vmm.h>
+
+// read the gs segment which is used to store the lapic id
+uint16_t smpID()
+{
+    return segmentReadGS();
+}
 
 uint16_t smpGetCores()
 {
@@ -14,12 +21,14 @@ uint16_t smpGetCores()
 void cpuStart(struct limine_smp_info *cpu)
 {
     cli();
-    printks("we're %d!\n", cpu->lapic_id);
+    segmentLoadGS(cpu->lapic_id); // save lapic id in gs which is not used for anything else
 
-    gdtInstall(cpu->lapic_id);
+    printks("we're %d!\n", smpID());
+
+    gdtInstall(smpID());
     vmmSwap(vmmGetBaseTable());
 
-    printks("done %d\n", cpu->lapic_id);
+    printks("done %d\n", smpID());
     hang();
 }
 
@@ -27,15 +36,20 @@ void smpBootstrap()
 {
     struct limine_smp_response *smp = bootloaderGetSMP();
 
+    printk("smp: we are core %d\n", smp->bsp_lapic_id);
+
     // load apropiate tables first
     gdtInstall(smp->bsp_lapic_id);
 
     vmmInit();
 
-    printk("smp: we are core %d\n", smp->bsp_lapic_id);
-
     if (smp->cpu_count == 1) // we are alone
+    {
+        printk("smp: no multicore setup detected\n");
         return;
+    }
+
+    printk("smp: ready to start the other cores\n");
 
     for (size_t i = 0; i < smp->cpu_count; i++)
     {
