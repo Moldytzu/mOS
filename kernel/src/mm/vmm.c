@@ -7,6 +7,8 @@
 #include <cpu/atomic.h>
 #include <main/panic.h>
 
+// todo: don't use an array of addresses to know where we did allocate pages
+
 locker_t vmmLock; // todo: replace this with a per-table lock
 vmm_page_table_t *baseTable;
 
@@ -63,15 +65,15 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pml4->entries[index.PDP];           // index pdp
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pdp = pmmPage();                                  // allocate table
-        zero(pdp, VMM_PAGE);                              // clear it
-        table->pages->page[table->idx++] = (uint64_t)pdp; // set page address
+        pdp = pmmPage();     // allocate table
+        zero(pdp, VMM_PAGE); // clear it
+        // table->pages->page[table->idx++] = (uint64_t)pdp; // set page address
 
-        if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
-        {
-            table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
-            table->allocated++;
-        }
+        // if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
+        // {
+        //     table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
+        //     table->allocated++;
+        // }
 
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
@@ -83,15 +85,15 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pdp->entries[index.PD];             // index pd
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pd = pmmPage();                                  // allocate table
-        zero(pd, VMM_PAGE);                              // clear it
-        table->pages->page[table->idx++] = (uint64_t)pd; // set page address
+        pd = pmmPage();     // allocate table
+        zero(pd, VMM_PAGE); // clear it
+        // table->pages->page[table->idx++] = (uint64_t)pd; // set page address
 
-        if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
-        {
-            table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
-            table->allocated++;
-        }
+        // if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
+        // {
+        //     table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
+        //     table->allocated++;
+        // }
 
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
@@ -103,15 +105,15 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pd->entries[index.PT];              // index pt
     if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pt = pmmPage();                                  // allocate table
-        zero(pt, VMM_PAGE);                              // clear it
-        table->pages->page[table->idx++] = (uint64_t)pt; // set page address
+        pt = pmmPage();     // allocate table
+        zero(pt, VMM_PAGE); // clear it
+        // table->pages->page[table->idx++] = (uint64_t)pt; // set page address
 
-        if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
-        {
-            table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
-            table->allocated++;
-        }
+        // if (table->idx >= (table->allocated * 4096) / 8) // reallocation needed
+        // {
+        //     table->pages = pmmReallocate(table->pages, table->allocated, table->allocated + 1);
+        //     table->allocated++;
+        // }
 
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);   // set it's address
         vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
@@ -240,14 +242,14 @@ void vmmDestroy(vmm_page_table_t *table)
     uint64_t a = pmmTotal().available;
 #endif
 
-    lock(vmmLock, {
-        // deallocate all the used pages
-        for (int i = 0; i < table->idx; i++)
-            pmmDeallocate((void *)table->pages->page[i]);
+    // lock(vmmLock, {
+    //     // deallocate all the used pages
+    //     for (int i = 0; i < table->idx; i++)
+    //         pmmDeallocate((void *)table->pages->page[i]);
 
-        pmmDeallocatePages(table->pages, table->allocated);
-        pmmDeallocatePages(table, 2);
-    });
+    //     pmmDeallocatePages(table->pages, table->allocated);
+    //     pmmDeallocatePages(table, 2);
+    // });
 
 #ifdef K_VMM_DEBUG
     printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, toKB(pmmTotal().available - a));
