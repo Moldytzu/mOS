@@ -14,12 +14,12 @@ uint16_t smpGetCores()
 void cpuStart(struct limine_smp_info *cpu)
 {
     cli();
-    serialWrite("hey!\n");
-    
+    printks("we're %d!\n", cpu->lapic_id);
+
     gdtInstall(cpu->lapic_id);
     vmmSwap(vmmGetBaseTable());
 
-    serialWrite("done!\n");
+    printks("done %d\n", cpu->lapic_id);
     hang();
 }
 
@@ -31,7 +31,7 @@ void smpBootstrap()
     gdtInstall(smp->bsp_lapic_id);
 
     vmmInit();
-    
+
     printk("smp: we are core %d\n", smp->bsp_lapic_id);
 
     if (smp->cpu_count == 1) // we are alone

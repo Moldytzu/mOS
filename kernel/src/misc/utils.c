@@ -2,6 +2,8 @@
 #include <drv/framebuffer.h>
 #include <drv/serial.h>
 
+locker_t utilsLock;
+
 // stop everything
 void hang()
 {
@@ -17,7 +19,7 @@ const char *to_string(uint64_t val)
     if (!val)
         return "0"; // if the value is 0 then return a constant string "0"
 
-    zero(to_stringout, sizeof(to_stringout) ); // clear output
+    zero(to_stringout, sizeof(to_stringout)); // clear output
     for (int i = 0; val; i++, val /= 10)
         to_stringout[i] = (val % 10) + '0';
 
@@ -34,7 +36,7 @@ const char *to_hstring(uint64_t val)
     if (!val)
         return "0"; // if the value is 0 then return a constant string "0"
 
-    zero(to_stringout, sizeof(to_hstringout) ); // clear output
+    zero(to_stringout, sizeof(to_hstringout)); // clear output
 
     for (int i = 0; i < 16; i++, val = val >> 4) // shift the value by 4 to get each nibble
         to_hstringout[i] = digits[val & 0xF];    // get each nibble
@@ -52,59 +54,62 @@ const char *to_hstring(uint64_t val)
 // print formated on framebuffer
 void printk(const char *fmt, ...)
 {
-    va_list list;
-    va_start(list, fmt); // start a variable arguments list
+    lock(utilsLock, {
+        va_list list;
+        va_start(list, fmt); // start a variable arguments list
 
-    for (size_t i = 0; fmt[i]; i++)
-    {
-        if (fmt[i] != '%')
+        for (size_t i = 0; fmt[i]; i++)
         {
-            framebufferWritec(fmt[i]);
-            continue;
+            if (fmt[i] != '%')
+            {
+                framebufferWritec(fmt[i]);
+                continue;
+            }
+            if (fmt[i + 1] == 'd')
+                framebufferWrite(to_string(va_arg(list, uint64_t))); // decimal
+            else if (fmt[i + 1] == 'p')
+                framebufferWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
+            else if (fmt[i + 1] == 'x')
+                framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
+            else if (fmt[i + 1] == 's')
+                framebufferWrite(va_arg(list, const char *)); // string
+            else if (fmt[i + 1] == 'c')
+                framebufferWritec(va_arg(list, int)); // char
+            i++;
         }
-        if (fmt[i + 1] == 'd')
-            framebufferWrite(to_string(va_arg(list, uint64_t))); // decimal
-        else if (fmt[i + 1] == 'p')
-            framebufferWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
-        else if (fmt[i + 1] == 'x')
-            framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
-        else if (fmt[i + 1] == 's')
-            framebufferWrite(va_arg(list, const char *)); // string
-        else if (fmt[i + 1] == 'c')
-            framebufferWritec(va_arg(list, int)); // char
-        i++;
-    }
 
-    va_end(list); // clean up
+        va_end(list); // clean up
+    });
 }
 
 // print formated on serial
 void printks(const char *fmt, ...)
 {
-    va_list list;
-    va_start(list, fmt); // start a variable arguments list
+    lock(utilsLock, {
+        va_list list;
+        va_start(list, fmt); // start a variable arguments list
 
-    for (size_t i = 0; fmt[i]; i++)
-    {
-        if (fmt[i] != '%')
+        for (size_t i = 0; fmt[i]; i++)
         {
-            serialWritec(fmt[i]);
-            continue;
+            if (fmt[i] != '%')
+            {
+                serialWritec(fmt[i]);
+                continue;
+            }
+
+            if (fmt[i + 1] == 'd')
+                serialWrite(to_string(va_arg(list, uint64_t))); // decimal
+            else if (fmt[i + 1] == 'p')
+                serialWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
+            else if (fmt[i + 1] == 'x')
+                serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
+            else if (fmt[i + 1] == 's')
+                serialWrite(va_arg(list, const char *)); // string
+            else if (fmt[i + 1] == 'c')
+                serialWritec(va_arg(list, int)); // char
+            i++;
         }
 
-        if (fmt[i + 1] == 'd')
-            serialWrite(to_string(va_arg(list, uint64_t))); // decimal
-        else if (fmt[i + 1] == 'p')
-            serialWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
-        else if (fmt[i + 1] == 'x')
-            serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
-        else if (fmt[i + 1] == 's')
-            serialWrite(va_arg(list, const char *)); // string
-        else if (fmt[i + 1] == 'c')
-            serialWritec(va_arg(list, int)); // char
-        i++;
-    }
-
-    va_end(list); // clean up
+        va_end(list); // clean up
+    });
 }
-
