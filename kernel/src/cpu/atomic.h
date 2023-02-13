@@ -12,3 +12,9 @@ bool atomicLock(locker_t *locker);
 bool atomicRelease(locker_t *locker);
 void atomicAquire(locker_t *locker);
 void atomicAquireCli(locker_t *locker);
+
+// hint spinlock
+static inline __attribute__((always_inline)) void pause()
+{
+    asm volatile ("pause");
+}
