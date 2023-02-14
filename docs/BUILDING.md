@@ -16,8 +16,9 @@ Run `make toolchain` and expect to wait at least half a hour. When done you will
 You simply have to do `make`. That's all. No need to pass the `-j` flag to it because it is automatically done inside the makefile. The kernel will be compiled to out/kernel.elf and an iso to out/dvd.iso.
 
 ## Testing in a virtual machine
-There are multiple targets that can used to test the operating system right away:
+##### There are multiple targets that can used to test the operating system right away:
     - run  -> runs QEmu with TCG
+    - run-slow -> runs QEmu with TCG and without SMP and PCIe support
     - run-efi  -> runs QEmu with TCG and UEFI support
     - run-kvm  -> runs QEmu with KVM acceleration (only on x86_64 hosts)
     - run-efi-kvm  -> runs QEmu with KVM acceleration and UEFI support (only on x86_64 hosts)
