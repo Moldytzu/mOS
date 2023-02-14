@@ -5,6 +5,8 @@
 #include <drv/serial.h>
 #include <mm/vmm.h>
 
+bool smpReady[K_MAX_CORES];
+
 uint16_t smpGetCores()
 {
     return bootloaderGetSMP()->cpu_count;
@@ -23,6 +25,10 @@ void cpuStart(struct limine_smp_info *cpu)
     vmmSwap(vmmGetBaseTable());
 
     printks("done %d\n", id);
+
+    // we're ready
+    smpReady[id] = true;
+
     hang();
 }
 
@@ -53,6 +59,13 @@ void smpBootstrap()
             continue;
 
         atomicWrite((void *)&cpu->goto_address, (uint64_t)cpuStart);
+    }
+
+    // wait for the cpus to be ready
+    for (int i = 1; i < smp->cpu_count; i++)
+    {
+        while (!smpReady[i])
+            pause();
     }
 
     printk("smp: started %d cores\n", smp->cpu_count - 1);
