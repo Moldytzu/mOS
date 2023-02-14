@@ -1,6 +1,7 @@
 #include <cpu/smp.h>
 #include <cpu/atomic.h>
 #include <cpu/gdt.h>
+#include <cpu/idt.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
 #include <mm/vmm.h>
@@ -22,6 +23,7 @@ void cpuStart(struct limine_smp_info *cpu)
     printks("we're %d!\n", id);
 
     gdtInstall(id);
+    idtInstall();
     vmmSwap(vmmGetBaseTable());
 
     printks("done %d\n", id);
@@ -40,6 +42,8 @@ void smpBootstrap()
 
     // load apropiate tables first
     gdtInstall(smp->bsp_lapic_id);
+
+    idtInit();
 
     vmmInit();
 

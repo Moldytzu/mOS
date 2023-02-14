@@ -7,6 +7,7 @@
 #include <subsys/socket.h>
 #include <main/panic.h>
 #include <cpu/pic.h>
+#include <cpu/smp.h>
 
 idt_descriptor_t idtr;
 idt_gate_descriptor_t *gates;
@@ -28,13 +29,13 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
     gate->offset2 = (uint16_t)(((uint64_t)handler & 0x00000000ffff0000) >> 16);
     gate->offset3 = (uint32_t)(((uint64_t)handler & 0xffffffff00000000) >> 32);
 
-#ifdef K_IDT_IST
-    // enable ists
-    if (user)
-        gate->ist = 2; // separate ists
-    else
-        gate->ist = 1;
-#endif
+// #ifdef K_IDT_IST
+//     // enable ists
+//     if (user)
+//         gate->ist = 2; // separate ists
+//     else
+//         gate->ist = 1;
+// #endif
 }
 
 // initialize the intrerupt descriptor table
@@ -42,14 +43,12 @@ void idtInit()
 {
     cli(); // disable intrerrupts
 
-#ifdef K_IDT_IST
     // setup ist
-    tssGet()->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
-    tssGet()->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
+    //tssGet()->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
+    //tssGet()->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
 
-    zero((void *)tssGet()->ist[0] - VMM_PAGE, VMM_PAGE);
-    zero((void *)tssGet()->ist[1] - VMM_PAGE, VMM_PAGE);
-#endif
+    //zero((void *)tssGet()->ist[0] - VMM_PAGE, VMM_PAGE);
+    //zero((void *)tssGet()->ist[1] - VMM_PAGE, VMM_PAGE);
 
     // allocate the gates
     gates = pmmPage();
@@ -67,6 +66,11 @@ void idtInit()
     zero(redirectTable, sizeof(redirectTable));
 
     printk("idt: loaded size %d\n", idtr.size);
+}
+
+void idtInstall()
+{
+    iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 }
 
 void idtRedirect(void *handler, uint8_t entry, uint32_t tid)
@@ -157,6 +161,6 @@ cnt:
     if (int_num == 0xE) // when a page fault occurs the faulting address is set in cr2
         printk("CR2=0x%p ", controlReadCR2());
 
-    printk("RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p ERR=0x%p", stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss, stack->error);
+    printk("CORE #%d: RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p ERR=0x%p", smpID(), stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss, stack->error);
     panick(message);
 }
