@@ -42,6 +42,8 @@ void eventLoop()
     }
 
     memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
+
+    sys_yield();
 }
 
 void parseCFG()

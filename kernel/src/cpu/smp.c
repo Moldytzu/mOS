@@ -69,4 +69,6 @@ void smpBootstrap()
     }
 
     printk("smp: started %d cores\n", smp->cpu_count - 1);
+
+    hang();
 }

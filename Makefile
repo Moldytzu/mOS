@@ -21,7 +21,7 @@ run-bochs: $(OUTPUT)
 	bochs -q
 
 run-kvm: $(OUTPUT)
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) --enable-kvm -cpu host
+	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) --enable-kvm -cpu host -smp $(CORES)
 
 run-debug: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) $(QEMUDEBUG)
