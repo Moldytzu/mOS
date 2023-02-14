@@ -4,6 +4,7 @@
 #include <mm/vmm.h>
 
 gdt_descriptor_t gdtr[K_MAX_CORES];
+gdt_tss_t *tsses[K_MAX_CORES];
 
 extern void gdtLoad(gdt_descriptor_t *);
 extern void tssLoad();
@@ -48,7 +49,9 @@ void gdtCreateSegment(uint16_t procID, uint8_t access)
 // create a new segment and install the tss on it
 void gdtInstallTSS(uint16_t procID)
 {
-    gdtr[procID].tss = pmmPage();              // allocate tss
+    gdtr[procID].tss = pmmPage();     // allocate tss
+    tsses[procID] = gdtr[procID].tss; // remember it
+
     zero(gdtr[procID].tss, sizeof(gdt_tss_t)); // clear it
 
     gdt_system_segment_t *segment = (gdt_system_segment_t *)&gdtr[procID].entries[gdtr[procID].size / sizeof(gdt_segment_t)]; // get address of the next segment
@@ -68,13 +71,7 @@ void gdtInstallTSS(uint16_t procID)
 }
 
 // get the tss address
-gdt_tss_t *tssGet()
+gdt_tss_t **tssGet()
 {
-    return NULL;
-}
-
-// get the gdt segments
-gdt_segment_t *gdtGet()
-{
-    return NULL;
+    return tsses;
 }

@@ -8,7 +8,7 @@
 
 bool smpReady[K_MAX_CORES];
 
-uint16_t smpGetCores()
+uint8_t smpCores()
 {
     return bootloaderGetSMP()->cpu_count;
 }
@@ -18,12 +18,12 @@ void cpuStart(struct limine_smp_info *cpu)
 {
     cli();
 
-    uint16_t id = smpID();
+    uint8_t id = smpID();
 
     printks("we're %d!\n", id);
 
     gdtInstall(id);
-    idtInstall();
+    idtInstall(id);
     vmmSwap(vmmGetBaseTable());
 
     printks("done %d\n", id);
@@ -43,7 +43,7 @@ void smpBootstrap()
     // load apropiate tables first
     gdtInstall(smp->bsp_lapic_id);
 
-    idtInit();
+    idtInit(smp->bsp_lapic_id);
 
     vmmInit();
 

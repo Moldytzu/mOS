@@ -52,5 +52,4 @@ pstruct
 gdt_descriptor_t;
 
 void gdtInstall(uint16_t procID);
-gdt_segment_t *gdtGet();
-gdt_tss_t *tssGet();
+gdt_tss_t **tssGet();

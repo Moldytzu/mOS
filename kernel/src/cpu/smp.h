@@ -2,5 +2,5 @@
 #include <misc/utils.h>
 
 uint8_t smpID();
-uint16_t smpGetCores();
+uint8_t smpCores();
 void smpBootstrap();

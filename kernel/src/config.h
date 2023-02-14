@@ -35,8 +35,5 @@
 // PIT
 #define K_PIT_FREQ 200 // frequency in hz of the pit
 
-// IDT
-#define K_IDT_IST // enable ist
-
 // Panic
 // #define K_PANIC_REBOOT // reboot on kernel panic

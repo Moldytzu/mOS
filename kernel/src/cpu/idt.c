@@ -29,26 +29,17 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
     gate->offset2 = (uint16_t)(((uint64_t)handler & 0x00000000ffff0000) >> 16);
     gate->offset3 = (uint32_t)(((uint64_t)handler & 0xffffffff00000000) >> 32);
 
-// #ifdef K_IDT_IST
-//     // enable ists
-//     if (user)
-//         gate->ist = 2; // separate ists
-//     else
-//         gate->ist = 1;
-// #endif
+    // enable ists
+    if (user)
+        gate->ist = 2; // separate ists
+    else
+        gate->ist = 1;
 }
 
 // initialize the intrerupt descriptor table
-void idtInit()
+void idtInit(uint16_t procID)
 {
     cli(); // disable intrerrupts
-
-    // setup ist
-    //tssGet()->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
-    //tssGet()->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
-
-    //zero((void *)tssGet()->ist[0] - VMM_PAGE, VMM_PAGE);
-    //zero((void *)tssGet()->ist[1] - VMM_PAGE, VMM_PAGE);
 
     // allocate the gates
     gates = pmmPage();
@@ -59,8 +50,9 @@ void idtInit()
     for (int i = 0; i < 0xFF; i++) // set all exception irqs to the base handler
         idtSetGate((void *)int_table[i], i, IDT_InterruptGateU, true);
 
-    idtr.size--;                 // decrement to comply with the spec
-    iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
+    idtr.size--; // decrement to comply with the spec
+
+    idtInstall(procID); // load the idtr
 
     // clear the redirection table
     zero(redirectTable, sizeof(redirectTable));
@@ -68,8 +60,16 @@ void idtInit()
     printk("idt: loaded size %d\n", idtr.size);
 }
 
-void idtInstall()
+void idtInstall(uint8_t procID)
 {
+    // setup ist
+    gdt_tss_t *tss = tssGet()[procID];
+    tss->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
+    tss->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
+
+    zero((void *)tss->ist[0] - VMM_PAGE, VMM_PAGE);
+    zero((void *)tss->ist[1] - VMM_PAGE, VMM_PAGE);
+
     iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 }
 
