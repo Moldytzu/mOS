@@ -4,6 +4,7 @@
 #include <fw/bootloader.h>
 #include <cpu/idt.h>
 #include <cpu/gdt.h>
+#include <cpu/smp.h>
 #include <cpu/atomic.h>
 #include <main/panic.h>
 
@@ -201,12 +202,16 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     // map the system tables as kernel rw
     vmmMap(newTable, newTable, newTable, driver, true); // page table
 
-    /* todo: map the ists after we enable the intrerrupts
-    #ifdef K_IDT_IST
-        vmmMap(newTable, (void *)tssGet()->ist[0], (void *)tssGet()->ist[0], driver, true); // kernel ist
-        vmmMap(newTable, (void *)tssGet()->ist[1], (void *)tssGet()->ist[1], driver, true); // user ist
-    #endif
-    */
+    // map the tsses
+    if (!full)
+    {
+        for (int i = 0; i < smpCores(); i++)
+        {
+            gdt_tss_t *tss = tssGet()[i];
+            vmmMap(newTable, (void *)tss->ist[0], (void *)tss->ist[0], driver, true); // kernel
+            vmmMap(newTable, (void *)tss->ist[1], (void *)tss->ist[1], driver, true); // user
+        }
+    }
 
     // map memory map entries as kernel rw
     for (size_t i = 0; i < memMap->entry_count; i++)
