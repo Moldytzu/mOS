@@ -21,7 +21,7 @@ extern void userspaceJump(uint64_t rip, uint64_t stack, uint64_t pagetable);
 void idleTask()
 {
     while (true)
-        asm volatile("int $0x20"); // yield instantly
+        ; // todo: replace this with a yield syscall
 }
 
 uint8_t simdContext[512] align_addr(16);
@@ -135,7 +135,7 @@ void schedulerInit()
 // enable the scheduler and then jump in the first task
 void schedulerEnable()
 {
-    
+
     userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp, (uint64_t)rootTask.pageTable); // jump in userspace
 }
 

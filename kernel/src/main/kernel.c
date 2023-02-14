@@ -4,6 +4,7 @@
 #include <cpu/fpu.h>
 #include <cpu/pic.h>
 #include <cpu/control.h>
+#include <cpu/smp.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
@@ -45,7 +46,8 @@ void kmain()
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
 
-    schedulerEnable(); // enable the schduler and jump in userspace
+    smpJumpUserspace(); // send all cores to userspace
+    schedulerEnable();  // enable the schduler and jump in userspace
 }
 
 void panick_impl(const char *file, size_t line, const char *msg)

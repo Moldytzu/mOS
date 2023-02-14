@@ -4,3 +4,4 @@
 uint8_t smpID();
 uint8_t smpCores();
 void smpBootstrap();
+void smpJumpUserspace();

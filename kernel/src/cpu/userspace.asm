@@ -48,5 +48,5 @@ userspaceJump:
     mov rcx, rdi ; set the new rip
     mov rsp, rsi ; set the new stack
 	mov cr3, rdx ; set new page table
-    mov r11, 0b1000000010 ; rflags, enable intrerrupts
+    mov r11, 0b0000000010 ; rflags, disable intrerrupts (temporary, will enable them when we have proper timers set up)
     o64 sysret ; to userspace and beyond

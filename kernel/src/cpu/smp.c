@@ -5,12 +5,20 @@
 #include <fw/bootloader.h>
 #include <drv/serial.h>
 #include <mm/vmm.h>
+#include <sys/syscall.h>
+#include <sched/scheduler.h>
 
+bool smpJump;
 bool smpReady[K_MAX_CORES];
 
 uint8_t smpCores()
 {
     return bootloaderGetSMP()->cpu_count;
+}
+
+void smpJumpUserspace()
+{
+    smpJump = true;
 }
 
 // this function is the entry point of each and every cpu but the bootstrap one
@@ -30,6 +38,13 @@ void cpuStart(struct limine_smp_info *cpu)
 
     // we're ready
     smpReady[id] = true;
+
+    // spinlock until we're ready to jump in userspace
+    while (!smpJump)
+        pause();
+
+    syscallInit(); // enable system calls
+    schedulerEnable();
 
     hang();
 }
@@ -55,8 +70,9 @@ void smpBootstrap()
         return;
     }
 
-    printk("smp: ready to start the other cores\n");
+    smpJump = false;
 
+    printk("smp: ready to start the other cores\n");
     for (size_t i = 0; i < smp->cpu_count; i++)
     {
         struct limine_smp_info *cpu = smp->cpus[i];
