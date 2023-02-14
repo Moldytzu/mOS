@@ -12,6 +12,12 @@ extern void tssLoad();
 void gdtCreateSegment(uint16_t procID, uint8_t access);
 void gdtInstallTSS(uint16_t procID);
 
+void gdtInit()
+{
+    zero(gdtr, sizeof(gdtr));
+    zero(tsses, sizeof(tsses));
+}
+
 // install a gdt
 void gdtInstall(uint16_t procID)
 {
@@ -51,7 +57,7 @@ void gdtInstallTSS(uint16_t procID)
 {
     gdtr[procID].tss = pmmPage();     // allocate tss
     tsses[procID] = gdtr[procID].tss; // remember it
-
+    
     zero(gdtr[procID].tss, sizeof(gdt_tss_t)); // clear it
 
     gdt_system_segment_t *segment = (gdt_system_segment_t *)&gdtr[procID].entries[gdtr[procID].size / sizeof(gdt_segment_t)]; // get address of the next segment

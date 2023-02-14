@@ -3,6 +3,7 @@
 #include <mm/pmm.h>
 #include <mm/blk.h>
 #include <cpu/gdt.h>
+#include <cpu/smp.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
 #include <drv/drv.h>
@@ -113,10 +114,14 @@ void schedulerSchedule(idt_intrerrupt_stack_t *stack)
 // initialize the scheduler
 void schedulerInit()
 {
-    void *kernelStack = pmmPage();                       // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE; // set kernel stack in tss
-    zero(&rootTask, sizeof(struct sched_task));          // clear the root task
-    currentTask = &rootTask;                             // set the current task
+    for (int i = 0; i < smpCores(); i++)
+    {
+        gdt_tss_t *tss = tssGet()[i];
+        tss->rsp[0] = (uint64_t)pmmPage() + VMM_PAGE;
+    }
+
+    zero(&rootTask, sizeof(struct sched_task)); // clear the root task
+    currentTask = &rootTask;                    // set the current task
 
     vtCreate(); // create the first terminal
 
@@ -130,6 +135,7 @@ void schedulerInit()
 // enable the scheduler and then jump in the first task
 void schedulerEnable()
 {
+    
     userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp, (uint64_t)rootTask.pageTable); // jump in userspace
 }
 

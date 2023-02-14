@@ -43,11 +43,6 @@ void _start()
 
     smpBootstrap(); // bootstrap the cpus
 
-    while (1)
-        ;
-
-    idtInit(); // initialize the idt
-
     vfsInit(); // initialize the virtual filesystem
 
     initrdMount(); // mount the initrd

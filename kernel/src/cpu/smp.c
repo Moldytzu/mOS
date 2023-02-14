@@ -41,6 +41,8 @@ void smpBootstrap()
     printk("smp: we are core %d\n", smp->bsp_lapic_id);
 
     // load apropiate tables first
+    gdtInit();
+
     gdtInstall(smp->bsp_lapic_id);
 
     idtInit(smp->bsp_lapic_id);
@@ -73,6 +75,4 @@ void smpBootstrap()
     }
 
     printk("smp: started %d cores\n", smp->cpu_count - 1);
-
-    hang();
 }
