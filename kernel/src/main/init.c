@@ -15,6 +15,7 @@
 #include <mm/vmm.h>
 #include <sched/pit.h>
 #include <sched/scheduler.h>
+#include <sched/hpet.h>
 #include <sys/syscall.h>
 #include <fw/bootloader.h>
 #include <fw/acpi.h>
@@ -43,6 +44,10 @@ void _start()
 
     smpBootstrap(); // bootstrap the cpus
 
+    acpiInit(); // initialize the acpi interface
+
+    hpetInit(); // initialize the hpet
+
     vfsInit(); // initialize the virtual filesystem
 
     initrdMount(); // mount the initrd
@@ -54,8 +59,6 @@ void _start()
     schedulerInit(); // initialize the scheduler
 
     drvInit(); // initialize the driver manager
-
-    acpiInit(); // initialize the acpi interface
 
     inputInit(); // initialize the input subsystem
 

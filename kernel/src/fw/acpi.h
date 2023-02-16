@@ -1,8 +1,8 @@
 #pragma once
 #include <misc/utils.h>
 
-#define ACPI_GAS_SYSMEM 0
-#define ACPI_GAS_SYSIO 1
+#define ACPI_GAS_ACCESS_MEMORY 0
+#define ACPI_GAS_ACCESS_IO 1
 
 pstruct
 {
@@ -161,9 +161,9 @@ pstruct
 {
     acpi_sdt_t header;
     uint8_t revision;
-    uint8_t comparators : 5;
+    uint8_t comparatorCount : 5;
     uint8_t counterSize : 1;
-    uint8_t padding : 1;
+    uint8_t reserved : 1;
     uint8_t replaceLegacy : 1;
     uint16_t pciVendor;
     acpi_gas_t base;
