@@ -3,7 +3,7 @@
 ## Prerequisites
 First things first clone this repository using git. This shouldn't take long but if it does make sure to pass `--depth 1` to it.
 
-The bare minimum hardware to build and emulate mOS is a Debian machine (could work on other distros) with enough disk space to build the toolchain (minimum 2 GB) and a reliable internet connection. Altough the architecture doesn't matter (yes, you can compile on a Pi 4), an x86_64 machine is recommended.
+The bare minimum hardware to build and emulate mOS is a Debian machine (could work on other distros) with enough disk space to build the toolchain (minimum 8 GB) and a reliable internet connection. Altough the architecture doesn't matter (yes, you can compile on a Pi 4 with at least 4 GB RAM, could work will less but didn't test), an x86_64 machine is recommended.
 
 If you are on Debian, there is a script that installs all the required packages automatically. To run it do `make deps`. (sudo permissions are required!)
 
