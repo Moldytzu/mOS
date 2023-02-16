@@ -74,6 +74,11 @@ uint64_t hpetMillis()
     return hpetNanos() / 1000000;
 }
 
+bool hpetAvailable()
+{
+    return hpet;
+}
+
 void hpetInit()
 {
     hpet = (acpi_hpet_t *)acpiGet("HPET");
@@ -91,8 +96,4 @@ void hpetInit()
     hpetWrite(HPET_OFFSET_TIMER_CONFIGURATION_CAPABILITY(0), (1 << 3) | (1 << 6)); // configure the timer (periodic timer-specific configuration)
     hpetWrite(HPET_OFFSET_TIMER_COMPARATOR(0), 0);                                 // clear the comparator
     hpetWrite(HPET_OFFSET_GENERAL_CONFIGURATION, 0b1);                             // enable counter
-
-    printk("hpet: sleeping for 5 seconds\n");
-    hpetSleepMillis(5000);
-    printk("hpet: done!\n");
 }

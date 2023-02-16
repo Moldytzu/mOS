@@ -16,6 +16,7 @@
 #include <sched/pit.h>
 #include <sched/scheduler.h>
 #include <sched/hpet.h>
+#include <sched/time.h>
 #include <sys/syscall.h>
 #include <fw/bootloader.h>
 #include <fw/acpi.h>
@@ -48,13 +49,15 @@ void _start()
 
     hpetInit(); // initialize the hpet
 
-    vfsInit(); // initialize the virtual filesystem
-
-    initrdMount(); // mount the initrd
+    timeSource(); // switch to best time source
 
     picInit(); // initialize the pic chips
 
     pitInit(); // initialize the timer
+
+    vfsInit(); // initialize the virtual filesystem
+
+    initrdMount(); // mount the initrd
 
     schedulerInit(); // initialize the scheduler
 

@@ -8,3 +8,4 @@ void hpetSleepNanos(uint64_t nanos);
 void hpetSleepMillis(uint64_t millis);
 
 void hpetInit();
+bool hpetAvailable();
