@@ -23,6 +23,9 @@ extern void PITHandler(idt_intrerrupt_stack_t *stack)
 // send packet and set the divisor
 void pitSet(uint32_t hz)
 {
+    if (hz < 19) // clamp value
+        hz = 19;
+
     // send packet
     outb(PIT_CMD, unsafe_cast(packet, uint8_t));
 
