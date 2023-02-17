@@ -52,12 +52,9 @@ const char *to_hstring(uint64_t val)
 }
 
 // print formated on framebuffer
-void printk(const char *fmt, ...)
+void printk_impl(const char *fmt, va_list list)
 {
     lock(utilsLock, {
-        va_list list;
-        va_start(list, fmt); // start a variable arguments list
-
         for (size_t i = 0; fmt[i]; i++)
         {
             if (fmt[i] != '%')
@@ -77,18 +74,13 @@ void printk(const char *fmt, ...)
                 framebufferWritec(va_arg(list, int)); // char
             i++;
         }
-
-        va_end(list); // clean up
     });
 }
 
 // print formated on serial
-void printks(const char *fmt, ...)
+void printks_impl(const char *fmt, va_list list)
 {
     lock(utilsLock, {
-        va_list list;
-        va_start(list, fmt); // start a variable arguments list
-
         for (size_t i = 0; fmt[i]; i++)
         {
             if (fmt[i] != '%')
@@ -109,7 +101,21 @@ void printks(const char *fmt, ...)
                 serialWritec(va_arg(list, int)); // char
             i++;
         }
-
-        va_end(list); // clean up
     });
+}
+
+void printk(const char *fmt, ...)
+{
+    va_list list;
+    va_start(list, fmt);
+    printk_impl(fmt, list);
+    va_end(list);
+}
+
+void printks(const char *fmt, ...)
+{
+    va_list list;
+    va_start(list, fmt);
+    printks_impl(fmt, list);
+    va_end(list);
 }

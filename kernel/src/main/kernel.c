@@ -20,6 +20,7 @@
 #include <subsys/socket.h>
 #include <main/panic.h>
 #include <elf/elf.h>
+#include <misc/logger.h>
 
 // kernel main, called after init
 void kmain()
@@ -45,6 +46,11 @@ void kmain()
 
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
+
+    logInfo("useful info %x %x %x",1,2,3);
+    logWarn("warning! %x %x %x",1,2,3);
+    logError("xyz failed! %x %x %x",1,2,3);
+    logDbg(1, "state: %x/10 %x/5 %x/60",1,2,3);
 
     smpJumpUserspace(); // send all cores to userspace
     schedulerEnable();  // enable the schduler and jump in userspace

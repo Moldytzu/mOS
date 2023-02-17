@@ -217,6 +217,8 @@ void hang();
 // printk
 void printk(const char *fmt, ...);
 void printks(const char *fmt, ...);
+void printk_impl(const char *fmt, va_list list);
+void printks_impl(const char *fmt, va_list list);
 
 // inline assembly shortcuts
 ifunc void cli()
