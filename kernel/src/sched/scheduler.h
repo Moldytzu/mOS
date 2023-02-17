@@ -41,6 +41,7 @@ struct sched_task
 void schedulerSchedule(idt_intrerrupt_stack_t *stack);
 void schedulerInit();
 void schedulerEnable();
+void schedulerUserspace();
 void schedulerSetTerminal(uint32_t tid, uint32_t terminal);
 void schedulerKill(uint32_t tid);
 struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);

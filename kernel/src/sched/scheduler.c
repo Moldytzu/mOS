@@ -15,6 +15,7 @@ struct sched_task rootTask;     // root of the tasks list
 struct sched_task *currentTask; // current task in the tasks list
 uint32_t lastTID = 0;           // last task ID
 bool taskKilled = false;        // flag that indicates if task was killed
+bool running = false;
 
 extern void userspaceJump(uint64_t rip, uint64_t stack, uint64_t pagetable);
 
@@ -35,6 +36,9 @@ void schedulerSchedule(idt_intrerrupt_stack_t *stack)
     // todo: rewrite this function
     // todo: use cpu time for usage calculation (also export the calculated values to the user space)
     // todo: split the cpu time equaly among the tasks (set the timer frequency to the number of tasks maybe??)
+
+    if(!running)
+        return;
 
     vmmSwap(vmmGetBaseTable()); // swap the page table
 
@@ -133,11 +137,16 @@ void schedulerInit()
     logInfo("sched: initialised");
 }
 
-// enable the scheduler and then jump in the first task
+// jump in the first task
+void schedulerUserspace()
+{
+    userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp, (uint64_t)rootTask.pageTable); // jump in userspace
+}
+
 void schedulerEnable()
 {
-
-    userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp, (uint64_t)rootTask.pageTable); // jump in userspace
+    running = true;
+    schedulerUserspace();
 }
 
 // add new task in the queue
