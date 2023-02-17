@@ -177,7 +177,7 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     // map the system tables as kernel rw
     vmmMap(newTable, newTable, newTable, driver, true); // page table
 
-    // map the tsses
+    // map the tsses (no need to do this with full tables since we'll map the entire memory map in next for loop)
     if (!full)
     {
         for (int i = 0; i < smpCores(); i++)
@@ -221,6 +221,48 @@ void vmmDestroy(vmm_page_table_t *table)
 #ifdef K_VMM_DEBUG
     uint64_t a = pmmTotal().available;
 #endif
+
+    lock(vmmLock, {
+        // deallocate sub-tables
+        for (int pdp = 0; pdp < 512; pdp++)
+        {
+            uint64_t pdpValue = table->entries[pdp];
+
+            if (!pdpValue)
+                continue;
+
+            vmm_page_table_t *pdpPtr = (void *)(vmmGetAddress(&pdpValue) << 12);
+
+            for (int pd = 0; pd < 512; pd++)
+            {
+                uint64_t pdValue = pdpPtr->entries[pd];
+
+                if (!pdValue)
+                    continue;
+
+                vmm_page_table_t *pdPtr = (void *)(vmmGetAddress(&pdValue) << 12);
+
+                for (int pt = 0; pt < 512; pt++)
+                {
+                    uint64_t ptValue = pdPtr->entries[pt];
+
+                    if (!ptValue)
+                        continue;
+
+                    vmm_page_table_t *ptPtr = (void *)(vmmGetAddress(&ptValue) << 12);
+
+                    pmmDeallocate(ptPtr);
+                }
+
+                pmmDeallocate(pdPtr);
+            }
+
+            pmmDeallocate(pdpPtr);
+        }
+
+        // deallocate main table
+        pmmDeallocatePages(table, 2);
+    });
 
 #ifdef K_VMM_DEBUG
     printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, toKB(pmmTotal().available - a));
