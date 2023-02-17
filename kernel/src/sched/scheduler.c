@@ -9,6 +9,7 @@
 #include <drv/drv.h>
 #include <main/panic.h>
 #include <sys/syscall.h>
+#include <misc/logger.h>
 
 struct sched_task rootTask;     // root of the tasks list
 struct sched_task *currentTask; // current task in the tasks list
@@ -129,7 +130,7 @@ void schedulerInit()
     memcpy8(task, (void *)idleTask, VMM_PAGE);                                // copy the executable part
     schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0, 0, 0, 0, 0); // create the idle task
 
-    printk("sched: initialised\n");
+    logInfo("sched: initialised");
 }
 
 // enable the scheduler and then jump in the first task

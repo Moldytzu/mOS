@@ -1,6 +1,7 @@
 #include <mm/blk.h>
 #include <mm/pmm.h>
 #include <main/panic.h>
+#include <misc/logger.h>
 
 #define HEADER_OF(ptr) ((blk_header_t *)(ptr - sizeof(blk_header_t)))
 #define HEADER_AT(ptr) ((blk_header_t *)(ptr))
@@ -119,7 +120,7 @@ void blkDeallocate(void *blk)
 {
     if (!blk || HEADER_OF(blk)->signature != BLK_HEADER_SIGNATURE)
     {
-        printks("blk: invalid deallocation at %x\n", blk);
+        logWarn("blk: invalid deallocation at %x", blk);
         return;
     }
 

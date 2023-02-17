@@ -7,6 +7,7 @@
 #include <mm/vmm.h>
 #include <sys/syscall.h>
 #include <sched/scheduler.h>
+#include <misc/logger.h>
 
 bool smpJump;
 bool smpReady[K_MAX_CORES];
@@ -53,7 +54,7 @@ void smpBootstrap()
 {
     struct limine_smp_response *smp = bootloaderGetSMP();
 
-    printk("smp: we are core %d\n", smp->bsp_lapic_id);
+    logInfo("smp: we are core %d", smp->bsp_lapic_id);
 
     // load apropiate tables first
     gdtInit();
@@ -66,13 +67,13 @@ void smpBootstrap()
 
     if (smp->cpu_count == 1) // we are alone
     {
-        printk("smp: no multicore setup detected\n");
+        logWarn("smp: no multicore setup detected");
         return;
     }
 
     smpJump = false;
 
-    printk("smp: ready to start the other cores\n");
+    logInfo("smp: ready to start the other cores");
     for (size_t i = 0; i < smp->cpu_count; i++)
     {
         struct limine_smp_info *cpu = smp->cpus[i];
@@ -90,5 +91,5 @@ void smpBootstrap()
             pause();
     }
 
-    printk("smp: started %d cores\n", smp->cpu_count - 1);
+    logInfo("smp: started %d cores", smp->cpu_count - 1);
 }

@@ -1,5 +1,6 @@
 #include <fs/vfs.h>
 #include <mm/blk.h>
+#include <misc/logger.h>
 
 #define ISVALID(node) (node && node->filesystem)
 
@@ -20,7 +21,7 @@ void vfsInit()
     zero(&rootNode, sizeof(rootNode)); // clear the root node
     rootNode.filesystem = &rootFS;     // rootfs
 
-    printk("vfs: rootfs mounted on %s\n", rootFS.mountName);
+    logInfo("vfs: rootfs mounted on %s", rootFS.mountName);
 }
 
 // add a node

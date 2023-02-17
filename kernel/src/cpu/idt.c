@@ -8,6 +8,7 @@
 #include <main/panic.h>
 #include <cpu/pic.h>
 #include <cpu/smp.h>
+#include <misc/logger.h>
 
 idt_descriptor_t idtr;
 idt_gate_descriptor_t *gates;
@@ -57,7 +58,7 @@ void idtInit(uint16_t procID)
     // clear the redirection table
     zero(redirectTable, sizeof(redirectTable));
 
-    printk("idt: loaded size %d\n", idtr.size);
+    logInfo("idt: loaded size %d", idtr.size);
 }
 
 void idtInstall(uint8_t procID)
@@ -130,7 +131,7 @@ cnt:
 
         const char *name = schedulerGetCurrent()->name;
 
-        printks("%s has crashed with %s! Terminating it.\n\r", name, exceptions[int_num]);
+        logWarn("%s has crashed with %s! Terminating it.", name, exceptions[int_num]);
 
         if (initSocket)
         {
@@ -159,8 +160,8 @@ cnt:
         message = exceptions[int_num];
 
     if (int_num == 0xE) // when a page fault occurs the faulting address is set in cr2
-        printk("CR2=0x%p ", controlReadCR2());
+        logError("CR2=0x%p ", controlReadCR2());
 
-    printk("CORE #%d: RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p ERR=0x%p", smpID(), stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss, stack->error);
+    logError("CORE #%d: RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p ERR=0x%p", smpID(), stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss, stack->error);
     panick(message);
 }

@@ -2,6 +2,7 @@
 #include <fw/acpi.h>
 #include <mm/vmm.h>
 #include <main/panic.h>
+#include <misc/logger.h>
 
 #define HPET_OFFSET_GENERAL_CAPABILITIES 0
 #define HPET_OFFSET_GENERAL_CONFIGURATION 0x10
@@ -96,4 +97,6 @@ void hpetInit()
     hpetWrite(HPET_OFFSET_TIMER_CONFIGURATION_CAPABILITY(0), (1 << 3) | (1 << 6)); // configure the timer (periodic timer-specific configuration)
     hpetWrite(HPET_OFFSET_TIMER_COMPARATOR(0), 0);                                 // clear the comparator
     hpetWrite(HPET_OFFSET_GENERAL_CONFIGURATION, 0b1);                             // enable counter
+
+    logInfo("hpet: initialised");
 }

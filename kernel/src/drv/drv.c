@@ -2,6 +2,7 @@
 #include <cpu/idt.h>
 #include <mm/blk.h>
 #include <sched/scheduler.h>
+#include <misc/logger.h>
 
 drv_context_input_t *inputCtx;
 uint16_t inputIdx;
@@ -35,7 +36,7 @@ void drvExit(uint32_t drv)
     }
 
     idtClearRedirect(drv);
-    printks("drv: %s exits\n", schedulerGet(drv)->name);
+    logInfo("drv: %s exits", schedulerGet(drv)->name);
 }
 
 void drvUpdateReference(uint32_t type, void *context)
@@ -60,7 +61,7 @@ void drvUpdateReference(uint32_t type, void *context)
 void *drvRegister(uint32_t drv, uint32_t type)
 {
     // return a new context
-    printks("drv: %s registred as type %d driver\n", schedulerGet(drv)->name, type);
+    logInfo("drv: %s registred as type %d driver", schedulerGet(drv)->name, type);
 
     switch (type)
     {

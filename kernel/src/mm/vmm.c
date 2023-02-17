@@ -7,8 +7,7 @@
 #include <cpu/smp.h>
 #include <cpu/atomic.h>
 #include <main/panic.h>
-
-// todo: don't use an array of addresses to know where we did allocate pages
+#include <misc/logger.h>
 
 locker_t vmmLock; // todo: replace this with a per-table lock
 vmm_page_table_t *baseTable;
@@ -19,7 +18,7 @@ void vmmInit()
     baseTable = vmmCreateTable(true, false); // create the base table with hhdm
     vmmSwap(baseTable);                      // swap the table
 
-    printk("vmm: loaded a new page table\n");
+    logInfo("vmm: loaded a new page table");
 }
 
 // set flags of some entries given by the indices

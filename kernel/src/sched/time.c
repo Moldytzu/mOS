@@ -1,5 +1,6 @@
 #include <sched/time.h>
 #include <sched/hpet.h>
+#include <misc/logger.h>
 
 uint8_t timeCurrentSource = TIME_SOURCE_NONE;
 
@@ -27,6 +28,8 @@ uint64_t timeNanos()
     default:
         break;
     }
+
+    return 0;
 }
 
 const char *timers[] = {"none", "hpet"};
@@ -37,5 +40,5 @@ void timeSource()
     if (hpetAvailable())
         timeCurrentSource = TIME_SOURCE_HPET;
 
-    printk("time: main time source is %s\n", timers[timeCurrentSource]);
+    logInfo("time: main time source is %s", timers[timeCurrentSource]);
 }

@@ -5,6 +5,7 @@
 #include <cpu/io.h>
 #include <cpu/idt.h>
 #include <main/panic.h>
+#include <misc/logger.h>
 
 uint8_t revision;
 acpi_rsdp_t *rsdp;
@@ -206,5 +207,8 @@ void acpiInit()
     printks("acpi: found %d pci functions in total\n\r", pciIndex);
 #endif
 
-    printk("acpi: detected %d pci functions\n", pciIndex);
+    if(pciIndex)
+        logInfo("acpi: detected %d pci functions", pciIndex);
+    else
+        logWarn("acpi: failed to detect pci functions! mcfg wasn't detected...");
 }

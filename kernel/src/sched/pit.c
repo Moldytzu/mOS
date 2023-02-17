@@ -3,6 +3,7 @@
 #include <drv/framebuffer.h>
 #include <cpu/idt.h>
 #include <subsys/vt.h>
+#include <misc/logger.h>
 
 pit_packet_t packet;
 
@@ -51,7 +52,7 @@ void pitInit()
     // unmask IRQ 0 on PIC
     outb(PIC_MASTER_DAT, inb(PIC_MASTER_DAT) & ~0b00000001);
 
-    printk("pit: using mode 2 at %d hz\n", K_PIT_FREQ);
+    logInfo("pit: using mode 2 at %d hz", K_PIT_FREQ);
 }
 
 // get ticks since startup

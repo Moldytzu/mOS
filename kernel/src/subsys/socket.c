@@ -2,6 +2,7 @@
 #include <mm/vmm.h>
 #include <mm/pmm.h>
 #include <mm/blk.h>
+#include <misc/logger.h>
 
 struct sock_socket rootSocket;
 uint32_t lastSockID = 0;
@@ -103,7 +104,7 @@ void sockInit()
     zero(&rootSocket, sizeof(struct sock_socket));
     sockCreate(); // create the first socket
 
-    printk("sock: created the first socket\n");
+    logInfo("sock: created the first socket");
 }
 
 // free the socket

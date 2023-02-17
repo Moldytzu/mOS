@@ -3,6 +3,7 @@
 #include <cpu/idt.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
+#include <misc/logger.h>
 
 extern void sysretInit();
 uint32_t count = 1;
@@ -39,5 +40,5 @@ uint32_t syscallGetCount()
 void syscallInit()
 {
     sysretInit(); // enable sysret/syscall capability
-    printk("syscall: enabled syscall/sysret functionality\n");
+    logInfo("syscall: enabled syscall/sysret functionality");
 }

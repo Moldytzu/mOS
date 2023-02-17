@@ -3,6 +3,7 @@
 #include <drv/drv.h>
 #include <fw/bootloader.h>
 #include <mm/vmm.h>
+#include <misc/logger.h>
 
 psf2_header_t *font;
 struct limine_framebuffer framebuffer;
@@ -21,7 +22,7 @@ void framebufferInit()
     cursor.colour = 0xFFFFFF; // white cursor
     cursor.X = cursor.Y = 0;  // upper left corner
 
-    printk("fb: display resolution is %dx%d\n", framebuffer.width, framebuffer.height);
+    logInfo("fb: display resolution is %dx%d", framebuffer.width, framebuffer.height);
 }
 
 void framebufferFlush()
