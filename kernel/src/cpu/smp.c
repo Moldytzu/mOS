@@ -27,25 +27,19 @@ void cpuStart(struct limine_smp_info *cpu)
 {
     cli();
 
-    uint8_t id = smpID();
-
-    printks("we're %d!\n", id);
-
-    gdtInstall(id);
-    idtInstall(id);
+    gdtInstall(smpID());
+    idtInstall(smpID());
     vmmSwap(vmmGetBaseTable());
 
-    printks("done %d\n", id);
-
     // we're ready
-    smpReady[id] = true;
+    smpReady[smpID()] = true;
 
     // spinlock until we're ready to jump in userspace
     while (!smpJump)
         pause();
 
-    syscallInit(); // enable system calls
-    schedulerEnable();
+    syscallInit();        // enable system calls
+    schedulerUserspace(); // jump in userspace
 
     hang();
 }
