@@ -35,7 +35,6 @@ pstruct
     uint64_t entries[512];
     uint32_t allocated;
     uint32_t idx;
-    vmm_meta_t *pages;
 }
 vmm_page_table_t;
 
