@@ -130,10 +130,10 @@ void acpiReboot()
 
     switch (fadt->reset.addressSpace)
     {
-    case ACPI_GAS_SYSIO: // if the reset register is i/o mapped
+    case ACPI_GAS_ACCESS_IO: // if the reset register is i/o mapped
         outb(fadt->reset.address, fadt->resetValue);
         break;
-    case ACPI_GAS_SYSMEM: // if the reset register is in the system memory
+    case ACPI_GAS_ACCESS_MEMORY: // if the reset register is in the system memory
         *(uint8_t *)fadt->reset.address = fadt->resetValue;
     default:
         break;
