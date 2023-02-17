@@ -3,6 +3,19 @@
 
 uint8_t timeCurrentSource = TIME_SOURCE_NONE;
 
+void timeSleepMilis(uint64_t milis)
+{
+    switch (timeCurrentSource)
+    {
+    case TIME_SOURCE_HPET:
+        hpetSleepMillis(milis);
+        break;
+    
+    default:
+        break;
+    }
+}
+
 uint64_t timeNanos()
 {
     switch (timeCurrentSource)
