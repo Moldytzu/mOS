@@ -4,10 +4,16 @@
 #include <main/panic.h>
 #include <cpu/atomic.h>
 
+pstruct
+{
+    unsigned val : 1;
+}
+bit_t;
+
 uint8_t poolCount = 0;
 pmm_pool_t pools[256]; // 256 pools should be enough
 bool debug = false;
-locker_t pmmLock; // todo: replace this with a per-pool lock
+locker_t pmmLock; // todo: replace this with a per-pool loc
 
 void pmmEnableDBG()
 {
@@ -21,30 +27,12 @@ void pmmDisableDBG()
 
 ifunc bool get(pmm_pool_t *pool, size_t idx)
 {
-    size_t arrIdx = idx / sizeof(size_t); // gives the index of the 64-bit bytes we need
-    size_t offset = idx % sizeof(size_t); // offset in bits
-
-    size_t mask = 1; // create a bit mask
-    mask <<= offset;
-
-    uint64_t *bmp = (uint64_t *)pool->base;
-    return bmp[arrIdx] & mask; // get the bit
+    return ((bit_t *)pool->base)[idx].val;
 }
 
 ifunc void set(pmm_pool_t *pool, size_t idx, bool value)
 {
-    size_t arrIdx = idx / sizeof(size_t); // gives the index of the 64-bit bytes we need
-    size_t offset = idx % sizeof(size_t); // offset in bits
-
-    size_t mask = 1; // create a bit mask
-    mask <<= offset;
-
-    uint64_t *bmp = (uint64_t *)pool->base;
-
-    if (value)
-        bmp[arrIdx] |= mask; // set the bit
-    else
-        bmp[arrIdx] &= ~mask; // unset the bit
+    ((bit_t *)pool->base)[idx].val = value;
 }
 
 void pmmDbgDump()
