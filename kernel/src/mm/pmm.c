@@ -3,6 +3,7 @@
 #include <drv/framebuffer.h>
 #include <main/panic.h>
 #include <cpu/atomic.h>
+#include <misc/logger.h>
 
 pstruct
 {
@@ -198,11 +199,11 @@ void pmmInit()
         zero(pool->base, pool->bitmapBytes);
     }
 
-#ifdef K_PMM_DEBUG
     // display the memory pools
     for (int i = 0; i < poolCount; i++)
-        printks("pmm pool %d: %x -> %x (%d kb)\n", i, pools[i].alloc, pools[i].alloc + pools[i].available, pools[i].available / 1024);
-#endif
+        logInfo("pmm: [pool %d] {%x -> %x} (%d kb)", i, pools[i].alloc, pools[i].alloc + pools[i].available, pools[i].available / 1024);
+
+    logInfo("pmm: %d MB available",toMB(pmmTotal().available));
 }
 
 // todo: make this function return a dedicated structure and not reuse the internal one

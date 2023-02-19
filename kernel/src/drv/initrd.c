@@ -1,6 +1,7 @@
 #include <drv/initrd.h>
 #include <fw/bootloader.h>
 #include <fs/vfs.h>
+#include <misc/logger.h>
 
 dsfs_fs_t *dsfs;
 vfs_fs_t dsfsFS;
@@ -12,13 +13,13 @@ void initrdInit()
 
     if (!dsfs)
     {
-        bootloaderWrite("dsfs: failed to load the initrd from \"initrd.dsfs\".\nmake sure the file is in the root of the boot device\n");
+        logError("dsfs: failed to load the initrd from \"initrd.dsfs\".\nmake sure the file is in the root of the boot device\n");
         hang();
     }
 
     if (dsfs->header.signature[0] != 'D' && dsfs->header.signature[1] != 'D')
     {
-        bootloaderWrite("dsfs: failed to verify the signature\n");
+        logError("dsfs: failed to verify the signature\n");
         hang();
     }
 }

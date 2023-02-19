@@ -1,5 +1,6 @@
 #include <drv/serial.h>
 #include <cpu/atomic.h>
+#include <misc/logger.h>
 
 locker_t serialLock;
 
@@ -17,7 +18,7 @@ void serialInit()
 
     outb(COM1 + 2, 0b111); // fifo control register (enable fifo, clear them, disable dma ,trigger at 1 character)
 
-    atomicClearLock(&serialLock);
+    logInfo("com1: %d baud", COM_BAUD_BASE / K_COM_BAUD_DIV);
 #endif
 }
 
