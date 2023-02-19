@@ -5,17 +5,35 @@
 #include <mm/vmm.h>
 #include <misc/logger.h>
 
+extern uint8_t _binary____kfont_psf_start; // the font file embeded in the kernel as a symbol
+
 psf2_header_t *font;
 struct limine_framebuffer framebuffer;
 
 framebuffer_cursor_info_t cursor; // info
+
+bool checkFont(psf2_header_t *font)
+{
+    if (!font)
+        return false;
+
+    if (font->magic[0] != PSF2_MAGIC0 || font->magic[1] != PSF2_MAGIC1 || font->magic[2] != PSF2_MAGIC2 || font->magic[3] != PSF2_MAGIC3)
+        return false;
+
+    return true;
+}
 
 // init the framebuffer
 void framebufferInit()
 {
     memcpy(&framebuffer, bootloaderGetFramebuffer(), sizeof(struct limine_framebuffer)); // get the tag
 
-    framebufferLoadFont("consola.psf"); // load default font
+    font = (psf2_header_t *)&_binary____kfont_psf_start; // use embeded kernel font
+    if (!checkFont(font))
+    {
+        bootloaderWrite("fb: invalid font structure!\n");
+        hang();
+    }
 
     framebufferClear(0x000000); // clear framebuffer
 
@@ -54,26 +72,6 @@ inline void framebufferClear(uint32_t colour)
         zero(framebuffer.address, framebuffer.pitch * framebuffer.height);
     else
         memset(framebuffer.address, colour, framebuffer.pitch * framebuffer.height); // todo: optimise this even though we don't clear with colour
-}
-
-// load a font
-void framebufferLoadFont(const char *name)
-{
-    font = (psf2_header_t *)initrdGet(name);
-
-    if (!font)
-        goto error;
-
-    if (font->magic[0] != PSF2_MAGIC0 || font->magic[1] != PSF2_MAGIC1 || font->magic[2] != PSF2_MAGIC2 || font->magic[3] != PSF2_MAGIC3)
-        goto error;
-
-    return;
-
-error: // show an error message
-    bootloaderWrite("fb: failed to load font \"");
-    bootloaderWrite(name);
-    bootloaderWrite("\" from the initrd.\n");
-    hang();
 }
 
 // plot pixel on the framebuffer

@@ -27,7 +27,6 @@ framebuffer_cursor_info_t;
 void framebufferInit();
 void framebufferFlush();
 void framebufferClear(uint32_t colour);
-void framebufferLoadFont(const char *name);
 void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour);
 void framebufferPlotc(char c, uint32_t x, uint32_t y);
 void framebufferWrite(const char *str);

@@ -1,6 +1,9 @@
 include ../compile.mk
 
+OBJCOPY := ~/cross_compiler/bin/x86_64-elf-objcopy
+
 KERNEL := ../out/kernel.elf
+FONT := ../kfont.psf
 
 # c compiler flags particular for the kernel
 INTERNALCFLAGS :=            \
@@ -32,7 +35,8 @@ src/limine.h:
 
 # Link rules for the final kernel executable.
 $(KERNEL): $(OBJS) 
-	$(LD) $(OBJS) $(LDFLAGS) $(INTERNALLDFLAGS) -o $(KERNEL)
+	$(OBJCOPY) -O elf64-x86-64 -B i386 -I binary $(FONT) $(OBJDIR)/kfont.o
+	$(LD) $(OBJS) $(OBJDIR)/kfont.o $(LDFLAGS) $(INTERNALLDFLAGS) -o $(KERNEL)
 
 # Compilation rules for *.c files.
 $(OBJDIR)/%.o: $(SRCDIR)/%.c

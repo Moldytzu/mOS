@@ -33,6 +33,8 @@ void _start()
 
     bootloaderInit(); // initialize the bootloader interface
 
+    framebufferInit(); // initialize framebuffer
+
     initrdInit(); // initialize the initrd
 
     serialInit(); // initialize the serial port
@@ -40,8 +42,6 @@ void _start()
     pmmInit(); // initialize the physical memory manager
 
     blkInit(); // initialize the block allocator
-
-    framebufferInit(); // initialize framebuffer
 
     smpBootstrap(); // bootstrap the cpus
 
