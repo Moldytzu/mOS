@@ -31,8 +31,6 @@ void _start()
 {
     fpuInit(); // initialize the fpu
 
-    bootloaderInit(); // initialize the bootloader interface
-
     framebufferInit(); // initialize framebuffer
 
     initrdInit(); // initialize the initrd

@@ -38,19 +38,9 @@ static volatile struct limine_stack_size_request stack_request = {
     .revision = 0,
     .stack_size = 16 * 1024};
 
-struct limine_terminal *terminal;
-
-void bootloaderInit()
-{
-    if (terminal_request.response == NULL) // check for the response to be valid
-        hang();
-
-    terminal = terminal_request.response->terminals[0]; // point the default to the first terminal given by the bootloader
-}
-
 void bootloaderWrite(const char *str)
 {
-    terminal_request.response->write(terminal, str, strlen(str));
+    terminal_request.response->write(terminal_request.response->terminals[0], str, strlen(str));
 }
 
 struct limine_file *bootloaderGetModule(const char *name)

@@ -2,8 +2,6 @@
 #include <misc/utils.h>
 #include <limine.h>
 
-void bootloaderInit();
-
 void bootloaderWrite(const char *str);
 
 struct limine_file *bootloaderGetModule(const char *name);
