@@ -22,7 +22,7 @@ void vmmInit()
 }
 
 // set flags of some entries given by the indices
-inline __attribute__((always_inline)) void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw)
+inline __attribute__((always_inline)) void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw, bool wt)
 {
     vmm_page_table_t *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
@@ -49,11 +49,12 @@ inline __attribute__((always_inline)) void vmmSetFlags(vmm_page_table_t *table, 
     currentEntry = pt->entries[index.P];                           // index further
     vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                   // read-write
     vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);               // userspace
+    vmmSetFlag(&currentEntry, VMM_ENTRY_WRITE_THROUGH, wt);        // write-through
     pt->entries[index.P] = currentEntry;                           // write the entry in the table
 }
 
 // map a virtual address to a physical address in a page table
-void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw)
+void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw, bool wt)
 {
     atomicAquire(&vmmLock);
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
@@ -106,7 +107,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true);            // present
     pt->entries[index.P] = currentEntry;                           // write the entry in the table
 
-    vmmSetFlags(table, index, user, rw); // set the flags
+    vmmSetFlags(table, index, user, rw, wt); // set the flags
     atomicRelease(&vmmLock);
 }
 
@@ -174,7 +175,7 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     struct limine_kernel_address_response *kaddr = bootloaderGetKernelAddress();
 
     // map the system tables as kernel rw
-    vmmMap(newTable, newTable, newTable, driver, true); // page table
+    vmmMap(newTable, newTable, newTable, driver, true, false); // page table
 
     // map the tsses (no need to do this with full tables since we'll map the entire memory map in next for loop)
     if (!full)
@@ -182,8 +183,8 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
         for (int i = 0; i < smpCores(); i++)
         {
             gdt_tss_t *tss = tssGet()[i];
-            vmmMap(newTable, (void *)tss->ist[0], (void *)tss->ist[0], driver, true); // kernel
-            vmmMap(newTable, (void *)tss->ist[1], (void *)tss->ist[1], driver, true); // user
+            vmmMap(newTable, (void *)tss->ist[0], (void *)tss->ist[0], driver, true, false); // kernel
+            vmmMap(newTable, (void *)tss->ist[1], (void *)tss->ist[1], driver, true, false); // user
         }
     }
 
@@ -198,12 +199,12 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
         if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
         {
             for (size_t i = 0; i < entry->length; i += 4096)
-                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), driver, true);
+                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), driver, true, false);
         }
         for (size_t i = 0; i < entry->length; i += 4096)
         {
-            vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), driver, true);
-            vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), driver, true);
+            vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), driver, true, false);
+            vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), driver, true, false);
         }
     }
 

@@ -88,7 +88,7 @@ void hpetInit()
         return;
 
     if (hpet->base.addressSpace == ACPI_GAS_ACCESS_MEMORY)
-        vmmMap(vmmGetBaseTable(), (void *)hpet->base.address, (void *)hpet->base.address, false, true); // map if it is in memory
+        vmmMap(vmmGetBaseTable(), (void *)hpet->base.address, (void *)hpet->base.address, false, true, true); // map if it is in memory
 
     uint64_t hpetFemto = (hpetRead(HPET_OFFSET_GENERAL_CAPABILITIES) >> 32) & 0xFFFFFFFF;
     hpetNano = hpetFemto / 1000000; // convert units of measure (femto to nano)
