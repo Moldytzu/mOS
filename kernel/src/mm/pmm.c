@@ -71,13 +71,12 @@ void *pmmPages(uint64_t pages)
                 if (get(pool, i)) // find first available index
                     continue;
 
-                // todo: optimize this even further by counting the number of empty spaces then adding it to i thus skipping some bitmap checking
-
                 bool found = true;
                 for (size_t k = i; k < i + pages; k++)
                 {
                     if (get(pool, k)) // we didn't find what we need
                     {
+                        i += k - i; // increment the offset (skips some iterations)
                         found = false;
                         break;
                     }
