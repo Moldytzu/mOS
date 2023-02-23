@@ -6,9 +6,10 @@ KERNEL := ../out/kernel.elf
 FONT := ../kfont.psf
 
 # c compiler flags particular for the kernel
-INTERNALCFLAGS :=            \
-	-I./src/                 \
-	-Wno-int-to-pointer-cast \
+INTERNALCFLAGS :=              \
+	-I./src/                   \
+	-I./src/vendor/lai/include \
+	-Wno-int-to-pointer-cast   \
 
 # linker flags particular for the kernel
 INTERNALLDFLAGS :=         \

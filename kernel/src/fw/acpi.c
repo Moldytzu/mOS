@@ -148,6 +148,12 @@ triplefault:
     outb(0x64, 0xFE); // cpu reset using the keyboard controller
 }
 
+// init lai
+void laiInit()
+{
+    // todo: implement this
+}
+
 // initialize the acpi subsystem
 void acpiInit()
 {
@@ -187,6 +193,8 @@ void acpiInit()
         }
     }
 #endif
+
+    laiInit();
 
     // get fadt & mcfg
     fadt = (acpi_fadt_t *)acpiGet("FACP");

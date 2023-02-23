@@ -119,3 +119,47 @@ void printks(const char *fmt, ...)
     printks_impl(fmt, list);
     va_end(list);
 }
+
+// copy memory
+void *memcpy(void *dest, const void *src, size_t num)
+{
+    memcpy8(dest, (void *)src, num);
+    return dest;
+}
+
+// set memory
+void *memset(void *dstpp, int c, size_t len)
+{
+    memset8(dstpp, c, len);
+    return dstpp;
+}
+
+// move memory
+void *memmove(void *dest, const void *src, size_t n)
+{
+    uint8_t *from = (uint8_t *)src;
+    uint8_t *to = (uint8_t *)dest;
+
+    if (from == to || n == 0)
+        return dest;
+    if (to > from && to - from < n)
+    {
+        for (size_t i = n - 1; i >= 0; i--)
+            to[i] = from[i];
+        return dest;
+    }
+    if (from > to && from - to < n)
+    {
+        for (size_t i = 0; i < n; i++)
+            to[i] = from[i];
+        return dest;
+    }
+    memcpy(dest, src, n);
+    return dest;
+}
+
+// compare memory
+int memcmp(const void *a, const void *b, size_t len)
+{
+    return memcmp8((void *)a, (void *)b, len);
+}

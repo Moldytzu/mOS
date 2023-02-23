@@ -40,11 +40,7 @@ ifunc int memcmp8(void *a, void *b, size_t len)
     return 0;
 }
 
-// compare memory
-ifunc int memcmp(const void *a, const void *b, size_t len)
-{
-    return memcmp8((void *)a, (void *)b, len);
-}
+int memcmp(const void *a, const void *b, size_t len);
 
 // string length
 ifunc uint32_t strlen(const char *str)
@@ -169,43 +165,9 @@ ifunc int strcmp(const char *str1, const char *str2)
     return *(const unsigned char *)str1 - *(const unsigned char *)str2;
 }
 
-// copy memory
-ifunc void *memcpy(void *dest, const void *src, size_t num)
-{
-    memcpy8(dest, (void *)src, num);
-    return dest;
-}
-
-// set memory
-ifunc void *memset(void *dstpp, int c, size_t len)
-{
-    memset8(dstpp, c, len);
-    return dstpp;
-}
-
-// move memory
-ifunc void *memmove(void *dest, const void *src, size_t n)
-{
-    uint8_t *from = (uint8_t *)src;
-    uint8_t *to = (uint8_t *)dest;
-
-    if (from == to || n == 0)
-        return dest;
-    if (to > from && to - from < n)
-    {
-        for (size_t i = n - 1; i >= 0; i--)
-            to[i] = from[i];
-        return dest;
-    }
-    if (from > to && from - to < n)
-    {
-        for (size_t i = 0; i < n; i++)
-            to[i] = from[i];
-        return dest;
-    }
-    memcpy(dest, src, n);
-    return dest;
-}
+void *memcpy(void *dest, const void *src, size_t num);
+void *memset(void *dstpp, int c, size_t len);
+void *memmove(void *dest, const void *src, size_t n);
 
 // to_string
 const char *to_string(uint64_t val);
