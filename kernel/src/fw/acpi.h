@@ -16,7 +16,7 @@ pstruct
     uint8_t echecksum;
     uint8_t reserved[3];
 }
-acpi_rsdp_t;
+acpi_rsdp_hdr_t;
 
 pstruct
 {
@@ -37,14 +37,14 @@ pstruct
     acpi_sdt_t header;
     uint32_t entries[];
 }
-acpi_rsdt_t;
+acpi_rsdt_hdr_t;
 
 pstruct
 {
     acpi_sdt_t header;
     uint64_t entries[];
 }
-acpi_xsdt_t;
+acpi_xsdt_hdr_t;
 
 pstruct
 {
@@ -54,7 +54,7 @@ pstruct
     uint8_t accessSize;
     uint64_t address;
 }
-acpi_gas_t;
+acpi_gas_hdr_t;
 
 pstruct
 {
@@ -97,21 +97,21 @@ pstruct
     uint16_t bootFlags;
     uint8_t reserved2;
     uint32_t flags;
-    acpi_gas_t reset;
+    acpi_gas_hdr_t reset;
     uint8_t resetValue;
     uint8_t reserved3[3];
     uint64_t FACS64;
     uint64_t DSDT64;
-    acpi_gas_t PM1aEvent64;
-    acpi_gas_t PM1bEvent64;
-    acpi_gas_t PM1aControl64;
-    acpi_gas_t PM1BControl64;
-    acpi_gas_t PM2Control64;
-    acpi_gas_t PMTimer64;
-    acpi_gas_t GPE064;
-    acpi_gas_t GPE164;
+    acpi_gas_hdr_t PM1aEvent64;
+    acpi_gas_hdr_t PM1bEvent64;
+    acpi_gas_hdr_t PM1aControl64;
+    acpi_gas_hdr_t PM1BControl64;
+    acpi_gas_hdr_t PM2Control64;
+    acpi_gas_hdr_t PMTimer64;
+    acpi_gas_hdr_t GPE064;
+    acpi_gas_hdr_t GPE164;
 }
-acpi_fadt_t;
+acpi_fadt_hdr_t;
 
 pstruct
 {
@@ -166,7 +166,7 @@ pstruct
     uint8_t reserved : 1;
     uint8_t replaceLegacy : 1;
     uint16_t pciVendor;
-    acpi_gas_t base;
+    acpi_gas_hdr_t base;
     uint8_t hpetNumber;
     uint16_t minimumTick;
     uint8_t pageProtection;
@@ -176,7 +176,6 @@ acpi_hpet_t;
 acpi_pci_descriptor_t *pciGetFunctions();
 uint64_t pciGetFunctionsNum();
 
-acpi_sdt_t *acpiGet(const char *sig);
-void acpiEnumeratePCI();
+acpi_sdt_t *acpiGet(const char *sig, int index);
 void acpiInit();
 void acpiReboot();

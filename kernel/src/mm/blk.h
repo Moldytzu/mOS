@@ -1,18 +1,17 @@
 #pragma once
 #include <misc/utils.h>
 
-#define BLK_ALIGNMENT 16
+#define BLK_ALIGNMENT 32
 #define BLK_HEADER_SIGNATURE 0xF00F
 
-pstruct
+typedef struct
 {
     uint16_t signature;
     uint16_t size;
     bool free;
     void *prev;
     void *next;
-}
-blk_header_t;
+} blk_header_t;
 
 void blkInit();
 void *blkBlock(size_t size);

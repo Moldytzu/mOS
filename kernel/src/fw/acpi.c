@@ -6,18 +6,22 @@
 #include <cpu/idt.h>
 #include <main/panic.h>
 #include <misc/logger.h>
+#include <lai/core.h>
+#include <lai/host.h>
+#include <lai/helpers/sci.h>
+#include <lai/helpers/pm.h>
 
 uint8_t revision;
-acpi_rsdp_t *rsdp;
+acpi_rsdp_hdr_t *rsdp;
 acpi_sdt_t *sdt;
-acpi_fadt_t *fadt;
+acpi_fadt_hdr_t *fadt;
 acpi_mcfg_t *mcfg;
 
 acpi_pci_descriptor_t *pciFuncs = NULL;
 uint16_t pciIndex = 0;
 
 // get a descriptor table with a signature
-acpi_sdt_t *acpiGet(const char *sig)
+acpi_sdt_t *acpiGet(const char *sig, int index)
 {
     if (!sdt)
         return NULL;
@@ -27,27 +31,27 @@ acpi_sdt_t *acpiGet(const char *sig)
 
     if (xsdt)
     { // xsdt parsing
-        acpi_xsdt_t *root = (acpi_xsdt_t *)sdt;
+        acpi_xsdt_hdr_t *root = (acpi_xsdt_hdr_t *)sdt;
         for (size_t i = 0; i < entries / sizeof(uint64_t); i++)
         {
             acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
             printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
 #endif
-            if (memcmp8((void *)sig, table->signature, 4) == 0) // compare the signatures
+            if (memcmp8((void *)sig, table->signature, 4) == 0 && index-- == 0) // compare the signatures
                 return table;
         }
     }
     else
-    { // rsdp parsing
-        acpi_rsdt_t *root = (acpi_rsdt_t *)sdt;
+    { // rsdt parsing
+        acpi_rsdt_hdr_t *root = (acpi_rsdt_hdr_t *)sdt;
         for (size_t i = 0; i < entries / sizeof(uint32_t); i++)
         {
             acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
 #ifdef K_ACPI_DEBUG
             printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
 #endif
-            if (memcmp8((void *)sig, table->signature, 4) == 0) // compare the signatures
+            if (memcmp8((void *)sig, table->signature, 4) == 0 && index-- == 0) // compare the signatures
                 return table;
         }
     }
@@ -122,43 +126,22 @@ uint64_t pciGetFunctionsNum()
 // reboot using acpi
 void acpiReboot()
 {
-    if (revision == 0 || !fadt) // acpi 1.0 doesn't support reboot, fadt must be present for acpi 2.0+ reboot
-        goto triplefault;
-
-#ifdef K_ACPI_DEBUG
-    printks("acpi: performing acpi reboot...\n\r");
-#endif
-
-    switch (fadt->reset.addressSpace)
-    {
-    case ACPI_GAS_ACCESS_IO: // if the reset register is i/o mapped
-        outb(fadt->reset.address, fadt->resetValue);
-        break;
-    case ACPI_GAS_ACCESS_MEMORY: // if the reset register is in the system memory
-        *(uint8_t *)fadt->reset.address = fadt->resetValue;
-    default:
-        break;
-    }
-
-triplefault:
-#ifdef K_ACPI_DEBUG
-    printks("acpi: reboot unsupported. resetting the cpu using the i8042.\n\r");
-#endif
-
-    outb(0x64, 0xFE); // cpu reset using the keyboard controller
+    lai_acpi_reset();
 }
 
 // init lai
 void laiInit()
 {
-    // todo: implement this
+    lai_set_acpi_revision(revision);
+    lai_create_namespace();
+    lai_enable_acpi(0); // use the legacy pic
 }
 
 // initialize the acpi subsystem
 void acpiInit()
 {
     // get rsdp
-    rsdp = (acpi_rsdp_t *)bootloaderGetRSDP();
+    rsdp = (acpi_rsdp_hdr_t *)bootloaderGetRSDP();
 
     vmmMap(vmmGetBaseTable(), rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), false, true, true); // properly map the rsdp
 
@@ -197,8 +180,8 @@ void acpiInit()
     laiInit();
 
     // get fadt & mcfg
-    fadt = (acpi_fadt_t *)acpiGet("FACP");
-    mcfg = (acpi_mcfg_t *)acpiGet("MCFG");
+    fadt = (acpi_fadt_hdr_t *)acpiGet("FACP", 0);
+    mcfg = (acpi_mcfg_t *)acpiGet("MCFG", 0);
 
     // enable ACPI mode if FADT is present
     if (fadt)

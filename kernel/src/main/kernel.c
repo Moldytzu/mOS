@@ -53,7 +53,7 @@ void kmain()
 
 void panick_impl(const char *file, size_t line, const char *msg)
 {
-    printk("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
+    logError("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
 
 #ifdef K_PANIC_REBOOT
     for (volatile size_t i = 0; i < 0xFFFFFFF; i++)

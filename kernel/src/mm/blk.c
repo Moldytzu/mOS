@@ -3,6 +3,8 @@
 #include <main/panic.h>
 #include <misc/logger.h>
 
+// todo: fix a fatal flaw in one or more of the functions that causes misalignment thus failure to deallocate
+
 #define HEADER_OF(ptr) ((blk_header_t *)(ptr - sizeof(blk_header_t)))
 #define HEADER_AT(ptr) ((blk_header_t *)(ptr))
 #define CONTENT_OF(hdr) ((void *)((uint64_t)hdr + sizeof(blk_header_t)))

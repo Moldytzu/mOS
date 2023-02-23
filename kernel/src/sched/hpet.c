@@ -82,7 +82,7 @@ bool hpetAvailable()
 
 void hpetInit()
 {
-    hpet = (acpi_hpet_t *)acpiGet("HPET");
+    hpet = (acpi_hpet_t *)acpiGet("HPET", 0);
 
     if (!hpet) // didn't find it
         return;
