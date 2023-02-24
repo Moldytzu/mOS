@@ -3,8 +3,6 @@
 #include <main/panic.h>
 #include <misc/logger.h>
 
-// todo: fix a fatal flaw in one or more of the functions that causes misalignment thus failure to deallocate
-
 #define HEADER_OF(ptr) ((blk_header_t *)(ptr - sizeof(blk_header_t)))
 #define HEADER_AT(ptr) ((blk_header_t *)(ptr))
 #define CONTENT_OF(hdr) ((void *)((uint64_t)hdr + sizeof(blk_header_t)))
@@ -29,6 +27,7 @@ void expand(uint16_t pages)
     newBlock->free = true;
     newBlock->size = (4096 * pages) - sizeof(blk_header_t);
     newBlock->prev = last();
+    newBlock->signature = BLK_HEADER_SIGNATURE;
 
     // add it in the chain
     last()->next = newBlock;
@@ -79,6 +78,12 @@ void *blkBlock(size_t size)
         if (current->size == size && current->free)
         {
             current->free = false;
+            if (current->signature != BLK_HEADER_SIGNATURE)
+            {
+                current->signature = BLK_HEADER_SIGNATURE;
+                logWarn("blk: writing signature of buggy block");
+            }
+
             return CONTENT_OF(current);
         }
 
@@ -95,6 +100,12 @@ void *blkBlock(size_t size)
             current->next = newBlock;
             current->free = false;
             current->size = size;
+
+            if (current->signature != BLK_HEADER_SIGNATURE)
+            {
+                current->signature = BLK_HEADER_SIGNATURE;
+                logWarn("blk: writing signature of buggy block");
+            }
 
             return CONTENT_OF(current);
         }
@@ -128,6 +139,7 @@ void blkDeallocate(void *blk)
 
     blk_header_t *header = HEADER_OF(blk);
     header->free = true;
+    header->signature = BLK_HEADER_SIGNATURE;
 
     if (header->next && HEADER_AT(header->next)->free) // we can merge forward
     {
@@ -142,5 +154,6 @@ void blkDeallocate(void *blk)
         prev->size += header->size + sizeof(blk_header_t);
         prev->free = true;
         prev->next = header->next;
+        prev->signature = BLK_HEADER_SIGNATURE;
     }
 }
