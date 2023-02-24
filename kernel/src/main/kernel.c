@@ -21,6 +21,8 @@
 #include <main/panic.h>
 #include <elf/elf.h>
 #include <misc/logger.h>
+#include <lai/helpers/pm.h>
+#include <lai/helpers/sci.h>
 
 // kernel main, called after init
 void kmain()
@@ -46,6 +48,14 @@ void kmain()
 
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
+
+    // todo: handle this in the scheduler
+    while(1)
+    {
+        uint16_t event = lai_get_sci_event();
+        if(event == ACPI_POWER_BUTTON)
+            lai_enter_sleep(5);
+    }
 
     smpJumpUserspace(); // send all cores to userspace
     schedulerEnable();  // enable the schduler and jump in userspace
