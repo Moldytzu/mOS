@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <limits.h>
 #include <config.h>
 #include <cpu/atomic.h>
 #include <misc/data.h>

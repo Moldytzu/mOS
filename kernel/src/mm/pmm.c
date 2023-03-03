@@ -20,14 +20,14 @@ void pmmDisableDBG()
     debug = false;
 }
 
-ifunc bool get(pmm_pool_t *pool, size_t idx)
+bool get(pmm_pool_t *pool, size_t idx)
 {
-    return pool->bitmap[idx].val;
+    return (bool)bmpGet(pool->base, idx);
 }
 
-ifunc void set(pmm_pool_t *pool, size_t idx, bool value)
+void set(pmm_pool_t *pool, size_t idx, bool value)
 {
-    pool->bitmap[idx].val = value;
+    bmpSet(pool->base, idx, value);
 }
 
 void pmmDbgDump()
@@ -184,9 +184,9 @@ void pmmInit()
         zero(pool, sizeof(pmm_pool_t));
 
         pool->bitmapBytes = entry->length / 4096 / 8; // we divide the memory regions in pages (4 KiB chunks) then we will store the availability in a bit in the bitmap
-        pool->alloc = (void *)align((void *)entry->base + pool->bitmapBytes, 4096);
-        pool->base = pool->bitmap = (void *)entry->base;
-        pool->available = entry->length - pool->bitmapBytes;
+        pool->alloc = (void *)align((void *)entry->base + pool->bitmapBytes, 4096) + PMM_ALLOC_PADDING;
+        pool->base = (void *)entry->base;
+        pool->available = entry->length - pool->bitmapBytes - PMM_ALLOC_PADDING;
 
         // clear the bitmap
         zero(pool->base, pool->bitmapBytes);

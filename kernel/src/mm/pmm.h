@@ -2,10 +2,12 @@
 #include <misc/utils.h>
 #include <fw/bootloader.h>
 
+#define PMM_PAGE 4096
+#define PMM_ALLOC_PADDING (2 * PMM_PAGE)
+
 pstruct
 {
     void *base;           // base address of the pool
-    bit_t *bitmap;        // bitmap address
     void *alloc;          // base address of the allocable memory
     uint64_t available;   // available bytes
     uint64_t used;        // used bytes
