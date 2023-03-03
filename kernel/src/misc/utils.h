@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <config.h>
 #include <cpu/atomic.h>
+#include <misc/data.h>
 
 // useful macros
 #define pack __attribute__((__packed__))

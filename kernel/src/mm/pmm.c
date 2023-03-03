@@ -5,12 +5,6 @@
 #include <cpu/atomic.h>
 #include <misc/logger.h>
 
-pstruct
-{
-    unsigned val : 1;
-}
-bit_t;
-
 uint8_t poolCount = 0;
 pmm_pool_t pools[256]; // 256 pools should be enough
 bool debug = false;
@@ -28,12 +22,12 @@ void pmmDisableDBG()
 
 ifunc bool get(pmm_pool_t *pool, size_t idx)
 {
-    return ((bit_t *)pool->base)[idx].val;
+    return pool->bitmap[idx].val;
 }
 
 ifunc void set(pmm_pool_t *pool, size_t idx, bool value)
 {
-    ((bit_t *)pool->base)[idx].val = value;
+    pool->bitmap[idx].val = value;
 }
 
 void pmmDbgDump()
@@ -191,7 +185,7 @@ void pmmInit()
 
         pool->bitmapBytes = entry->length / 4096 / 8; // we divide the memory regions in pages (4 KiB chunks) then we will store the availability in a bit in the bitmap
         pool->alloc = (void *)align((void *)entry->base + pool->bitmapBytes, 4096);
-        pool->base = (void *)entry->base;
+        pool->base = pool->bitmap = (void *)entry->base;
         pool->available = entry->length - pool->bitmapBytes;
 
         // clear the bitmap
@@ -202,7 +196,7 @@ void pmmInit()
     for (int i = 0; i < poolCount; i++)
         logInfo("pmm: [pool %d] {%x -> %x} (%d kb)", i, pools[i].alloc, pools[i].alloc + pools[i].available, pools[i].available / 1024);
 
-    logInfo("pmm: %d MB available",toMB(pmmTotal().available));
+    logInfo("pmm: %d MB available", toMB(pmmTotal().available));
 }
 
 // todo: make this function return a dedicated structure and not reuse the internal one

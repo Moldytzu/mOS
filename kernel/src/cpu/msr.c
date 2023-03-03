@@ -6,7 +6,7 @@ uint64_t rdmsr(uint32_t ecx)
     iasm("rdmsr"
          : "=a"(low), "=d"(high)
          : "c"(ecx));
-         
+
     return ((uint64_t)high << 32) | low;
 }
 
