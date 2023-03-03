@@ -1,10 +1,7 @@
-cpu: model=p4_prescott_celeron_336, ips=10000000, count=4, reset_on_triple_fault=false
+cpu: model=p4_prescott_celeron_336, count=4
 megs: 512
-vga: extension=vbe
 keyboard: type=mf
 pci: enabled=1, chipset=i440fx
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
 ata0-master: type=cdrom, status=inserted, path=out/dvd.iso
 boot: cdrom
-port_e9_hack: enabled=1
-magic_break: enabled=1
