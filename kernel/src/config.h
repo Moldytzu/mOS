@@ -36,5 +36,8 @@
 // PIT
 #define K_PIT_FREQ 200 // frequency in hz of the pit
 
+// ACPI
+#define K_ACPI_LAI // enables lai support
+
 // Panic
 // #define K_PANIC_REBOOT // reboot on kernel panic

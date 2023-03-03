@@ -132,9 +132,11 @@ void acpiReboot()
 // init lai
 void laiInit()
 {
+#ifdef K_ACPI_LAI
     lai_set_acpi_revision(revision);
     lai_create_namespace();
     lai_enable_acpi(0); // use the legacy pic
+#endif
 }
 
 // initialize the acpi subsystem
