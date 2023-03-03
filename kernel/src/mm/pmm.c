@@ -176,9 +176,6 @@ void pmmInit()
         if (entry->type != LIMINE_MEMMAP_USABLE)
             continue;
 
-        if (entry->length < 1 * 1024 * 1024) // ignore entries lower than 1 mb (don't mess with legacy real mode ram)
-            continue;
-
         // populate the pool metadata
         pmm_pool_t *pool = &pools[poolCount++];
         zero(pool, sizeof(pmm_pool_t));
