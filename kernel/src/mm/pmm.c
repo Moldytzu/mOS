@@ -15,7 +15,6 @@ locker_t pmmLock; // todo: replace this with a per-pool loc
 
 void pmmBenchmark()
 {
-
     pmmDbgDump();
 
     // test performance of the allocator
@@ -179,6 +178,8 @@ void pmmDeallocate(void *page)
 
                 break;
             }
+
+            break;
         }
     });
 }
