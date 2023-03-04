@@ -15,6 +15,9 @@ locker_t pmmLock; // todo: replace this with a per-pool loc
 
 void pmmBenchmark()
 {
+
+    pmmDbgDump();
+
     // test performance of the allocator
     logInfo("pmm: benchmarking allocation");
 
@@ -39,6 +42,8 @@ void pmmBenchmark()
     end = hpetMillis();
 
     logInfo("pmm: %d KB/ms", (PMM_BENCHMARK_SIZE * 1024) / (end - start));
+
+    pmmDbgDump();
 
     hang();
 }
@@ -150,9 +155,14 @@ void pmmDeallocate(void *page)
         {
             pmm_pool_t *pool = &pools[i];
 
-            for (int j = 0; j < pool->bitmapBytes * 8; j++)
+            if ((uint64_t)page < (uint64_t)pool->alloc) // we're under the pool
+                continue;
+
+            uint64_t offset = (uint64_t)(page - pool->alloc) / 4096; // calculate the offset index
+
+            for (int j = offset; j < pool->bitmapBytes * 8; j++) // for some reason this loop is required
             {
-                if (page != (void *)((uint64_t)pool->alloc + j * 4096))
+                if (offset != j)
                     continue;
 
                 if (get(pool, j) == 0) // don't deallocate second time
@@ -166,6 +176,8 @@ void pmmDeallocate(void *page)
                 pool->used -= 4096;
 
                 set(pool, j, false); // unset bit
+
+                break;
             }
         }
     });
