@@ -15,6 +15,7 @@ pstruct
 }
 pmm_pool_t;
 
+void pmmBenchmark();
 void pmmEnableDBG();
 void pmmDisableDBG();
 void pmmDbgDump();

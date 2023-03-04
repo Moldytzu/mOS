@@ -4,11 +4,31 @@
 #include <main/panic.h>
 #include <cpu/atomic.h>
 #include <misc/logger.h>
+#include <sched/hpet.h>
 
 uint8_t poolCount = 0;
 pmm_pool_t pools[256]; // 256 pools should be enough
 bool debug = false;
 locker_t pmmLock; // todo: replace this with a per-pool loc
+
+#define PMM_BENCHMARK_SIZE 256
+
+void pmmBenchmark()
+{
+    // test performance of the allocator
+    logInfo("pmm: benchmarking allocation");
+
+    uint64_t start = hpetMillis();
+
+    for (int i = 0; i < 256 * PMM_BENCHMARK_SIZE; i++) // allocate
+        pmmPage();
+
+    uint64_t end = hpetMillis();
+
+    logInfo("pmm: %d KB/ms", (PMM_BENCHMARK_SIZE * 1024) / (end - start));
+
+    hang();
+}
 
 void pmmEnableDBG()
 {
@@ -62,6 +82,12 @@ void *pmmPages(uint64_t pages)
 
             for (size_t i = 0; i < pool->bitmapBytes * 8; i++)
             {
+                if (BMP_WORD_ALIGNED(i) && ((BMP_ACCESS_SIZE *)pool->base)[i / BMP_ACCESS_BITS] == UINT32_MAX) // if index is aligned to 1 bitmap word and the word is all set then skip it
+                {
+                    i += BMP_ACCESS_BITS - 1;
+                    continue;
+                }
+
                 if (get(pool, i)) // find first available index
                     continue;
 
