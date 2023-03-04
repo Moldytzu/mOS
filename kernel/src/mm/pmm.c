@@ -20,10 +20,23 @@ void pmmBenchmark()
 
     uint64_t start = hpetMillis();
 
-    for (int i = 0; i < 256 * PMM_BENCHMARK_SIZE; i++) // allocate
-        pmmPage();
+    void *addr[256 * PMM_BENCHMARK_SIZE];
+
+    for (int i = 1; i < 256 * PMM_BENCHMARK_SIZE; i++) // allocate
+        addr[i] = pmmPage();
 
     uint64_t end = hpetMillis();
+
+    logInfo("pmm: %d KB/ms", (PMM_BENCHMARK_SIZE * 1024) / (end - start));
+
+    logInfo("pmm: benchmarking deallocation");
+
+    start = hpetMillis();
+
+    for (int i = 0; i < 256 * PMM_BENCHMARK_SIZE; i++)
+        pmmDeallocate(addr[i]);
+
+    end = hpetMillis();
 
     logInfo("pmm: %d KB/ms", (PMM_BENCHMARK_SIZE * 1024) / (end - start));
 
@@ -42,7 +55,7 @@ void pmmDisableDBG()
 
 bool get(pmm_pool_t *pool, size_t idx)
 {
-    return (bool)bmpGet(pool->base, idx);
+    return bmpGet(pool->base, idx) > 0;
 }
 
 void set(pmm_pool_t *pool, size_t idx, bool value)
@@ -137,23 +150,23 @@ void pmmDeallocate(void *page)
         {
             pmm_pool_t *pool = &pools[i];
 
-            // find the parent pool of the page
-            if ((uint64_t)page < (uint64_t)pool->alloc)
-                continue;
-
-            uint64_t addressOffset = (uint64_t)page - (uint64_t)pool->alloc; // offset from the base allocation address
-            uint64_t index = addressOffset / 4096;                           // calculate the bitmap offset
-
-            if (get(pool, index) == 0) // don't deallocate second time
+            for (int j = 0; j < pool->bitmapBytes * 8; j++)
             {
-                printks("pmm: deallocating second time %x\n", page);
-                return;
+                if (page != (void *)((uint64_t)pool->alloc + j * 4096))
+                    continue;
+
+                if (get(pool, j) == 0) // don't deallocate second time
+                {
+                    logWarn("pmm: deallocating second time %x", page);
+                    release(pmmLock);
+                    return;
+                }
+
+                pool->available += 4096;
+                pool->used -= 4096;
+
+                set(pool, j, false); // unset bit
             }
-
-            pool->available += 4096;
-            pool->used -= 4096;
-
-            set(pool, index, false); // unset bit
         }
     });
 }
