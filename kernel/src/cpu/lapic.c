@@ -2,8 +2,16 @@
 #include <cpu/msr.h>
 #include <cpu/pic.h>
 #include <cpu/io.h>
+#include <sched/hpet.h>
 #include <misc/logger.h>
 #include <mm/vmm.h>
+
+void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
+{
+    logInfo("lapic tick!");
+
+    lapicEOI();
+}
 
 void lapicWrite(uint64_t offset, uint32_t value)
 {
@@ -36,11 +44,35 @@ void lapicInit()
 
     // enable the lapic
     uint32_t low = (uint64_t)lapicBase() >> 32;
-    uint32_t high = (uint64_t)lapicBase() | 0b100100000000; // set global enable flag and processor is bsp flag
+    uint32_t high = (uint64_t)lapicBase() | 0b100000000000; // set global enable flag
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
 
-    lapicWrite(APIC_REG_SPURIOUS_INT_VECTOR, lapicRead(APIC_REG_SPURIOUS_INT_VECTOR) | 0b10000000); // set apic software enable/disable
+    lapicWrite(APIC_REG_SIV, lapicRead(APIC_REG_SIV) | 0b10000000); // set apic software enable/disable
+
+    lapicWrite(APIC_REG_TPR, 0); // don't block any interrupt
+
+    // set up timer
+    lapicWrite(APIC_REG_TIMER_DIV, 0x4);            // 16 divider
+    lapicWrite(APIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // enable timer
+    hpetSleepMillis(1);                             // the longer this is, the slower the timer will be
+
+    uint32_t tickRate = 0xFFFFFFFF - lapicRead(APIC_REG_TIMER_CURRENTCNT);
+
+    lapicWrite(APIC_REG_LVT_TIMER, 32 | 0b100000000000000000); // periodic mode
+    lapicWrite(APIC_REG_TIMER_DIV, 0x4);                       // set the initial divider
+    lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);              // go!
+
+    // enable interrupts
+    lapicWrite(APIC_REG_DFR, 0xFFFFFFFF);
+    lapicWrite(APIC_REG_LDR, 0x01000000);
+
+    lapicWrite(APIC_REG_SVR, 0x1FF);
 
     logInfo("lapic: present at %x", lapicBase());
+
+    sti(); // temporary...
+
+    while (1)
+        ;
 }

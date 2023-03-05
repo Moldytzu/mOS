@@ -1,13 +1,14 @@
 #include <cpu/idt.h>
 #include <cpu/gdt.h>
+#include <cpu/pic.h>
+#include <cpu/smp.h>
+#include <cpu/lapic.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <drv/serial.h>
 #include <sched/scheduler.h>
 #include <subsys/socket.h>
 #include <main/panic.h>
-#include <cpu/pic.h>
-#include <cpu/smp.h>
 #include <misc/logger.h>
 
 idt_descriptor_t idtr;
@@ -119,9 +120,9 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
     }
 
 cnt:
-    if (int_num >= 0x20 && int_num <= 0x2D) // pic intrerrupt
+    if (int_num == 0x20) // lapic timer int
     {
-        picEOI();
+        lapicHandleTimer(stack);
         return;
     }
 
