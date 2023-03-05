@@ -5,6 +5,7 @@
 #include <cpu/pic.h>
 #include <cpu/smp.h>
 #include <cpu/control.h>
+#include <cpu/lapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
@@ -50,6 +51,8 @@ void _start()
     timeSource(); // switch to best time source
 
     picInit(); // initialize the pic chips
+
+    lapicInit(); // initalize the advanced intrerupt controller
 
     pitInit(); // initialize the timer
 
