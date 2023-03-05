@@ -20,3 +20,4 @@ void *lapicBase();
 void lapicWrite(uint64_t offset, uint32_t value);
 void lapicEOI();
 void lapicHandleTimer(idt_intrerrupt_stack_t *stack);
+void lapicEnableTimer();

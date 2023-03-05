@@ -14,7 +14,6 @@
 #include <mm/blk.h>
 #include <drv/drv.h>
 #include <mm/vmm.h>
-#include <sched/pit.h>
 #include <sched/scheduler.h>
 #include <sched/hpet.h>
 #include <sched/time.h>
@@ -53,8 +52,6 @@ void _start()
     picInit(); // initialize the pic chips
 
     lapicInit(); // initalize the advanced intrerupt controller
-
-    pitInit(); // initialize the timer
 
     vfsInit(); // initialize the virtual filesystem
 

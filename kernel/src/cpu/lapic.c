@@ -68,11 +68,4 @@ void lapicInit()
     lapicWrite(APIC_REG_LDR, 0x01000000);
 
     lapicWrite(APIC_REG_SVR, 0x1FF);
-
-    logInfo("lapic: present at %x", lapicBase());
-
-    sti(); // temporary...
-
-    while (1)
-        ;
 }

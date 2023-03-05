@@ -62,15 +62,6 @@ GEN_HANDLER i
 %assign i i+1
 %endrep
 
-PITHandlerEntry:
-    push rax ; simulate error push
-    PUSH_REG
-    mov rdi, rsp ; give the handler the stack frame
-    call PITHandler
-    POP_REG
-    add rsp, 8 ; hide that push
-    iretq
-
 SyscallHandlerEntry:
     push rax ; simulate error push
     PUSH_REG

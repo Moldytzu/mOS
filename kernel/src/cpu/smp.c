@@ -2,6 +2,7 @@
 #include <cpu/atomic.h>
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
+#include <cpu/lapic.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
 #include <mm/vmm.h>
@@ -37,6 +38,13 @@ void cpuStart(struct limine_smp_info *cpu)
     // spinlock until we're ready to jump in userspace
     while (!smpJump)
         pause();
+
+    lapicInit();
+
+    sti();
+
+    while (1)
+        ;
 
     syscallInit();        // enable system calls
     schedulerUserspace(); // jump in userspace

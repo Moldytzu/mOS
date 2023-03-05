@@ -1,5 +1,4 @@
 #include <sched/scheduler.h>
-#include <sched/pit.h>
 #include <mm/pmm.h>
 #include <mm/blk.h>
 #include <cpu/gdt.h>
