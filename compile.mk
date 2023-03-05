@@ -22,7 +22,7 @@ CFLAGS :=   		         \
 	-mno-red-zone        	 \
 	-Werror 			     \
 	-mcmodel=large           \
-	-O2                      \
+	-Og                      \
 	-march=nocona            \
 	-MMD                     \
 	-g

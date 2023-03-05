@@ -9,6 +9,7 @@ pstruct
 {
     void *base;           // base address of the pool
     void *alloc;          // base address of the allocable memory
+    uint64_t size;        // maximum allocable bytes
     uint64_t available;   // available bytes
     uint64_t used;        // used bytes
     uint64_t bitmapBytes; // bytes used by the bitmap
