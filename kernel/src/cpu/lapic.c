@@ -53,14 +53,14 @@ void lapicInit()
     lapicWrite(APIC_REG_TPR, 0); // don't block any interrupt
 
     // set up timer
-    lapicWrite(APIC_REG_TIMER_DIV, 0x4);            // 16 divider
+    lapicWrite(APIC_REG_TIMER_DIV, 0b1011);         // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // enable timer
     hpetSleepMillis(1);                             // the longer this is, the slower the timer will be
 
     uint32_t tickRate = 0xFFFFFFFF - lapicRead(APIC_REG_TIMER_CURRENTCNT);
 
     lapicWrite(APIC_REG_LVT_TIMER, 32 | 0b100000000000000000); // periodic mode
-    lapicWrite(APIC_REG_TIMER_DIV, 0x4);                       // set the initial divider
+    lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                    // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);              // go!
 
     // enable interrupts
