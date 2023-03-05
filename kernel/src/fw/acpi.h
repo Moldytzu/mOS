@@ -179,3 +179,4 @@ uint64_t pciGetFunctionsNum();
 acpi_sdt_t *acpiGet(const char *sig, int index);
 void acpiInit();
 void acpiReboot();
+void acpiShutdown();

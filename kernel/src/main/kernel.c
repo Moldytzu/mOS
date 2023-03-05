@@ -50,11 +50,11 @@ void kmain()
         panick("Failed to load \"init.mx\" from the initrd.");
 
     // todo: handle this in the scheduler
-    while(1)
+    while (1)
     {
         uint16_t event = lai_get_sci_event();
-        if(event == ACPI_POWER_BUTTON)
-            lai_enter_sleep(5);
+        if (event == ACPI_POWER_BUTTON)
+            acpiShutdown();
     }
 
     smpJumpUserspace(); // send all cores to userspace

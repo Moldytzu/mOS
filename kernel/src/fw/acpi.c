@@ -126,7 +126,22 @@ uint64_t pciGetFunctionsNum()
 // reboot using acpi
 void acpiReboot()
 {
+#ifdef K_ACPI_LAI
     lai_acpi_reset();
+#else
+    logError("Reboot unsupported. LAI support is disabled.");
+    hang();
+#endif
+}
+
+void acpiShutdown()
+{
+#ifdef K_ACPI_LAI
+    lai_enter_sleep(5);
+#else
+    logError("Shutdown unsupported. LAI support is disabled.");
+    hang();
+#endif
 }
 
 // init lai
