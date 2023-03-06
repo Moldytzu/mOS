@@ -55,9 +55,13 @@ void kmain()
     // todo: handle this in the scheduler
     while (1)
     {
+#ifdef K_ACPI_LAI
         uint16_t event = lai_get_sci_event();
         if (event == ACPI_POWER_BUTTON)
             acpiShutdown();
+#endif
+
+        pause();
     }
 
     schedulerEnable(); // enable the schduler and jump in userspace
