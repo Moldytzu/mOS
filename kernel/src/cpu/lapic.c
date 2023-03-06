@@ -5,10 +5,25 @@
 #include <sched/hpet.h>
 #include <misc/logger.h>
 #include <mm/vmm.h>
+#include <mm/pmm.h>
+
+uint64_t lapicTPS = 0; // will need this to increase / decrease quantum of each task (we want the same cpu time even if the timer is faster or slower)
+uint64_t __tps = 0;
+uint64_t lastSeconds = 0;
 
 void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
-    logInfo("lapic tick!");
+    if (hpetMillis() / 1000 != lastSeconds)
+    {
+        logInfo("lapic tick! %d hz", lapicTPS);
+
+        lapicTPS = __tps;
+
+        __tps = 0;
+    }
+
+    __tps++;
+    lastSeconds = hpetMillis() / 1000;
 
     lapicEOI();
 }
@@ -58,13 +73,13 @@ void lapicInit(bool bsp)
     // set up timer
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);         // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // enable timer
-    hpetSleepMillis(1);                             // the longer this is, the slower the timer will be
+    hpetSleepMillis(1);
 
     uint32_t tickRate = 0xFFFFFFFF - lapicRead(APIC_REG_TIMER_CURRENTCNT);
 
-    lapicWrite(APIC_REG_LVT_TIMER, 32 | 0b100000000000000000); // periodic mode
-    lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                    // divide by 1
-    lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);              // go!
+    lapicWrite(APIC_REG_LVT_TIMER, 0b100000000000000000 | APIC_TIMER_VECTOR); // periodic mode
+    lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
+    lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);                             // go!
 
     // enable interrupts
     lapicWrite(APIC_REG_DFR, 0xFFFFFFFF);
