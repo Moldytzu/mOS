@@ -33,7 +33,7 @@ void lapicEOI()
     lapicWrite(APIC_REG_EOI, 0);
 }
 
-void lapicInit()
+void lapicInit(bool bsp)
 {
     // disable pic by masking all interrupts
     outb(PIC_MASTER_DAT, 0b11111111);
@@ -42,9 +42,12 @@ void lapicInit()
     // map the base
     vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, true);
 
-    // enable the lapic
-    uint32_t low = (uint64_t)lapicBase() >> 32;
-    uint32_t high = (uint64_t)lapicBase() | 0b100000000000; // set global enable flag
+    // enable the lapic (don't use lapicBase since we need to preserve the reserved bits)
+    uint32_t low = (uint64_t)rdmsr(MSR_APIC_BASE) >> 32;
+    uint32_t high = (uint64_t)rdmsr(MSR_APIC_BASE) | 0b100000000000; // set global enable flag
+
+    if (bsp) // set the bsp flag
+        high |= (uint32_t)0b100000000;
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
 

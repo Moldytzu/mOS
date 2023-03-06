@@ -15,7 +15,7 @@
 #define APIC_REG_TIMER_CURRENTCNT 0x390
 #define APIC_REG_LVT_TIMER 0x320
 
-void lapicInit();
+void lapicInit(bool bsp);
 void *lapicBase();
 void lapicWrite(uint64_t offset, uint32_t value);
 void lapicEOI();

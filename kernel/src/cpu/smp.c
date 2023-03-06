@@ -39,7 +39,7 @@ void cpuStart(struct limine_smp_info *cpu)
     while (!smpJump)
         pause();
 
-    lapicInit();
+    lapicInit(false);
 
     sti();
 

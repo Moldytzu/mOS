@@ -51,7 +51,7 @@ void _start()
 
     picInit(); // initialize the pic chips
 
-    lapicInit(); // initalize the advanced intrerupt controller
+    lapicInit(true); // initalize the advanced intrerupt controller
 
     vfsInit(); // initialize the virtual filesystem
 
