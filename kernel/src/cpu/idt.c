@@ -120,11 +120,8 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
     }
 
 cnt:
-    if (int_num == 0x20) // lapic timer int
-    {
-        lapicHandleTimer(stack);
-        return;
-    }
+    if (int_num == APIC_TIMER_VECTOR)
+        return lapicHandleTimer(stack);
 
     if (stack->cs == 0x23) // userspace
     {
