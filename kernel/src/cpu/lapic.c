@@ -2,28 +2,29 @@
 #include <cpu/msr.h>
 #include <cpu/pic.h>
 #include <cpu/io.h>
+#include <cpu/smp.h>
 #include <sched/hpet.h>
 #include <misc/logger.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
 
-uint64_t lapicTPS = 0; // will need this to increase / decrease quantum of each task (we want the same cpu time even if the timer is faster or slower)
-uint64_t __tps = 0;
-uint64_t lastSeconds = 0;
+uint64_t lapicTPS[K_MAX_CORES]; // will need this to increase / decrease quantum of each task (we want the same cpu time even if the timer is faster or slower)
+uint64_t __tps[K_MAX_CORES];
+uint64_t lastSeconds[K_MAX_CORES];
 
 void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
-    if (hpetMillis() / 1000 != lastSeconds)
+    if (hpetMillis() / 1000 != lastSeconds[smpID()])
     {
-        logInfo("lapic tick! %d hz", lapicTPS);
+        logInfo("lapic tick! %d hz", lapicTPS[smpID()]);
 
-        lapicTPS = __tps;
+        lapicTPS[smpID()] = __tps[smpID()];
 
-        __tps = 0;
+        __tps[smpID()] = 0;
     }
 
-    __tps++;
-    lastSeconds = hpetMillis() / 1000;
+    __tps[smpID()]++;
+    lastSeconds[smpID()] = hpetMillis() / 1000;
 
     lapicEOI();
 }
