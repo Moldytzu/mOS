@@ -12,6 +12,12 @@ uint32_t queueMax = 0;
 
 bool _enabled = false;
 
+void taskCommon()
+{
+    while (1)
+        ;
+}
+
 void taskA()
 {
     while (1)
@@ -34,7 +40,8 @@ void schedEnable()
 {
     _enabled = true;
     sti();
-    taskA();
+    while (1)
+        ;
 }
 
 void schedSchedule(idt_intrerrupt_stack_t *stack)
@@ -54,37 +61,50 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
         queueIdx[id] = 0;
 
     // copy new state
-    memcpy(stack, &queue[0][queueIdx[id]].registers, sizeof(idt_intrerrupt_stack_t));
+    memcpy(stack, &queue[id][queueIdx[id]].registers, sizeof(idt_intrerrupt_stack_t));
 }
 
 void schedInit()
 {
     zero(queueIdx, sizeof(queueIdx));
 
-    queueMax = 3;
+    queueMax = 2;
 
-    for (int i = 0; i < 1; i++) // single core for the moment
+    int q = 0;
+
+    for (int i = 0; i < smpCores(); i++) // single core for the moment
     {
         sched_task_t *t = queue[i];
         t[0].registers.rflags = 0b1000000010; // interrupts
         t[0].registers.cs = 8;
         t[0].registers.ss = 16;
         t[0].registers.rsp = t[0].registers.rbp = (uint64_t)pmmPage() + PMM_PAGE;
-        t[0].registers.rip = (uint64_t)taskA;
+        t[0].registers.rip = (uint64_t)taskCommon;
         t[0].registers.cr3 = (uint64_t)vmmGetBaseTable();
 
         t[1].registers.rflags = 0b1000000010; // interrupts
         t[1].registers.cs = 8;
         t[1].registers.ss = 16;
         t[1].registers.rsp = t[1].registers.rbp = (uint64_t)pmmPage() + PMM_PAGE;
-        t[1].registers.rip = (uint64_t)taskB;
+
         t[1].registers.cr3 = (uint64_t)vmmGetBaseTable();
 
-        t[2].registers.rflags = 0b1000000010; // interrupts
-        t[2].registers.cs = 8;
-        t[2].registers.ss = 16;
-        t[2].registers.rsp = t[2].registers.rbp = (uint64_t)pmmPage() + PMM_PAGE;
-        t[2].registers.rip = (uint64_t)taskC;
-        t[2].registers.cr3 = (uint64_t)vmmGetBaseTable();
+        switch (q++)
+        {
+        case 0:
+            t[1].registers.rip = (uint64_t)taskA;
+            break;
+        case 1:
+            t[1].registers.rip = (uint64_t)taskB;
+            break;
+        case 2:
+            t[1].registers.rip = (uint64_t)taskC;
+            break;
+
+        default:
+            t[1].registers.rip = (uint64_t)taskA;
+            q = 0;
+            break;
+        }
     }
 }
