@@ -58,15 +58,15 @@ void lapicInit(bool bsp)
     // map the base
     vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, false);
 
-    // reset important registers to a known state before enabling the apic
+    // reset important registers to a known state before enabling the apic (not required by any spec)
     lapicWrite(APIC_REG_DFR, 0xFFFFFFFF);
     lapicWrite(APIC_REG_LDR, 0x01000000);
     lapicWrite(APIC_REG_SVR, 0x1FF); // enable interrupts
     lapicWrite(APIC_REG_TPR, 0);
 
-    // enable the lapic (don't use lapicBase since we need to preserve the reserved bits)
-    uint32_t low = (uint64_t)rdmsr(MSR_APIC_BASE) >> 32;
-    uint32_t high = (uint64_t)rdmsr(MSR_APIC_BASE) | 0b100000000000; // set global enable flag
+    // enable the lapic
+    uint32_t low = (uint64_t)lapicBase() >> 32;
+    uint32_t high = (uint64_t)lapicBase() | 0b100000000000; // set global enable flag
 
     if (bsp) // set the bsp flag
         high |= (uint32_t)0b100000000;
