@@ -4,9 +4,12 @@
 #include <cpu/io.h>
 #include <cpu/smp.h>
 #include <sched/hpet.h>
+#include <sched/smpsched.h>
 #include <misc/logger.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
+
+extern void lapicEntry();
 
 uint64_t lapicTPS[K_MAX_CORES]; // will need this to increase / decrease quantum of each task (we want the same cpu time even if the timer is faster or slower)
 uint64_t __tps[K_MAX_CORES];
@@ -16,7 +19,7 @@ void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
     if (hpetMillis() / 1000 != lastSeconds[smpID()])
     {
-        logInfo("lapic tick! %d hz", lapicTPS[smpID()]);
+        //logInfo("lapic tick! %d hz", lapicTPS[smpID()]);
 
         lapicTPS[smpID()] = __tps[smpID()];
 
@@ -25,6 +28,8 @@ void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 
     __tps[smpID()]++;
     lastSeconds[smpID()] = hpetMillis() / 1000;
+
+    schedSchedule(stack);
 
     lapicEOI();
 }
@@ -85,6 +90,9 @@ void lapicInit(bool bsp)
     lapicWrite(APIC_REG_LVT_TIMER, 0b100000000000000000 | APIC_TIMER_VECTOR); // periodic mode
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);                             // go!
+
+    // setup idt entry
+    idtSetGate(lapicEntry, 0x20, IDT_InterruptGateU, true);
 
     logInfo("lapic: initialised ID: %x", lapicRead(APIC_REG_ID));
 }

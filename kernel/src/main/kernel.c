@@ -12,6 +12,7 @@
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
+#include <sched/smpsched.h>
 #include <sys/syscall.h>
 #include <fw/bootloader.h>
 #include <fw/acpi.h>
@@ -48,9 +49,10 @@ void kmain()
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
 
-    smpJumpUserspace(); // send all cores to userspace (and enables the lapic)
+    schedInit();
 
-    sti();
+    smpJumpUserspace(); // send all cores to userspace
+    schedEnable();
 
     // todo: handle this in the scheduler
     while (1)

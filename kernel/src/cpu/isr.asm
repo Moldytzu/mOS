@@ -53,7 +53,7 @@ BaseHandlerEntry%1:
     iretq
 %endmacro
 
-global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, PS2Port1HandlerEntry, PS2Port2HandlerEntry
+global lapicEntry, SyscallHandlerEntry
 extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler, exceptionHandler
 
 %assign i 0
@@ -70,6 +70,17 @@ SyscallHandlerEntry:
     POP_REG
     add rsp, 8 ; hide that push
     o64 sysret ; return to userspace
+
+lapicEntry:
+    cli ; disable intrerrupts
+    push rax ; simulate error push
+    PUSH_REG
+    mov rdi, rsp ; give the handler the stack frame
+    mov rsi, 0x20 ; give the intrerrupt number
+    call exceptionHandler
+    POP_REG
+    add rsp, 8 ; hide push
+    iretq
 
 section .data
 int_table:

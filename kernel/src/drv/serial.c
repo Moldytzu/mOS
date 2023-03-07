@@ -2,8 +2,6 @@
 #include <cpu/atomic.h>
 #include <misc/logger.h>
 
-locker_t serialLock;
-
 // initialize serial controller
 void serialInit()
 {
@@ -26,16 +24,14 @@ void serialInit()
 void serialWrite(const char *str)
 {
 #ifdef K_COM_ENABLE
-    lock(serialLock, {
-        if (!str)
-            return;
+    if (!str)
+        return;
 
-        while (*str) // loop thru every character
-        {
-            if (*str == '\n')
-                serialWritec('\r'); // the serial console uses the CRLF end line method and we don't
-            serialWritec(*str++);
-        }
-    });
+    while (*str) // loop thru every character
+    {
+        if (*str == '\n')
+            serialWritec('\r'); // the serial console uses the CRLF end line method and we don't
+        serialWritec(*str++);
+    }
 #endif
 }
