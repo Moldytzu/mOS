@@ -150,7 +150,7 @@ void laiInit()
 #ifdef K_ACPI_LAI
     lai_set_acpi_revision(revision);
     lai_create_namespace();
-    lai_enable_acpi(0); // use the legacy pic
+    lai_enable_acpi(1); // use the lapic
 #endif
 }
 

@@ -56,7 +56,13 @@ void lapicInit(bool bsp)
     outb(PIC_SLAVE_DAT, 0b11111111);
 
     // map the base
-    vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, true);
+    vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, false);
+
+    // reset important registers to a known state before enabling the apic
+    lapicWrite(APIC_REG_DFR, 0xFFFFFFFF);
+    lapicWrite(APIC_REG_LDR, 0x01000000);
+    lapicWrite(APIC_REG_SVR, 0x1FF); // enable interrupts
+    lapicWrite(APIC_REG_TPR, 0);
 
     // enable the lapic (don't use lapicBase since we need to preserve the reserved bits)
     uint32_t low = (uint64_t)rdmsr(MSR_APIC_BASE) >> 32;
@@ -69,8 +75,6 @@ void lapicInit(bool bsp)
 
     lapicWrite(APIC_REG_SIV, lapicRead(APIC_REG_SIV) | 0b10000000); // set apic software enable/disable
 
-    lapicWrite(APIC_REG_TPR, 0); // don't block any interrupt
-
     // set up timer
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);         // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // enable timer
@@ -82,9 +86,5 @@ void lapicInit(bool bsp)
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);                             // go!
 
-    // enable interrupts
-    lapicWrite(APIC_REG_DFR, 0xFFFFFFFF);
-    lapicWrite(APIC_REG_LDR, 0x01000000);
-
-    lapicWrite(APIC_REG_SVR, 0x1FF);
+    logInfo("lapic: initialised ID: %x", lapicRead(APIC_REG_ID));
 }
