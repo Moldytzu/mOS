@@ -6,6 +6,9 @@ pstruct
 {
     uint32_t id;
     idt_intrerrupt_stack_t registers;
+
+    void *next;
+    void *prev;
 }
 sched_task_t;
 
