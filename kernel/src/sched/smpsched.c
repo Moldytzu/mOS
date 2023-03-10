@@ -84,7 +84,7 @@ void schedAdd(void *entry, bool kernel)
     lock(schedLock, { t->id = lastTaskID++; }); // set ID
 
     // essential registers
-    t->registers.rflags = 0b1000000010;                                                           // enable interrupts
+    t->registers.rflags = 0b11001000000010;                                                       // enable interrupts and iopl
     t->registers.rsp = t->registers.rbp = (uint64_t)pmmPages(K_STACK_SIZE / 4096) + K_STACK_SIZE; // create a new stack
     t->registers.rip = (uint64_t)entry;                                                           // set instruction pointer
 
@@ -96,8 +96,8 @@ void schedAdd(void *entry, bool kernel)
     }
     else
     {
-        t->registers.cs = 8 * 4;
-        t->registers.ss = 8 * 3;
+        t->registers.cs = (8 * 4) | 3;
+        t->registers.ss = (8 * 3) | 3;
     }
 
     // page table
@@ -136,7 +136,7 @@ void schedInit()
     maxCore = bootloaderGetSMP()->cpu_count;
     zero(queueStart, sizeof(queueStart));
 
-    for (int i = 0; i < maxCore; i++) // set start of the queues to the idle task
+    for (int i = 0; i < maxCore; i++) // set start of the queues to the common task
     {
         sched_task_t *t = &queueStart[i];
         t->registers.rflags = 0b1000000010; // interrupts
@@ -165,16 +165,16 @@ void schedInit()
         switch (q++)
         {
         case 0:
-            schedAdd(taskAPage, true);
+            schedAdd(taskAPage, false);
             break;
         case 1:
-            schedAdd(taskBPage, true);
+            schedAdd(taskBPage, false);
             break;
         case 2:
-            schedAdd(taskCPage, true);
+            schedAdd(taskCPage, false);
             break;
         default:
-            schedAdd(taskAPage, true);
+            schedAdd(taskAPage, false);
             q = 0;
             break;
         }

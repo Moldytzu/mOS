@@ -55,16 +55,10 @@ void smpBootstrap()
 
     logInfo("smp: we are core %d", smp->bsp_lapic_id);
 
-    // load apropiate tables first
+    // load system tables first
     gdtInit();
     gdtInstall(smp->bsp_lapic_id);
-
-    logInfo("gdt");
-
     idtInit(smp->bsp_lapic_id);
-
-    logInfo("idt");
-
     vmmInit();
 
     if (smp->cpu_count == 1) // we are alone
