@@ -38,6 +38,11 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
         gate->ist = 1;
 }
 
+void *idtGet()
+{
+    return (void *)gates;
+}
+
 // initialize the intrerupt descriptor table
 void idtInit(uint16_t procID)
 {

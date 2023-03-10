@@ -80,13 +80,15 @@ void schedAdd(void *entry, bool kernel)
     t = TASK(t->next);                        // point to the newly allocated task
     zero(t, sizeof(sched_task_t));            // clear it
 
+    // metadata
     lock(schedLock, { t->id = lastTaskID++; }); // set ID
 
+    // essential registers
     t->registers.rflags = 0b1000000010;                                                           // enable interrupts
     t->registers.rsp = t->registers.rbp = (uint64_t)pmmPages(K_STACK_SIZE / 4096) + K_STACK_SIZE; // create a new stack
-    t->registers.cr3 = (uint64_t)vmmGetBaseTable();                                               // kernel table
+    t->registers.rip = (uint64_t)entry;                                                           // set instruction pointer
 
-    // set segment registers
+    // segment registers
     if (kernel)
     {
         t->registers.cs = 8 * 1;
@@ -98,7 +100,14 @@ void schedAdd(void *entry, bool kernel)
         t->registers.ss = 8 * 3;
     }
 
-    t->registers.rip = (uint64_t)entry; // set instruction pointer
+    // page table
+    vmm_page_table_t *pt = vmmCreateTable(false, false);
+    t->registers.cr3 = (uint64_t)pt;
+
+    for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
+        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, true, true, false);
+
+    vmmMap(pt, (void *)t->registers.rip, (void *)t->registers.rip, true, true, false); // map executable
 }
 
 void schedSchedule(idt_intrerrupt_stack_t *stack)
@@ -118,6 +127,8 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
     // copy new state
     memcpy(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t));
+
+    vmmSwap((void *)lastTask[id]->registers.cr3);
 }
 
 void schedInit()
@@ -138,22 +149,32 @@ void schedInit()
         lastTask[i] = t;
     }
 
+    // temporary, append a task to each core
+    void *taskAPage = pmmPage();
+    memcpy8(taskAPage, taskA, 4096);
+
+    void *taskBPage = pmmPage();
+    memcpy8(taskBPage, taskB, 4096);
+
+    void *taskCPage = pmmPage();
+    memcpy8(taskCPage, taskC, 4096);
+
     int q = 0;
     for (int i = 0; i < maxCore; i++)
     {
         switch (q++)
         {
         case 0:
-            schedAdd(taskA, true);
+            schedAdd(taskAPage, true);
             break;
         case 1:
-            schedAdd(taskB, true);
+            schedAdd(taskBPage, true);
             break;
         case 2:
-            schedAdd(taskC, true);
+            schedAdd(taskCPage, true);
             break;
         default:
-            schedAdd(taskA, true);
+            schedAdd(taskAPage, true);
             q = 0;
             break;
         }

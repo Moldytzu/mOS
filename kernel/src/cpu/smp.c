@@ -57,10 +57,13 @@ void smpBootstrap()
 
     // load apropiate tables first
     gdtInit();
-
     gdtInstall(smp->bsp_lapic_id);
 
+    logInfo("gdt");
+
     idtInit(smp->bsp_lapic_id);
+
+    logInfo("idt");
 
     vmmInit();
 

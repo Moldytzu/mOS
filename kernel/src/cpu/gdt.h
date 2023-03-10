@@ -53,4 +53,5 @@ gdt_descriptor_t;
 
 void gdtInit();
 void gdtInstall(uint16_t procID);
+gdt_descriptor_t *gdtGet();
 gdt_tss_t **tssGet();

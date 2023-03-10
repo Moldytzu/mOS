@@ -6,6 +6,7 @@
 #include <cpu/gdt.h>
 #include <cpu/smp.h>
 #include <cpu/atomic.h>
+#include <cpu/lapic.h>
 #include <main/panic.h>
 #include <misc/logger.h>
 
@@ -177,15 +178,23 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     // map the system tables as kernel rw
     vmmMap(newTable, newTable, newTable, driver, true, false); // page table
 
-    // map the tsses (no need to do this with full tables since we'll map the entire memory map in next for loop)
+    // map system tables for non-kernel tables (kernel tables have everything mapped)
     if (!full)
     {
-        for (int i = 0; i < smpCores(); i++)
+        for (int i = 0; i < smpCores(); i++) // map gdt and tss of each core
         {
             gdt_tss_t *tss = tssGet()[i];
-            vmmMap(newTable, (void *)tss->ist[0], (void *)tss->ist[0], driver, true, false); // kernel
-            vmmMap(newTable, (void *)tss->ist[1], (void *)tss->ist[1], driver, true, false); // user
+            gdt_descriptor_t gdt = gdtGet()[i];
+
+            vmmMap(newTable, (void *)tss, (void *)tss, false, true, false);                               // tss struct
+            vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, false, true, false); // kernel ist
+            vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, false, true, false); // userspace ist
+
+            vmmMap(newTable, gdt.entries, gdt.entries, false, true, false);   // gdt entries
+            vmmMap(newTable, &gdtGet()[i], &gdtGet()[i], false, true, false); // gdtr
         }
+
+        vmmMap(newTable, idtGet(), idtGet(), false, true, false);
     }
 
     // map memory map entries as kernel rw
@@ -207,6 +216,9 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
             vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), driver, true, false);
         }
     }
+
+    // map lapic
+    vmmMap(newTable, lapicBase(), lapicBase(), false, true, false);
 
 #ifdef K_VMM_DEBUG
     printks("vmm: wasted %d KB on a new page table\n\r", toKB(a - pmmTotal().available));
