@@ -28,10 +28,6 @@ void serialWrite(const char *str)
         return;
 
     while (*str) // loop thru every character
-    {
-        if (*str == '\n')
-            serialWritec('\r'); // the serial console uses the CRLF end line method and we don't
         serialWritec(*str++);
-    }
 #endif
 }
