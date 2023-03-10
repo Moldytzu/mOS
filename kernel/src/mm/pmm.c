@@ -212,6 +212,9 @@ void pmmInit()
         if (entry->type != LIMINE_MEMMAP_USABLE)
             continue;
 
+        if(entry->length < 128 * 1024) // don't bother with very small chunks
+            continue;
+
         // populate the pool metadata
         pmm_pool_t *pool = &pools[poolCount++];
         zero(pool, sizeof(pmm_pool_t));
