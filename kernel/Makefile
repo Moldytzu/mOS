@@ -31,11 +31,12 @@ DIRS = $(wildcard $(SRCDIR)/*)
 .PHONY: all
 all: $(KERNEL)
 
-src/limine.h:
-	curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o $@
+vendor:
+	-curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o src/limine.h
+	-git clone https://github.com/managarm/lai.git src/vendor/lai
 
 # Link rules for the final kernel executable.
-$(KERNEL): $(OBJS) 
+$(KERNEL): $(OBJS)
 	$(OBJCOPY) -O elf64-x86-64 -B i386 -I binary $(FONT) $(OBJDIR)/kfont.o
 	$(LD) $(OBJS) $(OBJDIR)/kfont.o $(LDFLAGS) $(INTERNALLDFLAGS) -o $(KERNEL)
 
@@ -52,7 +53,7 @@ $(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJS) src/limine.h
+	rm -rf $(KERNEL) $(OBJS) src/limine.h src/vendor/lai
 
 .PHONY: setup
-setup: src/limine.h
+setup: vendor
