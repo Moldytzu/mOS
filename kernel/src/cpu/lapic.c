@@ -19,7 +19,7 @@ void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
     if (hpetMillis() / 1000 != lastSeconds[smpID()])
     {
-        //logInfo("lapic tick! %d hz", lapicTPS[smpID()]);
+        // logInfo("lapic tick! %d hz", lapicTPS[smpID()]);
 
         lapicTPS[smpID()] = __tps[smpID()];
 
@@ -46,7 +46,7 @@ uint32_t lapicRead(uint64_t offset)
 
 void *lapicBase()
 {
-    return (void *)(rdmsr(MSR_APIC_BASE) & 0xFFFFFFFFFFFFF000); // clear first 11 bits
+    return (void *)(rdmsr(MSR_APIC_BASE) & 0xFFFFFFFFFFFFF000);
 }
 
 void lapicEOI()
@@ -56,6 +56,8 @@ void lapicEOI()
 
 void lapicInit(bool bsp)
 {
+    sti();
+
     // disable pic by masking all interrupts
     outb(PIC_MASTER_DAT, 0b11111111);
     outb(PIC_SLAVE_DAT, 0b11111111);
@@ -70,13 +72,15 @@ void lapicInit(bool bsp)
     lapicWrite(APIC_REG_TPR, 0);
 
     // enable the lapic
-    uint32_t low = (uint64_t)lapicBase() >> 32;
-    uint32_t high = (uint64_t)lapicBase() | 0b100000000000; // set global enable flag
+    uint32_t low = (uint64_t)rdmsr(MSR_APIC_BASE) >> 32;
+    uint32_t high = (uint64_t)rdmsr(MSR_APIC_BASE) | 0b100000000000; // set global enable flag
 
     if (bsp) // set the bsp flag
         high |= (uint32_t)0b100000000;
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
+
+    logInfo("msr");
 
     lapicWrite(APIC_REG_SIV, lapicRead(APIC_REG_SIV) | 0b10000000); // set apic software enable/disable
 
@@ -91,8 +95,11 @@ void lapicInit(bool bsp)
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);                             // go!
 
-    // setup idt entry
-    idtSetGate(lapicEntry, 0x20, IDT_InterruptGateU, true);
+    logInfo("timer");
+
+    // setup idt entry if bsp
+    if (bsp)
+        idtSetGate(lapicEntry, 0x20, IDT_InterruptGateU, true);
 
     logInfo("lapic: initialised ID: %x", lapicRead(APIC_REG_ID));
 }
