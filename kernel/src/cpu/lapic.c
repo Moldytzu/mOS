@@ -70,7 +70,7 @@ void lapicInit(bool bsp)
     // reset important registers to a known state before enabling the apic (not required by any spec)
     lapicWrite(APIC_REG_DFR, 0xFF000000);
     lapicWrite(APIC_REG_LDR, 0x01000000);
-    lapicWrite(APIC_REG_SVR, 0x100 | 0xFF); // software enable apic and set the spurious vector to 0xFF
+    lapicWrite(APIC_REG_SVR, 0x1FF); // software enable apic and set the spurious vector to 0xFF
     lapicWrite(APIC_REG_TPR, 0);
 
     // enable the lapic
@@ -82,18 +82,22 @@ void lapicInit(bool bsp)
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
 
-    // set up timer
-    lapicWrite(APIC_REG_TIMER_DIV, 0b1011); // divide by 1
+    // set up timer to a frequency ~2 kHz (todo: real hardware crashes here, not sure why)
+    lapicWrite(APIC_REG_TIMER_DIV, 0b1011);
+    lapicWrite(APIC_REG_TIMER_INITCNT, 1000000); // enable timer
 
-    lapicWrite(APIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // enable timer
-    hpetSleepMillis(1);
-    lapicWrite(APIC_REG_TIMER_INITCNT, 0); // disable timer
+    uint64_t before = hpetMillis();
 
-    uint32_t tickRate = 0xFFFFFFFF - lapicRead(APIC_REG_TIMER_CURRENTCNT);
+    while (lapicRead(APIC_REG_TIMER_CURRENTCNT))
+        ; // wait for the timer to clear
+
+    uint64_t after = hpetMillis();
+
+    uint64_t target = 1000000 / (after - before + 1 /*that 1 prevents us dividing by 0*/);
 
     lapicWrite(APIC_REG_LVT_TIMER, 0b100000000000000000 | APIC_TIMER_VECTOR); // periodic mode
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
-    lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);                             // go!
+    lapicWrite(APIC_REG_TIMER_INITCNT, target);                               // go!
 
     // setup idt entry if bsp
     if (bsp)
