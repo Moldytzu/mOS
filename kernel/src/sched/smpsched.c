@@ -108,9 +108,9 @@ void schedAdd(void *entry, bool kernel)
     t->registers.cr3 = (uint64_t)pt;
 
     for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
-        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, true, true, false);
+        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, true, true, false, false);
 
-    vmmMap(pt, (void *)t->registers.rip, (void *)t->registers.rip, true, true, false); // map executable
+    vmmMap(pt, (void *)t->registers.rip, (void *)t->registers.rip, true, true, false, false); // map executable
 }
 
 void schedSchedule(idt_intrerrupt_stack_t *stack)

@@ -13,9 +13,9 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, struct sched_
 
         // todo: make it so the application can allocate smaller chunks of memory (maybe implement an allocator for each task based on the one present in mm/blk.c?)
 
-        void *page = pmmPage();                                                     // allocate a page
-        zero(page, VMM_PAGE);                                                       // clear it
-        vmmMap(task->pageTable, task->lastVirtualAddress, page, true, true, false); // map it
+        void *page = pmmPage();                                                            // allocate a page
+        zero(page, VMM_PAGE);                                                              // clear it
+        vmmMap(task->pageTable, task->lastVirtualAddress, page, true, true, false, false); // map it
 
         *(uint64_t *)PHYSICAL(arg1) = (uint64_t)task->lastVirtualAddress; // give the application the virtual address
         task->lastVirtualAddress += 4096;                                 // increment the last virtual address

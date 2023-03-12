@@ -10,7 +10,7 @@
 // helper functions for lai
 void laihost_log(int level, const char *msg)
 {
-    logInfo("lai: %s", msg);
+    logInfo("lai %d: %s", level, msg);
 }
 
 __attribute__((noreturn)) void laihost_panic(const char *msg)
@@ -35,7 +35,7 @@ void *laihost_map(size_t address, size_t count)
     if (address % 4096 != 0) // ensure alignment
         address -= address % 4096;
 
-    vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, false, true, false);
+    vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, false, true, false, false);
 
     return (void *)address;
 }

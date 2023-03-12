@@ -192,11 +192,11 @@ struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSiz
     task->stackBase = stack;
     task->stackSize = stackSize;
 
-    for (size_t i = 0; i < stackSize; i += VMM_PAGE) // map task stack as user, read-write
-        vmmMap(newTable, (void *)stack + i, stack + i, true, true, false);
+    //for (size_t i = 0; i < stackSize; i += VMM_PAGE) // map task stack as user, read-write
+    //    vmmMap(newTable, (void *)stack + i, stack + i, true, true, false);
 
-    for (size_t i = 0; i < execSize; i += VMM_PAGE)
-        vmmMap(newTable, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, true, true, false); // map task as user, read-write
+    //for (size_t i = 0; i < execSize; i += VMM_PAGE)
+    //    vmmMap(newTable, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, true, true, false); // map task as user, read-write
 
     // initial registers
     task->intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer

@@ -81,8 +81,8 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
                 continue;
 
             // map it
-            vmmMap(vmmGetBaseTable(), functions[i].header, functions[i].header, true, true, true);
-            vmmMap(task->pageTable, functions[i].header, functions[i].header, true, true, true);
+            vmmMap(vmmGetBaseTable(), functions[i].header, functions[i].header, true, true, true, false);
+            vmmMap(task->pageTable, functions[i].header, functions[i].header, true, true, true, false);
 
             if (functions[i].header->vendor == arg2 && functions[i].header->device == arg3)
             {
@@ -94,7 +94,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
         break;
 
     case 6: // identity map
-        vmmMap(task->pageTable, (void *)arg1, (void *)arg1, true, true, false);
+        vmmMap(task->pageTable, (void *)arg1, (void *)arg1, true, true, false, false);
         break;
 
     default:

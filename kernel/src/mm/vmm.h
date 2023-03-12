@@ -6,7 +6,7 @@
 #define VMM_ENTRY_RW 1
 #define VMM_ENTRY_USER 2
 #define VMM_ENTRY_WRITE_THROUGH 3
-#define VMM_ENTRY_CACHE 4
+#define VMM_ENTRY_CACHE_DISABLE 4
 #define VMM_ENTRY_ACCESSED 5
 #define VMM_ENTRY_DIRTY 6
 #define VMM_ENTRY_HUGE_PAGES 7
@@ -85,8 +85,8 @@ ifunc void vmmSwap(void *newTable)
 }
 
 // mapping
-void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw, bool wt);
-void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw, bool wt);
+void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw, bool wt, bool cache);
+void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw, bool wt, bool cache);
 void vmmUnmap(vmm_page_table_t *table, void *virtualAddress);
 void *vmmGetBaseTable();
 void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress);

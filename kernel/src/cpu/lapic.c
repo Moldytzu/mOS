@@ -8,6 +8,7 @@
 #include <misc/logger.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
+#include <main/panic.h>
 
 extern void lapicEntry();
 
@@ -63,10 +64,10 @@ void lapicInit(bool bsp)
     outb(PIC_SLAVE_DAT, 0b11111111);
 
     // map the base
-    vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, false);
+    vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, false, true); // disable cache
 
     // reset important registers to a known state before enabling the apic (not required by any spec)
-    lapicWrite(APIC_REG_DFR, 0xFFFFFFFF);
+    lapicWrite(APIC_REG_DFR, 0xFF000000);
     lapicWrite(APIC_REG_LDR, 0x01000000);
     lapicWrite(APIC_REG_SVR, 0x1FF); // enable interrupts
     lapicWrite(APIC_REG_TPR, 0);
