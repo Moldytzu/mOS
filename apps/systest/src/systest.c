@@ -31,7 +31,7 @@ const char *to_hstring(uint64_t val)
 
 int main(int argc, char **argv)
 {
-    if(argc == 0)
+    if (argc == 0)
         printf("running as init system\n");
 
     TEST("display")
@@ -53,10 +53,49 @@ int main(int argc, char **argv)
         assert(buffer != NULL);
 
         printf("allocated %s\n", to_hstring((uint64_t)buffer)); // for some reason the %x format is broken in libc
+
+        uint64_t used, available;
+        sys_mem(SYS_MEM_INFO, (uint64_t)&used, (uint64_t)&available);
+
+        printf("used %d kB, available %d kB\n", used / 1024, available / 1024);
+
+        assert(used > 0 && available > 0);
     }
 
     TEST("vfs")
     {
+    }
+
+    TEST("pid")
+    {
+        uint64_t pid = 0;
+        sys_pid(0, SYS_PID_GET, &pid);
+
+        printf("we're pid %d\n", pid);
+
+        const char env[4096], env2[4096];
+        memset((void *)env, 0, 4096);
+        memset((void *)env2, 0, 4096);
+        memcpy((void *)env, "test env", strlen("test env")); // set an arbritary enviroment
+
+        sys_pid(pid, SYS_PID_SET_ENVIROMENT, (void *)&env);
+        sys_pid(pid, SYS_PID_GET_ENVIROMENT, (void *)&env2);
+
+        printf("set enviroment to %s\n", env2);
+
+        assert(*(uint8_t *)env2 != 0);
+
+        const char cwd[512], cwd2[512];
+        memset((void *)cwd, 0, 512);
+        memset((void *)cwd2, 0, 512);
+        memcpy((void *)env, "/init", strlen("/init")); // set an arbritary enviroment
+
+        sys_pid(pid, SYS_PID_SET_CWD, (void *)&cwd);
+        sys_pid(pid, SYS_PID_GET_CWD, (void *)&cwd2);
+
+        printf("set working directory to %s\n", cwd2);
+
+        assert(*(uint8_t *)cwd2 != 0);
     }
 
     printf("system passed\n");

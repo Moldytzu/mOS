@@ -244,14 +244,15 @@ sched_task_t *schedGet(uint32_t id)
     for (int i = 0; i < smpCores(); i++)
     {
         sched_task_t *t = schedFirst(i);
-        do
+        while (t)
         {
             if (t->id == id)
                 return t;
-
             t = t->next;
-        } while (t->next);
+        }
     }
+
+    return NULL;
 }
 
 // kill a task
