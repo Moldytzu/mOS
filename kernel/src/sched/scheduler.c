@@ -7,9 +7,11 @@
 #include <mm/blk.h>
 #include <drv/serial.h>
 #include <subsys/vt.h>
+#include <main/panic.h>
 
 #define TASK(x) ((sched_task_t *)x)
 
+bool taskKilled[K_MAX_CORES];         // indicates that last task was killed
 sched_task_t queueStart[K_MAX_CORES]; // start of the linked lists
 sched_task_t *lastTask[K_MAX_CORES];  // current task in the linked list
 uint64_t minQuantum[K_MAX_CORES];     // minimum quantum of a task
@@ -143,52 +145,55 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
     uint64_t id = smpID();
 
-    if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
+    if (!taskKilled[id])
     {
-        lastTask[id]->quantumLeft--;
-        return;
-    }
-
-    // we've hit the commonTask
-    if (lastTask[id] == &queueStart[id])
-    {
-        // adjust quantums based on the lapic frequency (it isn't the same on every machine thus we have to adjust)
-        uint64_t *tps = lapicGetTPS();
-        minQuantum[id] = (tps[id] / K_SCHED_FREQ) + 1;
-
-        if (id == 0)
+        if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
         {
-            switch (vtGetMode())
+            lastTask[id]->quantumLeft--;
+            return;
+        }
+
+        // we've hit the commonTask
+        if (lastTask[id] == &queueStart[id])
+        {
+            // adjust quantums based on the lapic frequency (it isn't the same on every machine thus we have to adjust)
+            uint64_t *tps = lapicGetTPS();
+            minQuantum[id] = (tps[id] / K_SCHED_FREQ) + 1;
+
+            if (id == 0)
             {
-            case VT_DISPLAY_FB:
-                // todo: copy the user display framebuffer to the global framebuffer
-                break;
-            case VT_DISPLAY_TTY0:
-                framebufferClear(0);
-                framebufferWrite(vtGet(0)->buffer);
-                break;
-            case VT_DISPLAY_KERNEL:
-            default: // doesn't update the framebuffer and lets the kernel write things to it
-                break;
+                switch (vtGetMode())
+                {
+                case VT_DISPLAY_FB:
+                    // todo: copy the user display framebuffer to the global framebuffer
+                    break;
+                case VT_DISPLAY_TTY0:
+                    framebufferClear(0);
+                    framebufferWrite(vtGet(0)->buffer);
+                    break;
+                case VT_DISPLAY_KERNEL:
+                default: // doesn't update the framebuffer and lets the kernel write things to it
+                    break;
+                }
             }
         }
-    }
 
 #ifdef K_ACPI_LAI
-    // handle sci events like power button
-    if (id == 0 && lastTask[id] == &queueStart[id])
-    {
-        uint16_t event = lai_get_sci_event();
-        if (event == ACPI_POWER_BUTTON)
-            acpiShutdown();
-    }
+        // handle sci events like power button
+        if (id == 0 && lastTask[id] == &queueStart[id])
+        {
+            uint16_t event = lai_get_sci_event();
+            if (event == ACPI_POWER_BUTTON)
+                acpiShutdown();
+        }
 #endif
 
-    // set new quantum
-    lastTask[id]->quantumLeft = minQuantum[id];
+        // set new quantum
+        lastTask[id]->quantumLeft = minQuantum[id];
 
-    // save old state
-    memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
+        // save old state
+        memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
+    }
 
     // get next id
     lastTask[id] = lastTask[id]->next;
@@ -208,6 +213,7 @@ void schedInit()
 
     maxCore = bootloaderGetSMP()->cpu_count;
     zero(queueStart, sizeof(queueStart));
+    zero(taskKilled, sizeof(taskKilled));
 
     lastTaskID = 1;
 
@@ -251,7 +257,57 @@ sched_task_t *schedGet(uint32_t id)
 // kill a task
 void schedKill(uint32_t id)
 {
-    // todo: implement this by back-porting from the old scheduler
+#ifdef K_SCHED_DEBUG
+    uint64_t a = pmmTotal().available;
+#endif
+
+    if (id == 1)
+        panick("Attempt to kill the init system.");
+
+    sched_task_t *task = schedGet(id);
+
+    if (!task)
+        return;
+
+    // clear driver contexts
+    // if (task->isDriver)
+    //    drvExit(id);
+
+    // deallocate some fields
+    // pmmDeallocatePages(task->stackBase, task->stackSize / VMM_PAGE); // stack
+    // pmmDeallocate(task->enviroment);                                 // enviroment
+
+    // deallocate the memory allocations
+    for (int i = 0; i < task->allocatedIndex; i++)
+        if (task->allocated[i] != NULL)
+            pmmDeallocate(task->allocated[i]);
+
+    pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
+
+    // deallocate the elf (if present)
+    // if (task->isElf)
+    //    pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
+
+    // deallocate the task
+    sched_task_t *prev = TASK(task->prev);
+    if (prev->next) // bypass this node if possible
+        prev->next = task->next;
+
+    vmmDestroy((void *)task->pageTable); // destroy the page table
+    blkDeallocate(task);                 // free the task
+
+    taskKilled[smpID()] = true;
+
+#ifdef K_SCHED_DEBUG
+    printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
+#endif
+
+    // halt until next intrerrupt fires
+    sti();
+    hlt();
+
+    while (1)
+        ; // prevent returning back
 }
 
 // enable the scheduler for the current core

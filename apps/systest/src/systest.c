@@ -31,7 +31,8 @@ const char *to_hstring(uint64_t val)
 
 int main(int argc, char **argv)
 {
-    // assert(argc != 0);
+    if(argc == 0)
+        printf("running as init system\n");
 
     TEST("display")
     {
