@@ -58,8 +58,8 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter
 
-    //sched_task_t *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true, driver); // add the task
-    blkDeallocate(cwd);                                                                                                                                     // free
+    sched_task_t *task = schedAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true, driver); // add the task
+    blkDeallocate(cwd);                                                                                                                            // free
     blkDeallocate(elf);
-    return NULL; // return the task
+    return task; // return the task
 }

@@ -6,6 +6,7 @@
 #include <mm/vmm.h>
 #include <mm/blk.h>
 #include <drv/serial.h>
+#include <subsys/vt.h>
 
 #define TASK(x) ((sched_task_t *)x)
 
@@ -24,54 +25,6 @@ void commonTask()
 {
     while (1)
         iasm("int $0x20"); // yield directly
-}
-
-void taskA()
-{
-    while (1)
-    {
-        uint8_t val;
-        iasm("inb %%dx,%%al"
-             : "=a"(val)
-             : "d"(COM1 + 5));
-
-        while (!(val & 0b100000)) // wait for input buffer to be clear
-            ;
-
-        iasm("outb %0, %1" ::"a"((uint8_t)'A'), "Nd"(COM1));
-    }
-}
-
-void taskB()
-{
-    while (1)
-    {
-        uint8_t val;
-        iasm("inb %%dx,%%al"
-             : "=a"(val)
-             : "d"(COM1 + 5));
-
-        while (!(val & 0b100000)) // wait for input buffer to be clear
-            ;
-
-        iasm("outb %0, %1" ::"a"((uint8_t)'B'), "Nd"(COM1));
-    }
-}
-
-void taskC()
-{
-    while (1)
-    {
-        uint8_t val;
-        iasm("inb %%dx,%%al"
-             : "=a"(val)
-             : "d"(COM1 + 5));
-
-        while (!(val & 0b100000)) // wait for input buffer to be clear
-            ;
-
-        iasm("outb %0, %1" ::"a"((uint8_t)'C'), "Nd"(COM1));
-    }
 }
 
 // determine to which core we should add the the task
@@ -105,7 +58,7 @@ sched_task_t *schedLast(uint16_t core)
 }
 
 // add new task
-void schedAdd(void *entry, bool kernel)
+sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
 {
     uint32_t id = nextCore(); // get next core id
 
@@ -116,27 +69,22 @@ void schedAdd(void *entry, bool kernel)
     zero(t, sizeof(sched_task_t));            // clear it
 
     // metadata
-    lock(schedLock, { t->id = lastTaskID++; });  // set ID
-    t->core = id;                                // set core id
-    memcpy((void *)t->name, "generic task", 13); // set a name
+    lock(schedLock, { t->id = lastTaskID++; }); // set ID
+    t->core = id;                               // set core id
+    memcpy(t->name, name, strlen(name));        // set a name
     t->lastVirtualAddress = TASK_BASE_ALLOC;
+    t->terminal = terminal;
+    t->isElf = elf;
 
     // essential registers
-    t->registers.rflags = 0b11001000000010;                                                       // enable interrupts and iopl
-    t->registers.rsp = t->registers.rbp = (uint64_t)pmmPages(K_STACK_SIZE / 4096) + K_STACK_SIZE; // create a new stack
-    t->registers.rip = (uint64_t)entry;                                                           // set instruction pointer
+    void *stack = pmmPages(K_STACK_SIZE / 4096);
+    t->registers.rflags = 0b1000000010;                                   // enable interrupts
+    t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE; // set the new stack
+    t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;               // set instruction pointer
 
     // segment registers
-    if (kernel)
-    {
-        t->registers.cs = 8 * 1;
-        t->registers.ss = 8 * 2;
-    }
-    else
-    {
-        t->registers.cs = (8 * 4) | 3;
-        t->registers.ss = (8 * 3) | 3;
-    }
+    t->registers.cs = (8 * 4) | 3;
+    t->registers.ss = (8 * 3) | 3;
 
     // page table
     vmm_page_table_t *pt = vmmCreateTable(false, false);
@@ -146,7 +94,45 @@ void schedAdd(void *entry, bool kernel)
     for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
         vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, true, true, false, false);
 
-    vmmMap(pt, (void *)t->registers.rip, (void *)t->registers.rip, true, true, false, false); // map executable
+    for (size_t i = 0; i < execSize; i += VMM_PAGE)
+        vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, true, true, false, false); // map task as user, read-write
+
+    // arguments (todo: refactor this code to be more readable)
+    if (argv)
+    {
+        t->registers.rdi = 1 + argc;                   // arguments count (1, the name)
+        t->registers.rsi = (uint64_t)t->registers.rsp; // the stack contains the array
+
+        uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
+
+        memcpy(stack + offset, name, strlen(name));        // copy the name
+        *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
+        offset += strlen(name) + 1;                        // move the offset after the name
+
+        for (int i = 0; i < argc; i++)
+        {
+            memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
+            *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
+            offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
+        }
+    }
+
+    // memory fields
+    t->allocated = pmmPage();                // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    zero(t->allocated, sizeof(uint64_t));    // null its content
+    t->allocatedIndex = 0;                   // the current index in the array
+    t->allocatedBufferPages++;               // we have one page already allocated
+    t->lastVirtualAddress = TASK_BASE_ALLOC; // set the last address
+
+    // enviroment
+    t->enviroment = pmmPage();     // 4k should be enough for now
+    zero(t->enviroment, VMM_PAGE); // clear the enviroment
+    if (!cwd)
+        t->cwd[0] = '/'; // set the current working directory to the root
+    else
+        memcpy(t->cwd, cwd, strlen(cwd)); // copy the current working directory
+
+    return t;
 }
 
 // do the context switch
@@ -170,21 +156,22 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
         uint64_t *tps = lapicGetTPS();
         minQuantum[id] = (tps[id] / K_SCHED_FREQ) + 1;
 
-#if 0
-        switch (vtGetMode())
+        if (id == 0)
         {
-        case VT_DISPLAY_FB:
-            // todo: copy the user display framebuffer to the global framebuffer
-            break;
-        case VT_DISPLAY_TTY0:
-            framebufferClear(0);
-            framebufferWrite(vtGet(0)->buffer);
-            break;
-        case VT_DISPLAY_KERNEL:
-        default: // doesn't update the framebuffer and lets the kernel write things to it
-            break;
+            switch (vtGetMode())
+            {
+            case VT_DISPLAY_FB:
+                // todo: copy the user display framebuffer to the global framebuffer
+                break;
+            case VT_DISPLAY_TTY0:
+                framebufferClear(0);
+                framebufferWrite(vtGet(0)->buffer);
+                break;
+            case VT_DISPLAY_KERNEL:
+            default: // doesn't update the framebuffer and lets the kernel write things to it
+                break;
+            }
         }
-#endif
     }
 
 #ifdef K_ACPI_LAI
@@ -217,6 +204,8 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 // initialise the scheduler
 void schedInit()
 {
+    vtCreate(); // create the very first terminal (the full screen one)
+
     maxCore = bootloaderGetSMP()->cpu_count;
     zero(queueStart, sizeof(queueStart));
 

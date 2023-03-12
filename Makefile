@@ -18,7 +18,7 @@ run: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT)
 
 run-slow: $(OUTPUT)
-	qemu-system-x86_64 -cdrom $(OUTPUT) -cpu core2duo -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -no-reboot -no-shutdown
+	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) -smp 1 -m 128M -vga std
 
 run-bochs: $(OUTPUT)
 	bochs -q

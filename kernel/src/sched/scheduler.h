@@ -15,6 +15,7 @@ pstruct
     char name[128];
     char cwd[512];
     bool isDriver;
+    bool isElf;
 
     // context
     idt_intrerrupt_stack_t registers;
@@ -34,7 +35,7 @@ pstruct
 sched_task_t;
 
 void schedEnable();
-void schedAdd(void *entry, bool kernel);
+sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
 void schedSchedule(idt_intrerrupt_stack_t *stack);
 void schedInit();
 sched_task_t *schedGetCurrent(uint32_t core);

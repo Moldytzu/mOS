@@ -17,6 +17,7 @@
 #include <fw/acpi.h>
 #include <fs/vfs.h>
 #include <subsys/socket.h>
+#include <subsys/vt.h>
 #include <main/panic.h>
 #include <elf/elf.h>
 #include <misc/logger.h>
@@ -45,8 +46,10 @@ void kmain()
     } while (currentNode);
 #endif
 
-    if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
+    if (!elfLoad("/init/hello.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
+
+    vtSetMode(VT_DISPLAY_TTY0);
 
     smpJumpUserspace(); // send all cores to userspace
     schedEnable();
