@@ -20,7 +20,7 @@ void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
     if (hpetMillis() / 1000 != lastSeconds[smpID()])
     {
-        // logInfo("lapic tick! %d hz", lapicTPS[smpID()]);
+        logInfo("lapic tick! %d hz", lapicTPS[smpID()]);
 
         lapicTPS[smpID()] = __tps[smpID()];
 
@@ -57,8 +57,6 @@ void lapicEOI()
 
 void lapicInit(bool bsp)
 {
-    sti();
-
     if (bsp)
     {
         // disable pic by masking all interrupts

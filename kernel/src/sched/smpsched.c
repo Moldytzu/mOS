@@ -27,22 +27,19 @@ void commonTask()
 void taskA()
 {
     while (1)
-        ;
-    iasm("outb %0, %1" ::"a"((uint8_t)'A'), "Nd"(COM1));
+        iasm("outb %0, %1" ::"a"((uint8_t)'A'), "Nd"(COM1));
 }
 
 void taskB()
 {
     while (1)
-        ;
-    iasm("outb %0, %1" ::"a"((uint8_t)'B'), "Nd"(COM1));
+        iasm("outb %0, %1" ::"a"((uint8_t)'B'), "Nd"(COM1));
 }
 
 void taskC()
 {
     while (1)
-        ;
-    iasm("outb %0, %1" ::"a"((uint8_t)'C'), "Nd"(COM1));
+        iasm("outb %0, %1" ::"a"((uint8_t)'C'), "Nd"(COM1));
 }
 
 // determine to which core we should add the the task
