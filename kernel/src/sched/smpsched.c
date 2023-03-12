@@ -27,19 +27,49 @@ void commonTask()
 void taskA()
 {
     while (1)
-        iasm("outb %0, %1" ::"a"((uint8_t)'A'), "Nd"(COM1));
+    {
+        uint8_t val;
+        iasm("inb %%dx,%%al"
+             : "=a"(val)
+             : "d"(COM1 + 5));
+
+        while (!(val & 0b100000)) // wait for input buffer to be clear
+            ;
+    
+         iasm("outb %0, %1" ::"a"((uint8_t)'A'), "Nd"(COM1));
+    }
 }
 
 void taskB()
 {
     while (1)
-        iasm("outb %0, %1" ::"a"((uint8_t)'B'), "Nd"(COM1));
+    {
+        uint8_t val;
+        iasm("inb %%dx,%%al"
+             : "=a"(val)
+             : "d"(COM1 + 5));
+
+        while (!(val & 0b100000)) // wait for input buffer to be clear
+            ;
+    
+         iasm("outb %0, %1" ::"a"((uint8_t)'B'), "Nd"(COM1));
+    }
 }
 
 void taskC()
 {
     while (1)
-        iasm("outb %0, %1" ::"a"((uint8_t)'C'), "Nd"(COM1));
+    {
+        uint8_t val;
+        iasm("inb %%dx,%%al"
+             : "=a"(val)
+             : "d"(COM1 + 5));
+
+        while (!(val & 0b100000)) // wait for input buffer to be clear
+            ;
+    
+         iasm("outb %0, %1" ::"a"((uint8_t)'C'), "Nd"(COM1));
+    }
 }
 
 // determine to which core we should add the the task
