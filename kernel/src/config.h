@@ -33,8 +33,8 @@
 #define K_COM_BAUD_DIV 1 // divisor of the baud rate (base is 115200)
 #define K_COM_LOG        // kernel logger on serial
 
-// PIT
-#define K_PIT_FREQ 200 // frequency in hz of the pit
+// Scheduler
+#define K_SCHED_FREQ 100 // frequency at which we want to context switch
 
 // ACPI
 // #define K_ACPI_LAI // enables lai support (enables experimental aml support)

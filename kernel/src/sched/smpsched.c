@@ -1,6 +1,7 @@
 #include <sched/smpsched.h>
 #include <misc/logger.h>
 #include <cpu/smp.h>
+#include <cpu/lapic.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <mm/blk.h>
@@ -10,6 +11,7 @@
 
 sched_task_t queueStart[K_MAX_CORES]; // start of the linked lists
 sched_task_t *lastTask[K_MAX_CORES];  // current task in the linked list
+uint64_t minQuantum[K_MAX_CORES];     // minimum quantum of a task
 uint16_t lastCore = 0;                // core on which last task was added
 uint32_t lastTaskID = 0;              // last id of the last task addedd
 uint16_t maxCore = 0;
@@ -21,7 +23,7 @@ bool _enabled = false;
 void commonTask()
 {
     while (1)
-        ;
+        iasm("int $0x20"); // yield directly
 }
 
 void taskA()
@@ -35,8 +37,8 @@ void taskA()
 
         while (!(val & 0b100000)) // wait for input buffer to be clear
             ;
-    
-         iasm("outb %0, %1" ::"a"((uint8_t)'A'), "Nd"(COM1));
+
+        iasm("outb %0, %1" ::"a"((uint8_t)'A'), "Nd"(COM1));
     }
 }
 
@@ -51,8 +53,8 @@ void taskB()
 
         while (!(val & 0b100000)) // wait for input buffer to be clear
             ;
-    
-         iasm("outb %0, %1" ::"a"((uint8_t)'B'), "Nd"(COM1));
+
+        iasm("outb %0, %1" ::"a"((uint8_t)'B'), "Nd"(COM1));
     }
 }
 
@@ -67,8 +69,8 @@ void taskC()
 
         while (!(val & 0b100000)) // wait for input buffer to be clear
             ;
-    
-         iasm("outb %0, %1" ::"a"((uint8_t)'C'), "Nd"(COM1));
+
+        iasm("outb %0, %1" ::"a"((uint8_t)'C'), "Nd"(COM1));
     }
 }
 
@@ -104,7 +106,7 @@ sched_task_t *schedLast(uint16_t core)
 
 void schedAdd(void *entry, bool kernel)
 {
-    sched_task_t *t = schedLast(nextCore());  // get last task of the next core
+    sched_task_t *t = schedLast(0);           // get last task of the next core
     t->next = blkBlock(sizeof(sched_task_t)); // allocate next
     TASK(t->next)->prev = t;                  // set previous task
     t = TASK(t->next);                        // point to the newly allocated task
@@ -147,6 +149,39 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
     uint64_t id = smpID();
 
+    if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
+    {
+        lastTask[id]->quantumLeft--;
+        return;
+    }
+
+    // we've hit the commonTask
+    if (lastTask[id] == &queueStart[id])
+    {
+        // adjust quantums based on the lapic frequency (it isn't the same on every machine thus we have to adjust)
+        uint64_t *tps = lapicGetTPS();
+        minQuantum[id] = (tps[id] / K_SCHED_FREQ) + 1;
+
+#if 0
+        switch (vtGetMode())
+        {
+        case VT_DISPLAY_FB:
+            // todo: copy the user display framebuffer to the global framebuffer
+            break;
+        case VT_DISPLAY_TTY0:
+            framebufferClear(0);
+            framebufferWrite(vtGet(0)->buffer);
+            break;
+        case VT_DISPLAY_KERNEL:
+        default: // doesn't update the framebuffer and lets the kernel write things to it
+            break;
+        }
+#endif
+    }
+
+    // set new quantum
+    lastTask[id]->quantumLeft = minQuantum[id];
+
     // save old state
     memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
 
@@ -177,6 +212,7 @@ void schedInit()
         t->registers.cr3 = (uint64_t)vmmGetBaseTable();
 
         lastTask[i] = t;
+        minQuantum[i] = 1;
     }
 
     // temporary, append a task to each core

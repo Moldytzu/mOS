@@ -7,6 +7,8 @@ pstruct
     uint32_t id;
     idt_intrerrupt_stack_t registers;
 
+    uint32_t quantumLeft;
+
     void *next;
     void *prev;
 }

@@ -12,7 +12,7 @@
 
 extern void lapicEntry();
 
-uint64_t lapicTPS[K_MAX_CORES]; // will need this to increase / decrease quantum of each task (we want the same cpu time even if the timer is faster or slower)
+uint64_t lapicTPS[K_MAX_CORES];
 uint64_t __tps[K_MAX_CORES];
 uint64_t lastSeconds[K_MAX_CORES];
 
@@ -20,8 +20,6 @@ void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
     if (hpetMillis() / 1000 != lastSeconds[smpID()])
     {
-        logInfo("lapic tick! %d hz", lapicTPS[smpID()]);
-
         lapicTPS[smpID()] = __tps[smpID()];
 
         __tps[smpID()] = 0;
@@ -33,6 +31,11 @@ void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
     schedSchedule(stack);
 
     lapicEOI();
+}
+
+uint64_t *lapicGetTPS()
+{
+    return lapicTPS;
 }
 
 void lapicWrite(uint64_t offset, uint32_t value)
