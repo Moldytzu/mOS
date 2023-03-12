@@ -2,10 +2,10 @@
 #include <sys/sys.h>
 
 // pid (rsi = pid, rdx = info, r8 = retVal/inputVal)
-void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, struct sched_task *task)
+void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, sched_task_t *task)
 {
     uint64_t *retAddr = PHYSICAL(retVal);
-    struct sched_task *t = schedulerGet(pid);
+    sched_task_t *t = schedGet(pid);
     if (!t) // check if the task exists
     {
         *retAddr = UINT64_MAX;

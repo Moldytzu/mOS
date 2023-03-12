@@ -107,7 +107,7 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
 
     if (redirectTable[int_num]) // there is a request to redirect intrerrupt to a driver
     {
-        struct sched_task *task = schedulerGet(redirectTableMeta[int_num]);
+        sched_task_t *task = schedGet(redirectTableMeta[int_num]);
 
         if (!task)
         {
@@ -132,7 +132,7 @@ cnt:
     {
         struct sock_socket *initSocket = sockGet(1);
 
-        const char *name = schedulerGetCurrent()->name;
+        const char *name = schedGetCurrent(smpID())->name;
 
         logWarn("%s has crashed with %s! Terminating it.", name, exceptions[int_num]);
 
@@ -150,8 +150,8 @@ cnt:
             pmmDeallocate(str);
         }
 
-        schedulerKill(schedulerGetCurrent()->id); // terminate the task
-        schedulerSchedule(stack);                 // schedule next task
+        schedKill(schedGetCurrent(smpID())->id); // terminate the task
+        schedSchedule(stack);                    // schedule next task
         return;
     }
 

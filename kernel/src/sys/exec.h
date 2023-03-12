@@ -15,7 +15,7 @@ pstruct
 sys_exec_packet_t;
 
 // exec (rsi = path, rdx = pid, r8 = packet)
-void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, struct sched_task *task)
+void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_t *task)
 {
     if (!INBOUNDARIES(path) || !INBOUNDARIES(pid) || !INBOUNDARIES(packet)) // prevent a crash
         return;
@@ -41,7 +41,7 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, struct sche
                 input->argv[i] = PHYSICAL(input->argv[i]);
     }
 
-    struct sched_task *newTask = elfLoad(execPath, input->argc, input->argv, 0); // do the loading
+    sched_task_t *newTask = elfLoad(execPath, input->argc, input->argv, 0); // do the loading
     *ret = newTask->id;                                                          // set the pid
 
     if (input->shouldCreateNewTerminal)

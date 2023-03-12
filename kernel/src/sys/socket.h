@@ -4,7 +4,7 @@
 #include <subsys/socket.h>
 
 // (rsi = call, rbx = arg1, r8 = arg2, r9 = arg3)
-void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct sched_task *task)
+void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_task_t *task)
 {
     uint64_t *arg1Ptr = PHYSICAL(arg1);
     uint64_t *arg2Ptr = PHYSICAL(arg2);

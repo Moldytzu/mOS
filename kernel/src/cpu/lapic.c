@@ -4,7 +4,7 @@
 #include <cpu/io.h>
 #include <cpu/smp.h>
 #include <sched/hpet.h>
-#include <sched/smpsched.h>
+#include <sched/scheduler.h>
 #include <misc/logger.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>

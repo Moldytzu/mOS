@@ -2,4 +2,4 @@
 #include <misc/utils.h>
 #include <sched/scheduler.h>
 
-struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver);
+sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver);

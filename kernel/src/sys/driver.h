@@ -9,7 +9,7 @@
 #define SYS_DRIVER_TYPE_INPUT 2
 
 // driver (rsi = call, rdx = arg1, r8 = arg2, r9 = arg3)
-void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct sched_task *task)
+void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_task_t *task)
 {
     if (!task->isDriver && task->id != 1) // unprivileged
         return;
@@ -82,7 +82,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
 
             // map it
             vmmMap(vmmGetBaseTable(), functions[i].header, functions[i].header, true, true, true, false);
-            vmmMap(task->pageTable, functions[i].header, functions[i].header, true, true, true, false);
+            vmmMap((void *)task->pageTable, functions[i].header, functions[i].header, true, true, true, false);
 
             if (functions[i].header->vendor == arg2 && functions[i].header->device == arg3)
             {
@@ -94,7 +94,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, struct s
         break;
 
     case 6: // identity map
-        vmmMap(task->pageTable, (void *)arg1, (void *)arg1, true, true, false, false);
+        vmmMap((void *)task->pageTable, (void *)arg1, (void *)arg1, true, true, false, false);
         break;
 
     default:

@@ -1,4 +1,4 @@
-#include <sched/smpsched.h>
+#include <sched/scheduler.h>
 #include <misc/logger.h>
 #include <cpu/smp.h>
 #include <cpu/lapic.h>
@@ -104,16 +104,22 @@ sched_task_t *schedLast(uint16_t core)
     return t;
 }
 
+// add new task
 void schedAdd(void *entry, bool kernel)
 {
-    sched_task_t *t = schedLast(nextCore());  // get last task of the next core
+    uint32_t id = nextCore(); // get next core id
+
+    sched_task_t *t = schedLast(id);          // get last task of the next core
     t->next = blkBlock(sizeof(sched_task_t)); // allocate next
     TASK(t->next)->prev = t;                  // set previous task
     t = TASK(t->next);                        // point to the newly allocated task
     zero(t, sizeof(sched_task_t));            // clear it
 
     // metadata
-    lock(schedLock, { t->id = lastTaskID++; }); // set ID
+    lock(schedLock, { t->id = lastTaskID++; });  // set ID
+    t->core = id;                                // set core id
+    memcpy((void *)t->name, "generic task", 13); // set a name
+    t->lastVirtualAddress = TASK_BASE_ALLOC;
 
     // essential registers
     t->registers.rflags = 0b11001000000010;                                                       // enable interrupts and iopl
@@ -135,6 +141,7 @@ void schedAdd(void *entry, bool kernel)
     // page table
     vmm_page_table_t *pt = vmmCreateTable(false, false);
     t->registers.cr3 = (uint64_t)pt;
+    t->pageTable = (uint64_t)pt;
 
     for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
         vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, true, true, false, false);
@@ -142,6 +149,7 @@ void schedAdd(void *entry, bool kernel)
     vmmMap(pt, (void *)t->registers.rip, (void *)t->registers.rip, true, true, false, false); // map executable
 }
 
+// do the context switch
 void schedSchedule(idt_intrerrupt_stack_t *stack)
 {
     if (!_enabled)
@@ -179,6 +187,16 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 #endif
     }
 
+#ifdef K_ACPI_LAI
+    // handle sci events like power button
+    if (id == 0 && lastTask[id] == &queueStart[id])
+    {
+        uint16_t event = lai_get_sci_event();
+        if (event == ACPI_POWER_BUTTON)
+            acpiShutdown();
+    }
+#endif
+
     // set new quantum
     lastTask[id]->quantumLeft = minQuantum[id];
 
@@ -196,6 +214,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     vmmSwap((void *)lastTask[id]->registers.cr3);
 }
 
+// initialise the scheduler
 void schedInit()
 {
     maxCore = bootloaderGetSMP()->cpu_count;
@@ -216,6 +235,35 @@ void schedInit()
     }
 }
 
+// get current task
+sched_task_t *schedGetCurrent(uint32_t core)
+{
+    return lastTask[core];
+}
+
+// get the task with id
+sched_task_t *schedGet(uint32_t id)
+{
+    for (int i = 0; i < smpCores(); i++)
+    {
+        sched_task_t *t = schedFirst(i);
+        do
+        {
+            if (t->id == id)
+                return t;
+
+            t = t->next;
+        } while (t->next);
+    }
+}
+
+// kill a task
+void schedKill(uint32_t id)
+{
+    // todo: implement this by back-porting from the old scheduler
+}
+
+// enable the scheduler for the current core
 void schedEnable()
 {
     _enabled = true;

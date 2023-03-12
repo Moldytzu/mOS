@@ -57,7 +57,7 @@ void _start()
 
     initrdMount(); // mount the initrd
 
-    schedulerInit(); // initialize the scheduler
+    schedInit();
 
     drvInit(); // initialize the driver manager
 

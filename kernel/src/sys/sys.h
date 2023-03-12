@@ -1,5 +1,7 @@
 #pragma once
 #include <misc/utils.h>
+#include <misc/logger.h>
+#include <cpu/smp.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <fs/vfs.h>
@@ -7,15 +9,15 @@
 
 #define SYS_STDIN 1
 
-#define PHYSICAL(virtual) ((void *)(vmmGetPhys(task->pageTable, (void *)(virtual))))
+#define PHYSICAL(virtual) ((void *)(vmmGetPhys((void *)task->pageTable, (void *)(virtual))))
 
-#define STACK alignD(task->intrerruptStack.rsp, 4096)
+#define STACK alignD(task->registers.rsp, 4096)
 #define INSTACK(address) between(address, STACK - K_STACK_SIZE, STACK + K_STACK_SIZE)
 #define INAPPLICATION(address) between(address, TASK_BASE_ADDRESS, task->lastVirtualAddress + 4096)
 #define INBOUNDARIES(address) (INSTACK(((uint64_t)address)) || INAPPLICATION(((uint64_t)address)))
 
 // expand relative path to full path
-ifunc char *expandPath(const char *path, struct sched_task *task)
+ifunc char *expandPath(const char *path, sched_task_t *task)
 {
     uint64_t fd;
     char *buffer = (char *)pmmPage();
@@ -71,5 +73,5 @@ cwd: // copy the cwd before the input
 #include <sys/power.h>
 #include <sys/driver.h>
 
-void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, struct sched_task *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver};
+void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver};
 const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver"};

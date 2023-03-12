@@ -3,7 +3,7 @@
 #include <drv/input.h>
 
 // input (rsi = device type, rdx = return pointer)
-void input(uint64_t deviceType, uint64_t returnPtr, uint64_t r8, uint64_t r9, struct sched_task *task)
+void input(uint64_t deviceType, uint64_t returnPtr, uint64_t r8, uint64_t r9, sched_task_t *task)
 {
     if (!INBOUNDARIES(returnPtr)) // prevent crashing
         return;

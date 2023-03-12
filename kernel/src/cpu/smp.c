@@ -8,7 +8,7 @@
 #include <mm/vmm.h>
 #include <sys/syscall.h>
 #include <sched/scheduler.h>
-#include <sched/smpsched.h>
+#include <sched/scheduler.h>
 #include <misc/logger.h>
 
 bool smpJump;
@@ -41,10 +41,8 @@ void cpuStart(struct limine_smp_info *cpu)
         pause();
 
     lapicInit(false);
-    schedEnable();
-
     syscallInit();        // enable system calls
-    schedulerUserspace(); // jump in userspace
+    schedEnable();
 
     hang();
 }

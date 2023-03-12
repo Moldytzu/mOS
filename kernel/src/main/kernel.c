@@ -12,7 +12,6 @@
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
-#include <sched/smpsched.h>
 #include <sys/syscall.h>
 #include <fw/bootloader.h>
 #include <fw/acpi.h>
@@ -49,24 +48,8 @@ void kmain()
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
 
-    schedInit();
-
     smpJumpUserspace(); // send all cores to userspace
     schedEnable();
-
-    // todo: handle this in the scheduler
-    while (1)
-    {
-#ifdef K_ACPI_LAI
-        uint16_t event = lai_get_sci_event();
-        if (event == ACPI_POWER_BUTTON)
-            acpiShutdown();
-#endif
-
-        pause();
-    }
-
-    schedulerEnable(); // enable the schduler and jump in userspace
 }
 
 void panick_impl(const char *file, size_t line, const char *msg)

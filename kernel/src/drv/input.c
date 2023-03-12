@@ -2,6 +2,7 @@
 #include <drv/input.h>
 #include <subsys/vt.h>
 #include <sched/scheduler.h>
+#include <cpu/smp.h>
 
 struct vt_terminal *startTerminal, *currentTerminal;
 
@@ -10,13 +11,13 @@ struct vt_terminal *startTerminal, *currentTerminal;
 // pop last key
 char kbGetLastKey()
 {
-    return vtkbGet(vtGet(schedulerGetCurrent()->terminal)); // get last key of the terminal
+    return vtkbGet(vtGet(schedGetCurrent(smpID())->terminal)); // get last key of the terminal
 }
 
 // get the buffer
 char *kbGetBuffer()
 {
-    return (char *)vtGet(schedulerGetCurrent()->terminal)->buffer; // get the buffer
+    return (char *)vtGet(schedGetCurrent(smpID())->terminal)->buffer; // get the buffer
 }
 
 // initialize the subsystem

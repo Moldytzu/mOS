@@ -36,7 +36,7 @@ void drvExit(uint32_t drv)
     }
 
     idtClearRedirect(drv);
-    logInfo("drv: %s exits", schedulerGet(drv)->name);
+    logInfo("drv: %s exits", schedGet(drv)->name);
 }
 
 void drvUpdateReference(uint32_t type, void *context)
@@ -61,7 +61,7 @@ void drvUpdateReference(uint32_t type, void *context)
 void *drvRegister(uint32_t drv, uint32_t type)
 {
     // return a new context
-    logInfo("drv: %s registred as type %d driver", schedulerGet(drv)->name, type);
+    logInfo("drv: %s registred as type %d driver", schedGet(drv)->name, type);
 
     switch (type)
     {

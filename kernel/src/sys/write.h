@@ -1,9 +1,10 @@
 #pragma once
 #include <sys/sys.h>
 #include <fs/vfs.h>
+#include <subsys/vt.h>
 
 // write (rsi = buffer, rdx = count, r8 = fd)
-void write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, struct sched_task *task)
+void write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, sched_task_t *task)
 {
     if (!INBOUNDARIES(buffer) && count > 1) // prevent a crash
         return;
@@ -11,10 +12,7 @@ void write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, struct sch
     const char *charBuffer = (const char *)PHYSICAL(buffer); // get physical address of the buffer
 
     if (task->isDriver)
-    {
-        // todo: use the kernel logger that doesn't exist
-        printks("%s", charBuffer);
-    }
+        logInfo("%s", charBuffer);
 
     if (fd == SYS_STDIN)
     {
