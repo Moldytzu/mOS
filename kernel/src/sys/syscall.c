@@ -18,8 +18,11 @@ void syscallHandler(idt_intrerrupt_stack_t *registers)
 
     sched_task_t *t = schedGetCurrent(smpID());
 
-    if (registers->rdi < (sizeof(syscallHandlers) / sizeof(void *)))                                      // check if the syscall is in range
+    if (registers->rdi < (sizeof(syscallHandlers) / sizeof(void *))) // check if the syscall is in range
+    {
+        logDbg(1, "%s calls %s", t->name, syscallNames[registers->rdi]);
         syscallHandlers[registers->rdi](registers->rsi, registers->rdx, registers->r8, registers->r9, t); // call the handler
+    }
 
     vmmSwap((void *)registers->cr3); // swap the page table back
 }

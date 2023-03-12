@@ -209,6 +209,8 @@ void schedInit()
     maxCore = bootloaderGetSMP()->cpu_count;
     zero(queueStart, sizeof(queueStart));
 
+    lastTaskID = 1;
+
     for (int i = 0; i < maxCore; i++) // set start of the queues to the common task
     {
         sched_task_t *t = &queueStart[i];

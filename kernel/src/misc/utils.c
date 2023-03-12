@@ -36,7 +36,7 @@ const char *to_hstring(uint64_t val)
     if (!val)
         return "0"; // if the value is 0 then return a constant string "0"
 
-    zero(to_stringout, sizeof(to_hstringout)); // clear output
+    zero(to_hstringout, sizeof(to_hstringout)); // clear output
 
     for (int i = 0; i < 16; i++, val = val >> 4) // shift the value by 4 to get each nibble
         to_hstringout[i] = digits[val & 0xF];    // get each nibble

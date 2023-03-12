@@ -46,10 +46,8 @@ void kmain()
     } while (currentNode);
 #endif
 
-    if (!elfLoad("/init/hello.mx", 0, 0, 0)) // load the init executable
+    if (!elfLoad("/init/systest.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
-
-    vtSetMode(VT_DISPLAY_TTY0);
 
     smpJumpUserspace(); // send all cores to userspace
     schedEnable();
