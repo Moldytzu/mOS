@@ -59,17 +59,20 @@ void lapicInit(bool bsp)
 {
     sti();
 
-    // disable pic by masking all interrupts
-    outb(PIC_MASTER_DAT, 0b11111111);
-    outb(PIC_SLAVE_DAT, 0b11111111);
+    if (bsp)
+    {
+        // disable pic by masking all interrupts
+        outb(PIC_MASTER_DAT, 0b11111111);
+        outb(PIC_SLAVE_DAT, 0b11111111);
 
-    // map the base
-    vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, false, true); // disable cache
+        // map the base
+        vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, false, true); // disable cache
+    }
 
     // reset important registers to a known state before enabling the apic (not required by any spec)
     lapicWrite(APIC_REG_DFR, 0xFF000000);
     lapicWrite(APIC_REG_LDR, 0x01000000);
-    lapicWrite(APIC_REG_SVR, 0x1FF); // enable interrupts
+    lapicWrite(APIC_REG_SVR, 0x100 | 0xFF); // software enable apic and set the spurious vector to 0xFF
     lapicWrite(APIC_REG_TPR, 0);
 
     // enable the lapic
@@ -81,22 +84,18 @@ void lapicInit(bool bsp)
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
 
-    logInfo("msr");
-
-    lapicWrite(APIC_REG_SIV, lapicRead(APIC_REG_SIV) | 0b10000000); // set apic software enable/disable
-
     // set up timer
-    lapicWrite(APIC_REG_TIMER_DIV, 0b1011);         // divide by 1
+    lapicWrite(APIC_REG_TIMER_DIV, 0b1011); // divide by 1
+
     lapicWrite(APIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // enable timer
     hpetSleepMillis(1);
+    lapicWrite(APIC_REG_TIMER_INITCNT, 0); // disable timer
 
     uint32_t tickRate = 0xFFFFFFFF - lapicRead(APIC_REG_TIMER_CURRENTCNT);
 
     lapicWrite(APIC_REG_LVT_TIMER, 0b100000000000000000 | APIC_TIMER_VECTOR); // periodic mode
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, tickRate);                             // go!
-
-    logInfo("timer");
 
     // setup idt entry if bsp
     if (bsp)
