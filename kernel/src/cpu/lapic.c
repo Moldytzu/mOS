@@ -87,7 +87,8 @@ void lapicInit(bool bsp)
 
     // set up timer to a frequency ~2 kHz (todo: real hardware crashes here, not sure why)
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);
-    lapicWrite(APIC_REG_TIMER_INITCNT, 1000000); // enable timer
+    lapicWrite(APIC_REG_TIMER_INITCNT, 1000000);       // enable timer
+    lapicWrite(APIC_REG_LVT_TIMER, APIC_TIMER_VECTOR); // one shot mode
 
     uint64_t before = hpetMillis();
 
