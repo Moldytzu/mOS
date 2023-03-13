@@ -134,7 +134,7 @@ cnt:
 
         const char *name = schedGetCurrent(smpID())->name;
 
-        logWarn("%s has crashed with %s! Terminating it.", name, exceptions[int_num]);
+        logWarn("%s has crashed with %s at %x! Terminating it.", name, exceptions[int_num], stack->rip);
 
         if (initSocket)
         {
