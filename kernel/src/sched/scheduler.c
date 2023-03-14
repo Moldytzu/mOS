@@ -211,7 +211,7 @@ void schedInit()
 {
     vtCreate(); // create the very first terminal (the full screen one)
 
-    maxCore = bootloaderGetSMP()->cpu_count;
+    maxCore = smpCores();
     zero(queueStart, sizeof(queueStart));
     zero(taskKilled, sizeof(taskKilled));
 

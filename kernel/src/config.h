@@ -24,9 +24,9 @@
 #define K_SOCK_DEBUG    // socket debug messages
 #endif
 
-// Constants
-#define K_STACK_SIZE 64 * 1024 // userspace stack size
-#define K_MAX_CORES 128        // maximum cores
+// SMP
+#define K_SMP           // enables symetric multiprocessing support (experimental)
+#define K_MAX_CORES 128 // maximum cores
 
 // Serial
 #define K_COM_ENABLE     // enable support for serial
@@ -34,7 +34,8 @@
 #define K_COM_LOG        // kernel logger on serial
 
 // Scheduler
-#define K_SCHED_FREQ 100 // frequency at which we want to context switch
+#define K_SCHED_FREQ 100       // frequency at which we want to context switch
+#define K_STACK_SIZE 64 * 1024 // userspace stack size
 
 // ACPI
 // #define K_ACPI_LAI // enables lai support (enables experimental aml support)

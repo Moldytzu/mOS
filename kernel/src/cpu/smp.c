@@ -16,7 +16,11 @@ bool smpReady[K_MAX_CORES];
 
 uint8_t smpCores()
 {
+#ifdef K_SMP
     return bootloaderGetSMP()->cpu_count;
+#else
+    return 1;
+#endif
 }
 
 void smpJumpUserspace()
@@ -41,7 +45,7 @@ void cpuStart(struct limine_smp_info *cpu)
         pause();
 
     lapicInit(false);
-    syscallInit();        // enable system calls
+    syscallInit(); // enable system calls
     schedEnable();
 
     hang();
@@ -59,6 +63,7 @@ void smpBootstrap()
     idtInit(smp->bsp_lapic_id);
     vmmInit();
 
+#ifdef K_SMP
     if (smp->cpu_count == 1) // we are alone
     {
         logWarn("smp: no multicore setup detected");
@@ -86,4 +91,5 @@ void smpBootstrap()
     }
 
     logInfo("smp: started %d cores", smp->cpu_count - 1);
+#endif
 }
