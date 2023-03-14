@@ -115,22 +115,23 @@ void logError(const char *fmt, ...)
 void logDbg(int level, const char *fmt, ...)
 {
     lock(loggerLock, {
-        // todo: use level as a level of verbosity by comparing with the value set in config.h and returning if it is higher than that
-
         va_list args;
         uint64_t milis = TIME_NANOS_TO_MILIS(timeNanos());
 
-        PUSH_COLOUR(0x00FF00);
+        if (level != LOG_SERIAL_ONLY)
+        {
+            PUSH_COLOUR(0x00FF00);
 
-        printk("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+            printk("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
 
-        va_start(args, fmt);
-        printk_impl(fmt, args);
-        va_end(args);
+            va_start(args, fmt);
+            printk_impl(fmt, args);
+            va_end(args);
 
-        printk("\n");
+            printk("\n");
 
-        POP_COLOUR();
+            POP_COLOUR();
+        }
 
 #ifdef K_COM_LOG
         printks("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
