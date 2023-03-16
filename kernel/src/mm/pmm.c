@@ -225,8 +225,8 @@ void pmmInit()
         pool->available = entry->length - pool->bitmapBytes - PMM_ALLOC_PADDING;
         pool->size = pool->available + pool->used;
 
-        // clear the bitmap
-        zero(pool->base, pool->bitmapBytes);
+        // clear the reserved bytes (holds padding and bitmap information)
+        zero(pool->base, (uint64_t)(pool->alloc - pool->base));
     }
 
     // display the memory pools
