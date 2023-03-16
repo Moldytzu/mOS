@@ -17,6 +17,12 @@ update-ovmf:
 run: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT)
 
+run-smp-debug: $(OUTPUT)
+	qemu-system-x86_64 -M q35,smm=off -m 512M -smp 4 -cpu core2duo -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -boot d -cdrom $(OUTPUT) $(QEMUDEBUG) -smp 4 &
+	gdb-multiarch -tui -q -x smpgdb.script out/kernel.elf
+	pkill -f qemu-system-x86_64
+	reset
+
 run-slow: $(OUTPUT)
 	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) -smp 1 -m 128M -vga std
 

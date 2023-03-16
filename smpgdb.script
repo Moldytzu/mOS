@@ -1,0 +1,16 @@
+# prepare interface for assembly
+layout asm
+tui reg all
+
+# attach to qemu then break in the kernel entry function
+target remote localhost:1234
+b kmain
+continue
+
+layout split # for C
+
+# switch to second core
+thread 2
+b scheduler.c:72 thread 2
+
+continue
