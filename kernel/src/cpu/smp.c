@@ -3,9 +3,11 @@
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
 #include <cpu/lapic.h>
+#include <cpu/fpu.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
 #include <mm/vmm.h>
+#include <mm/pmm.h>
 #include <sys/syscall.h>
 #include <sched/scheduler.h>
 #include <sched/scheduler.h>
@@ -32,7 +34,7 @@ void smpJumpUserspace()
 void cpuStart(struct limine_smp_info *cpu)
 {
     cli();
-
+    fpuInit();
     gdtInstall(smpID());
     idtInstall(smpID());
     vmmSwap(vmmGetBaseTable());

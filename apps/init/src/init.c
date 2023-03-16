@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define SOCKET_SIZE 4096
+// #define DRIVERS
 
 uint64_t sockID = 0;
 void *sockBuffer = NULL;
@@ -133,7 +134,9 @@ void parseCFG()
         if (verbose)
             printf("Starting driver from %s\n", drivers[i]); // for some reason it shows null
 
+#ifdef DRIVERS
         sys_driver(SYS_DRIVER_START, (uint64_t)(drivers[i]), 0, 0);
+#endif
     }
 }
 

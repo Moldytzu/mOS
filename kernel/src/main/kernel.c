@@ -46,7 +46,7 @@ void kmain()
     } while (currentNode);
 #endif
 
-    if (!elfLoad("/init/systest.mx", 0, 0, 0)) // load the init executable
+    if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
 
     smpJumpUserspace(); // send all cores to userspace
