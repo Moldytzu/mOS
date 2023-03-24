@@ -1,6 +1,7 @@
 #pragma once
 #include <misc/utils.h>
 #include <cpu/control.h>
+#include <cpu/tlb.h>
 
 #define VMM_ENTRY_PRESENT 0
 #define VMM_ENTRY_RW 1

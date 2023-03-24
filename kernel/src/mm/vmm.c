@@ -112,6 +112,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     pt->entries[index.P] = currentEntry;                           // write the entry in the table
 
     vmmSetFlags(table, index, user, rw, wt, cache); // set the flags
+    tlbFlush(virtualAddress);
     atomicRelease(&vmmLock);
 }
 
@@ -133,6 +134,8 @@ void vmmUnmap(vmm_page_table_t *table, void *virtualAddress)
     currentEntry = pt->entries[index.P];                 // index p
     vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, false); // unvalidate page
     pt->entries[index.P] = currentEntry;                 // write the entry in the table
+
+    tlbFlush(virtualAddress);
 }
 
 // get the base table aka kernel table
@@ -144,6 +147,8 @@ void *vmmGetBaseTable()
 // get physical address of a virtual address
 void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
 {
+    tlbFlush(virtualAddress);
+
     // get physical memory address form virtual memory address
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     vmm_page_table_t *pdp, *pd, *pt;

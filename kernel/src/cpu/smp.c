@@ -46,8 +46,13 @@ void cpuStart(struct limine_smp_info *cpu)
     while (!smpJump)
         pause();
 
+    tlbFlushAll();
+
     lapicInit(false);
     syscallInit(); // enable system calls
+
+    tlbFlushAll();
+
     schedEnable();
 
     hang();
