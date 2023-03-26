@@ -3,15 +3,15 @@
 #include <cpu/control.h>
 #include <cpu/tlb.h>
 
-#define VMM_ENTRY_PRESENT 0
-#define VMM_ENTRY_RW 1
-#define VMM_ENTRY_USER 2
-#define VMM_ENTRY_WRITE_THROUGH 3
-#define VMM_ENTRY_CACHE_DISABLE 4
-#define VMM_ENTRY_ACCESSED 5
-#define VMM_ENTRY_DIRTY 6
-#define VMM_ENTRY_HUGE_PAGES 7
-#define VMM_ENTRY_NO_EXECUTE 63
+#define VMM_ENTRY_PRESENT (1 << 0)
+#define VMM_ENTRY_RW (1 << 1)
+#define VMM_ENTRY_USER (1 << 2)
+#define VMM_ENTRY_WRITE_THROUGH (1 << 3)
+#define VMM_ENTRY_CACHE_DISABLE (1 << 4)
+#define VMM_ENTRY_ACCESSED (1 << 5)
+#define VMM_ENTRY_DIRTY (1 << 6)
+#define VMM_ENTRY_HUGE_PAGES (1 << 7)
+#define VMM_ENTRY_NO_EXECUTE (1 << 63)
 
 #define VMM_PAGE 4096
 
@@ -43,11 +43,11 @@ ifunc void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
 {
     if (value)
     {
-        *entry |= (1 << flag); // set flag
-        return;                // return
+        *entry |= flag; // set flag
+        return;         // return
     }
 
-    *entry &= ~(1 << flag); // unset flag
+    *entry &= ~flag; // unset flag
 }
 
 // get the address of an entry
