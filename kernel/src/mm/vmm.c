@@ -26,24 +26,18 @@ void vmmInit()
 // set flags of some entries given by the indices
 ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, uint64_t flags)
 {
-    vmm_page_table_t *pml4, *pdp, *pd, *pt;
-    uint64_t currentEntry;
-    pml4 = table;
+    vmm_page_table_t *pdp, *pd, *pt;
 
-    currentEntry = pml4->entries[index.PDP];         // index pdp
-    pml4->entries[index.PDP] = currentEntry | flags; // write the entry in the table
+    table->entries[index.PDP] = table->entries[index.PDP] | flags; // index pdp
 
-    pdp = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
-    currentEntry = pdp->entries[index.PD];                          // index further
-    pdp->entries[index.PD] = currentEntry | flags;                  // write the entry in the table
+    pdp = (vmm_page_table_t *)(vmmGetAddress(&table->entries[index.PDP]) << 12);
+    pdp->entries[index.PD] = pdp->entries[index.PD] | flags;
 
-    pd = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
-    currentEntry = pd->entries[index.PT];                          // index further
-    pd->entries[index.PT] = currentEntry | flags;                  // write the entry in the table
-
-    pt = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
-    currentEntry = pt->entries[index.P];                           // index further
-    pt->entries[index.P] = currentEntry | flags;                   // write the entry in the table
+    pd = (vmm_page_table_t *)(vmmGetAddress(&pdp->entries[index.PD]) << 12);
+    pd->entries[index.PT] = pd->entries[index.PT] | flags;
+    
+    pt = (vmm_page_table_t *)(vmmGetAddress(&pd->entries[index.PT]) << 12);
+    pt->entries[index.P] = pt->entries[index.P] | flags;
 }
 
 // map a virtual address to a physical address in a page table
@@ -186,6 +180,7 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
         }
 
         vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
+        vmmMap(newTable, lapicBase(), lapicBase(), VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
     }
 
     // map memory map entries as kernel rw
@@ -219,9 +214,6 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
                 vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), VMM_ENTRY_RW);
             }
     }
-
-    // map lapic
-    vmmMap(newTable, lapicBase(), lapicBase(), VMM_ENTRY_RW);
 
     logDbg(LOG_ALWAYS, "vmm: wasted %d KB on a new page table", toKB(a - pmmTotal().available));
 

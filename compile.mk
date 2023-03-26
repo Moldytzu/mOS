@@ -11,20 +11,21 @@ LD := ~/cross_compiler/bin/x86_64-elf-ld
 ASM := nasm
 
 # flags for c compiler
-CFLAGS :=   		         \
-	-I.                  	 \
-	-Iinc/                   \
-	-std=gnu11           	 \
-	-ffreestanding       	 \
-	-fno-stack-protector 	 \
-	-fno-pic             	 \
-	-mabi=sysv           	 \
-	-mno-red-zone        	 \
-	-Werror 			     \
-	-mcmodel=large           \
-	-Og                      \
-	-march=nocona            \
-	-MMD                     \
+CFLAGS :=   		              \
+	-I.                  	      \
+	-Iinc/                        \
+	-std=gnu11           	      \
+	-ffreestanding       	      \
+	-fno-stack-protector 	      \
+	-fno-pic             	      \
+	-mabi=sysv           	      \
+	-mno-red-zone        	      \
+	-Werror 			          \
+	-Wno-address-of-packed-member \
+	-mcmodel=large                \
+	-Og                           \
+	-march=nocona                 \
+	-MMD                          \
 	-g
 
 # flags for assembler
