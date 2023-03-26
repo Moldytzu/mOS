@@ -26,7 +26,7 @@ void vmmInit()
 }
 
 // set flags of some entries given by the indices
-inline __attribute__((always_inline)) void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw, bool wt, bool cache)
+ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw, bool wt, bool cache)
 {
     vmm_page_table_t *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
@@ -148,8 +148,6 @@ void *vmmGetBaseTable()
 // get physical address of a virtual address
 void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
 {
-    tlbFlush(virtualAddress);
-
     // get physical memory address form virtual memory address
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     vmm_page_table_t *pdp, *pd, *pt;

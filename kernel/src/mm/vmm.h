@@ -87,7 +87,6 @@ ifunc void vmmSwap(void *newTable)
 }
 
 // mapping
-void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw, bool wt, bool cache);
 void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw, bool wt, bool cache);
 void vmmUnmap(vmm_page_table_t *table, void *virtualAddress);
 void *vmmGetBaseTable();
