@@ -11,8 +11,6 @@
 #include <misc/logger.h>
 #include <sched/hpet.h>
 
-// todo: don't use booleans to set flags, instead let the function take an uint64_t and or it over the flags thus changing them easily and makes this extensible if a flag is needed
-
 locker_t vmmLock; // todo: replace this with a per-table lock
 vmm_page_table_t *baseTable;
 
@@ -26,40 +24,30 @@ void vmmInit()
 }
 
 // set flags of some entries given by the indices
-ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw, bool wt, bool cache)
+ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, uint64_t flags)
 {
     vmm_page_table_t *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
     pml4 = table;
 
     currentEntry = pml4->entries[index.PDP];         // index pdp
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);     // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user); // userspace
-    pml4->entries[index.PDP] = currentEntry;         // write the entry in the table
+    pml4->entries[index.PDP] = currentEntry | flags; // write the entry in the table
 
     pdp = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
     currentEntry = pdp->entries[index.PD];                          // index further
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                    // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);                // userspace
-    pdp->entries[index.PD] = currentEntry;                          // write the entry in the table
+    pdp->entries[index.PD] = currentEntry | flags;                  // write the entry in the table
 
     pd = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
     currentEntry = pd->entries[index.PT];                          // index further
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                   // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);               // userspace
-    pd->entries[index.PT] = currentEntry;                          // write the entry in the table
+    pd->entries[index.PT] = currentEntry | flags;                  // write the entry in the table
 
     pt = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
     currentEntry = pt->entries[index.P];                           // index further
-    vmmSetFlag(&currentEntry, VMM_ENTRY_RW, rw);                   // read-write
-    vmmSetFlag(&currentEntry, VMM_ENTRY_USER, user);               // userspace
-    vmmSetFlag(&currentEntry, VMM_ENTRY_WRITE_THROUGH, wt);        // write-through
-    vmmSetFlag(&currentEntry, VMM_ENTRY_CACHE_DISABLE, cache);     // cache disable
-    pt->entries[index.P] = currentEntry;                           // write the entry in the table
+    pt->entries[index.P] = currentEntry | flags;                   // write the entry in the table
 }
 
 // map a virtual address to a physical address in a page table
-void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw, bool wt, bool cache)
+void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, uint64_t flags)
 {
     atomicAquire(&vmmLock);
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
@@ -68,51 +56,47 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
 
     pml4 = table;
 
-    currentEntry = pml4->entries[index.PDP];           // index pdp
-    if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
+    currentEntry = pml4->entries[index.PDP]; // index pdp
+    if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pdp = pmmPage();     // allocate table
         zero(pdp, VMM_PAGE); // clear it
 
-        vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);  // set it's address
-        vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        pml4->entries[index.PDP] = currentEntry;            // write the entry in the table
+        vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);           // set it's address
+        pml4->entries[index.PDP] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }
     else
         pdp = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pdp->entries[index.PD];             // index pd
-    if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
+    currentEntry = pdp->entries[index.PD];   // index pd
+    if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pd = pmmPage();     // allocate table
         zero(pd, VMM_PAGE); // clear it
 
-        vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);   // set it's address
-        vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        pdp->entries[index.PD] = currentEntry;              // write the entry in the table
+        vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);          // set it's address
+        pdp->entries[index.PD] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }
     else
         pd = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
 
-    currentEntry = pd->entries[index.PT];              // index pt
-    if (!vmmGetFlag(&currentEntry, VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
+    currentEntry = pd->entries[index.PT];    // index pt
+    if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pt = pmmPage();     // allocate table
         zero(pt, VMM_PAGE); // clear it
 
-        vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);   // set it's address
-        vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true); // present
-        pd->entries[index.PT] = currentEntry;               // write the entry in the table
+        vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);         // set it's address
+        pd->entries[index.PT] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }
     else
         pt = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12); // continue
 
     currentEntry = pt->entries[index.P];                           // index p
     vmmSetAddress(&currentEntry, (uint64_t)physicalAddress >> 12); // set the address to the physical one
-    vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, true);            // present
-    pt->entries[index.P] = currentEntry;                           // write the entry in the table
+    pt->entries[index.P] = currentEntry | VMM_ENTRY_PRESENT;       // write the entry in the table
 
-    vmmSetFlags(table, index, user, rw, wt, cache); // set the flags
+    vmmSetFlags(table, index, flags); // set the flags
     tlbFlush(virtualAddress);
     atomicRelease(&vmmLock);
 }
@@ -132,9 +116,8 @@ void vmmUnmap(vmm_page_table_t *table, void *virtualAddress)
     currentEntry = pd->entries[index.PT]; // index pt
     pt = (vmm_page_table_t *)(vmmGetAddress(&currentEntry) << 12);
 
-    currentEntry = pt->entries[index.P];                 // index p
-    vmmSetFlag(&currentEntry, VMM_ENTRY_PRESENT, false); // unvalidate page
-    pt->entries[index.P] = currentEntry;                 // write the entry in the table
+    currentEntry = pt->entries[index.P];                      // index p
+    pt->entries[index.P] = currentEntry & ~VMM_ENTRY_PRESENT; // write the entry in the table
 
     tlbFlush(virtualAddress);
 }
@@ -181,7 +164,10 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     struct limine_kernel_address_response *kaddr = bootloaderGetKernelAddress();
 
     // map the system tables as kernel rw
-    vmmMap(newTable, newTable, newTable, driver, true, false, false); // page table
+    if (driver)
+        vmmMap(newTable, newTable, newTable, VMM_ENTRY_USER | VMM_ENTRY_RW); // page table
+    else
+        vmmMap(newTable, newTable, newTable, VMM_ENTRY_RW); // page table
 
     // map system tables for non-kernel tables (kernel tables have everything mapped)
     if (!full)
@@ -191,15 +177,15 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
             gdt_tss_t *tss = tssGet()[i];
             gdt_descriptor_t gdt = gdtGet()[i];
 
-            vmmMap(newTable, (void *)tss, (void *)tss, false, true, false, false);                               // tss struct
-            vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, false, true, false, false); // kernel ist
-            vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, false, true, false, false); // userspace ist
+            vmmMap(newTable, (void *)tss, (void *)tss, VMM_ENTRY_RW);                               // tss struct
+            vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, VMM_ENTRY_RW); // kernel ist
+            vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // userspace ist
 
-            vmmMap(newTable, gdt.entries, gdt.entries, false, true, false, false);   // gdt entries
-            vmmMap(newTable, &gdtGet()[i], &gdtGet()[i], false, true, false, false); // gdtr
+            vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW);   // gdt entries
+            vmmMap(newTable, &gdtGet()[i], &gdtGet()[i], VMM_ENTRY_RW); // gdtr
         }
 
-        vmmMap(newTable, idtGet(), idtGet(), false, true, false, false);
+        vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
     }
 
     // map memory map entries as kernel rw
@@ -212,18 +198,30 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
 
         if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
         {
+            if (driver)
+                for (size_t i = 0; i < entry->length; i += 4096)
+                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_USER | VMM_ENTRY_RW);
+            else
+                for (size_t i = 0; i < entry->length; i += 4096)
+                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW);
+        }
+
+        if (driver)
             for (size_t i = 0; i < entry->length; i += 4096)
-                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), driver, true, false, false);
-        }
-        for (size_t i = 0; i < entry->length; i += 4096)
-        {
-            vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), driver, true, false, false);
-            vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), driver, true, false, false);
-        }
+            {
+                vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), VMM_ENTRY_USER | VMM_ENTRY_RW);
+                vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), VMM_ENTRY_RW);
+            }
+        else
+            for (size_t i = 0; i < entry->length; i += 4096)
+            {
+                vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), VMM_ENTRY_USER | VMM_ENTRY_RW);
+                vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), VMM_ENTRY_RW);
+            }
     }
 
     // map lapic
-    vmmMap(newTable, lapicBase(), lapicBase(), false, true, false, false);
+    vmmMap(newTable, lapicBase(), lapicBase(), VMM_ENTRY_RW);
 
     logDbg(LOG_ALWAYS, "vmm: wasted %d KB on a new page table", toKB(a - pmmTotal().available));
 

@@ -60,7 +60,7 @@ void framebufferFlush()
 
     // map the framebuffer
     for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
-        vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, false, true, true, false);
+        vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW);
 }
 
 // clear the framebuffer with a colour

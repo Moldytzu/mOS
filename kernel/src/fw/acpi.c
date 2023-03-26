@@ -75,7 +75,7 @@ void acpiEnumeratePCI()
 
             acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)base;
 
-            vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, false, true, true, false); // map the header
+            vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, VMM_ENTRY_RW); // map the header
 
             // non-existent bus
             if (baseHeader->device == UINT16_MAX || baseHeader->device == 0)
@@ -89,7 +89,7 @@ void acpiEnumeratePCI()
                 {
                     acpi_pci_header_t *header = (acpi_pci_header_t *)(base + (bus << 20 | device << 15 | function << 12));
 
-                    vmmMap(vmmGetBaseTable(), header, header, false, true, true, false); // map the header
+                    vmmMap(vmmGetBaseTable(), header, header, VMM_ENTRY_RW); // map the header
 
                     if (header->device == UINT16_MAX || header->device == 0) // invalid function
                         continue;
@@ -160,7 +160,7 @@ void acpiInit()
     // get rsdp
     rsdp = (acpi_rsdp_hdr_t *)bootloaderGetRSDP();
 
-    vmmMap(vmmGetBaseTable(), rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), false, true, true, false); // properly map the rsdp
+    vmmMap(vmmGetBaseTable(), rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), VMM_ENTRY_RW); // properly map the rsdp
 
     // parse the version field
     revision = rsdp->version;

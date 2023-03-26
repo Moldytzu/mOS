@@ -94,10 +94,10 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     t->pageTable = (uint64_t)pt;
 
     for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
-        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, true, true, false, false);
+        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
     for (size_t i = 0; i < execSize; i += VMM_PAGE)
-        vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, true, true, false, false); // map task as user, read-write
+        vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER); // map task as user, read-write
 
     // arguments (todo: refactor this code to be more readable)
     if (argv)
@@ -142,6 +142,8 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 {
     if (!_enabled)
         return;
+
+    tlbFlushAll();
 
     uint64_t id = smpID();
 

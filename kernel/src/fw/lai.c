@@ -35,7 +35,7 @@ void *laihost_map(size_t address, size_t count)
     if (address % 4096 != 0) // ensure alignment
         address -= address % 4096;
 
-    vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, false, true, false, false);
+    vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, VMM_ENTRY_RW);
 
     return (void *)address;
 }

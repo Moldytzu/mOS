@@ -67,7 +67,7 @@ void lapicInit(bool bsp)
         outb(PIC_SLAVE_DAT, 0b11111111);
 
         // map the base
-        vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), false, true, false, true); // disable cache
+        vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
     }
 
     // reset important registers to a known state before enabling the apic (not required by any spec)

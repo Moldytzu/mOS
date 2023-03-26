@@ -33,23 +33,6 @@ pstruct
 }
 vmm_page_table_t;
 
-// operations on entries
-ifunc bool vmmGetFlag(uint64_t *entry, uint8_t flag)
-{
-    return *entry & (1 << flag); // get flag
-}
-
-ifunc void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
-{
-    if (value)
-    {
-        *entry |= flag; // set flag
-        return;         // return
-    }
-
-    *entry &= ~flag; // unset flag
-}
-
 // get the address of an entry
 ifunc uint64_t vmmGetAddress(uint64_t *entry)
 {
@@ -87,7 +70,7 @@ ifunc void vmmSwap(void *newTable)
 }
 
 // mapping
-void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw, bool wt, bool cache);
+void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, uint64_t flags);
 void vmmUnmap(vmm_page_table_t *table, void *virtualAddress);
 void *vmmGetBaseTable();
 void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress);
