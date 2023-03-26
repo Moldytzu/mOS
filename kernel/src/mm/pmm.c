@@ -99,6 +99,12 @@ void *pmmPages(uint64_t pages)
 
             for (size_t i = 0; i < pool->bitmapBytes * 8; i++)
             {
+                if (BMP_WORD_ALIGNED(i) && ((BMP_ACCESS_TYPE *)pool->base)[i / BMP_ACCESS_BITS] == UINT32_MAX) // if index is aligned to 1 bitmap word and the word is all set then skip it (speeds up allocation by a lot)
+                {
+                    i += BMP_ACCESS_BITS - 1;
+                    continue;
+                }
+
                 if (get(pool, i)) // find first available index
                     continue;
 
