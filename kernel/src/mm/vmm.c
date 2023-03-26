@@ -9,6 +9,7 @@
 #include <cpu/lapic.h>
 #include <main/panic.h>
 #include <misc/logger.h>
+#include <sched/hpet.h>
 
 // todo: don't use booleans to set flags, instead let the function take an uint64_t and or it over the flags thus changing them easily and makes this extensible if a flag is needed
 
@@ -170,9 +171,7 @@ void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
 // create a new table
 vmm_page_table_t *vmmCreateTable(bool full, bool driver)
 {
-#ifdef K_VMM_DEBUG
     uint64_t a = pmmTotal().available;
-#endif
 
     // create a new table to use as a base for everything
     vmm_page_table_t *newTable = (vmm_page_table_t *)pmmPages(2);
@@ -228,9 +227,7 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     // map lapic
     vmmMap(newTable, lapicBase(), lapicBase(), false, true, false, false);
 
-#ifdef K_VMM_DEBUG
-    printks("vmm: wasted %d KB on a new page table\n\r", toKB(a - pmmTotal().available));
-#endif
+    logDbg(LOG_ALWAYS, "vmm: wasted %d KB on a new page table", toKB(a - pmmTotal().available));
 
     return newTable; // return the created table
 }
@@ -287,4 +284,24 @@ void vmmDestroy(vmm_page_table_t *table)
 #ifdef K_VMM_DEBUG
     printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, toKB(pmmTotal().available - a));
 #endif
+}
+
+#define VMM_BENCHMARK_SIZE 70
+void vmmBenchmark()
+{
+    // test performance of the mapper
+    logInfo("vmm: benchmarking");
+
+    uint64_t start = hpetMillis();
+
+    void *addr[VMM_BENCHMARK_SIZE];
+
+    for (int i = 0; i < VMM_BENCHMARK_SIZE; i++) // allocate
+        addr[i] = vmmCreateTable(true, false);
+
+    uint64_t end = hpetMillis();
+
+    logInfo("vmm: it took %d miliseconds", end - start);
+
+    hang();
 }
