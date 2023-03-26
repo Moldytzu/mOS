@@ -55,12 +55,12 @@ void pmmDisableDBG()
     debug = false;
 }
 
-bool get(pmm_pool_t *pool, size_t idx)
+ifunc bool get(pmm_pool_t *pool, size_t idx)
 {
     return (bool)bmpGet(pool->base, idx);
 }
 
-void set(pmm_pool_t *pool, size_t idx, bool value)
+ifunc void set(pmm_pool_t *pool, size_t idx, bool value)
 {
     bmpSet(pool->base, idx, value);
 }
