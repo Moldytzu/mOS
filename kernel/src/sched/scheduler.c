@@ -25,6 +25,7 @@ bool _enabled = false;
 
 void commonTask()
 {
+    sti();
     while (1)
         iasm("int $0x20"); // yield directly
 }
@@ -32,14 +33,10 @@ void commonTask()
 // determine to which core we should add the the task
 ifunc uint16_t nextCore()
 {
-    lock(schedLock, {
-        lastCore++;
-
-        if (lastCore == maxCore)
-            lastCore = 0;
-    });
-
-    return lastCore;
+    if (lastCore == maxCore)
+        lastCore = 0;
+        
+    return lastCore++;
 }
 
 // first task of a core
@@ -62,77 +59,80 @@ sched_task_t *schedLast(uint16_t core)
 // add new task
 sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
 {
-    uint32_t id = nextCore(); // get next core id
+    sched_task_t *t;
+    lock(schedLock, {
+        uint32_t id = nextCore(); // get next core id
 
-    sched_task_t *t = schedLast(id);          // get last task of the next core
-    t->next = blkBlock(sizeof(sched_task_t)); // allocate next
-    TASK(t->next)->prev = t;                  // set previous task
-    t = TASK(t->next);                        // point to the newly allocated task
-    zero(t, sizeof(sched_task_t));            // clear it
+        t = schedLast(id);                        // get last task of the next core
+        t->next = blkBlock(sizeof(sched_task_t)); // allocate next
+        TASK(t->next)->prev = t;                  // set previous task
+        t = TASK(t->next);                        // point to the newly allocated task
+        zero(t, sizeof(sched_task_t));            // clear it
 
-    // metadata
-    lock(schedLock, { t->id = lastTaskID++; }); // set ID
-    t->core = id;                               // set core id
-    memcpy(t->name, name, strlen(name));        // set a name
-    t->lastVirtualAddress = TASK_BASE_ALLOC;
-    t->terminal = terminal;
-    t->isElf = elf;
+        // metadata
+        t->id = lastTaskID++;                // set ID
+        t->core = id;                        // set core id
+        memcpy(t->name, name, strlen(name)); // set a name
+        t->lastVirtualAddress = TASK_BASE_ALLOC;
+        t->terminal = terminal;
+        t->isElf = elf;
 
-    // essential registers
-    void *stack = pmmPages(K_STACK_SIZE / 4096);
-    t->registers.rflags = 0b1000000010;                                   // enable interrupts
-    t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE; // set the new stack
-    t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;               // set instruction pointer
+        // essential registers
+        void *stack = pmmPages(K_STACK_SIZE / 4096);
+        t->registers.rflags = 0b1000000010;                                   // enable interrupts
+        t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE; // set the new stack
+        t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;               // set instruction pointer
 
-    // segment registers
-    t->registers.cs = (8 * 4) | 3;
-    t->registers.ss = (8 * 3) | 3;
+        // segment registers
+        t->registers.cs = (8 * 4) | 3;
+        t->registers.ss = (8 * 3) | 3;
 
-    // page table
-    vmm_page_table_t *pt = vmmCreateTable(false, false);
-    t->registers.cr3 = (uint64_t)pt;
-    t->pageTable = (uint64_t)pt;
+        // page table
+        vmm_page_table_t *pt = vmmCreateTable(false, false);
+        t->registers.cr3 = (uint64_t)pt;
+        t->pageTable = (uint64_t)pt;
 
-    for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
-        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
+        for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
+            vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-    for (size_t i = 0; i < execSize; i += VMM_PAGE)
-        vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER); // map task as user, read-write
+        for (size_t i = 0; i < execSize; i += VMM_PAGE)
+            vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER); // map task as user, read-write
 
-    // arguments (todo: refactor this code to be more readable)
-    if (argv)
-    {
-        t->registers.rdi = 1 + argc;                   // arguments count (1, the name)
-        t->registers.rsi = (uint64_t)t->registers.rsp; // the stack contains the array
-
-        uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
-
-        memcpy(stack + offset, name, strlen(name));        // copy the name
-        *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
-        offset += strlen(name) + 1;                        // move the offset after the name
-
-        for (int i = 0; i < argc; i++)
+        // arguments (todo: refactor this code to be more readable)
+        if (argv)
         {
-            memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
-            *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
-            offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
+            t->registers.rdi = 1 + argc;                   // arguments count (1, the name)
+            t->registers.rsi = (uint64_t)t->registers.rsp; // the stack contains the array
+
+            uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
+
+            memcpy(stack + offset, name, strlen(name));        // copy the name
+            *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
+            offset += strlen(name) + 1;                        // move the offset after the name
+
+            for (int i = 0; i < argc; i++)
+            {
+                memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
+                *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
+                offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
+            }
         }
-    }
 
-    // memory fields
-    t->allocated = pmmPage();                // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
-    zero(t->allocated, sizeof(uint64_t));    // null its content
-    t->allocatedIndex = 0;                   // the current index in the array
-    t->allocatedBufferPages++;               // we have one page already allocated
-    t->lastVirtualAddress = TASK_BASE_ALLOC; // set the last address
+        // memory fields
+        t->allocated = pmmPage();                // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+        zero(t->allocated, sizeof(uint64_t));    // null its content
+        t->allocatedIndex = 0;                   // the current index in the array
+        t->allocatedBufferPages++;               // we have one page already allocated
+        t->lastVirtualAddress = TASK_BASE_ALLOC; // set the last address
 
-    // enviroment
-    t->enviroment = pmmPage();     // 4k should be enough for now
-    zero(t->enviroment, VMM_PAGE); // clear the enviroment
-    if (!cwd)
-        t->cwd[0] = '/'; // set the current working directory to the root
-    else
-        memcpy(t->cwd, cwd, strlen(cwd)); // copy the current working directory
+        // enviroment
+        t->enviroment = pmmPage();     // 4k should be enough for now
+        zero(t->enviroment, VMM_PAGE); // clear the enviroment
+        if (!cwd)
+            t->cwd[0] = '/'; // set the current working directory to the root
+        else
+            memcpy(t->cwd, cwd, strlen(cwd)); // copy the current working directory
+    });
 
     return t;
 }
@@ -143,69 +143,70 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     if (!_enabled)
         return;
 
-    tlbFlushAll();
+    lock(schedLock, {
+        uint64_t id = smpID();
 
-    uint64_t id = smpID();
-
-    if (!taskKilled[id])
-    {
-        if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
+        if (!taskKilled[id])
         {
-            lastTask[id]->quantumLeft--;
-            return;
-        }
-
-        // we've hit the commonTask
-        if (lastTask[id] == &queueStart[id])
-        {
-            // adjust quantums based on the lapic frequency (it isn't the same on every machine thus we have to adjust)
-            uint64_t *tps = lapicGetTPS();
-            minQuantum[id] = (tps[id] / K_SCHED_FREQ) + 1;
-
-            if (id == 0)
+            if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
             {
-                switch (vtGetMode())
+                lastTask[id]->quantumLeft--;
+                release(schedLock);
+                return;
+            }
+
+            // we've hit the commonTask
+            if (lastTask[id] == &queueStart[id])
+            {
+                // adjust quantums based on the lapic frequency (it isn't the same on every machine thus we have to adjust)
+                uint64_t *tps = lapicGetTPS();
+                minQuantum[id] = (tps[id] / K_SCHED_FREQ) + 1;
+
+                if (id == 0)
                 {
-                case VT_DISPLAY_FB:
-                    // todo: copy the user display framebuffer to the global framebuffer
-                    break;
-                case VT_DISPLAY_TTY0:
-                    framebufferClear(0);
-                    framebufferWrite(vtGet(0)->buffer);
-                    break;
-                case VT_DISPLAY_KERNEL:
-                default: // doesn't update the framebuffer and lets the kernel write things to it
-                    break;
+                    switch (vtGetMode())
+                    {
+                    case VT_DISPLAY_FB:
+                        // todo: copy the user display framebuffer to the global framebuffer
+                        break;
+                    case VT_DISPLAY_TTY0:
+                        framebufferClear(0);
+                        framebufferWrite(vtGet(0)->buffer);
+                        break;
+                    case VT_DISPLAY_KERNEL:
+                    default: // doesn't update the framebuffer and lets the kernel write things to it
+                        break;
+                    }
                 }
             }
-        }
 
 #ifdef K_ACPI_LAI
-        // handle sci events like power button
-        if (id == 0 && lastTask[id] == &queueStart[id])
-        {
-            uint16_t event = lai_get_sci_event();
-            if (event == ACPI_POWER_BUTTON)
-                acpiShutdown();
-        }
+            // handle sci events like power button
+            if (id == 0 && lastTask[id] == &queueStart[id])
+            {
+                uint16_t event = lai_get_sci_event();
+                if (event == ACPI_POWER_BUTTON)
+                    acpiShutdown();
+            }
 #endif
 
-        // set new quantum
-        lastTask[id]->quantumLeft = minQuantum[id];
+            // set new quantum
+            lastTask[id]->quantumLeft = minQuantum[id];
 
-        // save old state
-        memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
-    }
+            // save old state
+            memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
+        }
 
-    // get next id
-    lastTask[id] = lastTask[id]->next;
-    if (!lastTask[id])
-        lastTask[id] = &queueStart[id];
+        // get next id
+        lastTask[id] = lastTask[id]->next;
+        if (!lastTask[id])
+            lastTask[id] = &queueStart[id];
 
-    // copy new state
-    memcpy(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t));
+        // copy new state
+        memcpy(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t));
 
-    vmmSwap((void *)lastTask[id]->registers.cr3);
+        vmmSwap((void *)lastTask[id]->registers.cr3);
+    });
 }
 
 // initialise the scheduler
@@ -317,7 +318,6 @@ void schedKill(uint32_t id)
 void schedEnable()
 {
     _enabled = true;
-    sti();
     commonTask();
     while (1)
         ;
