@@ -17,36 +17,12 @@ uint64_t hpetNano;
 
 void hpetWrite(uint64_t offset, uint64_t data)
 {
-    switch (hpet->base.addressSpace)
-    {
-    case ACPI_GAS_ACCESS_MEMORY:
-        *((uint64_t *)(hpet->base.address + offset)) = data;
-        break;
-
-        // todo: add more address space modes if necessary
-
-    default:
-        panick("Failed HPET write! Unsupported address space.");
-        break;
-    }
+    *((uint64_t *)(hpet->base.address + offset)) = data;
 }
 
 uint64_t hpetRead(uint64_t offset)
 {
-    switch (hpet->base.addressSpace)
-    {
-    case ACPI_GAS_ACCESS_MEMORY:
-        return *((uint64_t *)(hpet->base.address + offset));
-        break;
-
-        // todo: add more address space modes if necessary
-
-    default:
-        panick("Failed HPET read! Unsupported address space.");
-        break;
-    }
-
-    return 0;
+    return *((uint64_t *)(hpet->base.address + offset));
 }
 
 void hpetSleepNanos(uint64_t nanos)
@@ -84,12 +60,12 @@ void hpetInit()
 {
     hpet = (acpi_hpet_t *)acpiGet("HPET", 0);
 
-    if (!hpet) // didn't find it
+    if (!hpet || hpet->base.addressSpace != ACPI_GAS_ACCESS_MEMORY) // didn't find it or it uses an unsupported addressing space
         return;
 
-    if (hpet->base.addressSpace == ACPI_GAS_ACCESS_MEMORY)
-        vmmMap(vmmGetBaseTable(), (void *)hpet->base.address, (void *)hpet->base.address, VMM_ENTRY_RW); // map if it is in memory
+    vmmMap(vmmGetBaseTable(), (void *)hpet->base.address, (void *)hpet->base.address, VMM_ENTRY_RW); // map it
 
+    // calculate the scale
     uint64_t hpetFemto = (hpetRead(HPET_OFFSET_GENERAL_CAPABILITIES) >> 32) & 0xFFFFFFFF;
     hpetNano = hpetFemto / 1000000; // convert units of measure (femto to nano)
 
