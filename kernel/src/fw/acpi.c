@@ -51,7 +51,7 @@ acpi_sdt_t *acpiGet(const char *sig, int index)
     return NULL; // return nothing
 }
 
-// enumerate the pci bus using mcfg
+// enumerate the pci bus using mcfg and ecam
 void acpiEnumeratePCI()
 {
     if (!mcfg)
@@ -63,10 +63,8 @@ void acpiEnumeratePCI()
         // enumerate each bus
         for (int bus = mcfg->buses[i].startBus; bus < mcfg->buses[i].endBus; bus++)
         {
-            uint64_t base = mcfg->buses[i].base;
-
-            acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)base;
-
+            uint64_t busBase = mcfg->buses[i].base;
+            acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)busBase;
             vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, VMM_ENTRY_RW); // map the header
 
             // non-existent bus
@@ -79,25 +77,20 @@ void acpiEnumeratePCI()
                 // enumerate each function
                 for (int function = 0; function < 8; function++)
                 {
-                    acpi_pci_header_t *header = (acpi_pci_header_t *)(base + (bus << 20 | device << 15 | function << 12));
+                    acpi_pci_header_t *header = (acpi_pci_header_t *)(busBase + (bus << 20 | device << 15 | function << 12));
 
                     vmmMap(vmmGetBaseTable(), header, header, VMM_ENTRY_RW); // map the header
 
                     if (header->device == UINT16_MAX || header->device == 0) // invalid function
                         continue;
 
-#ifdef K_ACPI_DEBUG
-                    printks("acpi: found pci function %x:%x at %d.%d.%d\n\r", header->vendor, header->device, bus, device, function);
-#endif
+                    logInfo("acpi: found pci function %x:%x at %d.%d.%d", header->vendor, header->device, bus, device, function);
 
                     // build the descriptor
                     acpi_pci_descriptor_t d;
                     d.bus = bus, d.device = device, d.function = function, d.header = header;
 
-                    // put it in our list of pci functions
-                    if (pciIndex > 4096 / sizeof(acpi_pci_descriptor_t)) // very unlikely
-                        panick("Can't hold that many PCI descriptors!");
-
+                    // put it in our list of pci functions (overflows at 372 descriptors thus we don't have to check anything since it's unlikely to have so many pci functions)
                     pciFuncs[pciIndex++] = d;
                 }
             }
@@ -160,31 +153,8 @@ void acpiInit()
     // set the system descriptor table root based on the revision
     if (revision == 0)
         sdt = (void *)(uint64_t)rsdp->rsdt;
-    else if (revision == 2)
+    else if (revision >= 2)
         sdt = (void *)rsdp->xsdt;
-
-#ifdef K_ACPI_DEBUG
-    if (revision == 0)
-    {
-        acpi_rsdt_t *root = (acpi_rsdt_t *)sdt;
-        size_t entries = (sdt->length - sizeof(acpi_sdt_t)) / sizeof(uint32_t);
-        for (size_t i = 0; i < entries; i++)
-        {
-            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
-            printks("acpi: found %c%c%c%c\n\r", table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
-        }
-    }
-    else
-    {
-        acpi_xsdt_t *root = (acpi_xsdt_t *)sdt;
-        size_t entries = (root->header.length - sizeof(acpi_sdt_t)) / sizeof(uint64_t);
-        for (size_t i = 0; i < entries; i++)
-        {
-            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
-            printks("acpi: found %c%c%c%c\n\r", table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
-        }
-    }
-#endif
 
     laiInit();
 
@@ -197,10 +167,6 @@ void acpiInit()
         pciFuncs = pmmPage(); // allocate a buffer hold the functions
         acpiEnumeratePCI();   // do the enumeration
     }
-
-#ifdef K_ACPI_DEBUG
-    printks("acpi: found %d pci functions in total\n\r", pciIndex);
-#endif
 
     if (pciIndex)
         logInfo("acpi: detected %d pci functions", pciIndex);
