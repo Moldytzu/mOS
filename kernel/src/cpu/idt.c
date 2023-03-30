@@ -105,28 +105,20 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
 {
     vmmSwap(vmmGetBaseTable()); // swap to the base table
 
-    if (redirectTable[int_num]) // there is a request to redirect intrerrupt to a driver
+    switch (int_num)
     {
-        sched_task_t *task = schedGet(redirectTableMeta[int_num]);
+    case APIC_TIMER_VECTOR: // apic timer interrupt
+        return lapicHandleTimer(stack);
 
-        if (!task)
-        {
-            printks("the task doesn't exist anymore!\n");
-            redirectTable[int_num] = NULL;
-            goto cnt;
-        }
+    case APIC_NMI_VECTOR: // this halts the cpus in case of a kernel panic
+        return hang();
 
-        // printks("redirecting %x to %x (requested by task %d with stack %x)\n", int_num, redirectTable[int_num], redirectTableMeta[int_num], task->intrerruptStack.rsp);
-
-        // this line gives the control to the driver
-        callWithPageTable((uint64_t)redirectTable[int_num], (uint64_t)task->pageTable);
-
-        goto cnt;
+    default:
+        break;
     }
 
-cnt:
-    if (int_num == APIC_TIMER_VECTOR)
-        return lapicHandleTimer(stack);
+    if (redirectTable[int_num] && schedGet(redirectTableMeta[int_num]))                                                 // there is a request to redirect intrerrupt to a driver
+        callWithPageTable((uint64_t)redirectTable[int_num], (uint64_t)schedGet(redirectTableMeta[int_num])->pageTable); // give control to the driver
 
     if (stack->cs == 0x23) // userspace
     {

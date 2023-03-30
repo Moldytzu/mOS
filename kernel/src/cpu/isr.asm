@@ -63,23 +63,23 @@ GEN_HANDLER i
 %endrep
 
 SyscallHandlerEntry:
-    push rax ; simulate error push
+    push rax ; push an arbitrary error code
     PUSH_REG
     mov rdi, rsp
     call syscallHandler ; call the syscall handler
     POP_REG
-    add rsp, 8 ; hide that push
+    add rsp, 8 ; pop the error code from earlier
     o64 sysret ; return to userspace
 
 lapicEntry:
     cli ; disable intrerrupts
-    push rax ; simulate error push
+    push rax ; push an arbitrary error code
     PUSH_REG
     mov rdi, rsp ; give the handler the stack frame
     mov rsi, 0x20 ; give the intrerrupt number
     call exceptionHandler
     POP_REG
-    add rsp, 8 ; hide push
+    pop rax ; pop the error code from earlier
     iretq
 
 section .data

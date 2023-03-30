@@ -5,6 +5,7 @@
 #include <cpu/pic.h>
 #include <cpu/control.h>
 #include <cpu/smp.h>
+#include <cpu/lapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
@@ -55,6 +56,8 @@ void kmain()
 
 void panick_impl(const char *file, size_t line, const char *msg)
 {
+    lapicNMI(); // send nmis
+
     logError("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
 
 #ifdef K_PANIC_REBOOT
