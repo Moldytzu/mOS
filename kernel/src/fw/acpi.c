@@ -14,7 +14,6 @@
 uint8_t revision;
 acpi_rsdp_hdr_t *rsdp;
 acpi_sdt_t *sdt;
-acpi_fadt_hdr_t *fadt;
 acpi_mcfg_t *mcfg;
 
 acpi_pci_descriptor_t *pciFuncs = NULL;
@@ -26,34 +25,27 @@ acpi_sdt_t *acpiGet(const char *sig, int index)
     if (!sdt)
         return NULL;
 
-    bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
-    size_t entries = sdt->length - sizeof(acpi_sdt_t);
+    bool xsdt = sdt->signature[0] == 'X';              // XSDT's signature is XSDT, RSDT's signature is RSDT
+    size_t entries = sdt->length - sizeof(acpi_sdt_t); // initial value is the length in bytes of the entire tables
 
+    // determine entries count
     if (xsdt)
-    { // xsdt parsing
-        acpi_xsdt_hdr_t *root = (acpi_xsdt_hdr_t *)sdt;
-        for (size_t i = 0; i < entries / sizeof(uint64_t); i++)
-        {
-            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
-#ifdef K_ACPI_DEBUG
-            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
-#endif
-            if (memcmp8((void *)sig, table->signature, 4) == 0 && index-- == 0) // compare the signatures
-                return table;
-        }
-    }
+        entries /= sizeof(uint64_t);
     else
-    { // rsdt parsing
-        acpi_rsdt_hdr_t *root = (acpi_rsdt_hdr_t *)sdt;
-        for (size_t i = 0; i < entries / sizeof(uint32_t); i++)
-        {
-            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
-#ifdef K_ACPI_DEBUG
-            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
-#endif
-            if (memcmp8((void *)sig, table->signature, 4) == 0 && index-- == 0) // compare the signatures
-                return table;
-        }
+        entries /= sizeof(uint32_t);
+
+    for (size_t i = 0; i < entries; i++)
+    {
+        acpi_sdt_t *t;
+
+        // xsdt uses 64 bit pointers while rsdt uses 32 bit pointers
+        if (xsdt)
+            t = (acpi_sdt_t *)(((uint64_t *)(((acpi_xsdt_hdr_t *)sdt)->entries))[i]);
+        else
+            t = (acpi_sdt_t *)(((uint32_t *)(((acpi_xsdt_hdr_t *)sdt)->entries))[i]);
+
+        if (memcmp8((void *)sig, t->signature, 4) == 0 && index-- == 0) // compare the signatures
+            return t;
     }
 
     return NULL; // return nothing
@@ -196,13 +188,8 @@ void acpiInit()
 
     laiInit();
 
-    // get fadt & mcfg
-    fadt = (acpi_fadt_hdr_t *)acpiGet("FACP", 0);
+    // get mcfg
     mcfg = (acpi_mcfg_t *)acpiGet("MCFG", 0);
-
-    // enable ACPI mode if FADT is present
-    if (fadt)
-        outb(fadt->smiCommand, fadt->acpiEnable);
 
     // enumerate PCI bus if MCFG is present
     if (mcfg)
