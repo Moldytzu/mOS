@@ -29,9 +29,9 @@ void framebufferInit()
     memcpy(&framebuffer, bootloaderGetFramebuffer(), sizeof(struct limine_framebuffer)); // get the tag
 
     font = (psf2_header_t *)&_binary____kfont_psf_start; // use embeded kernel font
-    if (!checkFont(font))
+    if (!checkFont(font))                                // trigger a red screen of death
     {
-        bootloaderWrite("fb: invalid font structure!\n");
+        memset32(framebuffer.address, 0xFF0000, framebuffer.width * framebuffer.pitch / sizeof(uint32_t));
         hang();
     }
 

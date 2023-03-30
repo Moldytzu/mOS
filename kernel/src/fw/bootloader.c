@@ -1,10 +1,6 @@
 #include <fw/bootloader.h>
 #include <mm/pmm.h>
 
-static volatile struct limine_terminal_request terminal_request = {
-    .id = LIMINE_TERMINAL_REQUEST,
-    .revision = 0};
-
 static volatile struct limine_memmap_request memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST,
     .revision = 0};
@@ -37,11 +33,6 @@ static volatile struct limine_stack_size_request stack_request = {
     .id = LIMINE_STACK_SIZE_REQUEST,
     .revision = 0,
     .stack_size = 16 * 1024};
-
-void bootloaderWrite(const char *str)
-{
-    terminal_request.response->write(terminal_request.response->terminals[0], str, strlen(str));
-}
 
 struct limine_file *bootloaderGetModule(const char *name)
 {
