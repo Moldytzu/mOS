@@ -44,6 +44,7 @@ bits 64
 global BaseHandlerEntry%1
 
 BaseHandlerEntry%1:
+    cld ; clear direction flag as the sysv abi mandates
     cli ; disable intrerrupts
     PUSH_REG
     mov rdi, rsp ; give the handler the stack frame
@@ -63,6 +64,7 @@ GEN_HANDLER i
 %endrep
 
 SyscallHandlerEntry:
+    cld      ; clear direction flag as the sysv abi mandates
     push rax ; push an arbitrary error code
     PUSH_REG
     mov rdi, rsp
@@ -72,11 +74,12 @@ SyscallHandlerEntry:
     o64 sysret ; return to userspace
 
 lapicEntry:
-    cli ; disable intrerrupts
+    cld      ; clear direction flag as the sysv abi mandates
+    cli      ; disable intrerrupts
     push rax ; push an arbitrary error code
     PUSH_REG
-    mov rdi, rsp ; give the handler the stack frame
-    mov rsi, 0x20 ; give the intrerrupt number
+    mov rdi, rsp  ; give the stack frame
+    mov rsi, 0x20 ; give a fake intrerrupt number
     call exceptionHandler
     POP_REG
     pop rax ; pop the error code from earlier
