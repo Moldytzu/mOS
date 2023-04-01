@@ -28,16 +28,8 @@ vmm_index_t;
 pstruct
 {
     uint64_t entries[512];
-    uint32_t allocated;
-    uint32_t idx;
 }
 vmm_page_table_t;
-
-// get the address of an entry
-ifunc uint64_t vmmGetAddress(uint64_t *entry)
-{
-    return (*entry & 0x000FFFFFFFFFF000) >> 12; // get the address from entry
-}
 
 // set the address of an entry
 ifunc void vmmSetAddress(uint64_t *entry, uint64_t address)
