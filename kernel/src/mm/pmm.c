@@ -88,6 +88,8 @@ void pmmDbgDump()
 
 void *pmmPages(uint64_t pages)
 {
+#define bits (8 * sizeof(uint64_t))
+
     lock(pmmLock, {
         for (int i = 0; i < poolCount; i++)
         {
@@ -99,9 +101,9 @@ void *pmmPages(uint64_t pages)
 
             for (size_t i = 0; i < pool->bitmapBytes * 8; i++)
             {
-                if (BMP_WORD_ALIGNED(i) && ((BMP_ACCESS_TYPE *)pool->base)[i / BMP_ACCESS_BITS] == UINT32_MAX) // if index is aligned to 1 bitmap word and the word is all set then skip it (speeds up allocation by a lot)
+                if (i % bits == 0 && ((uint64_t *)pool->base)[i / bits] == UINT64_MAX) // if index is aligned to 1 64 bit value and the word is all set then skip it (speeds up allocation by a lot)
                 {
-                    i += BMP_ACCESS_BITS - 1;
+                    i += bits - 1;
                     continue;
                 }
 
@@ -136,6 +138,8 @@ void *pmmPages(uint64_t pages)
             }
         }
     });
+
+#undef bits
 
     panick("Out of memory!");
 
@@ -218,7 +222,7 @@ void pmmInit()
         if (entry->type != LIMINE_MEMMAP_USABLE)
             continue;
 
-        if(entry->length < 128 * 1024) // don't bother with very small chunks
+        if (entry->length < 128 * 1024) // don't bother with very small chunks
             continue;
 
         // populate the pool metadata
