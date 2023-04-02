@@ -132,13 +132,13 @@ void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
     vmm_page_table_t *pdp, *pd, *pt;
 
     uint64_t currentEntry = table->entries[index.PDP]; // index pdp
-    pdp = PAGE_ADDR(currentEntry);                          // continue
+    pdp = PAGE_ADDR(currentEntry);                     // continue
 
     currentEntry = pdp->entries[index.PD]; // index pd
-    pd = PAGE_ADDR(currentEntry);               // continue
+    pd = PAGE_ADDR(currentEntry);          // continue
 
     currentEntry = pd->entries[index.PT]; // index pt
-    pt = PAGE_ADDR(currentEntry);              // continue
+    pt = PAGE_ADDR(currentEntry);         // continue
 
     currentEntry = pt->entries[index.P]; // index p
 
@@ -180,9 +180,6 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
             vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW);   // gdt entries
             vmmMap(newTable, &gdtGet()[i], &gdtGet()[i], VMM_ENTRY_RW); // gdtr
         }
-
-        vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
-        vmmMap(newTable, lapicBase(), lapicBase(), VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
     }
 
     // map memory map entries as kernel rw
@@ -216,6 +213,9 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
                 vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), VMM_ENTRY_RW);
             }
     }
+
+    vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
+    vmmMap(newTable, lapicBase(), lapicBase(), VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
 
     logDbg(LOG_ALWAYS, "vmm: wasted %d KB on a new page table", toKB(a - pmmTotal().available));
 

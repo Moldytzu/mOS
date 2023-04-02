@@ -35,7 +35,7 @@ ifunc uint16_t nextCore()
 {
     if (lastCore == maxCore)
         lastCore = 0;
-        
+
     return lastCore++;
 }
 
@@ -88,7 +88,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         t->registers.ss = (8 * 3) | 3;
 
         // page table
-        vmm_page_table_t *pt = vmmCreateTable(false, false);
+        vmm_page_table_t *pt = vmmCreateTable(driver, driver);
         t->registers.cr3 = (uint64_t)pt;
         t->pageTable = (uint64_t)pt;
 
@@ -264,54 +264,57 @@ void schedKill(uint32_t id)
 #ifdef K_SCHED_DEBUG
     uint64_t a = pmmTotal().available;
 #endif
+    lock(schedLock, {
+        if (id == 1)
+            panick("Attempt to kill the init system.");
 
-    if (id == 1)
-        panick("Attempt to kill the init system.");
+        sched_task_t *task = schedGet(id);
 
-    sched_task_t *task = schedGet(id);
+        if (!task)
+            return;
 
-    if (!task)
-        return;
+        // clear driver contexts
+        // if (task->isDriver)
+        //    drvExit(id);
 
-    // clear driver contexts
-    // if (task->isDriver)
-    //    drvExit(id);
+        // deallocate some fields
+        // pmmDeallocatePages(task->stackBase, task->stackSize / VMM_PAGE); // stack
+        // pmmDeallocate(task->enviroment);                                 // enviroment
 
-    // deallocate some fields
-    // pmmDeallocatePages(task->stackBase, task->stackSize / VMM_PAGE); // stack
-    // pmmDeallocate(task->enviroment);                                 // enviroment
+        // deallocate the memory allocations
+        for (int i = 0; i < task->allocatedIndex; i++)
+            if (task->allocated[i] != NULL)
+                pmmDeallocate(task->allocated[i]);
 
-    // deallocate the memory allocations
-    for (int i = 0; i < task->allocatedIndex; i++)
-        if (task->allocated[i] != NULL)
-            pmmDeallocate(task->allocated[i]);
+        pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
 
-    pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
+        // deallocate the elf (if present)
+        // if (task->isElf)
+        //    pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
 
-    // deallocate the elf (if present)
-    // if (task->isElf)
-    //    pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
+        // deallocate the task
+        if (task->prev)
+        {
+            sched_task_t *prev = TASK(task->prev);
+            prev->next = task->next;
+        }
 
-    // deallocate the task
-    sched_task_t *prev = TASK(task->prev);
-    if (prev->next) // bypass this node if possible
-        prev->next = task->next;
+        vmmDestroy((void *)task->pageTable); // destroy the page table
+        blkDeallocate(task);                 // free the task
 
-    vmmDestroy((void *)task->pageTable); // destroy the page table
-    blkDeallocate(task);                 // free the task
-
-    taskKilled[smpID()] = true;
+        taskKilled[smpID()] = true;
 
 #ifdef K_SCHED_DEBUG
-    printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
+        printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
 #endif
 
-    // halt until next intrerrupt fires
-    sti();
-    hlt();
+        // halt until next intrerrupt fires
+        sti();
+        hlt();
 
-    while (1)
-        ; // prevent returning back
+        while (1)
+            ; // prevent returning back
+    });
 }
 
 // enable the scheduler for the current core
