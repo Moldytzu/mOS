@@ -14,25 +14,25 @@ update-ovmf:
 	wget https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd -O ovmf/ovmf.fd
 
 run: image
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -hda $(DISK)
+	qemu-system-x86_64 $(QEMUFLAGS) -boot c -hda $(DISK)
 
 run-smp-debug: image
-	qemu-system-x86_64 -M q35,smm=off -m 512M -smp 4 -cpu core2duo -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -boot d -hda $(DISK) $(QEMUDEBUG) -smp 4 &
+	qemu-system-x86_64 -M q35,smm=off -m 512M -smp 4 -cpu core2duo -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -boot c -hda $(DISK) $(QEMUDEBUG) -smp 4 &
 	gdb-multiarch -tui -q -x smpgdb.script out/kernel.elf
 	pkill -f qemu-system-x86_64
 	reset
 
 run-slow: image
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -hda $(DISK) -smp 1 -m 128M -vga std
+	qemu-system-x86_64 $(QEMUFLAGS) -boot c -hda $(DISK) -smp 1 -m 128M -vga std
 
 run-bochs: image
 	bochs -q
 
 run-kvm: image
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -hda $(DISK) --enable-kvm -cpu host -smp $(CORES)
+	qemu-system-x86_64 $(QEMUFLAGS) -boot c -hda $(DISK) --enable-kvm -cpu host -smp $(CORES)
 
 run-debug: image
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -hda $(DISK) $(QEMUDEBUG) &
+	qemu-system-x86_64 $(QEMUFLAGS) -boot c -hda $(DISK) $(QEMUDEBUG) &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 	reset
