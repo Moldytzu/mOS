@@ -113,7 +113,7 @@ void vmmUnmap(vmm_page_table_t *table, void *virtualAddress)
     pt = PAGE_ADDR(currentEntry);
 
     currentEntry = pt->entries[index.P];                      // index p
-    pt->entries[index.P] = currentEntry & ~VMM_ENTRY_PRESENT; // write the entry in the table
+    pt->entries[index.P] = currentEntry & ~VMM_ENTRY_PRESENT; // unset present flag
 
     tlbFlush(virtualAddress);
 }

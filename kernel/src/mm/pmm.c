@@ -55,16 +55,6 @@ void pmmDisableDBG()
     debug = false;
 }
 
-ifunc bool get(pmm_pool_t *pool, size_t idx)
-{
-    return (bool)bmpGet(pool->base, idx);
-}
-
-ifunc void set(pmm_pool_t *pool, size_t idx, bool value)
-{
-    bmpSet(pool->base, idx, value);
-}
-
 void poolDump(int i)
 {
     pmm_pool_t *pool = &pools[i];
@@ -73,8 +63,8 @@ void poolDump(int i)
 
     // iterate over the bitmap bytes to display the status of the bits
     for (uint64_t b = 0; b < pool->bitmapBytes * 8; b++)
-        if (get(pool, b)) // uncomment this to show only the allocated indices
-            printks("%d", get(pool, b) ? 1 : 0);
+        if (bmpGet(pool->base, b)) // uncomment this to show only the allocated indices
+            printks("%d", bmpGet(pool->base, b) ? 1 : 0);
 
     printks("\n");
 }
@@ -107,13 +97,13 @@ void *pmmPages(uint64_t pages)
                     continue;
                 }
 
-                if (get(pool, i)) // find first available index
+                if (bmpGet(pool->base, i)) // find first available index
                     continue;
 
                 bool found = true;
                 for (size_t k = i; k < i + pages; k++)
                 {
-                    if (get(pool, k)) // we didn't find what we need
+                    if (bmpGet(pool->base, k)) // we didn't find what we need
                     {
                         i += k - i; // increment the offset (skips some iterations)
                         found = false;
@@ -126,7 +116,7 @@ void *pmmPages(uint64_t pages)
 
                 // set the needed bits
                 for (size_t k = i; k < i + pages; k++)
-                    set(pool, k, true);
+                    bmpSet(pool->base, k);
 
                 // update metadata
                 pool->available -= 4096 * pages;
@@ -164,7 +154,7 @@ void pmmDeallocate(void *page)
 
         uint64_t idx = (uint64_t)(page - pools[i].alloc) / 4096;
 
-        if (!get(&pools[i], idx)) // don't deallocate second time
+        if (!bmpGet(pools[i].base, idx)) // don't deallocate second time
         {
             logWarn("pmm: failed to deallocate");
             release(pmmLock);
@@ -174,7 +164,7 @@ void pmmDeallocate(void *page)
         pools[i].available += 4096;
         pools[i].used -= 4096;
 
-        set(&pools[i], idx, false); // unset bit
+        bmpUnset(pools[i].base, idx); // unset index
     });
 }
 
