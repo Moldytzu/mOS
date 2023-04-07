@@ -28,18 +28,16 @@ void vmmInit()
 // set flags of some entries given by the indices
 ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, uint64_t flags)
 {
-    vmm_page_table_t *pdp, *pd, *pt;
-
     table->entries[index.PDP] = table->entries[index.PDP] | flags; // index pdp
 
-    pdp = PAGE_ADDR(table->entries[index.PDP]);
-    pdp->entries[index.PD] = pdp->entries[index.PD] | flags;
+    table = PAGE_ADDR(table->entries[index.PDP]); // index pd
+    table->entries[index.PD] = table->entries[index.PD] | flags;
 
-    pd = PAGE_ADDR(pdp->entries[index.PD]);
-    pd->entries[index.PT] = pd->entries[index.PT] | flags;
+    table = PAGE_ADDR(table->entries[index.PD]); // index pt
+    table->entries[index.PT] = table->entries[index.PT] | flags;
 
-    pt = PAGE_ADDR(pd->entries[index.PT]);
-    pt->entries[index.P] = pt->entries[index.P] | flags;
+    table = PAGE_ADDR(table->entries[index.PT]); // index the page
+    table->entries[index.P] = table->entries[index.P] | flags;
 }
 
 // map a virtual address to a physical address in a page table
