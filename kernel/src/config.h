@@ -25,7 +25,7 @@
 #endif
 
 // SMP
-// #define K_SMP           // enables symetric multiprocessing support (experimental)
+#define K_SMP           // enables symetric multiprocessing support (experimental)
 
 #ifdef K_SMP
 #define K_MAX_CORES 128 // maximum cores

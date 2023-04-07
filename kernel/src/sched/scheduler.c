@@ -143,9 +143,12 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     if (!_enabled)
         return;
 
-    lock(schedLock, {
-        uint64_t id = smpID();
+    uint64_t id = smpID();
 
+    uint8_t simdContext[512];
+    iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
+
+    lock(schedLock, {
         if (!taskKilled[id])
         {
             if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
@@ -195,6 +198,9 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
             // save old state
             memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
+
+            // save old simd context
+            memcpy(&lastTask[id]->simdContext, simdContext, 512);
         }
 
         // get next id
@@ -204,6 +210,11 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
         // copy new state
         memcpy(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t));
+
+        // copy new simd context
+        memcpy(simdContext, &lastTask[id]->simdContext, 512);
+
+        iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context
 
         vmmSwap((void *)lastTask[id]->registers.cr3);
     });

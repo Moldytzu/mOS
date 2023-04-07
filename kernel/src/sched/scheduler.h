@@ -18,6 +18,7 @@ pstruct
     bool isElf;
 
     // context
+    uint8_t simdContext[512];
     idt_intrerrupt_stack_t registers;
     uint64_t pageTable;
     uint64_t lastVirtualAddress;
