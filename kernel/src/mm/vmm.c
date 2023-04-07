@@ -93,7 +93,6 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     pt->entries[index.P] = currentEntry | VMM_ENTRY_PRESENT;       // write the entry in the table
 
     vmmSetFlags(table, index, flags); // set the flags
-    tlbFlush(virtualAddress);
     atomicRelease(&vmmLock);
 }
 
