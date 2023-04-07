@@ -1,10 +1,10 @@
 #pragma once
 
-// ========================================================
+// ======================================================================================
 // mOS Kernel configuration
 // Uncomment to enable, comment to disable
-// Be sure to perform a full rebuild when changing settings
-// ========================================================
+// Be sure to do `make clean` before rebuilding to be sure the new settings will apply
+// ======================================================================================
 
 // Debug
 #define K_RELEASE // generate release build of the kernel (removes all debug statements);
@@ -25,8 +25,13 @@
 #endif
 
 // SMP
-#define K_SMP           // enables symetric multiprocessing support (experimental)
+// #define K_SMP           // enables symetric multiprocessing support (experimental)
+
+#ifdef K_SMP
 #define K_MAX_CORES 128 // maximum cores
+#else
+#define K_MAX_CORES 1 // this decreases kernel memory usage
+#endif
 
 // Serial
 #define K_COM_ENABLE     // enable support for serial
