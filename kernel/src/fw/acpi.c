@@ -22,9 +22,6 @@ uint16_t pciIndex = 0;
 // get a descriptor table with a signature
 acpi_sdt_t *acpiGet(const char *sig, int index)
 {
-    if (!sdt)
-        return NULL;
-
     bool xsdt = sdt->signature[0] == 'X';              // XSDT's signature is XSDT, RSDT's signature is RSDT
     size_t entries = sdt->length - sizeof(acpi_sdt_t); // initial value is the length in bytes of the entire tables
 
@@ -166,10 +163,11 @@ void acpiInit()
     {
         pciFuncs = pmmPage(); // allocate a buffer hold the functions
         acpiEnumeratePCI();   // do the enumeration
-    }
 
-    if (pciIndex)
         logInfo("acpi: detected %d pci functions", pciIndex);
+    }
     else
-        logWarn("acpi: failed to detect pci functions! mcfg wasn't detected...");
+    {
+        logError("acpi: failed to enumerate pci bus");
+    }
 }
