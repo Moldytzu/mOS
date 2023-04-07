@@ -13,7 +13,6 @@
 
 #define PAGE_ADDR(x) ((vmm_page_table_t *)(x & 0xFFFFFFFFFF000))
 
-locker_t vmmLock; // todo: replace this with a per-table lock
 vmm_page_table_t *baseTable;
 
 // initialize the virtual memory manager
@@ -43,7 +42,6 @@ ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, uint64_t flag
 // map a virtual address to a physical address in a page table
 void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, uint64_t flags)
 {
-    atomicAquire(&vmmLock);
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     vmm_page_table_t *pml4, *pdp, *pd, *pt;
     uint64_t currentEntry;
@@ -91,7 +89,6 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     pt->entries[index.P] = currentEntry | VMM_ENTRY_PRESENT;       // write the entry in the table
 
     vmmSetFlags(table, index, flags); // set the flags
-    atomicRelease(&vmmLock);
 }
 
 // unmap a virtual address
@@ -226,47 +223,45 @@ void vmmDestroy(vmm_page_table_t *table)
     uint64_t a = pmmTotal().available;
 #endif
 
-    lock(vmmLock, {
-        // deallocate sub-tables
-        for (int pdp = 0; pdp < 512; pdp++)
-        {
-            uint64_t pdpValue = table->entries[pdp];
+    // deallocate sub-tables
+    for (int pdp = 0; pdp < 512; pdp++)
+    {
+        uint64_t pdpValue = table->entries[pdp];
 
-            if (!pdpValue)
+        if (!pdpValue)
+            continue;
+
+        vmm_page_table_t *pdpPtr = PAGE_ADDR(pdpValue);
+
+        for (int pd = 0; pd < 512; pd++)
+        {
+            uint64_t pdValue = pdpPtr->entries[pd];
+
+            if (!pdValue)
                 continue;
 
-            vmm_page_table_t *pdpPtr = PAGE_ADDR(pdpValue);
+            vmm_page_table_t *pdPtr = PAGE_ADDR(pdValue);
 
-            for (int pd = 0; pd < 512; pd++)
+            for (int pt = 0; pt < 512; pt++)
             {
-                uint64_t pdValue = pdpPtr->entries[pd];
+                uint64_t ptValue = pdPtr->entries[pt];
 
-                if (!pdValue)
+                if (!ptValue)
                     continue;
 
-                vmm_page_table_t *pdPtr = PAGE_ADDR(pdValue);
+                vmm_page_table_t *ptPtr = PAGE_ADDR(ptValue);
 
-                for (int pt = 0; pt < 512; pt++)
-                {
-                    uint64_t ptValue = pdPtr->entries[pt];
-
-                    if (!ptValue)
-                        continue;
-
-                    vmm_page_table_t *ptPtr = PAGE_ADDR(ptValue);
-
-                    pmmDeallocate(ptPtr);
-                }
-
-                pmmDeallocate(pdPtr);
+                pmmDeallocate(ptPtr);
             }
 
-            pmmDeallocate(pdpPtr);
+            pmmDeallocate(pdPtr);
         }
 
-        // deallocate main table
-        pmmDeallocate(table);
-    });
+        pmmDeallocate(pdpPtr);
+    }
+
+    // deallocate main table
+    pmmDeallocate(table);
 
 #ifdef K_VMM_DEBUG
     printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, toKB(pmmTotal().available - a));
