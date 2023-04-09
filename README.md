@@ -1,6 +1,6 @@
 # mOS
 ![Lines of code](https://img.shields.io/tokei/lines/github/Moldytzu/mOS?style=for-the-badge) 
-### Hobby operating system written in C that targets 1st gen x86_64 Nocona Xeon Intel CPUs and low RAM requirements
+### Hobby operating system written in C that targets early x86_64 computers and low RAM requirements
 ### Features
     - Monolithic kernel design
     - 32 bpp linear frame buffer support
@@ -17,6 +17,7 @@
     - Unlimited virtual terminals
     - 15+ system calls accessible in userspace
     - Driver infrastructure
+    - Symmetric multiprocessing support
 
 ## Building and running
 See [BUILDING.md](./docs/BUILDING.md)
