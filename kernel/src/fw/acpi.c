@@ -64,28 +64,36 @@ void acpiEnumeratePCI()
             acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)busBase;
             vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, VMM_ENTRY_RW); // map the header
 
-            // non-existent bus
+            // check for non-existent bus
             if (baseHeader->device == UINT16_MAX || baseHeader->device == 0)
                 continue;
 
             // enumerate each device
             for (int device = 0; device < 32; device++)
             {
+                acpi_pci_header_t *deviceHeader = (acpi_pci_header_t *)(busBase + (bus << 20 | device << 15));
+                vmmMap(vmmGetBaseTable(), deviceHeader, deviceHeader, VMM_ENTRY_RW); // map the header
+
+                // check for non-existent device
+                if (deviceHeader->device == UINT16_MAX || deviceHeader->device == 0)
+                    continue;
+
                 // enumerate each function
                 for (int function = 0; function < 8; function++)
                 {
-                    acpi_pci_header_t *header = (acpi_pci_header_t *)(busBase + (bus << 20 | device << 15 | function << 12));
+                    acpi_pci_header_t *functionHeader = (acpi_pci_header_t *)(busBase + (bus << 20 | device << 15 | function << 12));
 
-                    vmmMap(vmmGetBaseTable(), header, header, VMM_ENTRY_RW); // map the header
+                    // check for non-existent function
+                    vmmMap(vmmGetBaseTable(), functionHeader, functionHeader, VMM_ENTRY_RW); // map the header
 
-                    if (header->device == UINT16_MAX || header->device == 0) // invalid function
+                    if (functionHeader->device == UINT16_MAX || functionHeader->device == 0)
                         continue;
 
-                    logInfo("acpi: found pci function %x:%x at %d.%d.%d", header->vendor, header->device, bus, device, function);
+                    logInfo("acpi: found pci function %x:%x at %d.%d.%d", functionHeader->vendor, functionHeader->device, bus, device, function);
 
                     // build the descriptor
                     acpi_pci_descriptor_t d;
-                    d.bus = bus, d.device = device, d.function = function, d.header = header;
+                    d.bus = bus, d.device = device, d.function = function, d.header = functionHeader;
 
                     // put it in our list of pci functions (overflows at 372 descriptors thus we don't have to check anything since it's unlikely to have so many pci functions)
                     pciFuncs[pciIndex++] = d;
