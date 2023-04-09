@@ -9,6 +9,7 @@
 #include <misc/data.h>
 
 // useful macros
+#define bitsof(x) (sizeof(x) * 8)
 #define pack __attribute__((__packed__))
 #define toMB(x) ((x) / 1024 / 1024)
 #define toKB(x) ((x) / 1024)

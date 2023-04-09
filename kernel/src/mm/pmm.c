@@ -78,8 +78,6 @@ void pmmDbgDump()
 
 void *pmmPages(uint64_t pages)
 {
-#define bits (8 * sizeof(uint64_t))
-
     lock(pmmLock, {
         for (int i = 0; i < poolCount; i++)
         {
@@ -91,9 +89,9 @@ void *pmmPages(uint64_t pages)
 
             for (size_t i = 0; i < pool->bitmapBytes * 8; i++)
             {
-                if (i % bits == 0 && ((uint64_t *)pool->base)[i / bits] == UINT64_MAX) // if index is aligned to 1 64 bit value and the word is all set then skip it (speeds up allocation by a lot)
+                if (((uint64_t *)pool->base)[i / bitsof(uint64_t)] == UINT64_MAX) // if the qword is all set then skip it (speeds up allocation by a lot)
                 {
-                    i += bits - 1;
+                    i += bitsof(uint64_t) - 1;
                     continue;
                 }
 
