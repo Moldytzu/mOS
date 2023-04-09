@@ -209,7 +209,7 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     }
 
     vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
-    vmmMap(newTable, lapicBase(), lapicBase(), VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
+    vmmMap(newTable, APIC_BASE, APIC_BASE, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
 
     logDbg(LOG_ALWAYS, "vmm: wasted %d KB on a new page table", toKB(a - pmmTotal().available));
 

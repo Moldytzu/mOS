@@ -41,17 +41,12 @@ uint64_t *lapicGetTPS()
 
 void lapicWrite(uint64_t offset, uint32_t value)
 {
-    *((uint32_t *)((uint8_t *)lapicBase() + offset)) = value;
+    *((uint32_t *)((uint8_t *)APIC_BASE + offset)) = value;
 }
 
 uint32_t lapicRead(uint64_t offset)
 {
-    return *((uint32_t *)((uint8_t *)lapicBase() + offset));
-}
-
-void *lapicBase()
-{
-    return (void *)(rdmsr(MSR_APIC_BASE) & 0xFFFFFFFFFFFFF000);
+    return *((uint32_t *)((uint8_t *)APIC_BASE + offset));
 }
 
 void lapicEOI()
@@ -68,7 +63,7 @@ void lapicInit(bool bsp)
         outb(PIC_SLAVE_DAT, 0b11111111);
 
         // map the base
-        vmmMap(vmmGetBaseTable(), lapicBase(), lapicBase(), VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
+        vmmMap(vmmGetBaseTable(), APIC_BASE, APIC_BASE, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
 
         isEnabled = true;
     }

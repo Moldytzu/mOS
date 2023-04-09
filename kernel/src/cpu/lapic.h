@@ -20,9 +20,10 @@
 #define APIC_TIMER_VECTOR 0x20
 #define APIC_NMI_VECTOR 0x02
 
+#define APIC_BASE ((void *)0xFEE00000)
+
 void lapicNMI();
 void lapicInit(bool bsp);
-void *lapicBase();
 void lapicWrite(uint64_t offset, uint32_t value);
 void lapicEOI();
 void lapicHandleTimer(idt_intrerrupt_stack_t *stack);
