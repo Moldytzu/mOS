@@ -76,10 +76,14 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         t->lastVirtualAddress = TASK_BASE_ALLOC;
         t->terminal = terminal;
         t->isElf = elf;
+        t->isDriver = driver;
 
-        // essential registers
+        // registers
         void *stack = pmmPages(K_STACK_SIZE / 4096);
-        t->registers.rflags = 0b1000000010;                                   // enable interrupts
+        if (driver)
+            t->registers.rflags = 0b11001000000010; // enable interrupts and set IOPL to 3
+        else
+            t->registers.rflags = 0b1000000010;                               // enable interrupts
         t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE; // set the new stack
         t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;               // set instruction pointer
 
