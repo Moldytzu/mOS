@@ -20,7 +20,7 @@ void syscallHandler(idt_intrerrupt_stack_t *registers)
 
     if (registers->rdi < (sizeof(syscallHandlers) / sizeof(void *))) // check if the syscall is in range
     {
-        logDbg(LOG_SERIAL_ONLY, "%s calls %s with arguments %x %x %x %x", t->name, syscallNames[registers->rdi], registers->rsi, registers->rdx, registers->r8, registers->r9);
+        //logDbg(LOG_SERIAL_ONLY, "%s calls %s with arguments %x %x %x %x", t->name, syscallNames[registers->rdi], registers->rsi, registers->rdx, registers->r8, registers->r9);
         syscallHandlers[registers->rdi](registers->rsi, registers->rdx, registers->r8, registers->r9, t); // call the handler
     }
 
