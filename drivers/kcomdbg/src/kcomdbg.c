@@ -8,6 +8,8 @@
 #define COM1_LINE_STATUS (COM1 + 5)
 
 drv_type_input_t *input;
+char kbuffer[256];
+uint8_t kindex = 0;
 
 uint8_t comRead()
 {
@@ -39,13 +41,39 @@ void comWrites(const char *str)
         comWrite(str[i]);
 }
 
-char kbuffer[256];
-uint8_t kindex = 0;
+void handleInput()
+{
+    // handle input
+    uint8_t lastChar = 0;
+    do
+    {
+        lastChar = comRead();
+        comWrite(lastChar);
+
+        if (lastChar != '\n')
+            kbuffer[kindex++] = lastChar;
+    } while (lastChar != '\n' && kindex != 255);
+}
+
+void handleCommands()
+{
+    if (strcmp(kbuffer, "enter") == 0)
+    {
+        input->keys[0] = '\n';
+    }
+    else if (strcmp(kbuffer, "help") == 0)
+    {
+        comWrites("mOS kernel debugger help\n");
+        comWrites("enter - send enter keystroke\n");
+    }
+}
+
 void _mdrvmain()
 {
     input = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT);
 
     comWrites("\nmOS serial kernel debugger initialised.\n");
+    comWrites("Type help for more information\n");
 
     while (1)
     {
@@ -54,19 +82,7 @@ void _mdrvmain()
 
         comWrites("mOS> ");
 
-        // handle input
-        uint8_t lastChar = 0;
-        do
-        {
-            lastChar = comRead();
-            comWrite(lastChar);
-
-            if (lastChar != '\n')
-                kbuffer[kindex++] = lastChar;
-        } while (lastChar != '\n' && kindex != 255);
-
-        comWrites("input: ");
-        comWrites(kbuffer);
-        comWrites("\n");
+        handleInput();
+        handleCommands();
     }
 }
