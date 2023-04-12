@@ -23,12 +23,7 @@ locker_t schedLock;
 
 bool _enabled = false;
 
-void commonTask()
-{
-    sti();
-    while (1)
-        iasm("int $0x20"); // yield directly
-}
+void commonTask();
 
 // determine to which core we should add the the task
 ifunc uint16_t nextCore()

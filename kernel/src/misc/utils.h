@@ -17,15 +17,15 @@
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 #define pstruct typedef struct __attribute__((__packed__))
 #define align_addr(al) __attribute__((aligned(al)))
-#define lock(lock, cmds)      \
-    {                         \
-        atomicAquire(&lock);  \
-        cmds;                 \
-        atomicRelease(&lock); \
+#define lock(l, cmds)      \
+    {                      \
+        atomicAquire(&l);  \
+        cmds;              \
+        atomicRelease(&l); \
     }
-#define release(lock)         \
-    {                         \
-        atomicRelease(&lock); \
+#define release(l)         \
+    {                      \
+        atomicRelease(&l); \
     }
 
 // compare memory
