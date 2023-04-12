@@ -2,13 +2,8 @@ bits 64
 
 section .text
 
-global sysretInit, callWithPageTable, commonTask
+global sysretInit, callWithPageTable, callWithStack
 extern SyscallHandlerEntry
-
-commonTask:
-	hlt
-	pause
-	jmp commonTask
 
 ; initialize the sysret/syscall functionality
 sysretInit:
@@ -47,3 +42,8 @@ callWithPageTable:
 	mov rsp, rbp  
 	pop rbp       
 	ret          ; return
+
+callWithStack:
+	mov rsp, rsi
+	call rdi
+	jmp $

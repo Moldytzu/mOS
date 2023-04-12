@@ -8,6 +8,7 @@
 #include <drv/serial.h>
 #include <subsys/vt.h>
 #include <main/panic.h>
+#include <stdnoreturn.h>
 
 #define TASK(x) ((sched_task_t *)x)
 
@@ -23,7 +24,17 @@ locker_t schedLock;
 
 bool _enabled = false;
 
-void commonTask();
+void callWithStack(void *func, void *stack);
+
+_Noreturn void commonTask()
+{
+    while (1)
+    {
+        sti();
+        hlt();
+        pause();
+    }
+}
 
 // determine to which core we should add the the task
 ifunc uint16_t nextCore()
@@ -331,7 +342,7 @@ void schedKill(uint32_t id)
 void schedEnable()
 {
     _enabled = true;
-    commonTask();
+    callWithStack(commonTask, (void *)lastTask[smpID()]->registers.rsp);
     while (1)
         ;
 }
