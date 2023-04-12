@@ -218,7 +218,11 @@ void pmmInit()
         zero(pool, sizeof(pmm_pool_t));
 
         pool->bitmapBytes = entry->length / 4096 / 8; // we divide the memory regions in pages (4 KiB chunks) then we will store the availability in a bit in the bitmap
-        pool->alloc = (void *)align((void *)entry->base + pool->bitmapBytes, 4096) + PMM_ALLOC_PADDING;
+
+        pool->alloc = (void *)entry->base + pool->bitmapBytes;
+        pool->alloc += 4096 - (uint64_t)pool->alloc % 4096;
+        pool->alloc += PMM_ALLOC_PADDING;
+        
         pool->base = (void *)entry->base;
         pool->available = entry->length - pool->bitmapBytes - PMM_ALLOC_PADDING;
         pool->size = pool->available + pool->used;
@@ -231,7 +235,7 @@ void pmmInit()
     for (int i = 0; i < poolCount; i++)
         logInfo("pmm: [pool %d] {%x -> %x} (%d kb)", i, pools[i].alloc, pools[i].alloc + pools[i].size, pools[i].size / 1024);
 
-    logInfo("pmm: %d MB available", toMB(pmmTotal().available));
+    logInfo("pmm: %d MB available", pmmTotal().available / 1024 / 1024);
 }
 
 // todo: make this function return a dedicated structure and not reuse the internal one

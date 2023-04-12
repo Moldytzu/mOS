@@ -5,6 +5,8 @@ tui reg all
 # attach to qemu then break in the kernel entry function
 target remote localhost:1234
 b _start
-continue
+c
 
 layout split # for C
+b pmm.c:216
+c

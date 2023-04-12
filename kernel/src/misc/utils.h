@@ -10,12 +10,8 @@
 
 // useful macros
 #define bitsof(x) (sizeof(x) * 8)
-#define pack __attribute__((__packed__))
-#define toMB(x) ((x) / 1024 / 1024)
-#define toKB(x) ((x) / 1024)
-#define align(val, alg) (max((uint64_t)(val), alg) + (alg - (max((uint64_t)(val), alg) % alg)))
-#define alignD(val, alg) (align(val, alg) - alg)
-#define unsafe_cast(val, type) (*(type *)&val)
+#define align(val, alg) (max((uint64_t)(val), alg) + (alg - (max((uint64_t)(val), alg) % alg))) // deprecated!
+#define alignD(val, alg) (align(val, alg) - alg)                                                // deprecated!
 #define iasm asm volatile
 #define ifunc static inline __attribute__((always_inline))
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
@@ -55,35 +51,35 @@ ifunc uint32_t strlen(const char *str)
 }
 
 // set memory 8 bits at a time
-ifunc void memset8(void *dest, uint8_t data, size_t count)
+static void memset8(void *dest, uint8_t data, size_t count)
 {
     for (; count; count--, dest++)
         *(uint8_t *)dest = data;
 }
 
 // set memory 16 bits at a time
-ifunc void memset16(void *dest, uint16_t data, size_t count)
+static void memset16(void *dest, uint16_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint16_t))
         *(uint16_t *)dest = data;
 }
 
 // set memory 32 bits at a time
-ifunc void memset32(void *dest, uint32_t data, size_t count)
+static void memset32(void *dest, uint32_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint32_t))
         *(uint32_t *)dest = data;
 }
 
 // set memory 64 bits at a time
-ifunc void memset64(void *dest, uint64_t data, size_t count)
+static void memset64(void *dest, uint64_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint64_t))
         *(uint64_t *)dest = data;
 }
 
 // set memory to 0
-ifunc void zero(void *dest, size_t count)
+static void zero(void *dest, size_t count)
 {
     if (count % sizeof(uint64_t) == 0)
         memset64(dest, 0, count / sizeof(uint64_t));
