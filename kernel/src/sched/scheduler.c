@@ -26,14 +26,10 @@ bool _enabled = false;
 
 void callWithStack(void *func, void *stack);
 
-_Noreturn void commonTask()
+_Noreturn __attribute__ ((naked)) void commonTask() 
 {
     while (1)
-    {
         sti();
-        hlt();
-        pause();
-    }
 }
 
 // determine to which core we should add the the task
