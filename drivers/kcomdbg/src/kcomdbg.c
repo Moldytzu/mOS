@@ -92,6 +92,12 @@ void _mdrvmain()
 {
     input = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT);
 
+    if(!input)
+    {
+        comWrites("kcomdbg: failed to announce!\n");
+        abort();
+    }
+
     comWrites("\nmOS serial kernel debugger initialised.\n");
     comWrites("Type help for more information\n");
 

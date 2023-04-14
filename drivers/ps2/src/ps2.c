@@ -358,7 +358,10 @@ void _mdrvmain()
     }
 
     if (!initController()) // initialise the controller
+    {
+        printf("ps2: failed to initialise!\n");
         abort();
+    }
 
     printf("ps2: started ps2 driver!\n");
 
