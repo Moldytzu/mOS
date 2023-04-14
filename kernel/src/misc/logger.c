@@ -21,6 +21,16 @@ uint32_t logOldColour;
         framebufferSetCursor(cursor);                              \
     }
 
+#define DO_WRITE()                                                                                             \
+    {                                                                                                          \
+        printk("[c%d] (%d.%d%d%d) ", smpID(), milis / 1000, milis % 1000 / 100, milis % 100 / 10, milis % 10); \
+    } // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+
+#define DO_WRITES()                                                                                             \
+    {                                                                                                           \
+        printks("[c%d] (%d.%d%d%d) ", smpID(), milis / 1000, milis % 1000 / 100, milis % 100 / 10, milis % 10); \
+    } // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+
 void logInfo(const char *fmt, ...)
 {
     lock(loggerLock, {
@@ -28,20 +38,24 @@ void logInfo(const char *fmt, ...)
 
         va_list args;
 
+        // print our prefix
         PUSH_COLOUR(0x3050FF);
-        printk("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        DO_WRITE();
         POP_COLOUR();
 
+        // print format given
         PUSH_COLOUR(0x20BF20);
         va_start(args, fmt);
         printk_impl(fmt, args);
         va_end(args);
         POP_COLOUR();
 
+        // don't forget a new line
         printk("\n");
 
 #ifdef K_COM_LOG
-        printks("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        // do same thing but on serial
+        DO_WRITES();
 
         va_start(args, fmt);
         printks_impl(fmt, args);
@@ -58,10 +72,12 @@ void logWarn(const char *fmt, ...)
         va_list args;
         uint64_t milis = TIME_NANOS_TO_MILIS(timeNanos());
 
+        // print our prefix
         PUSH_COLOUR(0x3050FF);
-        printk("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        DO_WRITE();
         POP_COLOUR();
 
+        // print given format
         PUSH_COLOUR(0xFFA000);
         va_start(args, fmt);
         printk_impl(fmt, args);
@@ -71,7 +87,8 @@ void logWarn(const char *fmt, ...)
         printk("\n");
 
 #ifdef K_COM_LOG
-        printks("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        // do same thing but on serial
+        DO_WRITES();
 
         va_start(args, fmt);
         printks_impl(fmt, args);
@@ -88,10 +105,12 @@ void logError(const char *fmt, ...)
         va_list args;
         uint64_t milis = TIME_NANOS_TO_MILIS(timeNanos());
 
+        // print our prefix
         PUSH_COLOUR(0x3050FF);
-        printk("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        DO_WRITE();
         POP_COLOUR();
 
+        // print given format
         PUSH_COLOUR(0xFF2020);
         va_start(args, fmt);
         printk_impl(fmt, args);
@@ -101,7 +120,8 @@ void logError(const char *fmt, ...)
         printk("\n");
 
 #ifdef K_COM_LOG
-        printks("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        // do same thing on serial
+        DO_WRITES();
 
         va_start(args, fmt);
         printks_impl(fmt, args);
@@ -120,9 +140,9 @@ void logDbg(int level, const char *fmt, ...)
 
         if (level != LOG_SERIAL_ONLY)
         {
+            // print our prefix and the given format
             PUSH_COLOUR(0x00FF00);
-
-            printk("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+            DO_WRITE();
 
             va_start(args, fmt);
             printk_impl(fmt, args);
@@ -134,7 +154,8 @@ void logDbg(int level, const char *fmt, ...)
         }
 
 #ifdef K_COM_LOG
-        printks("{#%d} (%d.%d): ", smpID(), milis / 1000, milis % 1000 / 100); // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        // print on serial our prefix and given format
+        DO_WRITES();
 
         va_start(args, fmt);
         printks_impl(fmt, args);
