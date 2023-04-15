@@ -6,6 +6,12 @@
 locker_t loggerLock;
 uint32_t logOldColour;
 
+#define PREFIX_COLOUR 0xD0D0D0
+#define DEBUG_COLOUR 0xD0D000
+#define INFO_COLOUR 0x10B010
+#define WARN_COLOUR 0xD07000
+#define ERROR_COLOUR 0xFF2020
+
 #define PUSH_COLOUR(x)                                             \
     {                                                              \
         framebuffer_cursor_info_t cursor = framebufferGetCursor(); \
@@ -52,7 +58,7 @@ void logInfo(const char *fmt, ...)
 {
     lock(loggerLock, {
         BOILERPLATE;
-        PRINT_PREFIX_FORMAT(0x3050FF, 0x20BF20); // print our prefix
+        PRINT_PREFIX_FORMAT(PREFIX_COLOUR, INFO_COLOUR); // print our prefix
 #ifdef K_COM_LOG
         PRINT_SERIAL(); // do the printing on serial
 #endif
@@ -63,7 +69,7 @@ void logWarn(const char *fmt, ...)
 {
     lock(loggerLock, {
         BOILERPLATE;
-        PRINT_PREFIX_FORMAT(0x3050FF, 0xFFA000); // print our prefix
+        PRINT_PREFIX_FORMAT(PREFIX_COLOUR, WARN_COLOUR); // print our prefix
 #ifdef K_COM_LOG
         PRINT_SERIAL(); // do the printing on serial
 #endif
@@ -74,7 +80,7 @@ void logError(const char *fmt, ...)
 {
     lock(loggerLock, {
         BOILERPLATE;
-        PRINT_PREFIX_FORMAT(0x3050FF, 0xFF2020); // print our prefix
+        PRINT_PREFIX_FORMAT(PREFIX_COLOUR, ERROR_COLOUR); // print our prefix
 #ifdef K_COM_LOG
         PRINT_SERIAL(); // do the printing on serial
 #endif
@@ -86,7 +92,7 @@ void logDbg(int level, const char *fmt, ...)
     lock(loggerLock, {
         BOILERPLATE;
         if (level != LOG_SERIAL_ONLY)
-            PRINT_PREFIX_FORMAT(0x00FF00, 0x00FF00); // print our prefix
+            PRINT_PREFIX_FORMAT(DEBUG_COLOUR, DEBUG_COLOUR); // print our prefix
 #ifdef K_COM_LOG
         PRINT_SERIAL(); // do the printing on serial
 #endif
