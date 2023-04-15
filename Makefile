@@ -1,7 +1,7 @@
 CORES = $(shell nproc)
 DISK = image.disk
 GDBFLAGS ?= -tui -q -x gdb.script
-QEMUFLAGS ?= -M q35,smm=off -m 512M -smp 4 -cpu core2duo -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
+QEMUFLAGS ?= -M q35,smm=off -m 512M -smp 4 -cpu core2duo -hda $(DISK)  -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
 QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)
@@ -14,37 +14,37 @@ update-ovmf:
 	wget https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd -O ovmf/ovmf.fd
 
 run: image
-	qemu-system-x86_64 $(QEMUFLAGS) -boot c -hda $(DISK)
+	qemu-system-x86_64 $(QEMUFLAGS) 
 
 run-smp-debug: image
-	qemu-system-x86_64 -M q35,smm=off -m 512M -smp 4 -cpu core2duo -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -boot c -hda $(DISK) $(QEMUDEBUG) -smp 4 &
+	qemu-system-x86_64 $(QEMUFLAGS) $(QEMUDEBUG) -smp 4 &
 	gdb-multiarch -tui -q -x smpgdb.script out/kernel.elf
 	pkill -f qemu-system-x86_64
 	reset
 
 run-slow: image
-	qemu-system-x86_64 $(QEMUFLAGS) -boot c -hda $(DISK) -smp 1 -m 128M -vga std
+	qemu-system-x86_64 $(QEMUFLAGS) -smp 1 -m 128M -vga std
 
 run-bochs: image
 	bochs -q
 
 run-kvm: image
-	qemu-system-x86_64 $(QEMUFLAGS) -boot c -hda $(DISK) --enable-kvm -cpu host -smp $(CORES)
+	qemu-system-x86_64 $(QEMUFLAGS) --enable-kvm -cpu host -smp $(CORES)
 
 run-debug: image
-	qemu-system-x86_64 $(QEMUFLAGS) -boot c -hda $(DISK) $(QEMUDEBUG) &
+	qemu-system-x86_64 $(QEMUFLAGS) $(QEMUDEBUG) &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 	reset
 
 run-efi:
-	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -hda $(DISK)
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) 
 
 run-efi-kvm:
-	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -hda $(DISK) --enable-kvm -cpu host
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) --enable-kvm -cpu host
 
 run-efi-debug:
-	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -hda $(DISK) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 	reset
