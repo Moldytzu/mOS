@@ -16,8 +16,6 @@ pstruct
 pmm_pool_t;
 
 void pmmBenchmark();
-void pmmEnableDBG();
-void pmmDisableDBG();
 void pmmDbgDump();
 void *pmmPage();
 void *pmmPages(uint64_t pages);

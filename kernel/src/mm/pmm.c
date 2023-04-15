@@ -8,8 +8,7 @@
 
 uint8_t poolCount = 0;
 pmm_pool_t pools[256]; // 256 pools should be enough
-bool debug = false;
-locker_t pmmLock; // todo: replace this with a per-pool loc
+locker_t pmmLock;      // todo: replace this with a per-pool loc
 
 #define PMM_BENCHMARK_SIZE 256 * 48
 
@@ -43,16 +42,6 @@ void pmmBenchmark()
     pmmDbgDump();
 
     hang();
-}
-
-void pmmEnableDBG()
-{
-    debug = true;
-}
-
-void pmmDisableDBG()
-{
-    debug = false;
 }
 
 void poolDump(int i)
