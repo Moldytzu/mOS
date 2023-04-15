@@ -3,7 +3,6 @@
 #include <fw/bootloader.h>
 
 #define PMM_PAGE 4096
-#define PMM_ALLOC_PADDING (2 * PMM_PAGE)
 
 pstruct
 {
