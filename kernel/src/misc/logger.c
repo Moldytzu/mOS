@@ -21,47 +21,40 @@ uint32_t logOldColour;
         framebufferSetCursor(cursor);                              \
     }
 
-#define DO_WRITE()                                                                                             \
+#define PRINT_PREFIX_FORMAT(x, y)                                                                              \
     {                                                                                                          \
+        PUSH_COLOUR(x);                                                                                        \
         printk("[c%d] (%d.%d%d%d) ", smpID(), milis / 1000, milis % 1000 / 100, milis % 100 / 10, milis % 10); \
-    } // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        POP_COLOUR();                                                                                          \
+                                                                                                               \
+        PUSH_COLOUR(y);                                                                                        \
+        va_start(args, fmt);                                                                                   \
+        printk_impl(fmt, args);                                                                                \
+        va_end(args);                                                                                          \
+        POP_COLOUR();                                                                                          \
+        printk("\n");                                                                                          \
+    } // print prefix then a format with desired colour
 
-#define DO_WRITES()                                                                                             \
+#define PRINT_SERIAL()                                                                                          \
     {                                                                                                           \
         printks("[c%d] (%d.%d%d%d) ", smpID(), milis / 1000, milis % 1000 / 100, milis % 100 / 10, milis % 10); \
-    } // do some trickery so we don't use the fpu, display first the seconds part then hundreds of miliseconds
+        va_start(args, fmt);                                                                                    \
+        printks_impl(fmt, args);                                                                                \
+        va_end(args);                                                                                           \
+        printks("\n");                                                                                          \
+    } // print prefix then format on serial
+
+#define BOILERPLATE \
+    va_list args;   \
+    uint64_t milis = TIME_NANOS_TO_MILIS(timeNanos());
 
 void logInfo(const char *fmt, ...)
 {
     lock(loggerLock, {
-        uint64_t milis = TIME_NANOS_TO_MILIS(timeNanos());
-
-        va_list args;
-
-        // print our prefix
-        PUSH_COLOUR(0x3050FF);
-        DO_WRITE();
-        POP_COLOUR();
-
-        // print format given
-        PUSH_COLOUR(0x20BF20);
-        va_start(args, fmt);
-        printk_impl(fmt, args);
-        va_end(args);
-        POP_COLOUR();
-
-        // don't forget a new line
-        printk("\n");
-
+        BOILERPLATE;
+        PRINT_PREFIX_FORMAT(0x3050FF, 0x20BF20); // print our prefix
 #ifdef K_COM_LOG
-        // do same thing but on serial
-        DO_WRITES();
-
-        va_start(args, fmt);
-        printks_impl(fmt, args);
-        va_end(args);
-
-        printks("\n");
+        PRINT_SERIAL(); // do the printing on serial
 #endif
     });
 }
@@ -69,32 +62,10 @@ void logInfo(const char *fmt, ...)
 void logWarn(const char *fmt, ...)
 {
     lock(loggerLock, {
-        va_list args;
-        uint64_t milis = TIME_NANOS_TO_MILIS(timeNanos());
-
-        // print our prefix
-        PUSH_COLOUR(0x3050FF);
-        DO_WRITE();
-        POP_COLOUR();
-
-        // print given format
-        PUSH_COLOUR(0xFFA000);
-        va_start(args, fmt);
-        printk_impl(fmt, args);
-        va_end(args);
-        POP_COLOUR();
-
-        printk("\n");
-
+        BOILERPLATE;
+        PRINT_PREFIX_FORMAT(0x3050FF, 0xFFA000); // print our prefix
 #ifdef K_COM_LOG
-        // do same thing but on serial
-        DO_WRITES();
-
-        va_start(args, fmt);
-        printks_impl(fmt, args);
-        va_end(args);
-
-        printks("\n");
+        PRINT_SERIAL(); // do the printing on serial
 #endif
     });
 }
@@ -102,32 +73,10 @@ void logWarn(const char *fmt, ...)
 void logError(const char *fmt, ...)
 {
     lock(loggerLock, {
-        va_list args;
-        uint64_t milis = TIME_NANOS_TO_MILIS(timeNanos());
-
-        // print our prefix
-        PUSH_COLOUR(0x3050FF);
-        DO_WRITE();
-        POP_COLOUR();
-
-        // print given format
-        PUSH_COLOUR(0xFF2020);
-        va_start(args, fmt);
-        printk_impl(fmt, args);
-        va_end(args);
-        POP_COLOUR();
-
-        printk("\n");
-
+        BOILERPLATE;
+        PRINT_PREFIX_FORMAT(0x3050FF, 0xFF2020); // print our prefix
 #ifdef K_COM_LOG
-        // do same thing on serial
-        DO_WRITES();
-
-        va_start(args, fmt);
-        printks_impl(fmt, args);
-        va_end(args);
-
-        printks("\n");
+        PRINT_SERIAL(); // do the printing on serial
 #endif
     });
 }
@@ -135,33 +84,11 @@ void logError(const char *fmt, ...)
 void logDbg(int level, const char *fmt, ...)
 {
     lock(loggerLock, {
-        va_list args;
-        uint64_t milis = TIME_NANOS_TO_MILIS(timeNanos());
-
+        BOILERPLATE;
         if (level != LOG_SERIAL_ONLY)
-        {
-            // print our prefix and the given format
-            PUSH_COLOUR(0x00FF00);
-            DO_WRITE();
-
-            va_start(args, fmt);
-            printk_impl(fmt, args);
-            va_end(args);
-
-            printk("\n");
-
-            POP_COLOUR();
-        }
-
+            PRINT_PREFIX_FORMAT(0x00FF00, 0x00FF00); // print our prefix
 #ifdef K_COM_LOG
-        // print on serial our prefix and given format
-        DO_WRITES();
-
-        va_start(args, fmt);
-        printks_impl(fmt, args);
-        va_end(args);
-
-        printks("\n");
+        PRINT_SERIAL(); // do the printing on serial
 #endif
     });
 }
