@@ -1,9 +1,10 @@
-#pragma once
 #include <sys/sys.h>
 #include <mm/pmm.h>
 #include <drv/framebuffer.h>
 #include <drv/drv.h>
+#include <drv/input.h>
 #include <fw/acpi.h>
+#include <elf/elf.h>
 
 #define SYS_DRIVER_TYPE_FRAMEBUFFER 1
 #define SYS_DRIVER_TYPE_INPUT 2

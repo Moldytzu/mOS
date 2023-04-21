@@ -1,4 +1,3 @@
-#pragma once
 #include <sys/sys.h>
 
 // exit (rsi = exit status)

@@ -1,4 +1,3 @@
-#pragma once
 #include <sys/sys.h>
 #include <elf/elf.h>
 #include <subsys/vt.h>

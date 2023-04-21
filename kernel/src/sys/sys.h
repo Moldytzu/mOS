@@ -58,20 +58,17 @@ cwd: // copy the cwd before the input
     return NULL;
 }
 
-#include <sys/exit.h>
-#include <sys/write.h>
-#include <sys/read.h>
-#include <sys/input.h>
-#include <sys/display.h>
-#include <sys/exec.h>
-#include <sys/pid.h>
-#include <sys/mem.h>
-#include <sys/vfs.h>
-#include <sys/open.h>
-#include <sys/close.h>
-#include <sys/socket.h>
-#include <sys/power.h>
-#include <sys/driver.h>
-
-void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver};
-const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver"};
+void exit(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void write(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void read(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void input(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void display(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void exec(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void pid(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void mem(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void vfs(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void open(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void close(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void socket(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void power(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+void driver(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);

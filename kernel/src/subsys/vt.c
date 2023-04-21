@@ -7,6 +7,8 @@ struct vt_terminal rootTerminal;
 uint32_t lastID = 0;
 bool refresh = false;
 
+// todo: lock this down
+
 // create new terminal and return it's address
 struct vt_terminal *vtCreate()
 {

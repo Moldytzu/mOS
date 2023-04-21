@@ -1,4 +1,3 @@
-#pragma once
 #include <sys/sys.h>
 
 // pid (rsi = pid, rdx = info, r8 = retVal/inputVal)

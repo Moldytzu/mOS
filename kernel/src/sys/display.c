@@ -1,7 +1,7 @@
-#pragma once
 #include <sys/sys.h>
 #include <drv/framebuffer.h>
 #include <drv/drv.h>
+#include <subsys/vt.h>
 
 // display (rsi = call, rdx = arg1, r8 = arg2)
 void display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t *task)

@@ -7,6 +7,7 @@
 struct sock_socket rootSocket;
 uint32_t lastSockID = 0;
 
+// todo: lock this down
 // todo: permission system (the socket creator can chose which pids can read/write from the socket)
 // adjustable buffer size (dynamically allocate buffer size)
 // master-slave system (multiple connections on the same socket, create a buffer for each connection)

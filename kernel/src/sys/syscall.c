@@ -5,6 +5,9 @@
 #include <sched/scheduler.h>
 #include <misc/logger.h>
 
+void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver};
+const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver"};
+
 extern void sysretInit();
 
 // handler called on syscall

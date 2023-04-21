@@ -1,4 +1,3 @@
-#pragma once
 #include <sys/sys.h>
 #include <fs/vfs.h>
 #include <subsys/socket.h>
