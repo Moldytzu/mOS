@@ -26,7 +26,6 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
     if (execPath == NULL) // the path doesn't exist
     {
         *ret = 0;
-        pmmDeallocate(execPath);
         return;
     }
 

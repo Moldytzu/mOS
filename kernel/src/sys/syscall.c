@@ -8,6 +8,35 @@
 void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver};
 const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver"};
 
+// expand relative path to full path
+char *expandPath(const char *path, sched_task_t *task)
+{
+    if (vfsExists(path)) // check if path exists as is
+        return (char *)path;
+
+    // todo: implement more advanced path traversal like .. and .
+    if (strlen(path) > 2 && memcmp(path, "./", 2) == 0) // remove ./
+        path += 2;
+
+    char *buffer = (char *)pmmPage(); // allocate an internal buffer
+    zero(buffer, PMM_PAGE);
+
+    uint64_t offset = strlen(task->cwd);
+    memcpy((void *)buffer, task->cwd, offset);             // copy cwd
+    memcpy((void *)(buffer + offset), path, strlen(path)); // append given path
+    
+    if (vfsExists(buffer)) // check if it exists
+    {
+        pmmDeallocate(buffer); // clean up
+        return buffer;
+    }
+
+    // fail
+    pmmDeallocate(buffer); // clean up
+
+    return NULL;
+}
+
 extern void sysretInit();
 
 // handler called on syscall
@@ -23,7 +52,7 @@ void syscallHandler(idt_intrerrupt_stack_t *registers)
 
     if (registers->rdi < (sizeof(syscallHandlers) / sizeof(void *))) // check if the syscall is in range
     {
-        //logDbg(LOG_SERIAL_ONLY, "%s calls %s with arguments %x %x %x %x", t->name, syscallNames[registers->rdi], registers->rsi, registers->rdx, registers->r8, registers->r9);
+        // logDbg(LOG_SERIAL_ONLY, "%s calls %s with arguments %x %x %x %x", t->name, syscallNames[registers->rdi], registers->rsi, registers->rdx, registers->r8, registers->r9);
         syscallHandlers[registers->rdi](registers->rsi, registers->rdx, registers->r8, registers->r9, t); // call the handler
     }
 

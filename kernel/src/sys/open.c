@@ -13,7 +13,6 @@ void open(uint64_t returnPtr, uint64_t path, uint64_t r8, uint64_t r9, sched_tas
     if (input == NULL) // check if the path exists
     {
         *returnVal = 0;
-        pmmDeallocate(input);
         return;
     }
 

@@ -170,7 +170,7 @@ int main(int argc, char **argv)
     path = enviroment;
 
     // find the path
-    while (memcmp(path, "PATH=", 5) != 0) // find the path in enviroment
+    while (memcmp(path, "PATH=", 5) != 0 && strlen(path)) // find the path in enviroment
         path++;
 
     if (memcmp(path, "PATH=", 5) == 0) // check if the path is available by comparing again the bytes
