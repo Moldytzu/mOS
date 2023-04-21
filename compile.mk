@@ -22,7 +22,7 @@ CFLAGS :=   		              \
 	-mno-red-zone        	      \
 	-Werror 			          \
 	-Wno-address-of-packed-member \
-	-mcmodel=large                \
+	-mcmodel=kernel               \
 	-Og                           \
 	-march=nocona                 \
 	-MMD                          \
