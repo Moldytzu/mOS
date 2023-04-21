@@ -12,7 +12,7 @@ uint64_t sockID = 0;
 void *sockBuffer = NULL;
 bool verbose = true;
 bool safe = false;
-char *shell;
+char *shell = "/init/msh.mx";
 char *cfg;
 char *drivers[512]; // 512 max drivers should be enough for now
 uint8_t driverIdx = 0;

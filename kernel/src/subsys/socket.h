@@ -1,16 +1,21 @@
 #pragma once
 #include <misc/utils.h>
 
+#define SOCK_SIZE (1 * 4096)
+
 struct sock_socket
 {
-    const char *buffer; // pointer to the terminal buffer
-    int bufferIdx;      // current index in the buffer
-    int readIdx;        // current read index in the buffer
-    uint32_t id;        // ID
+    uint32_t id;   // ID
+    int bufferIdx; // current index in the buffer
+    int readIdx;   // current read index in the buffer
 
     struct sock_socket *previous; // previous terminal
     struct sock_socket *next;     // next terminal
+
+    uint8_t buffer[]; // data to be used
 };
+
+#define SOCK_BUFFER_SIZE (SOCK_SIZE - offsetof(struct sock_socket, buffer))
 
 void sockDestroy(struct sock_socket *sock);
 void sockInit();

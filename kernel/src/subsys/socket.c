@@ -23,15 +23,13 @@ struct sock_socket *sockCreate()
 
         if (currentSocket->buffer)
         {
-            currentSocket->next = blkBlock(sizeof(struct sock_socket)); // allocate next socket if the current socket is valid
-            currentSocket->next->previous = currentSocket;              // set the previous socket
-            currentSocket = currentSocket->next;                        // set current socket to the newly allocated socket
+            currentSocket->next = pmmPage();               // allocate next socket if the current socket is valid
+            currentSocket->next->previous = currentSocket; // set the previous socket
+            currentSocket = currentSocket->next;           // set current socket to the newly allocated socket
         }
     }
 
     zero(currentSocket, sizeof(struct sock_socket)); // clear the socket
-    currentSocket->buffer = pmmPage();               // allocate the buffer
-    zero((void *)currentSocket->buffer, VMM_PAGE);   // clear the buffer
     currentSocket->id = lastSockID++;                // set the ID
 
 #ifdef K_SOCK_DEBUG
@@ -47,13 +45,13 @@ void sockAppend(struct sock_socket *sock, const char *str, size_t count)
     if (!sock || !count)
         return;
 
-    const char *input = str;                 // input buffer
-    if (sock->bufferIdx + count >= VMM_PAGE) // check if we could overflow
+    const char *input = str;                         // input buffer
+    if (sock->bufferIdx + count >= SOCK_BUFFER_SIZE) // check if we could overflow
     {
-        input += (sock->bufferIdx + count) - VMM_PAGE; // move the pointer until where it overflows
-        count -= (sock->bufferIdx + count) - VMM_PAGE; // decrease the count by the number of bytes where it overflows
-        zero((void *)sock->buffer, VMM_PAGE);          // clear the buffer
-        sock->bufferIdx = 0;                           // reset the index
+        input += (sock->bufferIdx + count) - SOCK_BUFFER_SIZE; // move the pointer until where it overflows
+        count -= (sock->bufferIdx + count) - SOCK_BUFFER_SIZE; // decrease the count by the number of bytes where it overflows
+        zero((void *)sock->buffer, SOCK_BUFFER_SIZE);          // clear the buffer
+        sock->bufferIdx = 0;                                   // reset the index
     }
 
     memcpy8((void *)((uint64_t)sock->buffer + sock->bufferIdx), (void *)input, count); // copy the buffer
@@ -70,10 +68,12 @@ void sockRead(struct sock_socket *sock, const char *str, size_t count)
     if (!sock)
         return;
 
-    memcpy((void *)str, (void *)sock->buffer, count);               // copy the buffer
-    memmove((void *)sock->buffer, sock->buffer + count - 1, count); // move the content after the requested count at the front
-    zero((void *)sock->buffer + count - 1, 4096 - count + 1);       // clear the ghost of the content
-    sock->bufferIdx = 0;                                            // reset the index
+    count = min(count, SOCK_BUFFER_SIZE - 1); // don't overflow
+
+    memcpy((void *)str, (void *)sock->buffer, count);                     // copy the buffer
+    memmove((void *)sock->buffer, sock->buffer + count - 1, count);       // move the content after the requested count at the front
+    zero((void *)sock->buffer + count - 1, SOCK_BUFFER_SIZE - count + 1); // clear the ghost of the content
+    sock->bufferIdx = 0;                                                  // reset the index
 }
 
 // get first socket
