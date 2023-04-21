@@ -41,6 +41,13 @@ void comWrites(const char *str)
         comWrite(str[i]);
 }
 
+void sendKeystroke(char c)
+{
+    input->keys[0] = c;
+    sys_drv_flush(SYS_DRIVER_TYPE_INPUT);
+    sys_yield();
+}
+
 void handleInput()
 {
     // handle input
@@ -58,33 +65,37 @@ void handleInput()
 void handleCommands()
 {
     // full single-word commands
-    if (strcmp(kbuffer, "enter") == 0)
-    {
-        input->keys[0] = '\n';
-        sys_drv_flush(SYS_DRIVER_TYPE_INPUT);
-        return;
-    }
-    else if (strcmp(kbuffer, "help") == 0)
+    if (strcmp(kbuffer, "help") == 0)
     {
         comWrites("mOS kernel debugger help\n");
-        comWrites("enter - send enter keystroke\n");
+        comWrites("e - send enter keystroke\n");
         comWrites("w<text> - send text as keystrokes\n");
         return;
     }
 
     // prefix commands
-    if (strlen(kbuffer) > 1 && kbuffer[0] == 'w')
+    switch (kbuffer[0])
+    {
+    case 'w':
     {
         const char *str = &kbuffer[1]; // text to write
-        
+
         for (int i = 0; i < strlen(str); i++)
         {
             comWrite(str[i]);
-            input->keys[0] = str[i];
-            sys_drv_flush(SYS_DRIVER_TYPE_INPUT);
-            sys_yield();
+            sendKeystroke(str[i]);
         }
         return;
+    }
+
+    case 'e':
+    {
+        sendKeystroke('\n');
+        return;
+    }
+    default:
+        comWrites("Unknown command. Use `help` to see all available commands\n");
+        break;
     }
 }
 
@@ -92,7 +103,7 @@ void _mdrvmain()
 {
     input = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT);
 
-    if(!input)
+    if (!input)
     {
         comWrites("kcomdbg: failed to announce!\n");
         abort();
