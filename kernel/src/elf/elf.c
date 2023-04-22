@@ -52,14 +52,14 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 
     blkDeallocate(phdr); // clean up
 
-    char *cwd = blkBlock(strlen(path));
+    char *cwd = pmmPage();
     zero(cwd, strlen(path)); // clear the string
     memcpy(cwd, path, strlen(path));
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter
 
     sched_task_t *task = schedAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true, driver); // add the task
-    blkDeallocate(cwd);                                                                                                                            // free
+    pmmDeallocate(cwd);                                                                                                                            // free
     blkDeallocate(elf);
     return task; // return the task
 }

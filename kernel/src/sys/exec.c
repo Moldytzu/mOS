@@ -39,8 +39,8 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
                 input->argv[i] = PHYSICAL(input->argv[i]);
     }
 
-    sched_task_t *newTask = elfLoad(execPath, input->argc, input->argv, 0); // do the loading
-    *ret = newTask->id;                                                          // set the pid
+    sched_task_t *newTask = elfLoad(execPath, input->argc, input->argv, false); // do the loading
+    *ret = newTask->id;                                                         // set the pid
 
     if (input->shouldCreateNewTerminal)
         newTask->terminal = vtCreate()->id; // create new tty and set the id to it's id
@@ -52,6 +52,4 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
 
     if (input->cwd)
         memcpy(newTask->cwd, PHYSICAL(input->cwd), strlen(PHYSICAL(input->cwd)) + 1); // copy the initial working directory
-
-    pmmDeallocate(execPath);
 }
