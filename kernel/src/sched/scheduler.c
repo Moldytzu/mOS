@@ -29,7 +29,7 @@ bool _enabled = false;
 
 void callWithStack(void *func, void *stack);
 
-void commonTask() 
+void commonTask()
 {
     while (1)
         sti();
@@ -74,7 +74,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         t = TASK(t->next);                        // point to the newly allocated task
         zero(t, sizeof(sched_task_t));            // clear it
 
-        // metadata 
+        // metadata
         t->id = lastTaskID++;                // set ID
         t->core = id;                        // set core id
         memcpy(t->name, name, strlen(name)); // set a name
@@ -104,8 +104,8 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
             vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-        for (size_t i = 0; i < execSize; i += VMM_PAGE)
-            vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER); // map task as user, read-write
+        for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
+            vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
         // arguments (todo: refactor this code to be more readable)
         if (argv)

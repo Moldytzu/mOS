@@ -5,7 +5,7 @@
 #define TASK_BASE_ADDRESS 0xA000000000
 #define TASK_BASE_ALLOC 0xB000000000
 
-pstruct
+typedef struct
 {
     // metadata
     uint32_t core;
