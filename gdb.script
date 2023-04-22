@@ -8,5 +8,3 @@ b _start
 c
 
 layout split # for C
-b syscall.c:46
-c

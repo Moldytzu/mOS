@@ -159,14 +159,9 @@ void handleCommands()
     }
 }
 
-const char *readme = "\x01\x02\x03";
-
 void _mdrvmain()
 {
     input = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT);
-
-    for (int i = 0; i < 10; i++)
-        comWrites(to_hstring((uint64_t)input));
 
     if (!input)
     {
