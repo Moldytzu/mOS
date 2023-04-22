@@ -2,6 +2,10 @@
 
 void sys_exit(uint64_t status)
 {
+    // todo: remove this after fixing schedKill
+    while(1)
+        sys_yield();
+        
     _syscall(SYS_EXIT, status, 0, 0, 0, 0);
 }
 
