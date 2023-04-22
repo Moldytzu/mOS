@@ -7,6 +7,7 @@
 #define HEADER_AT(ptr) ((blk_header_t *)(ptr))
 #define CONTENT_OF(hdr) ((void *)((uint64_t)hdr + sizeof(blk_header_t)))
 
+locker_t blkLock;
 blk_header_t *start = NULL;
 
 blk_header_t *last()
@@ -55,66 +56,72 @@ void dbgDump()
 void blkInit()
 {
     // create first block
-    start = (blk_header_t *)pmmPage();
-    zero(start, 4096);
+    start = (blk_header_t *)pmmPages(BLK_EXPAND_INCREMENT);
+    zero(start, BLK_EXPAND_INCREMENT * PMM_PAGE);
     start->signature = BLK_HEADER_SIGNATURE;
     start->free = true;
-    start->size = 4096 - sizeof(blk_header_t);
+    start->size = (BLK_EXPAND_INCREMENT * PMM_PAGE) - sizeof(blk_header_t);
 }
 
 void *blkBlock(size_t size)
 {
-    if (size % BLK_ALIGNMENT != 0)
-        size += size % BLK_ALIGNMENT;
+    lock(blkLock, {
+        if (size % BLK_ALIGNMENT != 0)
+            size += size % BLK_ALIGNMENT;
 
-    size += BLK_ALIGNMENT; // padding
+        size += BLK_ALIGNMENT; // padding
 
-    size_t internalSize = size + sizeof(blk_header_t);
+        size_t internalSize = size + sizeof(blk_header_t);
 
-    blk_header_t *current = start;
+        blk_header_t *current = start;
 
-    while (current)
-    {
-        if (current->size == size && current->free)
+        while (current)
         {
-            current->free = false;
-            if (current->signature != BLK_HEADER_SIGNATURE)
+            if (current->size == size && current->free)
             {
-                current->signature = BLK_HEADER_SIGNATURE;
-                logWarn("blk: writing signature of buggy block");
+                current->free = false;
+                if (current->signature != BLK_HEADER_SIGNATURE)
+                {
+                    current->signature = BLK_HEADER_SIGNATURE;
+                    logWarn("blk: writing signature of buggy block");
+                }
+
+                release(blkLock);
+
+                return CONTENT_OF(current);
             }
 
-            return CONTENT_OF(current);
-        }
-
-        if (current->size >= internalSize && current->free)
-        {
-            // create new block then add it in the chain
-            blk_header_t *newBlock = CONTENT_OF(current) + size;
-            newBlock->size = current->size - internalSize;
-            newBlock->free = true;
-            newBlock->next = current->next;
-            newBlock->prev = current;
-            newBlock->signature = BLK_HEADER_SIGNATURE;
-
-            current->next = newBlock;
-            current->free = false;
-            current->size = size;
-
-            if (current->signature != BLK_HEADER_SIGNATURE)
+            if (current->size >= internalSize && current->free)
             {
-                current->signature = BLK_HEADER_SIGNATURE;
-                logWarn("blk: writing signature of buggy block");
+                // create new block then add it in the chain
+                blk_header_t *newBlock = CONTENT_OF(current) + size;
+                newBlock->size = current->size - internalSize;
+                newBlock->free = true;
+                newBlock->next = current->next;
+                newBlock->prev = current;
+                newBlock->signature = BLK_HEADER_SIGNATURE;
+
+                current->next = newBlock;
+                current->free = false;
+                current->size = size;
+
+                if (current->signature != BLK_HEADER_SIGNATURE)
+                {
+                    current->signature = BLK_HEADER_SIGNATURE;
+                    logWarn("blk: writing signature of buggy block");
+                }
+
+                release(blkLock);
+
+                return CONTENT_OF(current);
             }
 
-            return CONTENT_OF(current);
+            current = current->next;
         }
-
-        current = current->next;
-    }
+    });
 
     // expand then try again
-    expand(size / 4096 + 1);
+    expand(16);
     return blkBlock(size - BLK_ALIGNMENT); // also remove the padding
 }
 
@@ -137,23 +144,25 @@ void blkDeallocate(void *blk)
         return;
     }
 
-    blk_header_t *header = HEADER_OF(blk);
-    header->free = true;
-    header->signature = BLK_HEADER_SIGNATURE;
+    lock(blkLock, {
+        blk_header_t *header = HEADER_OF(blk);
+        header->free = true;
+        header->signature = BLK_HEADER_SIGNATURE;
 
-    if (header->next && HEADER_AT(header->next)->free) // we can merge forward
-    {
-        blk_header_t *next = HEADER_AT(header->next);
-        header->size += next->size + sizeof(blk_header_t);
-        header->next = next->next;
-    }
+        if (header->next && HEADER_AT(header->next)->free) // we can merge forward
+        {
+            blk_header_t *next = HEADER_AT(header->next);
+            header->size += next->size + sizeof(blk_header_t);
+            header->next = next->next;
+        }
 
-    if (header->prev && HEADER_AT(header->prev)->free) // we can merge backwards
-    {
-        blk_header_t *prev = HEADER_AT(header->prev);
-        prev->size += header->size + sizeof(blk_header_t);
-        prev->free = true;
-        prev->next = header->next;
-        prev->signature = BLK_HEADER_SIGNATURE;
-    }
+        if (header->prev && HEADER_AT(header->prev)->free) // we can merge backwards
+        {
+            blk_header_t *prev = HEADER_AT(header->prev);
+            prev->size += header->size + sizeof(blk_header_t);
+            prev->free = true;
+            prev->next = header->next;
+            prev->signature = BLK_HEADER_SIGNATURE;
+        }
+    });
 }

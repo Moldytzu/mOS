@@ -1,8 +1,9 @@
 #pragma once
 #include <misc/utils.h>
 
-#define BLK_ALIGNMENT 16
+#define BLK_ALIGNMENT 32
 #define BLK_HEADER_SIGNATURE 0xF00F
+#define BLK_EXPAND_INCREMENT 16
 
 typedef struct
 {
