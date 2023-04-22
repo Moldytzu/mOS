@@ -8,7 +8,10 @@
 #include <drv/serial.h>
 #include <subsys/vt.h>
 #include <main/panic.h>
+#include <lai/helpers/pm.h>
+#include <lai/helpers/sci.h>
 #include <stdnoreturn.h>
+#include <fw/acpi.h>
 
 #define TASK(x) ((sched_task_t *)x)
 
@@ -26,7 +29,7 @@ bool _enabled = false;
 
 void callWithStack(void *func, void *stack);
 
-_Noreturn __attribute__ ((naked)) void commonTask() 
+void commonTask() 
 {
     while (1)
         sti();
@@ -71,7 +74,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         t = TASK(t->next);                        // point to the newly allocated task
         zero(t, sizeof(sched_task_t));            // clear it
 
-        // metadata
+        // metadata 
         t->id = lastTaskID++;                // set ID
         t->core = id;                        // set core id
         memcpy(t->name, name, strlen(name)); // set a name
