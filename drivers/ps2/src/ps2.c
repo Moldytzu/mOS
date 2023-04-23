@@ -335,10 +335,10 @@ bool initController()
         sys_idt_set(ps2Port2Handler, PIC_IRQ_12);
 
     // unmask the irqs
-    if (port1Present)
-        outb(PIC_MASTER_DAT, 0b11111100); // IRQ 1 and IRQ 0 (timer and PS/2 port 1)
-    if (port2Present)
-        outb(PIC_SLAVE_DAT, 0b11101111); // IRQ 12 (PS/2 port 2)
+    //if (port1Present)
+    //    outb(PIC_MASTER_DAT, 0b11111100); // IRQ 1 and IRQ 0 (timer and PS/2 port 1)
+    //if (port2Present)
+    //    outb(PIC_SLAVE_DAT, 0b11101111); // IRQ 12 (PS/2 port 2)
 
     // initialize the keyboard
     kbInit();
