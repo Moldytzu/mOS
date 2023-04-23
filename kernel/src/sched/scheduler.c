@@ -68,11 +68,14 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     lock(schedLock, {
         uint32_t id = nextCore(); // get next core id
 
+        // allocate a new task metadata structure
         t = schedLast(id);                        // get last task of the next core
         t->next = blkBlock(sizeof(sched_task_t)); // allocate next
-        TASK(t->next)->prev = t;                  // set previous task
-        t = TASK(t->next);                        // point to the newly allocated task
-        zero(t, sizeof(sched_task_t));            // clear it
+        zero(t->next, sizeof(sched_task_t));      // clear it
+
+        // add in the list
+        TASK(t->next)->prev = t; // set previous task
+        t = TASK(t->next);       // point to the newly allocated task
 
         // metadata
         t->id = lastTaskID++;                // set ID
