@@ -214,6 +214,8 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
             // save old simd context
             memcpy(&lastTask[id]->simdContext, simdContext, 512);
         }
+        else
+            taskKilled[id] = false; // reset the flag if needed
 
         // get next id
         lastTask[id] = lastTask[id]->next;
@@ -291,52 +293,15 @@ void schedKill(uint32_t id)
         if (id == 1)
             panick("Attempt to kill the init system.");
 
+        // todo: deallocate resources here!
+
         sched_task_t *task = schedGet(id);
-
-        if (!task)
-            return;
-
-        // clear driver contexts
-        // if (task->isDriver)
-        //    drvExit(id);
-
-        // deallocate some fields
-        // pmmDeallocatePages(task->stackBase, task->stackSize / VMM_PAGE); // stack
-        // pmmDeallocate(task->enviroment);                                 // enviroment
-
-        // deallocate the memory allocations
-        for (int i = 0; i < task->allocatedIndex; i++)
-            if (task->allocated[i] != NULL)
-                pmmDeallocate(task->allocated[i]);
-
-        pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
-
-        // deallocate the elf (if present)
-        // if (task->isElf)
-        //    pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
-
-        // deallocate the task
-        if (task->prev)
-        {
-            sched_task_t *prev = TASK(task->prev);
-            prev->next = task->next;
-        }
-
-        vmmDestroy((void *)task->pageTable); // destroy the page table
-        blkDeallocate(task);                 // free the task
-
-        taskKilled[smpID()] = true;
+        TASK(task->prev)->next = task->next; // remove task from its list
+        taskKilled[smpID()] = true;          // signal that we have killed a task (todo: make it so we know which task was killed so we can kill other tasks beside the current running one)
 
 #ifdef K_SCHED_DEBUG
         printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
 #endif
-
-        // halt until next intrerrupt fires
-        sti();
-        hlt();
-
-        while (1)
-            ; // prevent returning back
     });
 }
 

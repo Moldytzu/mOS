@@ -18,6 +18,7 @@
 #define INBOUNDARIES(address) (INSTACK(((uint64_t)address)) || INAPPLICATION(((uint64_t)address)))
 
 char *expandPath(const char *path, sched_task_t *task);
+void yield();
 
 void exit(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
 void write(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);

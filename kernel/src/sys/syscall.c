@@ -37,6 +37,12 @@ char *expandPath(const char *path, sched_task_t *task)
     return NULL;
 }
 
+// forces a scheduler context swap
+void yield()
+{
+    iasm("int $0x20"); // simulates an interrupt
+}
+
 extern void sysretInit();
 
 // handler called on syscall
