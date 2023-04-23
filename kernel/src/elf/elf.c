@@ -53,10 +53,10 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     blkDeallocate(phdr); // clean up
 
     char *cwd = pmmPage();
-    zero(cwd, strlen(path)); // clear the string
-    memcpy(cwd, path, strlen(path));
+    zero(cwd, strlen(path) + 1);     // clear the string
+    memcpy(cwd, path, strlen(path)); // copy the path
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
-        ; // step back to last delimiter
+        ; // step back to last delimiter (removes file name)
 
     sched_task_t *task = schedAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true, driver); // add the task
     pmmDeallocate(cwd);                                                                                                                            // free
