@@ -89,10 +89,7 @@ void ioapicInit()
         panick("MADT doesn't contain I/O APIC base");
 
     // redirect irq 1 (ps2 port one)
-    uint64_t redirector = 0;
-    redirector |= 0x21;                                                 // vector
-    redirector |= 0b000 << 8;                                           // fixed priority delivery mode
-    redirector |= 1 << 11;                                              // logical destination mode
+    uint64_t redirector = 0x21; // redirect to vector 0x21, with fixed priority of physical apic 0
     ioapicWrite(IRQ_TO_OFFSET(1), redirector & 0xFFFFFFFF);             // write low bits
     ioapicWrite(IRQ_TO_OFFSET(1) + 1, (redirector >> 32) & 0xFFFFFFFF); // write high bits
 
