@@ -173,6 +173,13 @@ pstruct
 }
 acpi_hpet_t;
 
+pstruct
+{
+    acpi_sdt_t header;
+    uint32_t lapicAddress;
+    uint32_t flags;
+} acpi_madt_t;
+
 acpi_pci_descriptor_t *pciGetFunctions();
 uint64_t pciGetFunctionsNum();
 

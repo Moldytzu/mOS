@@ -6,6 +6,7 @@
 #include <cpu/smp.h>
 #include <cpu/control.h>
 #include <cpu/lapic.h>
+#include <cpu/ioapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
@@ -29,43 +30,45 @@ void kmain();
 // entry point of the kernel
 void _start()
 {
-    fpuInit(); // initialize the fpu
+    fpuInit(); // initialise the fpu
 
-    framebufferInit(); // initialize framebuffer
+    framebufferInit(); // initialise framebuffer
 
-    initrdInit(); // initialize the initrd
+    initrdInit(); // initialise the initrd
 
-    serialInit(); // initialize the serial port
+    serialInit(); // initialise the serial port
 
-    pmmInit(); // initialize the physical memory manager
+    pmmInit(); // initialise the physical memory manager
 
-    blkInit(); // initialize the block allocator
+    blkInit(); // initialise the block allocator
 
     smpBootstrap(); // bootstrap the cpus
 
-    acpiInit(); // initialize the acpi interface
+    acpiInit(); // initialise the acpi interface
 
-    hpetInit(); // initialize the hpet
+    hpetInit(); // initialise the hpet
 
     timeSource(); // switch to best time source
 
-    picInit(); // initialize the pic chips
+    picInit(); // initialise the pic chips
 
     lapicInit(true); // initalize the advanced intrerupt controller
 
-    vfsInit(); // initialize the virtual filesystem
+    ioapicInit(); // initialise the external interrupt controller
+
+    vfsInit(); // initialise the virtual filesystem
 
     initrdMount(); // mount the initrd
 
-    schedInit();
+    schedInit(); // create initial tasks
 
-    drvInit(); // initialize the driver manager
+    drvInit(); // initialise the driver manager
 
-    inputInit(); // initialize the input subsystem
+    inputInit(); // initialise the input subsystem
 
-    sockInit(); // initialize the ipc (sockets)
+    sockInit(); // initialise the ipc (sockets)
 
-    syscallInit(); // initialize system calls
+    syscallInit(); // initialise system calls
 
     kmain(); // call main
 
