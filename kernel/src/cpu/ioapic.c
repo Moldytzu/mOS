@@ -55,7 +55,11 @@ uint32_t ioapicRead(uint8_t offset)
 
 void ioapicRedirectIRQ(uint8_t irq, uint16_t vector, uint16_t core)
 {
-    // todo: check interruptOVerrides before
+    for (int i = 0; i < interruptOverridesIdx; i++)
+    {
+        if (interruptOverrides[i]->irq == irq) // check for redirection in madt
+            irq = interruptOverrides[i]->systemInt;
+    }
 
     uint64_t redirector = vector;       // redirect to vector 0x21
     redirector |= (uint64_t)core << 56; // set destination core
