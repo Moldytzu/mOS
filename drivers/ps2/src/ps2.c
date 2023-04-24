@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// todo: implement ioapic support then make this work properly
-
 // ports
 #define PS2_DATA 0x60
 #define PS2_STATUS 0x64
@@ -162,8 +160,6 @@ void ps2Port1Handler()
     uint8_t data = inb(PS2_DATA);
     if (port1Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
         kbHandle(data);
-
-    picEOI();
 }
 
 void ps2Port2Handler()
@@ -171,8 +167,6 @@ void ps2Port2Handler()
     uint8_t data = inb(PS2_DATA);
     if (port2Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
         kbHandle(data);
-
-    picEOI();
 }
 
 const char *lookup[] = {"mouse", "mouse w/ scroll", "5 button mouse", "keyboard", "unknown"};
@@ -330,15 +324,16 @@ bool initController()
 
     // set the intrerrupt handlers
     if (port1Present)
-        sys_idt_set(ps2Port1Handler, PIC_IRQ_1);
-    if (port2Present)
-        sys_idt_set(ps2Port2Handler, PIC_IRQ_12);
+    {
+        sys_idt_set(ps2Port1Handler, 0x21); // todo: allocate idt vectors
+        sys_driver(SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR, 1, 0x21, 0);
+    }
 
-    // unmask the irqs
-    //if (port1Present)
-    //    outb(PIC_MASTER_DAT, 0b11111100); // IRQ 1 and IRQ 0 (timer and PS/2 port 1)
-    //if (port2Present)
-    //    outb(PIC_SLAVE_DAT, 0b11101111); // IRQ 12 (PS/2 port 2)
+    if (port2Present)
+    {
+        sys_idt_set(ps2Port2Handler, 0x22); // todo: allocate idt vectors
+        sys_driver(SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR, 12, 0x22, 0);
+    }
 
     // initialize the keyboard
     kbInit();

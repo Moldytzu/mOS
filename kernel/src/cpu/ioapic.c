@@ -53,6 +53,18 @@ uint32_t ioapicRead(uint8_t offset)
     return *(uint32_t *)((uint64_t)ioapicBase + 0x10); // read data
 }
 
+void ioapicRedirectIRQ(uint8_t irq, uint16_t vector, uint16_t core)
+{
+    // todo: check interruptOVerrides before
+    // todo: use the core field
+
+    uint64_t redirector = vector;                                         // redirect to vector 0x21, with fixed priority of physical apic 0
+    ioapicWrite(IRQ_TO_OFFSET(irq), redirector & 0xFFFFFFFF);             // write low bits
+    ioapicWrite(IRQ_TO_OFFSET(irq) + 1, (redirector >> 32) & 0xFFFFFFFF); // write high bits
+
+    logInfo("ioapic: redirected %d to vector %d of %d", irq, vector, core);
+}
+
 void ioapicInit()
 {
     // disable pic
@@ -85,13 +97,6 @@ void ioapicInit()
     for (uint64_t i = 0; i < interruptOverridesIdx; i++)
         logInfo("irq %d from bus %d -> %d", interruptOverrides[i]->irq, interruptOverrides[i]->bus, interruptOverrides[i]->systemInt);
 
-    if(!ioapicBase)
+    if (!ioapicBase)
         panick("MADT doesn't contain I/O APIC base");
-
-    // redirect irq 1 (ps2 port one)
-    uint64_t redirector = 0x21; // redirect to vector 0x21, with fixed priority of physical apic 0
-    ioapicWrite(IRQ_TO_OFFSET(1), redirector & 0xFFFFFFFF);             // write low bits
-    ioapicWrite(IRQ_TO_OFFSET(1) + 1, (redirector >> 32) & 0xFFFFFFFF); // write high bits
-
-    logInfo("wrote %x",redirector);
 }

@@ -117,8 +117,12 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
         break;
     }
 
-    if (redirectTable[int_num] && schedGet(redirectTableMeta[int_num]))                                                 // there is a request to redirect intrerrupt to a driver
+    if (redirectTable[int_num] && schedGet(redirectTableMeta[int_num])) // there is a request to redirect intrerrupt to a driver (todo: replace this with a struct)
+    {
         callWithPageTable((uint64_t)redirectTable[int_num], (uint64_t)schedGet(redirectTableMeta[int_num])->pageTable); // give control to the driver
+        lapicEOI();                                                                                                     // todo: send eoi only if the task asks us in the syscall
+        return;                                                                                                         // don't execute rest of the handler
+    }
 
     if (stack->cs == 0x23) // userspace
     {

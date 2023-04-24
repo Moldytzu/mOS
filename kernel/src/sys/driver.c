@@ -5,6 +5,7 @@
 #include <drv/input.h>
 #include <fw/acpi.h>
 #include <elf/elf.h>
+#include <cpu/ioapic.h>
 
 #define SYS_DRIVER_TYPE_FRAMEBUFFER 1
 #define SYS_DRIVER_TYPE_INPUT 2
@@ -96,6 +97,10 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
 
     case 6: // identity map
         vmmMap((void *)task->pageTable, (void *)arg1, (void *)arg1, VMM_ENTRY_RW | VMM_ENTRY_USER);
+        break;
+
+    case 7: // redirect irq to vector
+        ioapicRedirectIRQ(arg1, arg2, smpID());
         break;
 
     default:
