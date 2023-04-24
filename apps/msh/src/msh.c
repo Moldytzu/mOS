@@ -100,8 +100,8 @@ void handleInput(const char *buffer)
     memset((void *)cmdBuffer, 0, 4096);                            // clear the buffer
     memcpy((void *)cmdBuffer, arguments[0], strlen(arguments[0])); // copy the input
 
-    uint64_t status;
-    sys_open(arguments[0], &status);
+    uint64_t status = sys_open(arguments[0]);
+    
     if (!status)
     {
         // try to append the path
@@ -109,8 +109,7 @@ void handleInput(const char *buffer)
         memcpy((void *)(cmdBuffer + pathLen), arguments[0], strlen(arguments[0])); // copy the input
         memcpy((void *)cmdBuffer, path, pathLen);                                  // copy the path
 
-        uint64_t status;
-        sys_open(cmdBuffer, &status);
+        uint64_t status = sys_open(cmdBuffer);
         if (status)
             goto execute;
 

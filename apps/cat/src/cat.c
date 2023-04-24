@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     }
 
     uint64_t fd, size;
-    sys_open(argv[1], &fd); // open the file
+    fd = sys_open(argv[1]); // open the file
     assert(fd != 0);
 
     sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size

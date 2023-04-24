@@ -54,7 +54,7 @@ void parseCFG()
     cfg = malloc(4096);
     assert(cfg != NULL);
 
-    sys_open("/init/init.cfg", &fd); // open the file
+    fd = sys_open("/init/init.cfg"); // open the file
     assert(fd != 0);
 
     sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
@@ -131,7 +131,7 @@ void parseCFG()
 
     for (int i = 0; i < driverIdx; i++)
     {
-        if(!drivers[i])
+        if (!drivers[i])
             continue;
 
         if (verbose)

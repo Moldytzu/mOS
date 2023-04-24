@@ -83,12 +83,6 @@ void sys_identity_map(void *address)
     sys_driver(SYS_DRIVER_IDENTITY_MAP, (uint64_t)address, 0, 0);
 }
 
-void picEOI()
-{
-    outb(PIC_SLAVE_CMD, PIC_EOI_CMD);
-    outb(PIC_MASTER_CMD, PIC_EOI_CMD);
-}
-
 void serialWritec(char c)
 {
     outb(0x3F8, c); // output the character on the serial console
