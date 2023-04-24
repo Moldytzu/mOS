@@ -56,13 +56,14 @@ uint32_t ioapicRead(uint8_t offset)
 void ioapicRedirectIRQ(uint8_t irq, uint16_t vector, uint16_t core)
 {
     // todo: check interruptOVerrides before
-    // todo: use the core field
 
-    uint64_t redirector = vector;                                         // redirect to vector 0x21, with fixed priority of physical apic 0
+    uint64_t redirector = vector;       // redirect to vector 0x21
+    redirector |= (uint64_t)core << 56; // set destination core
+
     ioapicWrite(IRQ_TO_OFFSET(irq), redirector & 0xFFFFFFFF);             // write low bits
     ioapicWrite(IRQ_TO_OFFSET(irq) + 1, (redirector >> 32) & 0xFFFFFFFF); // write high bits
 
-    logInfo("ioapic: redirected %d to vector %d of %d", irq, vector, core);
+    logInfo("ioapic: redirected %d to vector %d of core %d", irq, vector, core);
 }
 
 void ioapicInit()
@@ -93,9 +94,6 @@ void ioapicInit()
         s += e->len;
         e = (madt_entry_t *)((uint64_t)e + e->len); // point to next entry
     }
-
-    for (uint64_t i = 0; i < interruptOverridesIdx; i++)
-        logInfo("irq %d from bus %d -> %d", interruptOverrides[i]->irq, interruptOverrides[i]->bus, interruptOverrides[i]->systemInt);
 
     if (!ioapicBase)
         panick("MADT doesn't contain I/O APIC base");
