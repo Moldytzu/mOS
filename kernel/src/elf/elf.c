@@ -29,7 +29,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 #endif
 
     if (fdSize % 4096 != 0) // make sure the executable size is divisible by a page
-        fdSize += fdSize % 4096;
+        fdSize += fdSize - (fdSize % 4096);
 
     void *buffer = pmmPages(fdSize / VMM_PAGE); // allocate the buffer for the sections
 

@@ -26,10 +26,7 @@ char *expandPath(const char *path, sched_task_t *task)
     memcpy((void *)(buffer + offset), path, strlen(path)); // append given path
     
     if (vfsExists(buffer)) // check if it exists
-    {
-        pmmDeallocate(buffer); // clean up
         return buffer;
-    }
 
     // fail
     pmmDeallocate(buffer); // clean up
