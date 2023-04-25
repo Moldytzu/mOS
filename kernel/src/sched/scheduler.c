@@ -79,13 +79,13 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     t->isDriver = driver;
 
     // registers
-    void *stack = pmmPages(K_STACK_SIZE / 4096);
+    void *stack = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
     if (driver)
         t->registers.rflags = 0b11001000000010; // enable interrupts and set IOPL to 3
     else
-        t->registers.rflags = 0b1000000010;                               // enable interrupts
-    t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE; // set the new stack
-    t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;               // set instruction pointer
+        t->registers.rflags = 0b1000000010;                                          // enable interrupts
+    t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE - VMM_PAGE; // set the new stack
+    t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;                          // set instruction pointer
 
     // segment registers
     t->registers.cs = (8 * 4) | 3;
@@ -96,30 +96,36 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     t->registers.cr3 = (uint64_t)pt;
     t->pageTable = (uint64_t)pt;
 
-    for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
+    for (int i = 0; i < K_STACK_SIZE + VMM_PAGE; i += VMM_PAGE) // map stack
         vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
     for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
         vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-    // arguments (todo: refactor this code to be more readable)
-    if (argv)
+    // handle c arguments
+    t->registers.rdi = 1 + argc; // arguments count the path + the optional arguments
+    t->registers.rsi = t->registers.rsp;
+
+    void **arguments = (void **)t->registers.rsi;                     // buffer in which we will put our 30 max arguments
+    char *str = (char *)(t->registers.rsi + (30 * sizeof(uint64_t))); // buffer with which we will copy the strings
+
+    memcpy(str, name, strlen(name)); // copy name
+    arguments[0] = str;              // point to it
+    str += strlen(name);             // move pointer after it
+    *str++ = '\0';                   // terminate string
+
+    for (int i = 0; i < argc; i++) // put every argument
     {
-        t->registers.rdi = 1 + argc;                   // arguments count (1, the name)
-        t->registers.rsi = (uint64_t)t->registers.rsp; // the stack contains the array
+        size_t len = strlen(argv[i]);
 
-        uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
+        memcpy(str, argv[i], len); // copy argument
+        arguments[i + 1] = str;    // point to it
 
-        memcpy(stack + offset, name, strlen(name));        // copy the name
-        *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
-        offset += strlen(name) + 1;                        // move the offset after the name
+        str += len;    // move after text
+        *str++ = '\0'; // terminate string
 
-        for (int i = 0; i < argc; i++)
-        {
-            memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
-            *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
-            offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
-        }
+        if ((uint64_t)str >= t->registers.rsp + VMM_PAGE) // don't overflow
+            break;
     }
 
     // memory fields
