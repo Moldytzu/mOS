@@ -64,89 +64,87 @@ sched_task_t *schedLast(uint16_t core)
 // add new task
 sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
 {
-    sched_task_t *t;
+    uint32_t id = nextCore(); // get next core id
+
+    sched_task_t *t = blkBlock(sizeof(sched_task_t));
+    zero(t, sizeof(sched_task_t));
+
+    // metadata
+    t->id = lastTaskID++;                // set ID
+    t->core = id;                        // set core id
+    memcpy(t->name, name, strlen(name)); // set a name
+    t->lastVirtualAddress = TASK_BASE_ALLOC;
+    t->terminal = terminal;
+    t->isElf = elf;
+    t->isDriver = driver;
+
+    // registers
+    void *stack = pmmPages(K_STACK_SIZE / 4096);
+    if (driver)
+        t->registers.rflags = 0b11001000000010; // enable interrupts and set IOPL to 3
+    else
+        t->registers.rflags = 0b1000000010;                               // enable interrupts
+    t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE; // set the new stack
+    t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;               // set instruction pointer
+
+    // segment registers
+    t->registers.cs = (8 * 4) | 3;
+    t->registers.ss = (8 * 3) | 3;
+
+    // page table
+    vmm_page_table_t *pt = vmmCreateTable(driver, driver);
+    t->registers.cr3 = (uint64_t)pt;
+    t->pageTable = (uint64_t)pt;
+
+    for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
+        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
+
+    for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
+        vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
+
+    // arguments (todo: refactor this code to be more readable)
+    if (argv)
+    {
+        t->registers.rdi = 1 + argc;                   // arguments count (1, the name)
+        t->registers.rsi = (uint64_t)t->registers.rsp; // the stack contains the array
+
+        uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
+
+        memcpy(stack + offset, name, strlen(name));        // copy the name
+        *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
+        offset += strlen(name) + 1;                        // move the offset after the name
+
+        for (int i = 0; i < argc; i++)
+        {
+            memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
+            *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
+            offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
+        }
+    }
+
+    // memory fields
+    t->allocated = pmmPage();                // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    zero(t->allocated, sizeof(uint64_t));    // null its content
+    t->allocatedIndex = 0;                   // the current index in the array
+    t->allocatedBufferPages++;               // we have one page already allocated
+    t->lastVirtualAddress = TASK_BASE_ALLOC; // set the last address
+
+    // enviroment
+    t->enviroment = pmmPage();     // 4k should be enough for now
+    zero(t->enviroment, VMM_PAGE); // clear the enviroment
+    if (!cwd)
+        t->cwd[0] = '/'; // set the current working directory to the root
+    else
+    {
+        memcpy(t->cwd, cwd, min(strlen(cwd), 512)); // copy the current working directory
+        pmmDeallocate((void *)cwd);
+    }
+
     lock(schedLock, {
-        uint32_t id = nextCore(); // get next core id
+        sched_task_t *last = schedLast(id); // get last task
 
-        // allocate a new task metadata structure
-        t = schedLast(id);                        // get last task of the next core
-        t->next = blkBlock(sizeof(sched_task_t)); // allocate next
-        zero(t->next, sizeof(sched_task_t));      // clear it
-
-        // add in the list
-        TASK(t->next)->prev = t; // set previous task
-        t = TASK(t->next);       // point to the newly allocated task
-
-        // metadata
-        t->id = lastTaskID++;                // set ID
-        t->core = id;                        // set core id
-        memcpy(t->name, name, strlen(name)); // set a name
-        t->lastVirtualAddress = TASK_BASE_ALLOC;
-        t->terminal = terminal;
-        t->isElf = elf;
-        t->isDriver = driver;
-
-        // registers
-        void *stack = pmmPages(K_STACK_SIZE / 4096);
-        if (driver)
-            t->registers.rflags = 0b11001000000010; // enable interrupts and set IOPL to 3
-        else
-            t->registers.rflags = 0b1000000010;                               // enable interrupts
-        t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE; // set the new stack
-        t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;               // set instruction pointer
-
-        // segment registers
-        t->registers.cs = (8 * 4) | 3;
-        t->registers.ss = (8 * 3) | 3;
-
-        // page table
-        vmm_page_table_t *pt = vmmCreateTable(driver, driver);
-        t->registers.cr3 = (uint64_t)pt;
-        t->pageTable = (uint64_t)pt;
-
-        for (int i = 0; i < K_STACK_SIZE; i += 4096) // map stack
-            vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
-
-        for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
-            vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
-
-        // arguments (todo: refactor this code to be more readable)
-        if (argv)
-        {
-            t->registers.rdi = 1 + argc;                   // arguments count (1, the name)
-            t->registers.rsi = (uint64_t)t->registers.rsp; // the stack contains the array
-
-            uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
-
-            memcpy(stack + offset, name, strlen(name));        // copy the name
-            *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
-            offset += strlen(name) + 1;                        // move the offset after the name
-
-            for (int i = 0; i < argc; i++)
-            {
-                memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
-                *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
-                offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
-            }
-        }
-
-        // memory fields
-        t->allocated = pmmPage();                // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
-        zero(t->allocated, sizeof(uint64_t));    // null its content
-        t->allocatedIndex = 0;                   // the current index in the array
-        t->allocatedBufferPages++;               // we have one page already allocated
-        t->lastVirtualAddress = TASK_BASE_ALLOC; // set the last address
-
-        // enviroment
-        t->enviroment = pmmPage();     // 4k should be enough for now
-        zero(t->enviroment, VMM_PAGE); // clear the enviroment
-        if (!cwd)
-            t->cwd[0] = '/'; // set the current working directory to the root
-        else
-        {
-            memcpy(t->cwd, cwd, min(strlen(cwd),512)); // copy the current working directory
-            pmmDeallocate((void *)cwd);
-        }
+        t->prev = last; // set previous
+        last->next = t; // add our new task in list
     });
 
     return t;
@@ -289,13 +287,13 @@ sched_task_t *schedGet(uint32_t id)
 // kill a task
 void schedKill(uint32_t id)
 {
-#ifdef K_SCHED_DEBUG
-    uint64_t a = pmmTotal().available;
-#endif
-    lock(schedLock, {
-        if (id == 1)
-            panick("Attempt to kill the init system.");
+    if (id == 1)
+        panick("Attempt to kill the init system.");
 
+    lock(schedLock, {
+#ifdef K_SCHED_DEBUG
+        uint64_t a = pmmTotal().available;
+#endif
         // todo: deallocate resources here!
 
         sched_task_t *task = schedGet(id);
