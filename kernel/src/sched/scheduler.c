@@ -143,7 +143,10 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         if (!cwd)
             t->cwd[0] = '/'; // set the current working directory to the root
         else
-            memcpy(t->cwd, cwd, strlen(cwd)); // copy the current working directory
+        {
+            memcpy(t->cwd, cwd, min(strlen(cwd),512)); // copy the current working directory
+            pmmDeallocate((void *)cwd);
+        }
     });
 
     return t;
