@@ -13,6 +13,8 @@ struct limine_framebuffer framebuffer;
 
 framebuffer_cursor_info_t cursor; // info
 
+void framebufferPlotc(char c, uint32_t x, uint32_t y);
+
 #define FB_BENCHMARK_SIZE 1000000
 void framebufferBenchmark()
 {
@@ -21,8 +23,8 @@ void framebufferBenchmark()
 
     uint64_t start = hpetMillis();
 
-    for(int i = 0; i < FB_BENCHMARK_SIZE; i++)
-        framebufferPlotc('A',0,0);
+    for (int i = 0; i < FB_BENCHMARK_SIZE; i++)
+        framebufferPlotc('A', 0, 0);
 
     uint64_t end = hpetMillis();
 
@@ -94,7 +96,7 @@ inline void framebufferClear(uint32_t colour)
 }
 
 // plot pixel on the framebuffer
-inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
+ifunc void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {
     *(uint32_t *)((uint64_t)framebuffer.address + x * framebuffer.bpp / 8 + y * framebuffer.pitch) = colour; // set the pixel to colour
 }
@@ -104,16 +106,11 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
     uint16_t pitch = font->charsize / font->height;
     uint8_t *character = (uint8_t *)font + font->headersize + c * font->charsize; // get the offset by skipping the header and indexing the character
-    for (size_t dy = 0; dy < font->height; dy++)                                  // loop thru each line of the character
-    {
-        for (size_t dx = 0; dx < font->width; dx++) // 8 pixels wide
-        {
-            uint8_t bits = character[dy * pitch + dx / 8];
-            uint8_t bit = bits >> (7 - dx % 8) & 1;
-            if (bit) // and the mask with the line
+
+    for (size_t dy = 0; dy < font->height; dy++) // loop for each pixel of character
+        for (size_t dx = 0; dx < font->width; dx++)
+            if ((character[dy * pitch + dx / 8] >> (7 - dx % 8)) & 1) // create a bit mask then and in the current byte of the character
                 framebufferPlotp(dx + x, dy + y, cursor.colour);
-        }
-    }
 }
 
 // create a new line
