@@ -21,11 +21,8 @@ void gdtInit()
 // install a gdt
 void gdtInstall(uint16_t procID)
 {
-    // allocate the entries
-    gdtr[procID].entries = pmmPage();
-    zero(gdtr[procID].entries, VMM_PAGE);
-
-    gdtr[procID].size = 0; // reset the size
+    gdtr[procID].entries = pmmPage(); // allocate the entries
+    gdtr[procID].size = 0;            // reset the size
 
     gdtCreateSegment(procID, 0);          // null
     gdtCreateSegment(procID, 0b10011010); // kernel code
@@ -45,7 +42,6 @@ void gdtInstall(uint16_t procID)
 void gdtCreateSegment(uint16_t procID, uint8_t access)
 {
     gdt_segment_t *segment = &gdtr[procID].entries[gdtr[procID].size / sizeof(gdt_segment_t)]; // get address of the next segment
-    zero(segment, sizeof(gdt_segment_t));                                                      // clear the segment
     segment->access = access;                                                                  // set the access byte
     segment->flags = 0b1010;                                                                   // 4k pages, long mode
 
@@ -61,7 +57,6 @@ void gdtInstallTSS(uint16_t procID)
     zero(gdtr[procID].tss, sizeof(gdt_tss_t)); // clear it
 
     gdt_system_segment_t *segment = (gdt_system_segment_t *)&gdtr[procID].entries[gdtr[procID].size / sizeof(gdt_segment_t)]; // get address of the next segment
-    zero(segment, sizeof(gdt_system_segment_t));                                                                              // clear the segment
 
     segment->access = 0b10001001; // set the access byte
 

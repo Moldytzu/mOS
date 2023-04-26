@@ -53,7 +53,6 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     blkDeallocate(phdr); // clean up
 
     char *cwd = pmmPage();
-    zero(cwd, strlen(path) + 1);     // clear the string
     memcpy(cwd, path, strlen(path)); // copy the path
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter (removes file name)

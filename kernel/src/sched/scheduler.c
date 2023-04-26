@@ -67,7 +67,6 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     uint32_t id = nextCore(); // get next core id
 
     sched_task_t *t = blkBlock(sizeof(sched_task_t));
-    zero(t, sizeof(sched_task_t));
 
     // metadata
     t->id = lastTaskID++;                // set ID
@@ -130,14 +129,12 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
 
     // memory fields
     t->allocated = pmmPage();                // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
-    zero(t->allocated, sizeof(uint64_t));    // null its content
     t->allocatedIndex = 0;                   // the current index in the array
     t->allocatedBufferPages++;               // we have one page already allocated
     t->lastVirtualAddress = TASK_BASE_ALLOC; // set the last address
 
     // enviroment
-    t->enviroment = pmmPage();     // 4k should be enough for now
-    zero(t->enviroment, VMM_PAGE); // clear the enviroment
+    t->enviroment = pmmPage(); // 4k should be enough for now
     if (!cwd)
         t->cwd[0] = '/'; // set the current working directory to the root
     else

@@ -140,9 +140,9 @@ uint64_t vfsSize(uint64_t fd)
 bool vfsExists(const char *name)
 {
     uint64_t fd = vfsOpen(name);
-    
+
     if (fd)
         vfsClose(fd);
-    
+
     return fd > 0;
 }

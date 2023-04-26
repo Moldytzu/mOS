@@ -30,7 +30,6 @@ struct sock_socket *sockCreate()
         }
     }
 
-    zero(currentSocket, sizeof(struct sock_socket)); // clear the socket
     currentSocket->id = lastSockID++;                // set the ID
 
 #ifdef K_SOCK_DEBUG

@@ -52,8 +52,6 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pdp = pmmPage();     // allocate table
-        zero(pdp, VMM_PAGE); // clear it
-
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);           // set it's address
         pml4->entries[index.PDP] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }
@@ -64,8 +62,6 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pd = pmmPage();     // allocate table
-        zero(pd, VMM_PAGE); // clear it
-
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);          // set it's address
         pdp->entries[index.PD] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }
@@ -76,8 +72,6 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
         pt = pmmPage();     // allocate table
-        zero(pt, VMM_PAGE); // clear it
-
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);         // set it's address
         pd->entries[index.PT] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }

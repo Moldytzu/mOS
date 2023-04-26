@@ -27,11 +27,8 @@ struct vt_terminal *vtCreate()
         }
     }
 
-    zero(currentTerminal, sizeof(struct vt_terminal)); // clear the terminal
     currentTerminal->buffer = pmmPage();               // allocate the character buffer
     currentTerminal->kbBuffer = pmmPage();             // allocate the keyboard buffer
-    zero((void *)currentTerminal->buffer, VMM_PAGE);   // clear the character buffer
-    zero((void *)currentTerminal->kbBuffer, VMM_PAGE); // clear the keyboard buffer
     currentTerminal->id = lastID++;                    // set the ID
 
 #ifdef K_VT_DEBUG

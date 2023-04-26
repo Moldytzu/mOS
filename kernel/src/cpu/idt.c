@@ -21,7 +21,6 @@ int redirectTableMeta[256];
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 {
     idt_gate_descriptor_t *gate = &gates[entry]; // select the gate
-    zero(gate, sizeof(idt_gate_descriptor_t));
     if (gate->segmentselector == 0)                 // detect if we didn't touch the gate
         idtr.size += sizeof(idt_gate_descriptor_t); // if we didn't we can safely increase the size
 
@@ -48,9 +47,7 @@ void idtInit(uint16_t procID)
 {
     cli(); // disable intrerrupts
 
-    // allocate the gates
-    gates = pmmPage();
-    zero(gates, VMM_PAGE);
+    gates = pmmPage(); // allocate the gates
 
     idtr.offset = (uint64_t)gates; // set the offset to the data
     idtr.size = 0;                 // reset the size
@@ -73,9 +70,6 @@ void idtInstall(uint8_t procID)
     gdt_tss_t *tss = tssGet()[procID];
     tss->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
     tss->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
-
-    zero((void *)tss->ist[0] - VMM_PAGE, VMM_PAGE);
-    zero((void *)tss->ist[1] - VMM_PAGE, VMM_PAGE);
 
     iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 }
@@ -135,7 +129,6 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
         if (initSocket)
         {
             char *str = pmmPage();
-            zero(str, 6 + strlen(name));
 
             // construct a string based on the format "crash %s", name
             memcpy(str, "crash ", 6);
