@@ -69,9 +69,9 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     sched_task_t *t = blkBlock(sizeof(sched_task_t));
 
     // metadata
-    t->id = lastTaskID++;                // set ID
-    t->core = id;                        // set core id
-    memcpy(t->name, name, strlen(name)); // set a name
+    t->id = lastTaskID++;                          // set ID
+    t->core = id;                                  // set core id
+    memcpy(t->name, name, min(strlen(name), 128)); // set a name
     t->lastVirtualAddress = TASK_BASE_ALLOC;
     t->terminal = terminal;
     t->isElf = elf;
@@ -138,10 +138,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     if (!cwd)
         t->cwd[0] = '/'; // set the current working directory to the root
     else
-    {
         memcpy(t->cwd, cwd, min(strlen(cwd), 512)); // copy the current working directory
-        pmmDeallocate((void *)cwd);
-    }
 
     lock(schedLock, {
         sched_task_t *last = schedLast(id); // get last task

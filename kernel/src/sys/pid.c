@@ -1,4 +1,5 @@
 #include <sys/sys.h>
+#include <misc/logger.h>
 
 // pid (rsi = pid, rdx = info, r8 = retVal/inputVal)
 void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, sched_task_t *task)
@@ -34,12 +35,17 @@ void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, sched_task_t
     case 4:                        // get current working directory
         if (!INBOUNDARIES(retVal)) // available only in the allocated memory
             break;
-        memcpy(PHYSICAL(retVal), task->cwd, 512); // copy the buffer
+
+        task->cwd[0] = '/'; // make sure the cwd starts with /
+
+        memcpy(PHYSICAL(retVal), task->cwd, min(strlen(task->cwd), 512)); // copy the buffer
         break;
     case 5:                        // set current working directory
         if (!INBOUNDARIES(retVal)) // available only in the allocated memory
             break;
-        memcpy(task->cwd, PHYSICAL(retVal), 512); // copy the buffer
+
+        zero(task->cwd, 512);
+        memcpy(task->cwd, PHYSICAL(retVal), min(strlen(PHYSICAL(retVal)), 512)); // copy the buffer
         break;
     default:
         break;
