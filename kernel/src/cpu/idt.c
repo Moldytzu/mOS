@@ -147,8 +147,9 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
         }
 
         schedKill(schedGetCurrent(smpID())->id); // terminate the task
-        schedSchedule(stack);                    // schedule next task
-        return;
+
+        sti();        // enable interrupts
+        return hlt(); // force a reschedule
     }
 
     framebufferClear(0);
