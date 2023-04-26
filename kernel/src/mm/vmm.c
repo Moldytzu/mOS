@@ -27,16 +27,16 @@ void vmmInit()
 // set flags of some entries given by the indices
 ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, uint64_t flags)
 {
-    table->entries[index.PDP] = table->entries[index.PDP] | flags; // index pdp
+    table->entries[index.PDP] |= flags; // index pdp
 
     table = PAGE_ADDR(table->entries[index.PDP]); // index pd
-    table->entries[index.PD] = table->entries[index.PD] | flags;
+    table->entries[index.PD] |= flags;
 
     table = PAGE_ADDR(table->entries[index.PD]); // index pt
-    table->entries[index.PT] = table->entries[index.PT] | flags;
+    table->entries[index.PT] |= flags;
 
     table = PAGE_ADDR(table->entries[index.PT]); // index the page
-    table->entries[index.P] = table->entries[index.P] | flags;
+    table->entries[index.P] |= flags;
 }
 
 // map a virtual address to a physical address in a page table
@@ -140,8 +140,6 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
 
     // create a new table to use as a base for everything
     vmm_page_table_t *newTable = (vmm_page_table_t *)pmmPage();
-
-    zero(newTable, VMM_PAGE); // zero out the table and the metadata
 
     struct limine_memmap_response *memMap = bootloaderGetMemoryMap();
     uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
