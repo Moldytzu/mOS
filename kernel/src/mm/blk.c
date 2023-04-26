@@ -25,7 +25,6 @@ void expand(uint16_t pages)
 {
     // allocate a new block
     blk_header_t *newBlock = (blk_header_t *)pmmPages(pages);
-    zero(newBlock, PMM_PAGE * pages);
     newBlock->free = true;
     newBlock->size = (PMM_PAGE * pages) - HEADER_PAD;
     newBlock->prev = last();
@@ -58,7 +57,6 @@ void blkInit()
 {
     // create first block
     start = (blk_header_t *)pmmPages(BLK_EXPAND_INCREMENT);
-    zero(start, BLK_EXPAND_INCREMENT * PMM_PAGE);
     start->signature = BLK_HEADER_SIGNATURE;
     start->free = true;
     start->size = (BLK_EXPAND_INCREMENT * PMM_PAGE) - HEADER_PAD;
@@ -87,6 +85,8 @@ void *blkBlock(size_t size)
                     logWarn("blk: writing signature of buggy block");
                 }
 
+                zero(CONTENT_OF(current), size);
+
                 release(blkLock);
 
                 return CONTENT_OF(current);
@@ -111,6 +111,8 @@ void *blkBlock(size_t size)
                     current->signature = BLK_HEADER_SIGNATURE;
                     logWarn("blk: writing signature of buggy block");
                 }
+
+                zero(CONTENT_OF(current), size);
 
                 release(blkLock);
 
