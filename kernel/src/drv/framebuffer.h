@@ -24,6 +24,7 @@ pstruct
 }
 framebuffer_cursor_info_t;
 
+void framebufferBenchmark();
 void framebufferInit();
 void framebufferFlush();
 void framebufferClear(uint32_t colour);

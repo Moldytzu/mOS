@@ -4,6 +4,7 @@
 #include <fw/bootloader.h>
 #include <mm/vmm.h>
 #include <misc/logger.h>
+#include <sched/hpet.h>
 
 extern uint8_t _binary____kfont_psf_start; // the font file embeded in the kernel as a symbol
 
@@ -11,6 +12,24 @@ psf2_header_t *font;
 struct limine_framebuffer framebuffer;
 
 framebuffer_cursor_info_t cursor; // info
+
+#define FB_BENCHMARK_SIZE 1000000
+void framebufferBenchmark()
+{
+    // test performance of the mapper
+    logInfo("vmm: benchmarking");
+
+    uint64_t start = hpetMillis();
+
+    for(int i = 0; i < FB_BENCHMARK_SIZE; i++)
+        framebufferPlotc('A',0,0);
+
+    uint64_t end = hpetMillis();
+
+    logInfo("vmm: it took %d miliseconds (%d chars/mili)", end - start, FB_BENCHMARK_SIZE / (end - start));
+
+    hang();
+}
 
 bool checkFont(psf2_header_t *font)
 {
@@ -83,12 +102,13 @@ inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 // plot character on the framebuffer
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
+    uint16_t pitch = font->charsize / font->height;
     uint8_t *character = (uint8_t *)font + font->headersize + c * font->charsize; // get the offset by skipping the header and indexing the character
     for (size_t dy = 0; dy < font->height; dy++)                                  // loop thru each line of the character
     {
         for (size_t dx = 0; dx < font->width; dx++) // 8 pixels wide
         {
-            uint8_t bits = character[dy * (font->charsize / font->height) + dx / 8];
+            uint8_t bits = character[dy * pitch + dx / 8];
             uint8_t bit = bits >> (7 - dx % 8) & 1;
             if (bit) // and the mask with the line
                 framebufferPlotp(dx + x, dy + y, cursor.colour);
