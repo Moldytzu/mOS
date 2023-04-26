@@ -23,6 +23,8 @@ void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
     {
         lapicTPS[smpID()] = __tps[smpID()];
 
+        // logInfo("%d", lapicTPS[smpID()]);
+
         __tps[smpID()] = 0;
     }
 
@@ -83,9 +85,9 @@ void lapicInit(bool bsp)
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
 
-    // set up timer to a frequency ~2 kHz (todo: real hardware crashes here, not sure why)
+    // set up timer to a frequency ~1 kHz (todo: real hardware crashes here, not sure why)
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);            // divide by 1
-    lapicWrite(APIC_REG_TIMER_INITCNT, 1000000);       // enable timer
+    lapicWrite(APIC_REG_TIMER_INITCNT, 10000000);       // enable timer
     lapicWrite(APIC_REG_LVT_TIMER, APIC_TIMER_VECTOR); // one shot mode
 
     uint64_t before = hpetMillis();
@@ -95,7 +97,7 @@ void lapicInit(bool bsp)
 
     uint64_t after = hpetMillis();
 
-    uint64_t target = 1000000 / (after - before + 1 /*that 1 prevents us dividing by 0 and generating an exception*/);
+    uint64_t target = 10000000 / (after - before + 1 /*that 1 prevents us dividing by 0 and generating an exception*/);
 
     lapicWrite(APIC_REG_LVT_TIMER, 0b100000000000000000 | APIC_TIMER_VECTOR); // periodic mode
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
