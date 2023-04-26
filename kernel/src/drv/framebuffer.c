@@ -19,7 +19,7 @@ void framebufferPlotc(char c, uint32_t x, uint32_t y);
 void framebufferBenchmark()
 {
     // test performance of the mapper
-    logInfo("vmm: benchmarking");
+    logInfo("fb: benchmarking");
 
     uint64_t start = hpetMillis();
 
@@ -28,7 +28,7 @@ void framebufferBenchmark()
 
     uint64_t end = hpetMillis();
 
-    logInfo("vmm: it took %d miliseconds (%d chars/mili)", end - start, FB_BENCHMARK_SIZE / (end - start));
+    logInfo("fb: it took %d miliseconds (%d chars/mili)", end - start, FB_BENCHMARK_SIZE / (end - start));
 
     hang();
 }
@@ -81,7 +81,7 @@ void framebufferFlush()
 
     // map the framebuffer
     for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
-        vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW);
+        vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
 }
 
 // clear the framebuffer with a colour

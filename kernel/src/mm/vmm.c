@@ -51,7 +51,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pml4->entries[index.PDP]; // index pdp
     if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pdp = pmmPage();     // allocate table
+        pdp = pmmPage();                                             // allocate table
         vmmSetAddress(&currentEntry, (uint64_t)pdp >> 12);           // set it's address
         pml4->entries[index.PDP] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }
@@ -61,7 +61,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pdp->entries[index.PD];   // index pd
     if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pd = pmmPage();     // allocate table
+        pd = pmmPage();                                            // allocate table
         vmmSetAddress(&currentEntry, (uint64_t)pd >> 12);          // set it's address
         pdp->entries[index.PD] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }
@@ -71,7 +71,7 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     currentEntry = pd->entries[index.PT];    // index pt
     if (!(currentEntry & VMM_ENTRY_PRESENT)) // if there isn't any page present there, we generate it
     {
-        pt = pmmPage();     // allocate table
+        pt = pmmPage();                                           // allocate table
         vmmSetAddress(&currentEntry, (uint64_t)pt >> 12);         // set it's address
         pd->entries[index.PT] = currentEntry | VMM_ENTRY_PRESENT; // write the entry in the table
     }
@@ -184,6 +184,16 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
             else
                 for (size_t i = 0; i < entry->length; i += 4096)
                     vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW);
+        }
+
+        if (entry->type == LIMINE_MEMMAP_FRAMEBUFFER)
+        {
+            if (driver)
+                for (size_t i = 0; i < entry->length; i += 4096)
+                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_USER | VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
+            else
+                for (size_t i = 0; i < entry->length; i += 4096)
+                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
         }
 
         if (driver)
