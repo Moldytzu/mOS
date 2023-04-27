@@ -72,18 +72,14 @@ void *blkBlock(size_t size)
 
         size_t internalSize = size + HEADER_PAD;
 
-        blk_header_t *current = start;
-
-        while (current)
+        for (blk_header_t *current = start; current; current = current->next)
         {
-            if (current->size == size && current->free)
+            if (!current->free)
+                continue;
+
+            if (current->size == size)
             {
                 current->free = false;
-                if (current->signature != BLK_HEADER_SIGNATURE)
-                {
-                    current->signature = BLK_HEADER_SIGNATURE;
-                    logWarn("blk: writing signature of buggy block");
-                }
 
                 zero(CONTENT_OF(current), size);
 
@@ -92,7 +88,7 @@ void *blkBlock(size_t size)
                 return CONTENT_OF(current);
             }
 
-            if (current->size >= internalSize && current->free)
+            if (current->size >= internalSize)
             {
                 // create new block then add it in the chain
                 blk_header_t *newBlock = CONTENT_OF(current) + size;
@@ -106,20 +102,12 @@ void *blkBlock(size_t size)
                 current->free = false;
                 current->size = size;
 
-                if (current->signature != BLK_HEADER_SIGNATURE)
-                {
-                    current->signature = BLK_HEADER_SIGNATURE;
-                    logWarn("blk: writing signature of buggy block");
-                }
-
                 zero(CONTENT_OF(current), size);
 
                 release(blkLock);
 
                 return CONTENT_OF(current);
             }
-
-            current = current->next;
         }
     });
 
