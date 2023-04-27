@@ -78,17 +78,8 @@ void *blkBlock(size_t size)
                 continue;
 
             if (current->size == size)
-            {
                 current->free = false;
-
-                zero(CONTENT_OF(current), size);
-
-                release(blkLock);
-
-                return CONTENT_OF(current);
-            }
-
-            if (current->size >= internalSize)
+            else if (current->size >= internalSize)
             {
                 // create new block then add it in the chain
                 blk_header_t *newBlock = CONTENT_OF(current) + size;
@@ -101,13 +92,11 @@ void *blkBlock(size_t size)
                 current->next = newBlock;
                 current->free = false;
                 current->size = size;
-
-                zero(CONTENT_OF(current), size);
-
-                release(blkLock);
-
-                return CONTENT_OF(current);
             }
+
+            zero(CONTENT_OF(current), size); // initialise memory
+            release(blkLock);
+            return CONTENT_OF(current);
         }
     });
 
