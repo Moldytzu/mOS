@@ -100,7 +100,7 @@ void handleInput(const char *buffer)
     memcpy((void *)cmdBuffer, arguments[0], strlen(arguments[0])); // copy the input
 
     uint64_t status = sys_open(arguments[0]);
-    
+
     if (!status)
     {
         // try to append the path
@@ -109,7 +109,7 @@ void handleInput(const char *buffer)
         memcpy((void *)cmdBuffer, path, pathLen);                                  // copy the path
 
         uint64_t status = sys_open(cmdBuffer);
-        if (status)
+        if (status && strlen(cmdBuffer))
             goto execute;
 
         printf("Couldn't find executable %s\n", arguments[0]);
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 
         char chr;
 
-        printf("%s m$ ",cwdBuffer); // print the prompt
+        printf("%s m$ ", cwdBuffer); // print the prompt
 
         // read in the buffer
         do

@@ -23,7 +23,7 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
     sys_exec_packet_t *input = PHYSICAL(packet);
     char *execPath = expandPath(PHYSICAL(path), task); // expand the path
 
-    if (execPath == NULL) // the path doesn't exist
+    if (execPath == NULL || !strlen(execPath)) // the path doesn't exist
     {
         *ret = 0;
         return;

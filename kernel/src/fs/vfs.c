@@ -63,7 +63,7 @@ struct vfs_node_t *vfsNodes()
 // open a node with the name
 uint64_t vfsOpen(const char *name)
 {
-    if (!name || *name != '/') // non-existent path
+    if (!name || *name != '/' || !strlen(name)) // non-existent path
         return 0;
 
     struct vfs_node_t *currentNode = &rootNode;

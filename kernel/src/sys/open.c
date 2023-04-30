@@ -10,7 +10,7 @@ void open(uint64_t returnPtr, uint64_t path, uint64_t r8, uint64_t r9, sched_tas
     uint64_t *returnVal = PHYSICAL(returnPtr);
     char *input = expandPath(PHYSICAL(path), task); // expand the path
 
-    if (input == NULL) // check if the path exists
+    if (input == NULL || strlen(input) == 0) // check if the path exists
     {
         *returnVal = 0;
         return;
