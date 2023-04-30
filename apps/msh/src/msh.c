@@ -84,8 +84,7 @@ void handleInput(const char *buffer)
         {
             printf("Couldn't find directory %s\n", arguments[1]);
 
-            // restore the cwd
-            sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
+            memset(cwdBuffer, 0, 4096); // clear cwd
             return;
         }
 
