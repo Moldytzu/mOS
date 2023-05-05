@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define SOCKET_SIZE 4096
 #define DRIVERS
@@ -47,6 +48,36 @@ void eventLoop()
     sys_yield();
 }
 
+char *cfgGet(const char *name)
+{
+    char *start = cfg;
+    char *end = cfg + 4096;
+
+    while (start < end)
+    {
+        if (memcmp(start, name, strlen(name)) != 0 || memcmp(start + strlen(name), " = ", strlen(" = ")) != 0) // check for the name then for the " = " suffix
+        {
+            start++;
+            continue;
+        }
+
+        char *value = start + strlen(name) + strlen(" = "); // get address of operand
+        return value;
+    }
+
+    return NULL;
+}
+
+bool cfgBool(const char *name)
+{
+    char *value = cfgGet(name);
+
+    if(!value)
+        return false;
+
+    return *value == '1';
+}
+
 void parseCFG()
 {
     // buffer for config file
@@ -68,23 +99,12 @@ void parseCFG()
     shell = "/init/msh.sh"; // set a default hard-coded shell location
     driverIdx = 0;          // initialise
 
+    verbose = cfgBool("VERBOSE");
+    safe = cfgBool("SAFE");
+
     // todo: make this code easier to read
     for (int i = 0; i < 4096; i++)
     {
-        // check for verbose flag
-        if (memcmp(cfg + i, "VERBOSE = ", strlen("VERBOSE = ")) == 0)
-        {
-            verbose = cfg[i + strlen("VERBOSE = ")] == '1';
-            i += strlen("VERBOSE = ");
-        }
-
-        // check for safe flag
-        if (memcmp(cfg + i, "SAFE = ", strlen("SAFE = ")) == 0)
-        {
-            safe = cfg[i + strlen("SAFE = ")] == '1';
-            i += strlen("SAFE = ");
-        }
-
         // check for driver path
         if (memcmp(cfg + i, "DRIVER \"", strlen("DRIVER \"")) == 0)
         {
@@ -102,7 +122,7 @@ void parseCFG()
             i += strlen("DRIVER \"") + len;
         }
 
-        // check for driver path
+        // check for shell path
         if (memcmp(cfg + i, "SHELL \"", strlen("SHELL \"")) == 0)
         {
             // calculate length of the driver path
