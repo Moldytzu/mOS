@@ -66,6 +66,7 @@ void parseCFG()
     memset(drivers, 0, sizeof(drivers)); // clear the driver addresses
 
     shell = "/init/msh.sh"; // set a default hard-coded shell location
+    driverIdx = 0;          // initialise
 
     // todo: make this code easier to read
     for (int i = 0; i < 4096; i++)
@@ -130,9 +131,6 @@ void parseCFG()
 
     for (int i = 0; i < driverIdx; i++)
     {
-        if (!drivers[i])
-            continue;
-
         if (verbose)
             printf("Starting driver from %s\n", drivers[i]); // for some reason it shows null
 
