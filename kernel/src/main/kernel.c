@@ -56,7 +56,9 @@ void kmain()
 
 void panick_impl(const char *file, size_t line, const char *msg)
 {
+#ifdef K_SMP
     lapicNMI(); // send nmis
+#endif
 
     logError("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
 
