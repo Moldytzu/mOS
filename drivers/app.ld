@@ -8,28 +8,20 @@ SECTIONS
 	{
 		*(.text)
 	}
-
-	. += CONSTANT(MAXPAGESIZE);
 	
 	.data :
 	{
 		*(.data)
 	}
 	
-	. += CONSTANT(MAXPAGESIZE);
-	
 	.rodata :
 	{
 		*(.rodata)
 	}
-	
-	. += CONSTANT(MAXPAGESIZE);
 	
 	.bss :
 	{
 		*(COMMON)
 		*(.bss)
 	}
-	
-	. += CONSTANT(MAXPAGESIZE);
 }

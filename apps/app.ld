@@ -9,27 +9,21 @@ SECTIONS
 		*(.text)
 	}
 
-	. += CONSTANT(MAXPAGESIZE);
-
 	.data :
 	{
 		*(.data)
 	}
-
-	. += CONSTANT(MAXPAGESIZE);
 
 	.rodata :
 	{
 		*(.rodata)
 	}
 
-	. += CONSTANT(MAXPAGESIZE);
-
+	__bss_start = .;
 	.bss :
 	{
 		*(COMMON)
 		*(.bss)
 	}
-
-	. += CONSTANT(MAXPAGESIZE);
+	__bss_end = .;
 }
