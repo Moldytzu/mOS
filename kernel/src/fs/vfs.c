@@ -146,3 +146,14 @@ bool vfsExists(const char *name)
 
     return fd > 0;
 }
+
+// gets full path of a node
+void vfsGetPath(uint64_t fd, void *buffer)
+{
+    struct vfs_node_t *node = (struct vfs_node_t *)fd;
+    if (!ISVALID(node))
+        return;
+
+    memcpy((void *)buffer, node->filesystem->mountName, strlen(node->filesystem->mountName));
+    memcpy((void *)(buffer + strlen(node->filesystem->mountName)), node->path, strlen(node->path));
+}
