@@ -72,10 +72,36 @@ bool cfgBool(const char *name)
 {
     char *value = cfgGet(name);
 
-    if(!value)
+    if (!value)
         return false;
 
     return *value == '1';
+}
+
+char *cfgStr(const char *name)
+{
+    char *start = cfgGet(name);
+    char *end = cfg + 4096;
+
+    if (!start || *start != '\"')
+        return "?";
+
+    start++; // skip to contents
+
+    char *strStart = start;
+
+    // find end of string
+    while (start < end)
+    {
+        if (*start == '\"') // terminate string
+        {
+            *start = '\0';
+            return strStart;
+        }
+        start++;
+    }
+
+    return "?";
 }
 
 void parseCFG()
@@ -101,6 +127,7 @@ void parseCFG()
 
     verbose = cfgBool("VERBOSE");
     safe = cfgBool("SAFE");
+    shell = cfgStr("SHELL");
 
     // todo: make this code easier to read
     for (int i = 0; i < 4096; i++)
@@ -120,23 +147,6 @@ void parseCFG()
             drivers[driverIdx++] = cfg + strlen("DRIVER \"") + i;
 
             i += strlen("DRIVER \"") + len;
-        }
-
-        // check for shell path
-        if (memcmp(cfg + i, "SHELL \"", strlen("SHELL \"")) == 0)
-        {
-            // calculate length of the driver path
-            size_t len = 0;
-            for (; cfg[i + strlen("SHELL \"") + len] != '\"'; len++)
-                ;
-
-            // terminate the string
-            cfg[i + strlen("SHELL \"") + len] = '\0';
-
-            // set the pointer
-            shell = cfg + strlen("SHELL \"") + i;
-
-            i += strlen("SHELL \"") + len;
         }
     }
 
