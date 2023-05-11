@@ -15,8 +15,6 @@ bool verbose = true;
 bool safe = false;
 char *shell = "/init/msh.mx";
 char *cfg;
-char *drivers[512]; // 512 max drivers should be enough for now
-uint8_t driverIdx = 0;
 
 void eventLoop()
 {
@@ -106,6 +104,9 @@ char *cfgStr(const char *name)
 
 void parseCFG()
 {
+    // display a welcome message
+    puts("m Init System is setting up your enviroment\n");
+
     // buffer for config file
     uint64_t fd, size;
     cfg = malloc(4096);
@@ -120,53 +121,34 @@ void parseCFG()
     memset(cfg, 0, 4096);               // clear the buffer
     sys_read(cfg, min(size, 4096), fd); // read the file
 
-    memset(drivers, 0, sizeof(drivers)); // clear the driver addresses
-
-    shell = "/init/msh.sh"; // set a default hard-coded shell location
-    driverIdx = 0;          // initialise
-
-    verbose = cfgBool("VERBOSE");
     safe = cfgBool("SAFE");
+    verbose = cfgBool("VERBOSE") | safe; // verbose mode is forced on by safe
     shell = cfgStr("SHELL");
 
-    // todo: make this code easier to read
-    for (int i = 0; i < 4096; i++)
+    // start drivers set in config
+    char *drivers = cfgStr("DRIVERS");
+    uint16_t driversLen = strlen(drivers);
+
+    // the drivers string is in the form "driver;driver2;driver3 etc etc"
+    char *start = drivers;
+    for (int i = 0; i < driversLen; i++)
     {
-        // check for driver path
-        if (memcmp(cfg + i, "DRIVER \"", strlen("DRIVER \"")) == 0)
+        if (drivers[i] == ' ') // ignore whitespace (improves readability)
         {
-            // calculate length of the driver path
-            size_t len = 0;
-            for (; cfg[i + strlen("DRIVER \"") + len] != '\"'; len++)
-                ;
-
-            // terminate the string
-            cfg[i + strlen("DRIVER \"") + len] = '\0';
-
-            // set the pointer
-            drivers[driverIdx++] = cfg + strlen("DRIVER \"") + i;
-
-            i += strlen("DRIVER \"") + len;
+            start++;
+            continue;
         }
-    }
 
-    if (safe)
-        verbose = true; // force verbose to true if we're in safe mode
+        if (drivers[i] == ';') // start each driver after the separator
+        {
+            drivers[i] = '\0';                                     // terminate string
+            sys_driver(SYS_DRIVER_START, (uint64_t)(start), 0, 0); // start the driver
 
-    puts("m Init System is setting up your enviroment\n"); // display a welcome screen
+            if (verbose)
+                printf("Started driver %s\n", start);
 
-    // start the drivers if safe mode isn't enabled
-    if (safe)
-        return;
-
-    for (int i = 0; i < driverIdx; i++)
-    {
-        if (verbose)
-            printf("Starting driver from %s\n", drivers[i]); // for some reason it shows null
-
-#ifdef DRIVERS
-        sys_driver(SYS_DRIVER_START, (uint64_t)(drivers[i]), 0, 0);
-#endif
+            start = drivers + i + 1;
+        }
     }
 }
 
