@@ -19,14 +19,16 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
     switch (call)
     {
     case 0: // driver start
-        if (!INBOUNDARIES(arg1) && !INBOUNDARIES(arg2))
+        if (!INBOUNDARIES(arg1))
             return;
 
-        char *path = expandPath(PHYSICAL(arg1), task);
-        uint64_t *pid = PHYSICAL(arg2);
-
-        if (!path)
+        uint64_t fd = openRelativePath(PHYSICAL(arg1), task);
+        if(!fd)
             return;
+
+        char path[512];
+        zero(path, sizeof(path));
+        vfsGetPath(fd, path);
 
         elfLoad(path, 0, 0, true); // start the driver
         break;

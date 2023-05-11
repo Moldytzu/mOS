@@ -21,13 +21,10 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
 
     uint64_t *ret = PHYSICAL(pid);
     sys_exec_packet_t *input = PHYSICAL(packet);
-    char *execPath = expandPath(PHYSICAL(path), task); // expand the path
+    uint64_t fd = openRelativePath(PHYSICAL(path), task); // expand the path
 
-    if (execPath == NULL || !strlen(execPath)) // the path doesn't exist
-    {
-        *ret = 0;
+    if(!fd)
         return;
-    }
 
     // convert virtual addresses to physical addresses
     if (input->argc && INBOUNDARIES(input->argv))
@@ -38,6 +35,10 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
             if (INBOUNDARIES(input->argv[i]))
                 input->argv[i] = PHYSICAL(input->argv[i]);
     }
+
+    char execPath[512];
+    zero(execPath, sizeof(execPath));
+    vfsGetPath(fd, (void *)execPath);
 
     sched_task_t *newTask = elfLoad(execPath, input->argc, input->argv, false); // do the loading
     *ret = newTask->id;                                                         // set the pid
