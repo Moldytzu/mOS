@@ -8,30 +8,31 @@
 void (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver};
 const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver"};
 
-// expand relative path to full path
-char *expandPath(const char *path, sched_task_t *task)
+// open file at relative path
+uint64_t openRelativePath(const char *path, sched_task_t *task)
 {
-    if (vfsExists(path)) // check if path exists as is
-        return (char *)path;
+    uint64_t fd = 0;
+    if (fd = vfsOpen(path)) // check if path exists as is
+        return fd;
 
     // todo: implement more advanced path traversal like .. and .
     if (strlen(path) > 2 && memcmp(path, "./", 2) == 0) // remove ./
         path += 2;
 
-    char *buffer = (char *)pmmPage(); // allocate an internal buffer
+    char *buffer = (char *)pmmPage(); // allocate an internal buffer (todo: this is not cleaned up properly)
     zero(buffer, PMM_PAGE);
 
     uint64_t offset = strlen(task->cwd);
     memcpy((void *)buffer, task->cwd, offset);             // copy cwd
     memcpy((void *)(buffer + offset), path, strlen(path)); // append given path
-    
-    if (vfsExists(buffer)) // check if it exists
-        return buffer;
+
+    if (fd = vfsOpen(buffer)) // check if it exists
+        return fd;
 
     // fail
     pmmDeallocate(buffer); // clean up
 
-    return NULL;
+    return 0;
 }
 
 // forces a scheduler context swap

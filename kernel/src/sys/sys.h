@@ -17,7 +17,7 @@
 #define INAPPLICATION(address) between(address, TASK_BASE_ADDRESS, task->lastVirtualAddress + 4096)
 #define INBOUNDARIES(address) (INSTACK(((uint64_t)address)) || INAPPLICATION(((uint64_t)address)))
 
-char *expandPath(const char *path, sched_task_t *task);
+uint64_t openRelativePath(const char *path, sched_task_t *task);
 void yield();
 
 void exit(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
