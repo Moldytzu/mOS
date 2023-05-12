@@ -16,36 +16,7 @@ bool safe = false;
 char *shell = "/init/msh.mx";
 char *cfg;
 
-void eventLoop()
-{
-    sys_socket(SYS_SOCKET_READ, sockID, (uint64_t)sockBuffer, SOCKET_SIZE); // read the whole socket
-    if (!*(char *)sockBuffer)                                               // if empty give up
-        return;
-
-    if (memcmp(sockBuffer, "crash ", 6) == 0)
-    {
-        printf("%s has crashed!\n", sockBuffer + 6 /*skip "crash "*/);
-    }
-
-    if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
-    {
-        sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
-        puts("\n\n\n Shutdowning...");
-        sys_power(SYS_POWER_SHUTDOWN, 0, 0);
-    }
-
-    if (strcmp(sockBuffer, "reboot") == 0) // shutdown command
-    {
-        sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
-        puts("\n\n\n Rebooting...");
-        sys_power(SYS_POWER_REBOOT, 0, 0);
-    }
-
-    memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
-
-    sys_yield();
-}
-
+// todo: move this in a dedicated library
 char *cfgGet(const char *name)
 {
     char *start = cfg;
@@ -102,6 +73,32 @@ char *cfgStr(const char *name)
     return "?";
 }
 
+uint32_t cfgUint(const char *name)
+{
+    char *start = cfgGet(name);
+    char *end = cfg + 4096;
+
+    if (!start)
+        return 0;
+
+    char *strStart = start;
+
+    // find end of string
+    while (start < end)
+    {
+        if (*start >= '0' && *start <= '9') // we want to find first invalid character (not a number)
+        {
+            start++;
+            continue;
+        }
+
+        *start = '\0';
+        return abs(atoi(strStart));
+    }
+
+    return 0;
+}
+
 void parseCFG()
 {
     // display a welcome message
@@ -124,6 +121,19 @@ void parseCFG()
     safe = cfgBool("SAFE");
     verbose = cfgBool("VERBOSE") | safe; // verbose mode is forced on by safe
     shell = cfgStr("SHELL");
+
+    uint32_t screenX = cfgUint("SCREEN_WIDTH");
+    uint32_t screenY = cfgUint("SCREEN_HEIGHT");
+
+    if(!screenX | !screenY) // invalid resolution
+    {
+        // set a fail-safe resolution
+        screenX = 640;
+        screenY = 480;
+    }
+
+    if (safe) // safe mode doesn't initialise drivers
+        return;
 
     // start drivers set in config
     char *drivers = cfgStr("DRIVERS");
@@ -150,6 +160,41 @@ void parseCFG()
             start = drivers + i + 1;
         }
     }
+
+    if(verbose)
+        printf("Setting screen resolution to %ux%u\n",screenX,screenY);
+
+    sys_display(SYS_DISPLAY_SET, screenX, screenY);
+}
+
+void eventLoop()
+{
+    sys_socket(SYS_SOCKET_READ, sockID, (uint64_t)sockBuffer, SOCKET_SIZE); // read the whole socket
+    if (!*(char *)sockBuffer)                                               // if empty give up
+        return;
+
+    if (memcmp(sockBuffer, "crash ", 6) == 0)
+    {
+        printf("%s has crashed!\n", sockBuffer + 6 /*skip "crash "*/);
+    }
+
+    if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
+    {
+        sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
+        puts("\n\n\n Shutdowning...");
+        sys_power(SYS_POWER_SHUTDOWN, 0, 0);
+    }
+
+    if (strcmp(sockBuffer, "reboot") == 0) // shutdown command
+    {
+        sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
+        puts("\n\n\n Rebooting...");
+        sys_power(SYS_POWER_REBOOT, 0, 0);
+    }
+
+    memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
+
+    sys_yield();
 }
 
 int main(int argc, char **argv)
@@ -169,24 +214,6 @@ int main(int argc, char **argv)
 
     // parse the config
     parseCFG();
-
-    if (!safe)
-    {
-        sys_display(SYS_DISPLAY_SET, 1024, 768); // set screen resolution to 1024x768
-        sys_yield();
-
-        // wait for the change to happen
-        for (int i = 0; i < 5; i++)
-        {
-            uint64_t width, height;
-            sys_display(SYS_DISPLAY_GET, (uint64_t)&width, (uint64_t)&height); // get old resolution
-
-            if (width == 1024 && height == 768)
-                break;
-
-            sys_yield();
-        }
-    }
 
     // create a socket for ipc
     sys_socket(SYS_SOCKET_CREATE, (uint64_t)&sockID, 0, 0);
