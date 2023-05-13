@@ -3,6 +3,7 @@
 #include <cpu/pic.h>
 #include <cpu/io.h>
 #include <cpu/smp.h>
+#include <sched/time.h>
 #include <sched/hpet.h>
 #include <sched/scheduler.h>
 #include <misc/logger.h>
@@ -85,23 +86,19 @@ void lapicInit(bool bsp)
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
 
-    // set up timer to a frequency ~1 kHz (todo: real hardware crashes here, not sure why)
+    // calibrate timer for ~1 kHz (todo: real hardware crashes here, not sure why)
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);            // divide by 1
-    lapicWrite(APIC_REG_TIMER_INITCNT, 10000000);       // enable timer
+    lapicWrite(APIC_REG_TIMER_INITCNT, 10000000);      // enable timer
     lapicWrite(APIC_REG_LVT_TIMER, APIC_TIMER_VECTOR); // one shot mode
 
-    uint64_t before = hpetMillis();
+    lapicWrite(APIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // initialise with -1
+    hpetSleepMillis((1000 / K_LAPIC_FREQ));
 
-    while (lapicRead(APIC_REG_TIMER_CURRENTCNT))
-        ; // wait for the timer to clear
-
-    uint64_t after = hpetMillis();
-
-    uint64_t target = 10000000 / (after - before + 1 /*that 1 prevents us dividing by 0 and generating an exception*/);
+    uint32_t ticks = 0xFFFFFFFF - *((uint32_t *)((uint8_t *)APIC_BASE + APIC_REG_TIMER_CURRENTCNT));
 
     lapicWrite(APIC_REG_LVT_TIMER, 0b100000000000000000 | APIC_TIMER_VECTOR); // periodic mode
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
-    lapicWrite(APIC_REG_TIMER_INITCNT, target);                               // go!
+    lapicWrite(APIC_REG_TIMER_INITCNT, ticks);                                // go!
 
     // setup idt entry (only needed to do once)
     if (bsp)

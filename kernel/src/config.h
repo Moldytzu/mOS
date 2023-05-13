@@ -42,6 +42,9 @@
 #define K_SCHED_FREQ 100       // frequency at which we want to context switch
 #define K_STACK_SIZE 64 * 1024 // userspace stack size
 
+// LAPIC
+#define K_LAPIC_FREQ 300 // target lapic timer frequency
+
 // ACPI
 // #define K_ACPI_LAI // enables lai support (enables experimental aml support)
 
