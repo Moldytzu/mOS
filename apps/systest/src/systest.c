@@ -62,8 +62,7 @@ int main(int argc, char **argv)
 
     TEST("pid")
     {
-        uint64_t pid = 0;
-        sys_pid(0, SYS_PID_GET, &pid);
+        uint64_t pid = sys_pid_get();
 
         printf("we're pid %d\n", pid);
 

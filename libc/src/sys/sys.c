@@ -76,3 +76,10 @@ void sys_yield()
 {
     asm volatile("int $0x20"); // simulate timer intrerrupt
 }
+
+uint64_t sys_pid_get()
+{
+    uint64_t pid;
+    sys_pid(0, SYS_PID_GET, &pid);
+    return pid;
+}

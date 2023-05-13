@@ -151,7 +151,7 @@ int main(int argc, char **argv)
     cwdBuffer = malloc(512);
     assert(cwdBuffer != NULL); // assert that the buffer is valid
 
-    sys_pid(0, SYS_PID_GET, &pid);                                // get the pid
+    pid = sys_pid_get();
     sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
 
     if (argc >= 2)

@@ -200,10 +200,7 @@ void eventLoop()
 int main(int argc, char **argv)
 {
     // ensure that the pid is 1
-    uint64_t initPID;
-    sys_pid(0, SYS_PID_GET, &initPID);
-
-    if (initPID != 1)
+    if (sys_pid_get() != 1)
     {
         puts("The init system has to be launched as PID 1!\n");
         sys_exit(1);
