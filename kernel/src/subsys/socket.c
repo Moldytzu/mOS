@@ -5,7 +5,7 @@
 #include <misc/logger.h>
 
 struct sock_socket rootSocket;
-uint32_t lastSockID = 0;
+uint32_t lastSockID = 1;
 
 // todo: permission system (the socket creator can chose which pids can read/write from the socket)
 // adjustable buffer size (dynamically allocate buffer size)
@@ -99,7 +99,6 @@ struct sock_socket *sockGet(uint32_t id)
 void sockInit()
 {
     zero(&rootSocket, sizeof(struct sock_socket));
-    sockCreate(); // create the first socket
 
     logInfo("sock: created the first socket");
 }
