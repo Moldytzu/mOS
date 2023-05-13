@@ -16,20 +16,14 @@ struct sock_socket *sockCreate()
 {
     struct sock_socket *currentSocket = &rootSocket; // first socket
 
-    if (currentSocket->buffer) // check if the root socket is valid
-    {
-        while (currentSocket->next) // get last socket
-            currentSocket = currentSocket->next;
+    while (currentSocket->next) // point to the last socket
+        currentSocket = currentSocket->next;
 
-        if (currentSocket->buffer)
-        {
-            currentSocket->next = pmmPage();               // allocate next socket if the current socket is valid
-            currentSocket->next->previous = currentSocket; // set the previous socket
-            currentSocket = currentSocket->next;           // set current socket to the newly allocated socket
-        }
-    }
+    currentSocket->next = pmmPage();               // allocate next socket if the current socket is valid
+    currentSocket->next->previous = currentSocket; // set the previous socket
 
-    currentSocket->id = lastSockID++; // set the ID
+    currentSocket = currentSocket->next; // point to the new socket
+    currentSocket->id = lastSockID++;    // set the ID
 
 #ifdef K_SOCK_DEBUG
     printks("sock: creating new socket with ID %d\n\r", currentSocket->id);
