@@ -99,8 +99,6 @@ struct sock_socket *sockGet(uint32_t id)
 void sockInit()
 {
     zero(&rootSocket, sizeof(struct sock_socket));
-
-    logInfo("sock: created the first socket");
 }
 
 // free the socket
