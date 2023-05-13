@@ -16,21 +16,23 @@
 #define INSTACK(address) between(address, STACK - K_STACK_SIZE, STACK + K_STACK_SIZE)
 #define INAPPLICATION(address) between(address, TASK_BASE_ADDRESS, task->lastVirtualAddress + 4096)
 #define INBOUNDARIES(address) (INSTACK(((uint64_t)address)) || INAPPLICATION(((uint64_t)address)))
+#define DEFINE_SYSCALL(x) void x(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
 
 uint64_t openRelativePath(const char *path, sched_task_t *task);
 void yield();
 
-void exit(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void write(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void read(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void input(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void display(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void exec(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void pid(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void mem(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void vfs(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void open(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void close(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void socket(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void power(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-void driver(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
+DEFINE_SYSCALL(exit);
+DEFINE_SYSCALL(write);
+DEFINE_SYSCALL(read);
+DEFINE_SYSCALL(input);
+DEFINE_SYSCALL(display);
+DEFINE_SYSCALL(exec);
+DEFINE_SYSCALL(pid);
+DEFINE_SYSCALL(mem);
+DEFINE_SYSCALL(vfs);
+DEFINE_SYSCALL(open);
+DEFINE_SYSCALL(close);
+DEFINE_SYSCALL(socket);
+DEFINE_SYSCALL(power);
+DEFINE_SYSCALL(driver);
+DEFINE_SYSCALL(time);
