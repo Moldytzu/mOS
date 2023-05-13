@@ -7,8 +7,6 @@ struct vt_terminal rootTerminal;
 uint32_t lastID = 0;
 bool refresh = false;
 
-// todo: lock this down
-
 // create new terminal and return it's address
 struct vt_terminal *vtCreate()
 {
@@ -27,9 +25,9 @@ struct vt_terminal *vtCreate()
         }
     }
 
-    currentTerminal->buffer = pmmPage();               // allocate the character buffer
-    currentTerminal->kbBuffer = pmmPage();             // allocate the keyboard buffer
-    currentTerminal->id = lastID++;                    // set the ID
+    currentTerminal->buffer = pmmPage();   // allocate the character buffer
+    currentTerminal->kbBuffer = pmmPage(); // allocate the keyboard buffer
+    currentTerminal->id = lastID++;        // set the ID
 
 #ifdef K_VT_DEBUG
     printks("vt: creating new terminal with ID %d\n\r", currentTerminal->id);
@@ -44,18 +42,20 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
     if (!count || !vt)
         return;
 
+    lock(vt->lock, {
+        const char *input = str;               // input buffer
+        if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow
+        {
+            zero((void *)vt->buffer, VMM_PAGE); // clear the buffer
+            vt->bufferIdx = 0;                  // reset the index
+        }
+
+        memcpy8((void *)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer
+        vt->bufferIdx += count;                                                        // increment the index
+    });
+
     if (vt == &rootTerminal)
         refresh = true; // set refresh flag
-
-    const char *input = str;               // input buffer
-    if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow
-    {
-        zero((void *)vt->buffer, VMM_PAGE); // clear the buffer
-        vt->bufferIdx = 0;                  // reset the index
-    }
-
-    memcpy8((void *)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer
-    vt->bufferIdx += count;                                                        // increment the index
 
 #ifdef K_VT_DEBUG
     printks("vt: appended %d bytes to terminal %d\n\r", count, vt->id);
@@ -87,10 +87,12 @@ void vtkbAppend(struct vt_terminal *vt, char c)
     if (!vt)
         return;
 
-    vt->kbBuffer[vt->kbBufferIdx++] = c; // append the character
+    lock(vt->lock, {
+        vt->kbBuffer[vt->kbBufferIdx++] = c; // append the character
 
-    if (vt->kbBufferIdx == 4096) // prevent buffer overflow
-        vt->kbBufferIdx = 0;
+        if (vt->kbBufferIdx == 4096) // prevent buffer overflow
+            vt->kbBufferIdx = 0;
+    });
 }
 
 // get firstly typed key from the keyboard buffer
