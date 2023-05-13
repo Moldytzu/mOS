@@ -7,7 +7,6 @@
 struct sock_socket rootSocket;
 uint32_t lastSockID = 0;
 
-// todo: lock this down
 // todo: permission system (the socket creator can chose which pids can read/write from the socket)
 // adjustable buffer size (dynamically allocate buffer size)
 // master-slave system (multiple connections on the same socket, create a buffer for each connection)
@@ -30,7 +29,7 @@ struct sock_socket *sockCreate()
         }
     }
 
-    currentSocket->id = lastSockID++;                // set the ID
+    currentSocket->id = lastSockID++; // set the ID
 
 #ifdef K_SOCK_DEBUG
     printks("sock: creating new socket with ID %d\n\r", currentSocket->id);
@@ -45,17 +44,19 @@ void sockAppend(struct sock_socket *sock, const char *str, size_t count)
     if (!sock || !count)
         return;
 
-    const char *input = str;                         // input buffer
-    if (sock->bufferIdx + count >= SOCK_BUFFER_SIZE) // check if we could overflow
-    {
-        input += (sock->bufferIdx + count) - SOCK_BUFFER_SIZE; // move the pointer until where it overflows
-        count -= (sock->bufferIdx + count) - SOCK_BUFFER_SIZE; // decrease the count by the number of bytes where it overflows
-        zero((void *)sock->buffer, SOCK_BUFFER_SIZE);          // clear the buffer
-        sock->bufferIdx = 0;                                   // reset the index
-    }
+    lock(sock->lock, {
+        const char *input = str;                         // input buffer
+        if (sock->bufferIdx + count >= SOCK_BUFFER_SIZE) // check if we could overflow
+        {
+            input += (sock->bufferIdx + count) - SOCK_BUFFER_SIZE; // move the pointer until where it overflows
+            count -= (sock->bufferIdx + count) - SOCK_BUFFER_SIZE; // decrease the count by the number of bytes where it overflows
+            zero((void *)sock->buffer, SOCK_BUFFER_SIZE);          // clear the buffer
+            sock->bufferIdx = 0;                                   // reset the index
+        }
 
-    memcpy8((void *)((uint64_t)sock->buffer + sock->bufferIdx), (void *)input, count); // copy the buffer
-    sock->bufferIdx += count;                                                          // increment the index
+        memcpy8((void *)((uint64_t)sock->buffer + sock->bufferIdx), (void *)input, count); // copy the buffer
+        sock->bufferIdx += count;                                                          // increment the index
+    });
 
 #ifdef K_SOCK_DEBUG
     printks("sock: appended %d bytes to socket %d\n\r", count, sock->id);
@@ -68,12 +69,14 @@ void sockRead(struct sock_socket *sock, const char *str, size_t count)
     if (!sock)
         return;
 
-    count = min(count, SOCK_BUFFER_SIZE - 1); // don't overflow
+    lock(sock->lock, {
+        count = min(count, SOCK_BUFFER_SIZE - 1); // don't overflow
 
-    memcpy((void *)str, (void *)sock->buffer, count);                     // copy the buffer
-    memmove((void *)sock->buffer, sock->buffer + count - 1, count);       // move the content after the requested count at the front
-    zero((void *)sock->buffer + count - 1, SOCK_BUFFER_SIZE - count + 1); // clear the ghost of the content
-    sock->bufferIdx = 0;                                                  // reset the index
+        memcpy((void *)str, (void *)sock->buffer, count);                     // copy the buffer
+        memmove((void *)sock->buffer, sock->buffer + count - 1, count);       // move the content after the requested count at the front
+        zero((void *)sock->buffer + count - 1, SOCK_BUFFER_SIZE - count + 1); // clear the ghost of the content
+        sock->bufferIdx = 0;                                                  // reset the index
+    });
 }
 
 // get first socket
@@ -110,7 +113,6 @@ void sockInit()
 // free the socket
 void sockDestroy(struct sock_socket *sock)
 {
-    sock->previous->next = sock->next;   // bypass this socket
-    pmmDeallocate((void *)sock->buffer); // deallocate the buffer
-    blkDeallocate(sock);                 // free the socket
+    sock->previous->next = sock->next; // bypass this socket
+    pmmDeallocate(sock);               // free the socket
 }
