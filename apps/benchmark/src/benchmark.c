@@ -23,7 +23,9 @@ bool isPrime(uint32_t n)
 int main(int argc, char **argv)
 {
     uint64_t old, new;
-    sys_time(SYS_TIME_GET_UPTIME_NANOS, (uint64_t)&old, 0);
+
+    count = 0;
+    old = sys_time_uptime_nanos();
 
     for(volatile int i = 1; i < 50000; i++)
     {
@@ -31,7 +33,7 @@ int main(int argc, char **argv)
             count++;
     }
 
-    sys_time(SYS_TIME_GET_UPTIME_NANOS, (uint64_t)&new, 0);
+    new = sys_time_uptime_nanos();
 
     printf("found %d primes in %llu miliseconds\n", count, (new - old) / 1000000);
 }

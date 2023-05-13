@@ -72,6 +72,13 @@ void sys_time(uint8_t call, uint64_t arg1, uint64_t arg2)
     _syscall(SYS_TIME, call, arg1, arg2, 0, 0);
 }
 
+uint64_t sys_time_uptime_nanos()
+{
+    uint64_t nanos;
+    sys_time(SYS_TIME_GET_UPTIME_NANOS, (uint64_t)&nanos, 0);
+    return nanos;
+}
+
 void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 {
     _syscall(SYS_DRIVER, call, arg1, arg2, arg3, 0);
