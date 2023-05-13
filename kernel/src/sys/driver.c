@@ -41,6 +41,8 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
 
         *ret = (uint64_t)drvRegister(task->id, arg1);
 
+        vmmMap((vmm_page_table_t *)task->pageTable, (void *)*ret, (void *)*ret, VMM_ENTRY_RW | VMM_ENTRY_USER); // map address
+
         break;
 
     case 2:           // flush struct updates

@@ -91,7 +91,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     t->registers.ss = (8 * 3) | 3;
 
     // page table
-    vmm_page_table_t *pt = vmmCreateTable(driver, driver);
+    vmm_page_table_t *pt = vmmCreateTable(false);
     t->registers.cr3 = (uint64_t)pt;
     t->pageTable = (uint64_t)pt;
 

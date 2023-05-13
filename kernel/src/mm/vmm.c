@@ -18,8 +18,8 @@ vmm_page_table_t *baseTable;
 // initialize the virtual memory manager
 void vmmInit()
 {
-    baseTable = vmmCreateTable(true, false); // create the base table with hhdm
-    vmmSwap(baseTable);                      // swap the table
+    baseTable = vmmCreateTable(true); // create the base table with hhdm
+    vmmSwap(baseTable);               // swap the table
 
     logInfo("vmm: loaded a new page table");
 }
@@ -134,7 +134,7 @@ void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
 }
 
 // create a new table
-vmm_page_table_t *vmmCreateTable(bool full, bool driver)
+vmm_page_table_t *vmmCreateTable(bool full)
 {
     uint64_t a = pmmTotal().available;
 
@@ -146,10 +146,7 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
     struct limine_kernel_address_response *kaddr = bootloaderGetKernelAddress();
 
     // map the system tables as kernel rw
-    if (driver)
-        vmmMap(newTable, newTable, newTable, VMM_ENTRY_USER | VMM_ENTRY_RW); // page table
-    else
-        vmmMap(newTable, newTable, newTable, VMM_ENTRY_RW); // page table
+    vmmMap(newTable, newTable, newTable, VMM_ENTRY_RW); // page table
 
     // map system tables for non-kernel tables (kernel tables have everything mapped)
     if (!full)
@@ -178,36 +175,21 @@ vmm_page_table_t *vmmCreateTable(bool full, bool driver)
 
         if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
         {
-            if (driver)
-                for (size_t i = 0; i < entry->length; i += 4096)
-                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_USER | VMM_ENTRY_RW);
-            else
-                for (size_t i = 0; i < entry->length; i += 4096)
-                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW);
+            for (size_t i = 0; i < entry->length; i += 4096)
+                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW);
         }
 
         if (entry->type == LIMINE_MEMMAP_FRAMEBUFFER)
         {
-            if (driver)
-                for (size_t i = 0; i < entry->length; i += 4096)
-                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_USER | VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
-            else
-                for (size_t i = 0; i < entry->length; i += 4096)
-                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
+            for (size_t i = 0; i < entry->length; i += 4096)
+                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
         }
 
-        if (driver)
-            for (size_t i = 0; i < entry->length; i += 4096)
-            {
-                vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), VMM_ENTRY_USER | VMM_ENTRY_RW);
-                vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), VMM_ENTRY_RW);
-            }
-        else
-            for (size_t i = 0; i < entry->length; i += 4096)
-            {
-                vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), VMM_ENTRY_USER | VMM_ENTRY_RW);
-                vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), VMM_ENTRY_RW);
-            }
+        for (size_t i = 0; i < entry->length; i += 4096)
+        {
+            vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), VMM_ENTRY_USER | VMM_ENTRY_RW);
+            vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), VMM_ENTRY_RW);
+        }
     }
 
     vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
@@ -281,7 +263,7 @@ void vmmBenchmark()
     void *addr[VMM_BENCHMARK_SIZE];
 
     for (int i = 0; i < VMM_BENCHMARK_SIZE; i++) // allocate
-        addr[i] = vmmCreateTable(true, false);
+        addr[i] = vmmCreateTable(true);
 
     uint64_t end = hpetMillis();
 
