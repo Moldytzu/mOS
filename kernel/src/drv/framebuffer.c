@@ -126,10 +126,23 @@ ifunc void newline()
     cursor.Y += font->height + 1; // add character's height and a 1 px padding
     cursor.X = 0;                 // reset cursor X
 
-    if (cursor.Y + font->height + 1 >= framebuffer.height)
+    if (cursor.Y + font->height + 1 >= framebuffer.height) // we can't write further
     {
+#ifdef K_FB_SCROLL
+        // todo: optimise this by not reading video memory
+        cursor.Y -= font->height + 1; // move back to the last line
+
+        size_t fbSize = framebuffer.pitch * framebuffer.height; // size in bytes of the frame buffer
+        size_t offset = font->height * framebuffer.pitch;       // get offset of the second line
+        size_t bytes = fbSize - offset;                         // calculate the bytes to be copied
+
+        memcpy64(framebuffer.address, framebuffer.address + offset, bytes / 8); // do the actual copy
+
+        memset64(framebuffer.address + bytes, 0, (fbSize - bytes) / 8); // zero last line
+#else
         cursor.Y = 0;
-        framebufferClear(0);
+        framebufferZero();
+#endif
     }
 }
 

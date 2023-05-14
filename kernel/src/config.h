@@ -45,6 +45,9 @@
 // LAPIC
 #define K_LAPIC_FREQ 300 // target lapic timer frequency
 
+// Framebuffer
+#define K_FB_SCROLL // enables framebuffer scrolling (by default after last line it clears the screen then starts again from the top which is faster)
+
 // ACPI
 // #define K_ACPI_LAI // enables lai support (enables experimental aml support)
 
