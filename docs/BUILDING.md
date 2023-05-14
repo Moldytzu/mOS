@@ -18,7 +18,7 @@ You simply have to do `make`. That's all. No need to pass the `-j` flag to it be
 ## Testing in a virtual machine
 ##### There are multiple targets that can used to test the operating system right away:
     - run  -> runs QEmu with TCG
-    - run-slow -> runs QEmu with TCG and without SMP and PCIe support
+    - run-no-smp -> runs QEmu with TCG and with SMP disabled
     - run-efi  -> runs QEmu with TCG and UEFI support
     - run-kvm  -> runs QEmu with KVM acceleration (only on x86_64 hosts)
     - run-efi-kvm  -> runs QEmu with KVM acceleration and UEFI support (only on x86_64 hosts)

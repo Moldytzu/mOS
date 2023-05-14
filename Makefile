@@ -22,8 +22,8 @@ run-smp-debug: image
 	pkill -f qemu-system-x86_64
 	reset
 
-run-slow: image
-	qemu-system-x86_64 $(QEMUFLAGS) -smp 1 -m 128M -vga std
+run-no-smp: image
+	qemu-system-x86_64 -M q35,smm=off -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -m 512M
 
 run-bochs: image
 	bochs -q
