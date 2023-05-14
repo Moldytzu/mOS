@@ -164,7 +164,11 @@ void parseCFG()
     if(verbose)
         printf("Setting screen resolution to %ux%u\n",screenX,screenY);
 
-    sys_display(SYS_DISPLAY_SET, screenX, screenY);
+    for(int i = 0; i < 20; i++) // it is not guranteed the fb driver has started so we try 20 times to set the resolution (todo: ask the kernel)
+    {
+        sys_display(SYS_DISPLAY_SET, screenX, screenY);
+        sys_yield();
+    }
 }
 
 void eventLoop()
