@@ -58,6 +58,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         ; // step back to last delimiter (removes file name)
 
     sched_task_t *task = schedAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true, driver); // add the task                                                                                                                         // free
+    pmmDeallocate(cwd);
     blkDeallocate(elf);
     return task; // return the task
 }

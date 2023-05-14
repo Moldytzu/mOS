@@ -20,14 +20,16 @@ uint64_t openRelativePath(const char *path, sched_task_t *task)
         path += 2;
 
     char *buffer = (char *)pmmPage(); // allocate an internal buffer (todo: this is not cleaned up properly)
-    zero(buffer, PMM_PAGE);
 
     uint64_t offset = strlen(task->cwd);
     memcpy((void *)buffer, task->cwd, offset);             // copy cwd
     memcpy((void *)(buffer + offset), path, strlen(path)); // append given path
 
     if (fd = vfsOpen(buffer)) // check if it exists
+    {
+        pmmDeallocate(buffer);
         return fd;
+    }
 
     // fail
     pmmDeallocate(buffer); // clean up
