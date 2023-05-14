@@ -18,7 +18,6 @@
 bool taskKilled[K_MAX_CORES];         // indicates that last task was killed
 sched_task_t queueStart[K_MAX_CORES]; // start of the linked lists
 sched_task_t *lastTask[K_MAX_CORES];  // current task in the linked list
-uint64_t minQuantum[K_MAX_CORES];     // minimum quantum of a task
 uint16_t lastCore = 0;                // core on which last task was added
 uint32_t lastTaskID = 0;              // last id of the last task addedd
 uint16_t maxCore = 0;
@@ -174,11 +173,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
             // we've hit the commonTask
             if (lastTask[id] == &queueStart[id])
             {
-                // adjust quantums based on the lapic frequency (it isn't the same on every machine thus we have to adjust)
-                uint64_t *tps = lapicGetTPS();
-                minQuantum[id] = (tps[id] / K_SCHED_FREQ) + 1;
-
-                if (id == 0)
+                if (id == 0) // update screen
                 {
                     switch (vtGetMode())
                     {
@@ -207,7 +202,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 #endif
 
             // set new quantum
-            lastTask[id]->quantumLeft = minQuantum[id];
+            lastTask[id]->quantumLeft = K_SCHED_MIN_QUANTUM;
 
             // save old state
             memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
@@ -257,7 +252,6 @@ void schedInit()
         t->registers.cr3 = (uint64_t)vmmGetBaseTable();
 
         lastTask[i] = t;
-        minQuantum[i] = 1;
     }
 }
 

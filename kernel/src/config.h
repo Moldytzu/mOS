@@ -25,7 +25,7 @@
 #endif
 
 // SMP
-#define K_SMP           // enables symetric multiprocessing support (experimental)
+#define K_SMP // enables symetric multiprocessing support (experimental)
 
 #ifdef K_SMP
 #define K_MAX_CORES 128 // maximum cores
@@ -39,7 +39,7 @@
 #define K_COM_LOG        // kernel logger on serial
 
 // Scheduler
-#define K_SCHED_FREQ 100       // frequency at which we want to context switch
+#define K_SCHED_MIN_QUANTUM 1  // minimum quantum of each task
 #define K_STACK_SIZE 64 * 1024 // userspace stack size
 
 // LAPIC
