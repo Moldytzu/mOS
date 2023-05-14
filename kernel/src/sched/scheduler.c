@@ -80,7 +80,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     t->isDriver = driver;
 
     // registers
-    void *stack = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
+    void *stack = t->stackBase = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
     if (driver)
         t->registers.rflags = 0b11001000000010; // enable interrupts and set IOPL to 3
     else
@@ -95,13 +95,16 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     // page table
     vmm_page_table_t *pt = vmmCreateTable(false);
     t->registers.cr3 = (uint64_t)pt;
-    t->pageTable = (uint64_t)pt;
+    t->pageTable = pt;
 
     for (int i = 0; i < K_STACK_SIZE + VMM_PAGE; i += VMM_PAGE) // map stack
         vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
     for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
         vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
+
+    t->elfBase = execBase;
+    t->elfSize = execSize;
 
     // handle c arguments
     t->registers.rdi = 1 + argc; // arguments count the path + the optional arguments
@@ -287,20 +290,26 @@ void schedKill(uint32_t id)
     if (id == 1)
         panick("Attempt to kill the init system.");
 
-    lock(schedLock, {
-#ifdef K_SCHED_DEBUG
-        uint64_t a = pmmTotal().available;
-#endif
-        // todo: deallocate resources here!
+    sched_task_t *task;
 
-        sched_task_t *task = schedGet(id);
+    // remove task from list
+    lock(schedLock, {
+        task = schedGet(id);                 // get task structure from id
         TASK(task->prev)->next = task->next; // remove task from its list
         taskKilled[smpID()] = true;          // signal that we have killed a task (todo: make it so we know which task was killed so we can kill other tasks beside the current running one)
-
-#ifdef K_SCHED_DEBUG
-        printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
-#endif
     });
+
+    // release resources
+    for (int i = 0; i < task->allocatedIndex; i++)
+        if (task->allocated[i] != NULL)
+            pmmDeallocate(task->allocated[i]);
+
+    pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
+    pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
+    pmmDeallocatePages(task->stackBase, K_STACK_SIZE / VMM_PAGE + 1);
+    pmmDeallocate(task->enviroment);
+    vmmDestroy(task->pageTable);
+    blkDeallocate(task);
 }
 
 // enable the scheduler for the current core

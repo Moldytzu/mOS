@@ -1,6 +1,7 @@
 #pragma once
 #include <misc/utils.h>
 #include <cpu/idt.h>
+#include <mm/vmm.h>
 
 #define TASK_BASE_ADDRESS 0xA000000000
 #define TASK_BASE_ALLOC 0xB000000000
@@ -20,11 +21,14 @@ typedef struct
     // context
     uint8_t simdContext[512];
     idt_intrerrupt_stack_t registers;
-    uint64_t pageTable;
+    vmm_page_table_t *pageTable;
     uint64_t lastVirtualAddress;
     char *enviroment;
 
     // internal
+    void *stackBase;
+    void *elfBase;
+    size_t elfSize;
     uint32_t quantumLeft;
     void **allocated;              // allocated pages
     uint32_t allocatedIndex;       // current index
@@ -32,8 +36,7 @@ typedef struct
 
     void *next;
     void *prev;
-}
-sched_task_t;
+} sched_task_t;
 
 void schedEnable();
 sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
