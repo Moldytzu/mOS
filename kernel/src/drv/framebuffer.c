@@ -95,6 +95,13 @@ inline void framebufferClear(uint32_t colour)
         memset(framebuffer.address, colour, framebuffer.pitch * framebuffer.height); // todo: optimise this even though we don't clear with colour
 }
 
+// zeros the whole framebuffer
+void framebufferZero()
+{
+    cursor.X = cursor.Y = 0;                                           // reset cursor position
+    zero(framebuffer.address, framebuffer.pitch * framebuffer.height); // clear the framebuffer
+}
+
 // plot pixel on the framebuffer
 ifunc void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {

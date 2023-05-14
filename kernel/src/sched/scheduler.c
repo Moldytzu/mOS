@@ -186,7 +186,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
                         // todo: copy the user display framebuffer to the global framebuffer
                         break;
                     case VT_DISPLAY_TTY0:
-                        framebufferClear(0);
+                        framebufferZero();
                         framebufferWrite(vtGet(0)->buffer);
                         break;
                     case VT_DISPLAY_KERNEL:

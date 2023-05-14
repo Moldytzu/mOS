@@ -28,6 +28,7 @@ void framebufferBenchmark();
 void framebufferInit();
 void framebufferFlush();
 void framebufferClear(uint32_t colour);
+void framebufferZero();
 void framebufferWrite(const char *str);
 void framebufferWritec(char c);
 framebuffer_cursor_info_t framebufferGetCursor();
