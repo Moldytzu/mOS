@@ -31,7 +31,10 @@ void callWithStack(void *func, void *stack);
 void commonTask()
 {
     while (1)
+    {
         sti();
+        iasm("int $0x20");
+    }
 }
 
 // determine to which core we should add the the task
