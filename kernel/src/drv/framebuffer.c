@@ -56,7 +56,7 @@ void framebufferInit()
         hang();
     }
 
-    framebufferClear(0x000000); // clear framebuffer
+    framebufferZero(); // clear framebuffer
 
     cursor.colour = 0xFFFFFF; // white cursor
     cursor.X = cursor.Y = 0;  // upper left corner
@@ -89,10 +89,7 @@ inline void framebufferClear(uint32_t colour)
 {
     cursor.X = cursor.Y = 0; // reset cursor position
 
-    if (!colour) // if the colour is null then we want everything to be zeroed out
-        zero(framebuffer.address, framebuffer.pitch * framebuffer.height);
-    else
-        memset(framebuffer.address, colour, framebuffer.pitch * framebuffer.height); // todo: optimise this even though we don't clear with colour
+    memset32(framebuffer.address, colour, framebuffer.pitch * framebuffer.height); // todo: optimise this even though we don't clear with colour
 }
 
 // zeros the whole framebuffer
