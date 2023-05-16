@@ -14,8 +14,14 @@ struct limine_framebuffer framebuffer;
 
 #ifdef K_FB_DOUBLE_BUFFER
 struct limine_framebuffer back;
+locker_t fbLock;
 #else
 #define back framebuffer
+#undef lock
+#define lock(x, y) \
+    {              \
+        y;         \
+    }
 #endif
 
 framebuffer_cursor_info_t cursor; // info
@@ -58,7 +64,7 @@ void framebufferInit()
     memcpy(&back, bootloaderGetFramebuffer(), sizeof(struct limine_framebuffer));        // copy metadata to the back buffer
 
     font = (psf2_header_t *)&_binary____kfont_psf_start; // use embeded kernel font
-    if (!checkFont(font))                               
+    if (!checkFont(font))
     {
         framebufferClear(0xFF0000); // trigger a red screen of death
         hang();
@@ -82,46 +88,60 @@ void framebufferFlush()
     if (!ctx || !ctx->base)
         return;
 
-    framebuffer.address = ctx->base;
-    framebuffer.width = ctx->currentXres;
-    framebuffer.height = ctx->currentYres;
-    framebuffer.pitch = ctx->currentXres * 4;
+    lock(fbLock, {
+        if (back.address != framebuffer.address) // deallocate
+            pmmDeallocatePages(back.address, (back.pitch * back.height) / PMM_PAGE + 1);
 
-    // map the framebuffer
-    for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
-        vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
+        framebuffer.address = ctx->base;
+        framebuffer.width = ctx->currentXres;
+        framebuffer.height = ctx->currentYres;
+        framebuffer.pitch = ctx->currentXres * 4;
+
+        memcpy(&back, &framebuffer, sizeof(struct limine_framebuffer)); // sync metadata (fixme: this might be a race condition??)
+        framebufferInitDoubleBuffer();                                  // quickly generate a new buffer
+
+        // map the framebuffer
+        for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
+            vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
+    });
 }
 
 // clear the framebuffer with a colour
 inline void framebufferClear(uint32_t colour)
 {
-    cursor.X = cursor.Y = 0; // reset cursor position
+    lock(fbLock, {
+        cursor.X = cursor.Y = 0; // reset cursor position
 
-    memset32(back.address, colour, (back.pitch * back.height) / sizeof(uint32_t)); // todo: optimise this even though we don't clear with colour
+        memset32(back.address, colour, (back.pitch * back.height) / sizeof(uint32_t)); // todo: optimise this even though we don't clear with colour
+    });
 }
 
 // inits the back buffer
 void framebufferInitDoubleBuffer()
 {
 #ifdef K_FB_DOUBLE_BUFFER
-    back.address = pmmPages((back.pitch * back.height) / PMM_PAGE);
+    back.address = pmmPages((back.pitch * back.height) / PMM_PAGE + 1);
 #endif
 }
 
 // copies back buffer to the front buffer
 void framebufferUpdate()
 {
+    lock(fbLock, {
 #ifdef K_FB_DOUBLE_BUFFER
-    if (framebuffer.address != back.address) // don't copy the same buffer to itself
-        memcpy64(framebuffer.address, back.address, (back.pitch * back.height) / sizeof(uint64_t));
+        if (framebuffer.address != back.address) // don't copy the same buffer to itself
+            memcpy64(framebuffer.address, back.address, (back.pitch * back.height) / sizeof(uint64_t));
 #endif
+    });
 }
 
 // zeros the whole framebuffer
 void framebufferZero()
 {
-    cursor.X = cursor.Y = 0;                      // reset cursor position
-    zero(back.address, back.pitch * back.height); // clear the framebuffer
+    lock(fbLock, {
+        cursor.X = cursor.Y = 0;                      // reset cursor position
+        zero(back.address, back.pitch * back.height); // clear the framebuffer
+    });
 }
 
 // plot pixel on the framebuffer
@@ -183,8 +203,10 @@ void framebufferWritec(char c)
     if (c == ' ' && cursor.X == 0)
         return;
 
-    framebufferPlotc(c, cursor.X, cursor.Y);
-    cursor.X += font->width + 1; // add character's width and a 1 px padding
+    lock(fbLock, {
+        framebufferPlotc(c, cursor.X, cursor.Y);
+        cursor.X += font->width + 1; // add character's width and a 1 px padding
+    });
 }
 
 // write a string

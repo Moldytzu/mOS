@@ -47,7 +47,7 @@
 
 // Framebuffer
 #define K_FB_SCROLL        // enables framebuffer scrolling (by default after last line it clears the screen then starts again from the top which is faster)
-//#define K_FB_DOUBLE_BUFFER // enables kernel double buffering (decreases flickering at expense of memory and latency)
+#define K_FB_DOUBLE_BUFFER // enables kernel double buffering (decreases flickering at expense of memory and latency)
 
 // ACPI
 // #define K_ACPI_LAI // enables lai support (enables experimental aml support)
