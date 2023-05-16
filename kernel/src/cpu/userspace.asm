@@ -2,7 +2,7 @@ bits 64
 
 section .text
 
-global sysretInit, userspaceJump, callWithPageTable
+global sysretInit, callWithPageTable, callWithStack
 extern SyscallHandlerEntry
 
 ; initialize the sysret/syscall functionality
@@ -43,10 +43,7 @@ callWithPageTable:
 	pop rbp       
 	ret          ; return
 
-; jump in userspace
-userspaceJump:
-    mov rcx, rdi ; set the new rip
-    mov rsp, rsi ; set the new stack
-	mov cr3, rdx ; set new page table
-    mov r11, 0b1000000010 ; rflags, enable intrerrupts
-    o64 sysret ; to userspace and beyond
+callWithStack:
+	mov rsp, rsi
+	call rdi
+	jmp $

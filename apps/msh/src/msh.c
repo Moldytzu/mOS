@@ -84,8 +84,7 @@ void handleInput(const char *buffer)
         {
             printf("Couldn't find directory %s\n", arguments[1]);
 
-            // restore the cwd
-            sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
+            memset(cwdBuffer, 0, 4096); // clear cwd
             return;
         }
 
@@ -100,8 +99,8 @@ void handleInput(const char *buffer)
     memset((void *)cmdBuffer, 0, 4096);                            // clear the buffer
     memcpy((void *)cmdBuffer, arguments[0], strlen(arguments[0])); // copy the input
 
-    uint64_t status;
-    sys_open(arguments[0], &status);
+    uint64_t status = sys_open(arguments[0]);
+
     if (!status)
     {
         // try to append the path
@@ -109,9 +108,8 @@ void handleInput(const char *buffer)
         memcpy((void *)(cmdBuffer + pathLen), arguments[0], strlen(arguments[0])); // copy the input
         memcpy((void *)cmdBuffer, path, pathLen);                                  // copy the path
 
-        uint64_t status;
-        sys_open(cmdBuffer, &status);
-        if (status)
+        uint64_t status = sys_open(cmdBuffer);
+        if (status && strlen(cmdBuffer))
             goto execute;
 
         printf("Couldn't find executable %s\n", arguments[0]);
@@ -153,7 +151,7 @@ int main(int argc, char **argv)
     cwdBuffer = malloc(512);
     assert(cwdBuffer != NULL); // assert that the buffer is valid
 
-    sys_pid(0, SYS_PID_GET, &pid);                                // get the pid
+    pid = sys_pid_get();
     sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
 
     if (argc >= 2)
@@ -170,7 +168,7 @@ int main(int argc, char **argv)
     path = enviroment;
 
     // find the path
-    while (memcmp(path, "PATH=", 5) != 0) // find the path in enviroment
+    while (memcmp(path, "PATH=", 5) != 0 && strlen(path)) // find the path in enviroment
         path++;
 
     if (memcmp(path, "PATH=", 5) == 0) // check if the path is available by comparing again the bytes
@@ -188,7 +186,7 @@ int main(int argc, char **argv)
 
         char chr;
 
-        printf("%s m$ ",cwdBuffer); // print the prompt
+        printf("%s m$ ", cwdBuffer); // print the prompt
 
         // read in the buffer
         do

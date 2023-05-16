@@ -20,3 +20,19 @@ ifunc uint64_t controlReadCR2()
     iasm("mov %%cr2, %0" ::"r"(value));
     return value;
 }
+
+// read cr3
+ifunc uint64_t controlReadCR3()
+{
+    uint64_t value;
+    iasm("mov %%cr3, %0" ::"r"(value));
+    return value;
+}
+
+// read cr4
+ifunc uint64_t controlReadCR4()
+{
+    uint64_t value;
+    iasm("mov %%cr4, %0" ::"r"(value));
+    return value;
+}

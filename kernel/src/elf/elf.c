@@ -7,7 +7,7 @@
 #include <sched/scheduler.h>
 
 // load an elf
-struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver)
+sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 {
     uint64_t fd = vfsOpen(path);                    // open the file
     uint64_t fdSize = vfsSize(fd);                  // get the size
@@ -29,7 +29,7 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver)
 #endif
 
     if (fdSize % 4096 != 0) // make sure the executable size is divisible by a page
-        fdSize += fdSize % 4096;
+        fdSize += fdSize - (fdSize % 4096);
 
     void *buffer = pmmPages(fdSize / VMM_PAGE); // allocate the buffer for the sections
 
@@ -52,14 +52,13 @@ struct sched_task *elfLoad(const char *path, int argc, char **argv, bool driver)
 
     blkDeallocate(phdr); // clean up
 
-    char *cwd = blkBlock(strlen(path));
-    zero(cwd, strlen(path)); // clear the string
-    memcpy(cwd, path, strlen(path));
+    char *cwd = pmmPage();
+    memcpy(cwd, path, strlen(path)); // copy the path
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
-        ; // step back to last delimiter
+        ; // step back to last delimiter (removes file name)
 
-    struct sched_task *task = schedulerAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true, driver); // add the task
-    blkDeallocate(cwd);                                                                                                                                     // free
+    sched_task_t *task = schedAdd(path, (void *)elf->e_entry - TASK_BASE_ADDRESS, K_STACK_SIZE, buffer, fdSize, 0, cwd, argc, argv, true, driver); // add the task                                                                                                                         // free
+    pmmDeallocate(cwd);
     blkDeallocate(elf);
     return task; // return the task
 }

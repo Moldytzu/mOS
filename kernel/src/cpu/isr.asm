@@ -44,6 +44,7 @@ bits 64
 global BaseHandlerEntry%1
 
 BaseHandlerEntry%1:
+    cld ; clear direction flag as the sysv abi mandates
     cli ; disable intrerrupts
     PUSH_REG
     mov rdi, rsp ; give the handler the stack frame
@@ -53,7 +54,7 @@ BaseHandlerEntry%1:
     iretq
 %endmacro
 
-global BaseHandlerEntry, PITHandlerEntry, SyscallHandlerEntry, PS2Port1HandlerEntry, PS2Port2HandlerEntry
+global lapicEntry, SyscallHandlerEntry
 extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler, exceptionHandler
 
 %assign i 0
@@ -62,23 +63,27 @@ GEN_HANDLER i
 %assign i i+1
 %endrep
 
-PITHandlerEntry:
-    push rax ; simulate error push
-    PUSH_REG
-    mov rdi, rsp ; give the handler the stack frame
-    call PITHandler
-    POP_REG
-    add rsp, 8 ; hide that push
-    iretq
-
 SyscallHandlerEntry:
-    push rax ; simulate error push
+    cld      ; clear direction flag as the sysv abi mandates
+    push rax ; push an arbitrary error code
     PUSH_REG
     mov rdi, rsp
     call syscallHandler ; call the syscall handler
     POP_REG
-    add rsp, 8 ; hide that push
+    add rsp, 8 ; pop the error code from earlier
     o64 sysret ; return to userspace
+
+lapicEntry:
+    cld      ; clear direction flag as the sysv abi mandates
+    cli      ; disable intrerrupts
+    push rax ; push an arbitrary error code
+    PUSH_REG
+    mov rdi, rsp  ; give the stack frame
+    mov rsi, 0x20 ; give a fake intrerrupt number
+    call exceptionHandler
+    POP_REG
+    pop rax ; pop the error code from earlier
+    iretq
 
 section .data
 int_table:

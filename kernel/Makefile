@@ -1,11 +1,15 @@
 include ../compile.mk
 
+OBJCOPY := ~/cross_compiler/bin/x86_64-elf-objcopy
+
 KERNEL := ../out/kernel.elf
+FONT := ../kfont.psf
 
 # c compiler flags particular for the kernel
-INTERNALCFLAGS :=            \
-	-I./src/                 \
-	-Wno-int-to-pointer-cast \
+INTERNALCFLAGS :=              \
+	-I./src/                   \
+	-I./src/vendor/lai/include \
+	-Wno-int-to-pointer-cast   \
 
 # linker flags particular for the kernel
 INTERNALLDFLAGS :=         \
@@ -27,12 +31,14 @@ DIRS = $(wildcard $(SRCDIR)/*)
 .PHONY: all
 all: $(KERNEL)
 
-src/limine.h:
-	curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o $@
+vendor:
+	-curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o src/limine.h
+	-git clone https://github.com/managarm/lai.git src/vendor/lai
 
 # Link rules for the final kernel executable.
-$(KERNEL): $(OBJS) 
-	$(LD) $(OBJS) $(LDFLAGS) $(INTERNALLDFLAGS) -o $(KERNEL)
+$(KERNEL): $(OBJS)
+	$(OBJCOPY) -O elf64-x86-64 -B i386 -I binary $(FONT) $(OBJDIR)/kfont.o
+	$(LD) $(OBJS) $(OBJDIR)/kfont.o $(LDFLAGS) $(INTERNALLDFLAGS) -o $(KERNEL)
 
 # Compilation rules for *.c files.
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
@@ -47,7 +53,7 @@ $(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJS) src/limine.h
+	rm -rf $(KERNEL) $(OBJS) src/limine.h src/vendor/lai
 
 .PHONY: setup
-setup: src/limine.h
+setup: vendor

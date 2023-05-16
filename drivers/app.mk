@@ -3,6 +3,7 @@ include ../../compile.mk
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS :=   		 \
 	-I../../libc/inc         \
+	-mcmodel=large       
 
 # Internal linker flags that should not be changed by the user.
 INTERNALLDFLAGS :=         \

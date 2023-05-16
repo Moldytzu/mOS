@@ -36,6 +36,8 @@
 #define SYS_POWER_SHUTDOWN 1
 #define SYS_POWER_UPTIME 2
 
+#define SYS_TIME_GET_UPTIME_NANOS 0
+
 #define SYS_EXIT 0
 #define SYS_WRITE 1
 #define SYS_READ 2
@@ -50,6 +52,7 @@
 #define SYS_SOCKET 11
 #define SYS_POWER 12
 #define SYS_DRIVER 13
+#define SYS_TIME 14
 
 typedef struct __attribute__((packed))
 {
@@ -67,10 +70,16 @@ void sys_read(void *buffer, uint64_t count, uint64_t fd);
 void sys_input(uint8_t deviceType, char *returnPtr);
 void sys_display(uint8_t call, uint64_t arg1, uint64_t arg2);
 void sys_exec(const char *path, uint64_t *pid, sys_exec_packet_t *packet);
+
 void sys_pid(uint32_t pid, uint16_t info, uint64_t *retVal);
+uint64_t sys_pid_get();
+
+void sys_time(uint8_t call, uint64_t arg1, uint64_t arg2);
+uint64_t sys_time_uptime_nanos();
+
 void sys_mem(uint8_t call, uint64_t arg1, uint64_t arg2);
 void sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2);
-void sys_open(const char *path, uint64_t *fd);
+uint64_t sys_open(const char *path);
 void sys_close(uint64_t fd);
 void sys_socket(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 void sys_power(uint8_t call, uint64_t arg1, uint64_t arg2);

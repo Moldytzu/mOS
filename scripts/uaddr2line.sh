@@ -1,0 +1,1 @@
+~/cross_compiler/bin/x86_64-elf-addr2line -e ./roots/initrd/$1 $2

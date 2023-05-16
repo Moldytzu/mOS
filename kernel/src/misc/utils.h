@@ -3,20 +3,36 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <limits.h>
 #include <config.h>
+#include <cpu/atomic.h>
+#include <misc/data.h>
 
 // useful macros
-#define pack __attribute__((__packed__))
-#define toMB(x) ((x) / 1024 / 1024)
-#define toKB(x) ((x) / 1024)
-#define align(val, alg) (max((uint64_t)(val), alg) + (alg - (max((uint64_t)(val), alg) % alg)))
-#define alignD(val, alg) (align(val, alg) - alg)
-#define unsafe_cast(val, type) (*(type *)&val)
+#define bitsof(x) (sizeof(x) * 8)
+#define align(val, alg) (max((uint64_t)(val), alg) + (alg - (max((uint64_t)(val), alg) % alg))) // deprecated!
+#define alignD(val, alg) (align(val, alg) - alg)                                                // deprecated!
 #define iasm asm volatile
 #define ifunc static inline __attribute__((always_inline))
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 #define pstruct typedef struct __attribute__((__packed__))
 #define align_addr(al) __attribute__((aligned(al)))
+
+#ifdef K_SMP
+#define lock(l, cmds)      \
+    {                      \
+        atomicAquire(&l);  \
+        cmds;              \
+        atomicRelease(&l); \
+    }
+#define release(l)         \
+    {                      \
+        atomicRelease(&l); \
+    }
+#else
+#define lock(l, cmds) {cmds}
+#define release(l)
+#endif
 
 // compare memory
 ifunc int memcmp8(void *a, void *b, size_t len)
@@ -29,11 +45,7 @@ ifunc int memcmp8(void *a, void *b, size_t len)
     return 0;
 }
 
-// compare memory
-ifunc int memcmp(const void *a, const void *b, size_t len)
-{
-    return memcmp8((void *)a, (void *)b, len);
-}
+int memcmp(const void *a, const void *b, size_t len);
 
 // string length
 ifunc uint32_t strlen(const char *str)
@@ -45,35 +57,35 @@ ifunc uint32_t strlen(const char *str)
 }
 
 // set memory 8 bits at a time
-ifunc void memset8(void *dest, uint8_t data, size_t count)
+static void memset8(void *dest, uint8_t data, size_t count)
 {
     for (; count; count--, dest++)
         *(uint8_t *)dest = data;
 }
 
 // set memory 16 bits at a time
-ifunc void memset16(void *dest, uint16_t data, size_t count)
+static void memset16(void *dest, uint16_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint16_t))
         *(uint16_t *)dest = data;
 }
 
 // set memory 32 bits at a time
-ifunc void memset32(void *dest, uint32_t data, size_t count)
+static void memset32(void *dest, uint32_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint32_t))
         *(uint32_t *)dest = data;
 }
 
 // set memory 64 bits at a time
-ifunc void memset64(void *dest, uint64_t data, size_t count)
+static void memset64(void *dest, uint64_t data, size_t count)
 {
     for (; count; count--, dest += sizeof(uint64_t))
         *(uint64_t *)dest = data;
 }
 
 // set memory to 0
-ifunc void zero(void *dest, size_t count)
+static void zero(void *dest, size_t count)
 {
     if (count % sizeof(uint64_t) == 0)
         memset64(dest, 0, count / sizeof(uint64_t));
@@ -158,43 +170,9 @@ ifunc int strcmp(const char *str1, const char *str2)
     return *(const unsigned char *)str1 - *(const unsigned char *)str2;
 }
 
-// copy memory
-ifunc void *memcpy(void *dest, const void *src, size_t num)
-{
-    memcpy8(dest, (void *)src, num);
-    return dest;
-}
-
-// set memory
-ifunc void *memset(void *dstpp, int c, size_t len)
-{
-    memset8(dstpp, c, len);
-    return dstpp;
-}
-
-// move memory
-ifunc void *memmove(void *dest, const void *src, size_t n)
-{
-    uint8_t *from = (uint8_t *)src;
-    uint8_t *to = (uint8_t *)dest;
-
-    if (from == to || n == 0)
-        return dest;
-    if (to > from && to - from < n)
-    {
-        for (size_t i = n - 1; i >= 0; i--)
-            to[i] = from[i];
-        return dest;
-    }
-    if (from > to && from - to < n)
-    {
-        for (size_t i = 0; i < n; i++)
-            to[i] = from[i];
-        return dest;
-    }
-    memcpy(dest, src, n);
-    return dest;
-}
+void *memcpy(void *dest, const void *src, size_t num);
+void *memset(void *dstpp, int c, size_t len);
+void *memmove(void *dest, const void *src, size_t n);
 
 // to_string
 const char *to_string(uint64_t val);
@@ -206,6 +184,8 @@ void hang();
 // printk
 void printk(const char *fmt, ...);
 void printks(const char *fmt, ...);
+void printk_impl(const char *fmt, va_list list);
+void printks_impl(const char *fmt, va_list list);
 
 // inline assembly shortcuts
 ifunc void cli()

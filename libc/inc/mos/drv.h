@@ -23,33 +23,10 @@ struct stack_frame;
 #define SYS_DRIVER_IDT_RESET 4
 #define SYS_DRIVER_GET_PCI_DEVICE 5
 #define SYS_DRIVER_IDENTITY_MAP 6
+#define SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR 7
 
 #define SYS_DRIVER_TYPE_FRAMEBUFFER 1
 #define SYS_DRIVER_TYPE_INPUT 2
-
-#define PIC_EOI_CMD 0x20
-#define PIC_INIT_CMD 0x11
-
-#define PIC_MASTER_CMD 0x20
-#define PIC_MASTER_DAT 0x21
-#define PIC_SLAVE_CMD 0xA0
-#define PIC_SLAVE_DAT 0xA1
-
-#define PIC_IRQ_BASE 0x20
-#define PIC_IRQ_0 (PIC_IRQ_BASE + 0)
-#define PIC_IRQ_1 (PIC_IRQ_BASE + 1)
-#define PIC_IRQ_2 (PIC_IRQ_BASE + 2)
-#define PIC_IRQ_3 (PIC_IRQ_BASE + 3)
-#define PIC_IRQ_4 (PIC_IRQ_BASE + 4)
-#define PIC_IRQ_5 (PIC_IRQ_BASE + 5)
-#define PIC_IRQ_6 (PIC_IRQ_BASE + 6)
-#define PIC_IRQ_7 (PIC_IRQ_BASE + 7)
-#define PIC_IRQ_8 (PIC_IRQ_BASE + 8)
-#define PIC_IRQ_9 (PIC_IRQ_BASE + 9)
-#define PIC_IRQ_10 (PIC_IRQ_BASE + 10)
-#define PIC_IRQ_11 (PIC_IRQ_BASE + 11)
-#define PIC_IRQ_12 (PIC_IRQ_BASE + 12)
-#define PIC_IRQ_13 (PIC_IRQ_BASE + 13)
 
 pstruct
 {
@@ -133,5 +110,4 @@ void outw(uint16_t port, uint16_t val);
 uint16_t inw(uint16_t port);
 void outl(uint16_t port, uint32_t val);
 uint32_t inl(uint16_t port);
-void picEOI();
 void serialWritec(char c);

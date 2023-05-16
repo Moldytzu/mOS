@@ -1,7 +1,7 @@
 #include <mos/sys.h>
 
 void sys_exit(uint64_t status)
-{
+{       
     _syscall(SYS_EXIT, status, 0, 0, 0, 0);
 }
 
@@ -45,9 +45,11 @@ void sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2)
     _syscall(SYS_VFS, call, arg1, arg2, 0, 0);
 }
 
-void sys_open(const char *path, uint64_t *fd)
+uint64_t sys_open(const char *path)
 {
-    _syscall(SYS_OPEN, (uint64_t)fd, (uint64_t)path, 0, 0, 0);
+    uint64_t fd;
+    _syscall(SYS_OPEN, (uint64_t)&fd, (uint64_t)path, 0, 0, 0);
+    return fd;
 }
 
 void sys_close(uint64_t fd)
@@ -65,6 +67,18 @@ void sys_power(uint8_t call, uint64_t arg1, uint64_t arg2)
     _syscall(SYS_POWER, call, arg1, arg2, 0, 0);
 }
 
+void sys_time(uint8_t call, uint64_t arg1, uint64_t arg2)
+{
+    _syscall(SYS_TIME, call, arg1, arg2, 0, 0);
+}
+
+uint64_t sys_time_uptime_nanos()
+{
+    uint64_t nanos;
+    sys_time(SYS_TIME_GET_UPTIME_NANOS, (uint64_t)&nanos, 0);
+    return nanos;
+}
+
 void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 {
     _syscall(SYS_DRIVER, call, arg1, arg2, arg3, 0);
@@ -73,4 +87,11 @@ void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 void sys_yield()
 {
     asm volatile("int $0x20"); // simulate timer intrerrupt
+}
+
+uint64_t sys_pid_get()
+{
+    uint64_t pid;
+    sys_pid(0, SYS_PID_GET, &pid);
+    return pid;
 }

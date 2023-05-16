@@ -20,6 +20,9 @@ ifunc void serialWritec(char c)
     while (!(inb(COM1 + 5) & 0b100000))
         ;
 
+    if (c == '\n')
+        outb(COM1, '\r');
+
     outb(COM1, c); // output the character on the serial console
 #endif
 }

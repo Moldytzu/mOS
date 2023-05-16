@@ -8,14 +8,17 @@ SECTIONS
 	{
 		*(.text)
 	}
+	
 	.data :
 	{
 		*(.data)
 	}
+	
 	.rodata :
 	{
 		*(.rodata)
 	}
+	
 	.bss :
 	{
 		*(COMMON)

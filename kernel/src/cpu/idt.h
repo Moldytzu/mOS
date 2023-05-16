@@ -60,6 +60,8 @@ pstruct
 idt_intrerrupt_stack_t;
 
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user);
-void idtInit();
+void idtInit(uint16_t procID);
+void idtInstall(uint8_t procID);
 void idtRedirect(void *handler, uint8_t entry, uint32_t tid);
 void idtClearRedirect(uint32_t tid);
+void *idtGet();

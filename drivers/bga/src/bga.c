@@ -132,8 +132,17 @@ void _mdrvmain()
 {
     fb = (drv_type_framebuffer_t *)sys_drv_announce(SYS_DRIVER_TYPE_FRAMEBUFFER); // announce that we are a framebuffer
 
-    if (!detectBGA())
+    if(!fb)
+    {
+        printf("bga: failed to announce!\n");
         abort();
+    }
+
+    if (!detectBGA())
+    {
+        printf("bga: failed to initialise!\n");
+        abort();
+    }
 
     setResolution(640, 480); // set a default resolution
 

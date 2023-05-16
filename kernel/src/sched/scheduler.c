@@ -1,347 +1,325 @@
 #include <sched/scheduler.h>
-#include <sched/pit.h>
+#include <misc/logger.h>
+#include <cpu/smp.h>
+#include <cpu/lapic.h>
 #include <mm/pmm.h>
+#include <mm/vmm.h>
 #include <mm/blk.h>
-#include <cpu/gdt.h>
-#include <fw/bootloader.h>
 #include <drv/serial.h>
-#include <drv/drv.h>
+#include <subsys/vt.h>
 #include <main/panic.h>
-#include <sys/syscall.h>
+#include <lai/helpers/pm.h>
+#include <lai/helpers/sci.h>
+#include <stdnoreturn.h>
+#include <fw/acpi.h>
 
-struct sched_task rootTask;     // root of the tasks list
-struct sched_task *currentTask; // current task in the tasks list
-uint32_t lastTID = 0;           // last task ID
-bool taskKilled = false;        // flag that indicates if task was killed
+#define TASK(x) ((sched_task_t *)x)
 
-extern void userspaceJump(uint64_t rip, uint64_t stack, uint64_t pagetable);
+bool taskKilled[K_MAX_CORES];         // indicates that last task was killed
+sched_task_t queueStart[K_MAX_CORES]; // start of the linked lists
+sched_task_t *lastTask[K_MAX_CORES];  // current task in the linked list
+uint16_t lastCore = 0;                // core on which last task was added
+uint32_t lastTaskID = 0;              // last id of the last task addedd
+uint16_t maxCore = 0;
 
-// idle task
-void idleTask()
+locker_t schedLock;
+
+bool _enabled = false;
+
+void callWithStack(void *func, void *stack);
+
+void commonTask()
 {
-    while (true)
-        asm volatile("int $0x20"); // yield instantly
-}
-
-uint8_t simdContext[512] align_addr(16);
-
-extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
-
-// schedule the next task
-void schedulerSchedule(idt_intrerrupt_stack_t *stack)
-{
-    // todo: rewrite this function
-    // todo: use cpu time for usage calculation (also export the calculated values to the user space)
-    // todo: split the cpu time equaly among the tasks (set the timer frequency to the number of tasks maybe??)
-
-    vmmSwap(vmmGetBaseTable()); // swap the page table
-
-    iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
-
-    // handle vt mode and calculate cpu time only after switching the idle task
-    if (currentTask->id == 0)
+    while (1)
     {
-        switch (vtGetMode())
-        {
-        case VT_DISPLAY_FB:
-            // todo: copy the user display framebuffer to the global framebuffer
-            break;
-        case VT_DISPLAY_TTY0:
-            framebufferClear(0);
-            framebufferWrite(vtGet(0)->buffer);
-            break;
-        case VT_DISPLAY_KERNEL:
-        default: // doesn't update the framebuffer and lets the kernel write things to it
-            break;
-        }
-
-        uint32_t syscalls = syscallGetCount(); // get the overall syscall usage
-
-        // calculate the percents for each task
-        struct sched_task *task = rootTask.next; // second task
-        while (task)
-        {
-            task->overallCPUpercent = (task->syscallUsage * 100) / syscalls; // multiply everything by 100 so we don't use expensive floating point math
-            task->syscallUsage = 1;                                          // reset the counter at one so we don't divide by zero, will be incremented when the task uses any syscall
-#ifdef K_SCHED_DEBUG
-            printks("sched: %s used %d percent of the total CPU time\n\r", task->name, task->overallCPUpercent);
-#endif
-            task = task->next;
-        }
+        sti();
+        iasm("int $0x20");
     }
-
-    if (taskKilled)
-        taskKilled = false;
-    else
-    {
-#ifdef K_SCHED_DEBUG
-        printks("sched: saving %s\n\r", currentTask->name);
-#endif
-
-        // save the registers
-        memcpy64(&currentTask->intrerruptStack, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
-
-        // copy the simd context
-        memcpy64(currentTask->simdContext, simdContext, sizeof(currentTask->simdContext) / sizeof(uint64_t));
-    }
-
-    // load the next task
-    do
-    {
-        if (currentTask->next == NULL) // wrap around
-            currentTask = &rootTask;
-        else
-            currentTask = currentTask->next;
-
-    } while (currentTask->state != 0);
-
-#ifdef K_SCHED_DEBUG
-    printks("sched: loading %s\n\r", currentTask->name);
-#endif
-
-    // copy the new registers
-    memcpy64(stack, &currentTask->intrerruptStack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
-
-    // copy the new simd context
-    memcpy64(simdContext, currentTask->simdContext, sizeof(currentTask->simdContext) / sizeof(uint64_t));
-
-    iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context
-
-    vmmSwap((void *)currentTask->intrerruptStack.cr3); // swap the page table
 }
 
-// initialize the scheduler
-void schedulerInit()
+// determine to which core we should add the the task
+ifunc uint16_t nextCore()
 {
-    void *kernelStack = pmmPage();                       // allocate a page for the new kernel stack
-    tssGet()->rsp[0] = (uint64_t)kernelStack + VMM_PAGE; // set kernel stack in tss
-    zero(&rootTask, sizeof(struct sched_task));          // clear the root task
-    currentTask = &rootTask;                             // set the current task
+    if (lastCore == maxCore)
+        lastCore = 0;
 
-    vtCreate(); // create the first terminal
-
-    void *task = pmmPage();                                                   // create an empty page just for the idle task
-    memcpy8(task, (void *)idleTask, VMM_PAGE);                                // copy the executable part
-    schedulerAdd("Idle Task", 0, VMM_PAGE, task, VMM_PAGE, 0, 0, 0, 0, 0, 0); // create the idle task
-
-    printk("sched: initialised\n");
+    return lastCore++;
 }
 
-// enable the scheduler and then jump in the first task
-void schedulerEnable()
+// first task of a core
+ifunc sched_task_t *schedFirst(uint16_t core)
 {
-    userspaceJump(TASK_BASE_ADDRESS, rootTask.intrerruptStack.rsp, (uint64_t)rootTask.pageTable); // jump in userspace
+    return &queueStart[core];
 }
 
-// add new task in the queue
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
+// last task of a core
+sched_task_t *schedLast(uint16_t core)
 {
-#ifdef K_SCHED_DEBUG
-    uint64_t a = pmmTotal().available;
-#endif
-    struct sched_task *task = &rootTask; // first task
+    sched_task_t *t = schedFirst(core);
 
-    if (task->pageTable) // check if the root task is valid
-    {
-        while (task->next) // get last task
-            task = task->next;
+    while (TASK(t->next))
+        t = TASK(t->next);
 
-        if (task->pageTable)
-        {
-            task->next = blkBlock(sizeof(struct sched_task)); // allocate next task if the current task is valid
-            zero(task->next, sizeof(struct sched_task));      // clear the thread
-            task->next->previous = task;                      // set the previous task
-            task = task->next;                                // set current task to the newly allocated task
-        }
-    }
+    return t;
+}
 
-    uint16_t index = lastTID++;
+// add new task
+sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
+{
+    uint32_t id = nextCore(); // get next core id
+
+    sched_task_t *t = blkBlock(sizeof(sched_task_t));
 
     // metadata
-    task->id = index;                                // set the task ID
-    task->terminal = terminal;                       // terminal
-    task->elf = elf;                                 // elf status
-    task->elfBase = execBase;                        // base of elf
-    task->elfSize = execSize;                        // size of elf
-    task->isDriver = driver;                         // driver
-    memcpy8(task->name, (char *)name, strlen(name)); // set the name
+    t->id = lastTaskID++;                          // set ID
+    t->core = id;                                  // set core id
+    memcpy(t->name, name, min(strlen(name), 128)); // set a name
+    t->lastVirtualAddress = TASK_BASE_ALLOC;
+    t->terminal = terminal;
+    t->isElf = elf;
+    t->isDriver = driver;
+
+    // registers
+    void *stack = t->stackBase = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
+    if (driver)
+        t->registers.rflags = 0b11001000000010; // enable interrupts and set IOPL to 3
+    else
+        t->registers.rflags = 0b1000000010;                                          // enable interrupts
+    t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE - VMM_PAGE; // set the new stack
+    t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;                          // set instruction pointer
+
+    // segment registers
+    t->registers.cs = (8 * 4) | 3;
+    t->registers.ss = (8 * 3) | 3;
 
     // page table
-    vmm_page_table_t *newTable = vmmCreateTable(driver, driver); // create a new page table
-    task->pageTable = newTable;                                  // set the new page table
+    vmm_page_table_t *pt = vmmCreateTable(false);
+    t->registers.cr3 = (uint64_t)pt;
+    t->pageTable = pt;
 
-    void *stack = pmmPages(stackSize / VMM_PAGE); // allocate stack for the task
-    zero(stack, stackSize);                       // clear the stack
+    for (int i = 0; i < K_STACK_SIZE + VMM_PAGE; i += VMM_PAGE) // map stack
+        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-    // set the data in the structure
-    task->stackBase = stack;
-    task->stackSize = stackSize;
+    for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
+        vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-    for (size_t i = 0; i < stackSize; i += VMM_PAGE) // map task stack as user, read-write
-        vmmMap(newTable, (void *)stack + i, stack + i, true, true);
+    t->elfBase = execBase;
+    t->elfSize = execSize;
 
-    for (size_t i = 0; i < execSize; i += VMM_PAGE)
-        vmmMap(newTable, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, true, true); // map task as user, read-write
+    // handle c arguments
+    t->registers.rdi = 1 + argc; // arguments count the path + the optional arguments
+    t->registers.rsi = t->registers.rsp;
 
-    // initial registers
-    task->intrerruptStack.rip = TASK_BASE_ADDRESS + (uint64_t)entry; // set the entry point a.k.a the instruction pointer
-    task->intrerruptStack.rsp = (uint64_t)stack + stackSize;         // task stack pointer
-    task->intrerruptStack.rbp = task->intrerruptStack.rsp;           // stack frame pointer
+    void **arguments = (void **)t->registers.rsi;                     // buffer in which we will put our 30 max arguments
+    char *str = (char *)(t->registers.rsi + (30 * sizeof(uint64_t))); // buffer with which we will copy the strings
 
-    task->intrerruptStack.cs = (8 * 4) | 3; // code segment for user
-    task->intrerruptStack.ss = (8 * 3) | 3; // data segment for user
+    memcpy(str, name, strlen(name)); // copy name
+    arguments[0] = str;              // point to it
+    str += strlen(name);             // move pointer after it
+    *str++ = '\0';                   // terminate string
 
-    task->intrerruptStack.cr3 = (uint64_t)task->pageTable; // page table
-
-    if (driver)
-        task->intrerruptStack.rflags = 0b11001000000010; // enable intrerrupts and iopl
-    else
-        task->intrerruptStack.rflags = 0b1000000010; // enable intrerrupts
-
-    // arguments
-    if (argv)
+    for (int i = 0; i < argc; i++) // put every argument
     {
-        task->intrerruptStack.rdi = 1 + argc;        // arguments count (1, the name)
-        task->intrerruptStack.rsi = (uint64_t)stack; // the stack contains the array
+        size_t len = strlen(argv[i]);
 
-        uint64_t offset = sizeof(void *) * (1 + argc) + 1; // count of address
+        memcpy(str, argv[i], len); // copy argument
+        arguments[i + 1] = str;    // point to it
 
-        memcpy(stack + offset, name, strlen(name));        // copy the name
-        *((uint64_t *)stack) = (uint64_t)(stack + offset); // point to the name
-        offset += strlen(name) + 1;                        // move the offset after the name
+        str += len;    // move after text
+        *str++ = '\0'; // terminate string
 
-        for (int i = 0; i < argc; i++)
-        {
-            memcpy(stack + offset, argv[i], strlen(argv[i]));                                   // copy next argument
-            *((uint64_t *)(stack + (i + 1) * sizeof(uint64_t *))) = (uint64_t)(stack + offset); // point to the name
-            offset += strlen(argv[i]) + 1;                                                      // move the offset after the argument
-        }
+        if ((uint64_t)str >= t->registers.rsp + VMM_PAGE) // don't overflow
+            break;
     }
 
     // memory fields
-    task->allocated = pmmPage();                        // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
-    zero(task->allocated, sizeof(uint64_t));            // null its content
-    task->allocatedIndex = 0;                           // the current index in the array
-    task->allocatedBufferPages++;                       // we have one page already allocated
-    task->lastVirtualAddress = (void *)TASK_BASE_ALLOC; // set the last address
+    t->allocated = pmmPage();                // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    t->allocatedIndex = 0;                   // the current index in the array
+    t->allocatedBufferPages++;               // we have one page already allocated
+    t->lastVirtualAddress = TASK_BASE_ALLOC; // set the last address
 
     // enviroment
-    task->enviroment = pmmPage();     // 4k should be enough for now
-    zero(task->enviroment, VMM_PAGE); // clear the enviroment
+    t->enviroment = pmmPage(); // 4k should be enough for now
     if (!cwd)
-        task->cwd[0] = '/'; // set the current working directory to the root
+        t->cwd[0] = '/'; // set the current working directory to the root
     else
-        memcpy(task->cwd, cwd, strlen(cwd)); // copy the current working directory
-    task->syscallUsage = 1;
+        memcpy(t->cwd, cwd, min(strlen(cwd), 512)); // copy the current working directory
 
-#ifdef K_SCHED_DEBUG
-    printks("sched: added %s and wasted %d KB\n\r", name, toKB(a - pmmTotal().available));
+    lock(schedLock, {
+        sched_task_t *last = schedLast(id); // get last task
+
+        t->prev = last; // set previous
+        last->next = t; // add our new task in list
+    });
+
+    return t;
+}
+
+// do the context switch
+void schedSchedule(idt_intrerrupt_stack_t *stack)
+{
+    if (!_enabled)
+        return;
+
+    uint64_t id = smpID();
+
+    uint8_t simdContext[512];
+    iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
+
+    lock(schedLock, {
+        if (!taskKilled[id])
+        {
+            if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
+            {
+                lastTask[id]->quantumLeft--;
+                release(schedLock);
+                return;
+            }
+
+            // we've hit the commonTask
+            if (lastTask[id] == &queueStart[id])
+            {
+                if (id == 0) // update screen
+                {
+                    switch (vtGetMode())
+                    {
+                    case VT_DISPLAY_FB:
+                        // todo: copy the user display framebuffer to the global framebuffer
+                        break;
+                    case VT_DISPLAY_TTY0:
+                        framebufferZero();
+                        framebufferWrite(vtGet(0)->buffer);
+#ifdef K_FB_DOUBLE_BUFFER
+                        framebufferUpdate();
+#endif
+                        break;
+                    case VT_DISPLAY_KERNEL:
+                    default: // doesn't update the framebuffer and lets the kernel write things to it
+                        break;
+                    }
+                }
+            }
+
+#ifdef K_ACPI_LAI
+            // handle sci events like power button
+            if (id == 0 && lastTask[id] == &queueStart[id])
+            {
+                uint16_t event = lai_get_sci_event();
+                if (event == ACPI_POWER_BUTTON)
+                    acpiShutdown();
+            }
 #endif
 
-    return task;
+            // set new quantum
+            lastTask[id]->quantumLeft = K_SCHED_MIN_QUANTUM;
+
+            // save old state
+            memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
+
+            // save old simd context
+            memcpy(&lastTask[id]->simdContext, simdContext, 512);
+        }
+        else
+            taskKilled[id] = false; // reset the flag if needed
+
+        // get next id
+        lastTask[id] = lastTask[id]->next;
+        if (!lastTask[id])
+            lastTask[id] = &queueStart[id];
+
+        // copy new state
+        memcpy(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t));
+
+        // copy new simd context
+        memcpy(simdContext, &lastTask[id]->simdContext, 512);
+
+        iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context
+
+        vmmSwap((void *)lastTask[id]->registers.cr3);
+    });
+}
+
+// initialise the scheduler
+void schedInit()
+{
+    vtCreate(); // create the very first terminal (the full screen one)
+
+    maxCore = smpCores();
+    zero(queueStart, sizeof(queueStart));
+    zero(taskKilled, sizeof(taskKilled));
+
+    lastTaskID = 1;
+
+    for (int i = 0; i < maxCore; i++) // set start of the queues to the common task
+    {
+        sched_task_t *t = &queueStart[i];
+        t->registers.rflags = 0b1000000010; // interrupts
+        t->registers.cs = 8;
+        t->registers.ss = 16;
+        t->registers.rsp = t->registers.rbp = (uint64_t)pmmPage() + PMM_PAGE;
+        t->registers.rip = (uint64_t)commonTask;
+        t->registers.cr3 = (uint64_t)vmmGetBaseTable();
+
+        lastTask[i] = t;
+    }
 }
 
 // get current task
-struct sched_task *schedulerGetCurrent()
+sched_task_t *schedGetCurrent(uint32_t core)
 {
-    return currentTask;
+    return lastTask[core];
 }
 
-// set terminal to a task
-void schedulerSetTerminal(uint32_t tid, uint32_t terminal)
+// get the task with id
+sched_task_t *schedGet(uint32_t id)
 {
-    if (lastTID - 1 < tid) // out of bounds
-        return;
-
-    struct sched_task *task = schedulerGet(tid);
-
-    if (!task)
-        return; // didn't find it
-
-    task->terminal = terminal; // set new terminal
-}
-
-// get the task with the id
-struct sched_task *schedulerGet(uint32_t tid)
-{
-    struct sched_task *task = &rootTask; // first task
-    while (task)
+    for (int i = 0; i < smpCores(); i++)
     {
-        if (task->id == tid)
-            break;
-        task = task->next;
+        sched_task_t *t = schedFirst(i);
+        while (t)
+        {
+            if (t->id == id)
+                return t;
+            t = t->next;
+        }
     }
 
-    return task; // return the task
+    return NULL;
 }
 
-// kill the task with the id
-void schedulerKill(uint32_t tid)
+// kill a task
+void schedKill(uint32_t id)
 {
-#ifdef K_SCHED_DEBUG
-    uint64_t a = pmmTotal().available;
-#endif
-
-    // todo: set task's status to KILL and clean up after it only when found by the schedule function
-
-    if (tid == 1)
+    if (id == 1)
         panick("Attempt to kill the init system.");
 
-    struct sched_task *task = schedulerGet(tid);
+    sched_task_t *task;
 
-    if (!task)
-        return;
+    // remove task from list
+    lock(schedLock, {
+        task = schedGet(id);                 // get task structure from id
+        TASK(task->prev)->next = task->next; // remove task from its list
+        taskKilled[smpID()] = true;          // signal that we have killed a task (todo: make it so we know which task was killed so we can kill other tasks beside the current running one)
+    });
 
-    // clear driver contexts
-    if (task->isDriver)
-        drvExit(tid);
-
-    // deallocate some fields
-    pmmDeallocatePages(task->stackBase, task->stackSize / VMM_PAGE); // stack
-    pmmDeallocate(task->enviroment);                                 // enviroment
-
-    // deallocate the terminal if it's not used by another task
-    uint64_t found = 0;
-    struct sched_task *temp = &rootTask; // first task
-    while (temp->next)                   // iterate thru every task
-    {
-        if (temp->terminal == task->terminal)
-            found++;
-        temp = temp->next;
-    }
-
-    if (found == 1) // if only one task is using that task (the task we're killing) then we deallocate the terminal
-        vtDestroy(vtGet(task->terminal));
-
-    // deallocate the memory allocations
+    // release resources
     for (int i = 0; i < task->allocatedIndex; i++)
         if (task->allocated[i] != NULL)
             pmmDeallocate(task->allocated[i]);
 
     pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
+    pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
+    pmmDeallocatePages(task->stackBase, K_STACK_SIZE / VMM_PAGE + 1);
+    pmmDeallocate(task->enviroment);
+    vmmDestroy(task->pageTable);
+    blkDeallocate(task);
+}
 
-    // deallocate the elf (if present)
-    if (task->elf)
-        pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
-
-    // deallocate the task
-    struct sched_task *prev = task->previous;
-    if (prev->next) // bypass this node if possible
-        prev->next = task->next;
-
-    vmmDestroy(task->pageTable); // destroy the page table
-    blkDeallocate(task);         // free the task
-
-    taskKilled = true;
-
-#ifdef K_SCHED_DEBUG
-    printks("sched: recovered %d KB\n\r", toKB(pmmTotal().available - a));
-#endif
-
-    // halt until next intrerrupt fires
-    sti();
-    hlt();
-
+// enable the scheduler for the current core
+void schedEnable()
+{
+    _enabled = true;
+    callWithStack(commonTask, (void *)lastTask[smpID()]->registers.rsp);
     while (1)
-        ; // prevent returning back
+        ;
 }

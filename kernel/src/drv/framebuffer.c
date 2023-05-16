@@ -3,25 +3,79 @@
 #include <drv/drv.h>
 #include <fw/bootloader.h>
 #include <mm/vmm.h>
+#include <mm/pmm.h>
+#include <misc/logger.h>
+#include <sched/hpet.h>
+
+extern uint8_t _binary____kfont_psf_start; // the font file embeded in the kernel as a symbol
 
 psf2_header_t *font;
 struct limine_framebuffer framebuffer;
 
+#ifdef K_FB_DOUBLE_BUFFER
+struct limine_framebuffer back;
+locker_t fbLock;
+#else
+#define back framebuffer
+#undef lock
+#define lock(x, y) \
+    {              \
+        y;         \
+    }
+#endif
+
 framebuffer_cursor_info_t cursor; // info
+
+void framebufferPlotc(char c, uint32_t x, uint32_t y);
+
+#define FB_BENCHMARK_SIZE 1000000
+void framebufferBenchmark()
+{
+    // test performance of the mapper
+    logInfo("fb: benchmarking");
+
+    uint64_t start = hpetMillis();
+
+    for (int i = 0; i < FB_BENCHMARK_SIZE; i++)
+        framebufferPlotc('A', 0, 0);
+
+    uint64_t end = hpetMillis();
+
+    logInfo("fb: it took %d miliseconds (%d chars/mili)", end - start, FB_BENCHMARK_SIZE / (end - start));
+
+    hang();
+}
+
+bool checkFont(psf2_header_t *font)
+{
+    if (!font)
+        return false;
+
+    if (font->magic[0] != PSF2_MAGIC0 || font->magic[1] != PSF2_MAGIC1 || font->magic[2] != PSF2_MAGIC2 || font->magic[3] != PSF2_MAGIC3)
+        return false;
+
+    return true;
+}
 
 // init the framebuffer
 void framebufferInit()
 {
     memcpy(&framebuffer, bootloaderGetFramebuffer(), sizeof(struct limine_framebuffer)); // get the tag
+    memcpy(&back, bootloaderGetFramebuffer(), sizeof(struct limine_framebuffer));        // copy metadata to the back buffer
 
-    framebufferLoadFont("consola.psf"); // load default font
+    font = (psf2_header_t *)&_binary____kfont_psf_start; // use embeded kernel font
+    if (!checkFont(font))
+    {
+        framebufferClear(0xFF0000); // trigger a red screen of death
+        hang();
+    }
 
-    framebufferClear(0x000000); // clear framebuffer
+    framebufferZero(); // clear framebuffer
 
     cursor.colour = 0xFFFFFF; // white cursor
     cursor.X = cursor.Y = 0;  // upper left corner
 
-    printk("fb: display resolution is %dx%d\n", framebuffer.width, framebuffer.height);
+    logInfo("fb: display resolution is %dx%d at %p", back.width, back.height, back.address);
 }
 
 void framebufferFlush()
@@ -34,67 +88,78 @@ void framebufferFlush()
     if (!ctx || !ctx->base)
         return;
 
-    framebuffer.address = ctx->base;
-    framebuffer.width = ctx->currentXres;
-    framebuffer.height = ctx->currentYres;
-    framebuffer.pitch = ctx->currentXres * 4;
+    lock(fbLock, {
+        if (back.address != framebuffer.address) // deallocate
+            pmmDeallocatePages(back.address, (back.pitch * back.height) / PMM_PAGE + 1);
 
-    // map the framebuffer
-    for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
-        vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, false, true);
+        framebuffer.address = ctx->base;
+        framebuffer.width = ctx->currentXres;
+        framebuffer.height = ctx->currentYres;
+        framebuffer.pitch = ctx->currentXres * 4;
+
+        memcpy(&back, &framebuffer, sizeof(struct limine_framebuffer)); // sync metadata (fixme: this might be a race condition??)
+        framebufferInitDoubleBuffer();                                  // quickly generate a new buffer
+
+        // map the framebuffer
+        for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
+            vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
+    });
 }
 
 // clear the framebuffer with a colour
 inline void framebufferClear(uint32_t colour)
 {
-    cursor.X = cursor.Y = 0; // reset cursor position
+    lock(fbLock, {
+        cursor.X = cursor.Y = 0; // reset cursor position
 
-    if (!colour) // if the colour is null then we want everything to be zeroed out
-        zero(framebuffer.address, framebuffer.pitch * framebuffer.height);
-    else
-        memset(framebuffer.address, colour, framebuffer.pitch * framebuffer.height); // todo: optimise this even though we don't clear with colour
+        memset32(back.address, colour, (back.pitch * back.height) / sizeof(uint32_t)); // todo: optimise this even though we don't clear with colour
+    });
 }
 
-// load a font
-void framebufferLoadFont(const char *name)
+// inits the back buffer
+void framebufferInitDoubleBuffer()
 {
-    font = (psf2_header_t *)initrdGet(name);
+#ifdef K_FB_DOUBLE_BUFFER
+    back.address = pmmPages((back.pitch * back.height) / PMM_PAGE + 1);
+#endif
+}
 
-    if (!font)
-        goto error;
+// copies back buffer to the front buffer
+void framebufferUpdate()
+{
+    lock(fbLock, {
+#ifdef K_FB_DOUBLE_BUFFER
+        if (framebuffer.address != back.address) // don't copy the same buffer to itself
+            memcpy64(framebuffer.address, back.address, (back.pitch * back.height) / sizeof(uint64_t));
+#endif
+    });
+}
 
-    if (font->magic[0] != PSF2_MAGIC0 || font->magic[1] != PSF2_MAGIC1 || font->magic[2] != PSF2_MAGIC2 || font->magic[3] != PSF2_MAGIC3)
-        goto error;
-
-    return;
-
-error: // show an error message
-    bootloaderWrite("fb: failed to load font \"");
-    bootloaderWrite(name);
-    bootloaderWrite("\" from the initrd.\n");
-    hang();
+// zeros the whole framebuffer
+void framebufferZero()
+{
+    lock(fbLock, {
+        cursor.X = cursor.Y = 0;                      // reset cursor position
+        zero(back.address, back.pitch * back.height); // clear the framebuffer
+    });
 }
 
 // plot pixel on the framebuffer
-inline void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
+ifunc void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {
-    *(uint32_t *)((uint64_t)framebuffer.address + x * framebuffer.bpp / 8 + y * framebuffer.pitch) = colour; // set the pixel to colour
+    *(uint32_t *)((uint64_t)back.address + x * back.bpp / 8 + y * back.pitch) = colour; // set the pixel to colour
 }
 
 // plot character on the framebuffer
 void framebufferPlotc(char c, uint32_t x, uint32_t y)
 {
+    uint16_t pitch = font->charsize / font->height;
     uint8_t *character = (uint8_t *)font + font->headersize + c * font->charsize; // get the offset by skipping the header and indexing the character
-    for (size_t dy = 0; dy < font->height; dy++)                                  // loop thru each line of the character
-    {
-        for (size_t dx = 0; dx < font->width; dx++) // 8 pixels wide
-        {
-            uint8_t bits = character[dy * (font->charsize / font->height) + dx / 8];
-            uint8_t bit = bits >> (7 - dx % 8) & 1;
-            if (bit) // and the mask with the line
+
+    for (size_t dy = 0; dy < font->height; dy++) // loop for each pixel of character
+        for (size_t dx = 0; dx < font->width; dx++)
+            if ((character[dy * pitch + dx / 8] >> (7 - dx % 8)) & 1) // create a bit mask then and in the current byte of the character
                 framebufferPlotp(dx + x, dy + y, cursor.colour);
-        }
-    }
 }
 
 // create a new line
@@ -103,10 +168,23 @@ ifunc void newline()
     cursor.Y += font->height + 1; // add character's height and a 1 px padding
     cursor.X = 0;                 // reset cursor X
 
-    if (cursor.Y + font->height + 1 >= framebuffer.height)
+    if (cursor.Y + font->height + 1 >= back.height) // we can't write further
     {
+#ifdef K_FB_SCROLL
+        // todo: optimise this by not reading video memory
+        cursor.Y -= font->height + 1; // move back to the last line
+
+        size_t fbSize = back.pitch * back.height;  // size in bytes of the frame buffer
+        size_t offset = font->height * back.pitch; // get offset of the second line
+        size_t bytes = fbSize - offset;            // calculate the bytes to be copied
+
+        memcpy64(back.address, back.address + offset, bytes / 8); // do the actual copy (todo: use memmove here)
+
+        memset64(back.address + bytes, 0, (fbSize - bytes) / 8); // zero last line
+#else
         cursor.Y = 0;
-        framebufferClear(0);
+        framebufferZero();
+#endif
     }
 }
 
@@ -119,14 +197,16 @@ void framebufferWritec(char c)
         return;
     }
 
-    if (cursor.X + font->width > framebuffer.width)
+    if (cursor.X + font->width > back.width)
         newline();
 
     if (c == ' ' && cursor.X == 0)
         return;
 
-    framebufferPlotc(c, cursor.X, cursor.Y);
-    cursor.X += font->width + 1; // add character's width and a 1 px padding
+    lock(fbLock, {
+        framebufferPlotc(c, cursor.X, cursor.Y);
+        cursor.X += font->width + 1; // add character's width and a 1 px padding
+    });
 }
 
 // write a string

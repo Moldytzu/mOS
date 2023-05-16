@@ -8,17 +8,22 @@ SECTIONS
 	{
 		*(.text)
 	}
+
 	.data :
 	{
 		*(.data)
 	}
+
 	.rodata :
 	{
 		*(.rodata)
 	}
+
+	__bss_start = .;
 	.bss :
 	{
 		*(COMMON)
 		*(.bss)
 	}
+	__bss_end = .;
 }

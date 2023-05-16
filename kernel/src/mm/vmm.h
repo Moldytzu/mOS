@@ -1,16 +1,17 @@
 #pragma once
 #include <misc/utils.h>
 #include <cpu/control.h>
+#include <cpu/tlb.h>
 
-#define VMM_ENTRY_PRESENT 0
-#define VMM_ENTRY_RW 1
-#define VMM_ENTRY_USER 2
-#define VMM_ENTRY_WRITE_THROUGH 3
-#define VMM_ENTRY_CACHE 4
-#define VMM_ENTRY_ACCESSED 5
-#define VMM_ENTRY_DIRTY 6
-#define VMM_ENTRY_HUGE_PAGES 7
-#define VMM_ENTRY_NO_EXECUTE 63
+#define VMM_ENTRY_PRESENT (1 << 0)
+#define VMM_ENTRY_RW (1 << 1)
+#define VMM_ENTRY_USER (1 << 2)
+#define VMM_ENTRY_WRITE_THROUGH (1 << 3)
+#define VMM_ENTRY_CACHE_DISABLE (1 << 4)
+#define VMM_ENTRY_ACCESSED (1 << 5)
+#define VMM_ENTRY_DIRTY (1 << 6)
+#define VMM_ENTRY_HUGE_PAGES (1 << 7)
+#define VMM_ENTRY_NO_EXECUTE (1 << 63)
 
 #define VMM_PAGE 4096
 
@@ -26,41 +27,9 @@ vmm_index_t;
 
 pstruct
 {
-    uint64_t page[1];
-}
-vmm_meta_t;
-
-pstruct
-{
     uint64_t entries[512];
-    uint32_t allocated;
-    uint32_t idx;
-    vmm_meta_t *pages;
 }
 vmm_page_table_t;
-
-// operations on entries
-ifunc bool vmmGetFlag(uint64_t *entry, uint8_t flag)
-{
-    return *entry & (1 << flag); // get flag
-}
-
-ifunc void vmmSetFlag(uint64_t *entry, uint8_t flag, bool value)
-{
-    if (value)
-    {
-        *entry |= (1 << flag); // set flag
-        return;                // return
-    }
-
-    *entry &= ~(1 << flag); // unset flag
-}
-
-// get the address of an entry
-ifunc uint64_t vmmGetAddress(uint64_t *entry)
-{
-    return (*entry & 0x000FFFFFFFFFF000) >> 12; // get the address from entry
-}
 
 // set the address of an entry
 ifunc void vmmSetAddress(uint64_t *entry, uint64_t address)
@@ -82,8 +51,9 @@ ifunc vmm_index_t vmmIndex(uint64_t virtualAddress)
 }
 
 // misc
+void vmmBenchmark();
 void vmmInit();
-vmm_page_table_t *vmmCreateTable(bool full, bool user);
+vmm_page_table_t *vmmCreateTable(bool full);
 
 // swap the page table
 ifunc void vmmSwap(void *newTable)
@@ -92,8 +62,7 @@ ifunc void vmmSwap(void *newTable)
 }
 
 // mapping
-void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, bool user, bool rw);
-void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, bool user, bool rw);
+void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, uint64_t flags);
 void vmmUnmap(vmm_page_table_t *table, void *virtualAddress);
 void *vmmGetBaseTable();
 void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress);

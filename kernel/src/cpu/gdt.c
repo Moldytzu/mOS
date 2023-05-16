@@ -1,82 +1,81 @@
 #include <cpu/gdt.h>
-#include <mm/blk.h>
+#include <cpu/atomic.h>
+#include <mm/pmm.h>
 #include <mm/vmm.h>
 
-gdt_tss_t *tss;
-gdt_descriptor_t gdtr;
-gdt_segment_t *entries;
+gdt_descriptor_t gdtr[K_MAX_CORES];
+gdt_tss_t *tsses[K_MAX_CORES];
 
 extern void gdtLoad(gdt_descriptor_t *);
 extern void tssLoad();
 
-void gdtInstallTSS();
+void gdtCreateSegment(uint16_t procID, uint8_t access);
+void gdtInstallTSS(uint16_t procID);
 
-// initialize the global descriptor table
 void gdtInit()
 {
-    // allocate the entries
-    entries = blkBlock(5 * sizeof(gdt_segment_t) + sizeof(gdt_system_segment_t));
-    zero(entries, VMM_PAGE);
+    zero(gdtr, sizeof(gdtr));
+    zero(tsses, sizeof(tsses));
+}
 
-    gdtr.size = 0; // reset the size
-    gdtr.offset = (uint64_t)entries;
+// install a gdt
+void gdtInstall(uint16_t procID)
+{
+    gdtr[procID].entries = pmmPage(); // allocate the entries
+    gdtr[procID].size = 0;            // reset the size
 
-    gdtCreateSegment(0);          // null
-    gdtCreateSegment(0b10011010); // kernel code
-    gdtCreateSegment(0b10010010); // kernel data
-    gdtCreateSegment(0b11110010); // user data
-    gdtCreateSegment(0b11111010); // user code
+    gdtCreateSegment(procID, 0);          // null
+    gdtCreateSegment(procID, 0b10011010); // kernel code
+    gdtCreateSegment(procID, 0b10010010); // kernel data
+    gdtCreateSegment(procID, 0b11110010); // user data
+    gdtCreateSegment(procID, 0b11111010); // user code
 
-    gdtInstallTSS(); // install a tss
+    gdtInstallTSS(procID); // install a tss
 
-    gdtr.size--;    // decrement size
-    gdtLoad(&gdtr); // load gdt and flush segments
-    tssLoad();      // load tss
+    gdtr[procID].size--; // decrement size
 
-    printk("gdt: loaded cs 0x%x, ss 0x%x and tss 0x%x\n", 8, 8 * 2, 8 * 5);
+    gdtLoad(&gdtr[procID]); // load gdt and flush segments
+    tssLoad();              // load tss
 }
 
 // create a new segment in the table
-void gdtCreateSegment(uint8_t access)
+void gdtCreateSegment(uint16_t procID, uint8_t access)
 {
-    gdt_segment_t *segment = &entries[gdtr.size / sizeof(gdt_segment_t)]; // get address of the next segment
-    zero(segment, sizeof(gdt_segment_t));                                 // clear the segment
-    segment->access = access;                                             // set the access byte
-    segment->flags = 0b1010;                                              // 4k pages, long mode
+    gdt_segment_t *segment = &gdtr[procID].entries[gdtr[procID].size / sizeof(gdt_segment_t)]; // get address of the next segment
+    segment->access = access;                                                                  // set the access byte
+    segment->flags = 0b1010;                                                                   // 4k pages, long mode
 
-    gdtr.size += sizeof(gdt_segment_t); // add the size of gdt_segment
+    gdtr[procID].size += sizeof(gdt_segment_t); // add the size of gdt_segment
 }
 
 // create a new segment and install the tss on it
-void gdtInstallTSS()
+void gdtInstallTSS(uint16_t procID)
 {
-    tss = blkBlock(sizeof(gdt_tss_t)); // allocate tss
-    zero(tss, sizeof(gdt_tss_t));      // clear it
+    gdtr[procID].tss = pmmPage();     // allocate tss
+    tsses[procID] = gdtr[procID].tss; // remember it
 
-    gdt_system_segment_t *segment = (gdt_system_segment_t *)&entries[gdtr.size / sizeof(gdt_segment_t)]; // get address of the next segment
-    zero(segment, sizeof(gdt_system_segment_t));                                                         // clear the segment
+    gdt_system_segment_t *segment = (gdt_system_segment_t *)&gdtr[procID].entries[gdtr[procID].size / sizeof(gdt_segment_t)]; // get address of the next segment
 
     segment->access = 0b10001001; // set the access byte
 
-    segment->base = (uint64_t)tss & 0x000000000000FFFF; // set the base address of the tss
-    segment->base2 = ((uint64_t)tss & 0x0000000000FF0000) >> 16;
-    segment->base3 = ((uint64_t)tss & 0x00000000FF000000) >> 24;
-    segment->base3 = ((uint64_t)tss & 0xFFFFFFFF00000000) >> 32;
+    segment->base = (uint64_t)gdtr[procID].tss & 0x000000000000FFFF; // set the base address of the tss
+    segment->base2 = ((uint64_t)gdtr[procID].tss & 0x0000000000FF0000) >> 16;
+    segment->base3 = ((uint64_t)gdtr[procID].tss & 0x00000000FF000000) >> 24;
+    segment->base3 = ((uint64_t)gdtr[procID].tss & 0xFFFFFFFF00000000) >> 32;
 
     segment->limit = sizeof(gdt_tss_t) & 0xFFFF; // set the limit of the tss
     segment->limit2 = (sizeof(gdt_tss_t) & 0xF000) >> 16;
 
-    gdtr.size += sizeof(gdt_system_segment_t); // add the size of gdt_system_segment
+    gdtr[procID].size += sizeof(gdt_system_segment_t); // add the size of gdt_system_segment
 }
 
 // get the tss address
-gdt_tss_t *tssGet()
+gdt_tss_t **tssGet()
 {
-    return tss;
+    return tsses;
 }
 
-// get the gdt segments
-gdt_segment_t *gdtGet()
+gdt_descriptor_t *gdtGet()
 {
-    return entries;
+    return gdtr;
 }

@@ -5,56 +5,50 @@
 #include <cpu/io.h>
 #include <cpu/idt.h>
 #include <main/panic.h>
+#include <misc/logger.h>
+#include <lai/core.h>
+#include <lai/host.h>
+#include <lai/helpers/sci.h>
+#include <lai/helpers/pm.h>
 
 uint8_t revision;
-acpi_rsdp_t *rsdp;
+acpi_rsdp_hdr_t *rsdp;
 acpi_sdt_t *sdt;
-acpi_fadt_t *fadt;
 acpi_mcfg_t *mcfg;
 
 acpi_pci_descriptor_t *pciFuncs = NULL;
 uint16_t pciIndex = 0;
 
 // get a descriptor table with a signature
-acpi_sdt_t *acpiGet(const char *sig)
+acpi_sdt_t *acpiGet(const char *sig, int index)
 {
-    if (!sdt)
-        return NULL;
+    bool xsdt = sdt->signature[0] == 'X';              // XSDT's signature is XSDT, RSDT's signature is RSDT
+    size_t entries = sdt->length - sizeof(acpi_sdt_t); // initial value is the length in bytes of the entire tables
 
-    bool xsdt = sdt->signature[0] == 'X'; // XSDT's signature is XSDT, RSDT's signature is RSDT
-    size_t entries = sdt->length - sizeof(acpi_sdt_t);
-
+    // determine entries count
     if (xsdt)
-    { // xsdt parsing
-        acpi_xsdt_t *root = (acpi_xsdt_t *)sdt;
-        for (size_t i = 0; i < entries / sizeof(uint64_t); i++)
-        {
-            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
-#ifdef K_ACPI_DEBUG
-            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
-#endif
-            if (memcmp8((void *)sig, table->signature, 4) == 0) // compare the signatures
-                return table;
-        }
-    }
+        entries /= sizeof(uint64_t);
     else
-    { // rsdp parsing
-        acpi_rsdt_t *root = (acpi_rsdt_t *)sdt;
-        for (size_t i = 0; i < entries / sizeof(uint32_t); i++)
-        {
-            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
-#ifdef K_ACPI_DEBUG
-            printks("acpi: %p %c%c%c%c and %c%c%c%c\n\r", table, table->signature[0], table->signature[1], table->signature[2], table->signature[3], sig[0], sig[1], sig[2], sig[3]);
-#endif
-            if (memcmp8((void *)sig, table->signature, 4) == 0) // compare the signatures
-                return table;
-        }
+        entries /= sizeof(uint32_t);
+
+    for (size_t i = 0; i < entries; i++)
+    {
+        acpi_sdt_t *t;
+
+        // xsdt uses 64 bit pointers while rsdt uses 32 bit pointers
+        if (xsdt)
+            t = (acpi_sdt_t *)(((uint64_t *)(((acpi_xsdt_hdr_t *)sdt)->entries))[i]);
+        else
+            t = (acpi_sdt_t *)(((uint32_t *)(((acpi_xsdt_hdr_t *)sdt)->entries))[i]);
+
+        if (memcmp8((void *)sig, t->signature, 4) == 0 && index-- == 0) // compare the signatures
+            return t;
     }
 
     return NULL; // return nothing
 }
 
-// enumerate the pci bus using mcfg
+// enumerate the pci bus using mcfg and ecam
 void acpiEnumeratePCI()
 {
     if (!mcfg)
@@ -66,41 +60,42 @@ void acpiEnumeratePCI()
         // enumerate each bus
         for (int bus = mcfg->buses[i].startBus; bus < mcfg->buses[i].endBus; bus++)
         {
-            uint64_t base = mcfg->buses[i].base;
+            uint64_t busBase = mcfg->buses[i].base;
+            acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)busBase;
+            vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, VMM_ENTRY_RW); // map the header
 
-            acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)base;
-
-            vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, false, true); // map the header
-
-            // non-existent bus
+            // check for non-existent bus
             if (baseHeader->device == UINT16_MAX || baseHeader->device == 0)
                 continue;
 
             // enumerate each device
             for (int device = 0; device < 32; device++)
             {
+                acpi_pci_header_t *deviceHeader = (acpi_pci_header_t *)(busBase + (bus << 20 | device << 15));
+                vmmMap(vmmGetBaseTable(), deviceHeader, deviceHeader, VMM_ENTRY_RW); // map the header
+
+                // check for non-existent device
+                if (deviceHeader->device == UINT16_MAX || deviceHeader->device == 0)
+                    continue;
+
                 // enumerate each function
                 for (int function = 0; function < 8; function++)
                 {
-                    acpi_pci_header_t *header = (acpi_pci_header_t *)(base + (bus << 20 | device << 15 | function << 12));
+                    acpi_pci_header_t *functionHeader = (acpi_pci_header_t *)(busBase + (bus << 20 | device << 15 | function << 12));
 
-                    vmmMap(vmmGetBaseTable(), header, header, false, true); // map the header
+                    // check for non-existent function
+                    vmmMap(vmmGetBaseTable(), functionHeader, functionHeader, VMM_ENTRY_RW); // map the header
 
-                    if (header->device == UINT16_MAX || header->device == 0) // invalid function
+                    if (functionHeader->device == UINT16_MAX || functionHeader->device == 0)
                         continue;
 
-#ifdef K_ACPI_DEBUG
-                    printks("acpi: found pci function %x:%x at %d.%d.%d\n\r", header->vendor, header->device, bus, device, function);
-#endif
+                    logInfo("acpi: found pci function %x:%x at %d.%d.%d", functionHeader->vendor, functionHeader->device, bus, device, function);
 
                     // build the descriptor
                     acpi_pci_descriptor_t d;
-                    d.bus = bus, d.device = device, d.function = function, d.header = header;
+                    d.bus = bus, d.device = device, d.function = function, d.header = functionHeader;
 
-                    // put it in our list of pci functions
-                    if (pciIndex > 4096 / sizeof(acpi_pci_descriptor_t)) // very unlikely
-                        panick("Can't hold that many PCI descriptors!");
-
+                    // put it in our list of pci functions (overflows at 372 descriptors thus we don't have to check anything since it's unlikely to have so many pci functions)
                     pciFuncs[pciIndex++] = d;
                 }
             }
@@ -121,39 +116,41 @@ uint64_t pciGetFunctionsNum()
 // reboot using acpi
 void acpiReboot()
 {
-    if (revision == 0 || !fadt) // acpi 1.0 doesn't support reboot, fadt must be present for acpi 2.0+ reboot
-        goto triplefault;
-
-#ifdef K_ACPI_DEBUG
-    printks("acpi: performing acpi reboot...\n\r");
+#ifdef K_ACPI_LAI
+    lai_acpi_reset();
+#else
+    logError("Reboot unsupported. LAI support is disabled.");
+    hang();
 #endif
+}
 
-    switch (fadt->reset.addressSpace)
-    {
-    case ACPI_GAS_SYSIO: // if the reset register is i/o mapped
-        outb(fadt->reset.address, fadt->resetValue);
-        break;
-    case ACPI_GAS_SYSMEM: // if the reset register is in the system memory
-        *(uint8_t *)fadt->reset.address = fadt->resetValue;
-    default:
-        break;
-    }
-
-triplefault:
-#ifdef K_ACPI_DEBUG
-    printks("acpi: reboot unsupported. resetting the cpu using the i8042.\n\r");
+void acpiShutdown()
+{
+#ifdef K_ACPI_LAI
+    lai_enter_sleep(5);
+#else
+    logError("Shutdown unsupported. LAI support is disabled.");
+    hang();
 #endif
+}
 
-    outb(0x64, 0xFE); // cpu reset using the keyboard controller
+// init lai
+void laiInit()
+{
+#ifdef K_ACPI_LAI
+    lai_set_acpi_revision(revision);
+    lai_create_namespace();
+    lai_enable_acpi(1); // use the lapic
+#endif
 }
 
 // initialize the acpi subsystem
 void acpiInit()
 {
     // get rsdp
-    rsdp = (acpi_rsdp_t *)bootloaderGetRSDP();
+    rsdp = (acpi_rsdp_hdr_t *)bootloaderGetRSDP();
 
-    vmmMap(vmmGetBaseTable(), rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), false, true); // properly map the rsdp
+    vmmMap(vmmGetBaseTable(), rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), VMM_ENTRY_RW); // properly map the rsdp
 
     // parse the version field
     revision = rsdp->version;
@@ -161,50 +158,24 @@ void acpiInit()
     // set the system descriptor table root based on the revision
     if (revision == 0)
         sdt = (void *)(uint64_t)rsdp->rsdt;
-    else if (revision == 2)
+    else if (revision >= 2)
         sdt = (void *)rsdp->xsdt;
 
-#ifdef K_ACPI_DEBUG
-    if (revision == 0)
-    {
-        acpi_rsdt_t *root = (acpi_rsdt_t *)sdt;
-        size_t entries = (sdt->length - sizeof(acpi_sdt_t)) / sizeof(uint32_t);
-        for (size_t i = 0; i < entries; i++)
-        {
-            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
-            printks("acpi: found %c%c%c%c\n\r", table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
-        }
-    }
-    else
-    {
-        acpi_xsdt_t *root = (acpi_xsdt_t *)sdt;
-        size_t entries = (root->header.length - sizeof(acpi_sdt_t)) / sizeof(uint64_t);
-        for (size_t i = 0; i < entries; i++)
-        {
-            acpi_sdt_t *table = (acpi_sdt_t *)root->entries[i]; // every entry in the table is an address to another table
-            printks("acpi: found %c%c%c%c\n\r", table->signature[0], table->signature[1], table->signature[2], table->signature[3]);
-        }
-    }
-#endif
+    laiInit();
 
-    // get fadt & mcfg
-    fadt = (acpi_fadt_t *)acpiGet("FACP");
-    mcfg = (acpi_mcfg_t *)acpiGet("MCFG");
-
-    // enable ACPI mode if FADT is present
-    if (fadt)
-        outb(fadt->smiCommand, fadt->acpiEnable);
+    // get mcfg
+    mcfg = (acpi_mcfg_t *)acpiGet("MCFG", 0);
 
     // enumerate PCI bus if MCFG is present
     if (mcfg)
     {
         pciFuncs = pmmPage(); // allocate a buffer hold the functions
         acpiEnumeratePCI();   // do the enumeration
+
+        logInfo("acpi: detected %d pci functions", pciIndex);
     }
-
-#ifdef K_ACPI_DEBUG
-    printks("acpi: found %d pci functions in total\n\r", pciIndex);
-#endif
-
-    printk("acpi: detected %d pci functions\n", pciIndex);
+    else
+    {
+        logError("acpi: failed to enumerate pci bus");
+    }
 }

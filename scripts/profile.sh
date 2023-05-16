@@ -5,8 +5,8 @@ set -e
 
 ARCH="x86_64"
 INTERVAL="0.001"
-CMDLINE="-M q35 -cpu Icelake-Server -m 2G -boot d -cdrom ../out/dvd.iso"
-KERNEL="../out/kernel.elf"
+CMDLINE="-M q35 -cpu core2duo -m 512M -boot c -hda image.disk"
+KERNEL="out/kernel.elf"
 
 SOCKET="$(mktemp)"
 OUTFILE="$(mktemp)"

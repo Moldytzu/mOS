@@ -1,42 +1,50 @@
-OUTPUT = out/dvd.iso
-OUTPUTEFI = out/efi.iso
 CORES = $(shell nproc)
-GDBFLAGS ?= -tui -q -ex "target remote localhost:1234" -ex "layout asm" -ex "tui reg all" -ex "b _start" -ex "continue"
-QEMUFLAGS ?= -M q35,smm=off -m 512M -cpu core2duo -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
-QEMUDEBUG = -no-reboot -no-shutdown -s -S &
+DISK = image.disk
+GDBFLAGS ?= -tui -q -x gdb.script
+QEMUFLAGS ?= -M q35,smm=off -m 512M -smp 4 -cpu core2duo -hda $(DISK)  -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
+QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)
 
 .PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps initrd libc
 
-all: $(OUTPUT)
+all: image
 
 update-ovmf:
 	wget https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd -O ovmf/ovmf.fd
 
-run: $(OUTPUT)
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT)
+run: image
+	qemu-system-x86_64 $(QEMUFLAGS) 
 
-run-bochs: $(OUTPUT)
+run-smp-debug: image
+	qemu-system-x86_64 $(QEMUFLAGS) $(QEMUDEBUG) -smp 4 &
+	gdb-multiarch -tui -q -x smpgdb.script out/kernel.elf
+	pkill -f qemu-system-x86_64
+	reset
+
+run-no-smp: image
+	qemu-system-x86_64 -M q35,smm=off -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -m 512M
+
+run-bochs: image
 	bochs -q
 
-run-kvm: $(OUTPUT)
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) --enable-kvm -cpu host
+run-kvm: image
+	qemu-system-x86_64 $(QEMUFLAGS) --enable-kvm -cpu host -smp $(CORES)
 
-run-debug: $(OUTPUT)
-	qemu-system-x86_64 $(QEMUFLAGS) -boot d -cdrom $(OUTPUT) $(QEMUDEBUG)
+run-debug: image
+	qemu-system-x86_64 $(QEMUFLAGS) $(QEMUDEBUG) &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 	reset
 
-run-efi: efi
-	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI)
+run-efi:
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) 
 
-run-efi-kvm: efi
-	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI) --enable-kvm -cpu host
+run-efi-kvm:
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) --enable-kvm -cpu host
 
-run-efi-debug: efi
-	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -cdrom $(OUTPUTEFI) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
+run-efi-debug:
+	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
 	reset
@@ -66,26 +74,38 @@ kernel:
 	$(MAKE) -C kernel setup
 	$(MAKE) -C kernel -j$(CORES)
 
-$(OUTPUT): limine kernel libc $(APPS) $(DRIVERS) initrd 
-	rm -rf iso_root
-	mkdir -p iso_root
-	cp out/kernel.elf limine/limine.sys limine/limine-cd.bin limine/limine-cd-efi.bin iso_root/
-	cd roots/img && cp -r . ../../iso_root
-	xorriso -as mkisofs -b limine-cd.bin \
-		-no-emul-boot -boot-load-size 4 -boot-info-table \
-		--efi-boot limine-cd-efi.bin \
-		-efi-boot-part --efi-boot-image -J \
-		iso_root -o $(OUTPUT)
-	limine/limine-deploy $(OUTPUT)
-	rm -rf iso_root
+# create mbr partition table and format a primary fat32 partition
+$(DISK):
+	dd if=/dev/zero of=./$(DISK) bs=1M count=128
+	parted -s ./$(DISK) mklabel msdos
+	parted -s ./$(DISK) mkpart primary fat32 1% 100%
+	sudo kpartx -a ./$(DISK)
+	sudo mkfs -t vfat /dev/mapper/loop*p1
+	sudo kpartx -d ./$(DISK)
 
-efi: limine kernel libc $(APPS) $(DRIVERS) initrd 
-	rm -rf iso_root
-	mkdir -p iso_root
-	cp out/kernel.elf limine/limine.sys limine/limine-cd-efi.bin iso_root/
-	cd roots/img && cp -r . ../../iso_root
-	xorriso -as mkisofs --efi-boot limine-cd-efi.bin -efi-boot-part --efi-boot-image -J -o $(OUTPUTEFI) iso_root
-	rm -rf iso_root
+image: $(DISK) limine kernel libc $(APPS) $(DRIVERS) initrd 
+	sudo kpartx -a ./$(DISK)
+	sudo mkdir -p /mnt
+	sudo mkdir -p /mnt/mOS
+	sudo mkdir -p /mnt/mOS/EFI
+	sudo mkdir -p /mnt/mOS/EFI/BOOT
+	sudo mount /dev/mapper/loop*p1 /mnt/mOS
+	sudo cp out/kernel.elf limine/limine.sys /mnt/mOS/
+	sudo cp limine/BOOTX64.EFI /mnt/mOS/EFI/BOOT/
+	cd roots/img && sudo cp -r . /mnt/mOS
+	limine/limine-deploy ./$(DISK)
+	sudo umount /dev/mapper/loop*p1
+	sudo kpartx -d ./$(DISK)
+
+mount: 
+	sudo kpartx -a ./$(DISK)
+	sudo mkdir -p /mnt
+	sudo mkdir -p /mnt/mOS
+	sudo mount /dev/mapper/loop*p1 /mnt/mOS
+
+umount:
+	sudo umount /dev/mapper/loop*p1
+	sudo kpartx -d ./$(DISK)
 
 clean:
 	chmod +x ./clean.sh

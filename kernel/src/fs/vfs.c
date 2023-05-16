@@ -1,5 +1,6 @@
 #include <fs/vfs.h>
 #include <mm/blk.h>
+#include <misc/logger.h>
 
 #define ISVALID(node) (node && node->filesystem)
 
@@ -20,7 +21,7 @@ void vfsInit()
     zero(&rootNode, sizeof(rootNode)); // clear the root node
     rootNode.filesystem = &rootFS;     // rootfs
 
-    printk("vfs: rootfs mounted on %s\n", rootFS.mountName);
+    logInfo("vfs: rootfs mounted on %s", rootFS.mountName);
 }
 
 // add a node
@@ -62,10 +63,7 @@ struct vfs_node_t *vfsNodes()
 // open a node with the name
 uint64_t vfsOpen(const char *name)
 {
-    if (!name)
-        return 0;
-
-    if (*name != '/') // non-existent path
+    if (!name || *name != '/' || !strlen(name)) // non-existent path
         return 0;
 
     struct vfs_node_t *currentNode = &rootNode;
@@ -136,4 +134,26 @@ uint64_t vfsSize(uint64_t fd)
         return 0;
 
     return node->size; // return the size
+}
+
+// checks if file exists
+bool vfsExists(const char *name)
+{
+    uint64_t fd = vfsOpen(name);
+
+    if (fd)
+        vfsClose(fd);
+
+    return fd > 0;
+}
+
+// gets full path of a node
+void vfsGetPath(uint64_t fd, void *buffer)
+{
+    struct vfs_node_t *node = (struct vfs_node_t *)fd;
+    if (!ISVALID(node))
+        return;
+
+    memcpy((void *)buffer, node->filesystem->mountName, strlen(node->filesystem->mountName));
+    memcpy((void *)(buffer + strlen(node->filesystem->mountName)), node->path, strlen(node->path));
 }

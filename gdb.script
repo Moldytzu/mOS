@@ -1,0 +1,10 @@
+# prepare interface for assembly
+layout asm
+tui reg all
+
+# attach to qemu then break in the kernel entry function
+target remote localhost:1234
+b _start
+c
+
+layout split # for C

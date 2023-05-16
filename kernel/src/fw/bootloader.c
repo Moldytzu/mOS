@@ -1,10 +1,6 @@
 #include <fw/bootloader.h>
 #include <mm/pmm.h>
 
-static volatile struct limine_terminal_request terminal_request = {
-    .id = LIMINE_TERMINAL_REQUEST,
-    .revision = 0};
-
 static volatile struct limine_memmap_request memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST,
     .revision = 0};
@@ -29,25 +25,14 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
     .revision = 0};
 
+static volatile struct limine_smp_request smp_request = {
+    .id = LIMINE_SMP_REQUEST,
+    .revision = 0};
+
 static volatile struct limine_stack_size_request stack_request = {
     .id = LIMINE_STACK_SIZE_REQUEST,
     .revision = 0,
     .stack_size = 16 * 1024};
-
-struct limine_terminal *terminal;
-
-void bootloaderInit()
-{
-    if (terminal_request.response == NULL) // check for the response to be valid
-        hang();
-
-    terminal = terminal_request.response->terminals[0]; // point the default to the first terminal given by the bootloader
-}
-
-void bootloaderWrite(const char *str)
-{
-    terminal_request.response->write(terminal, str, strlen(str));
-}
 
 struct limine_file *bootloaderGetModule(const char *name)
 {
@@ -75,6 +60,11 @@ struct limine_memmap_response *bootloaderGetMemoryMap()
 struct limine_kernel_address_response *bootloaderGetKernelAddress()
 {
     return kernel_address_request.response;
+}
+
+struct limine_smp_response *bootloaderGetSMP()
+{
+    return smp_request.response;
 }
 
 void *bootloaderGetRSDP()

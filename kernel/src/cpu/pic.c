@@ -1,4 +1,5 @@
 #include <cpu/pic.h>
+#include <misc/logger.h>
 
 // initialize the legacy programable intrerrupt controller
 void picInit()
@@ -25,5 +26,5 @@ void picInit()
     outb(PIC_MASTER_DAT, 0b11111111);
     outb(PIC_SLAVE_DAT, 0b11111111);
 
-    printk("pic: irq base %d\n", PIC_IRQ_BASE);
+    logInfo("pic: irq base %d", PIC_IRQ_BASE);
 }

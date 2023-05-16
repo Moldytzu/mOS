@@ -3,7 +3,10 @@
 #include <cpu/gdt.h>
 #include <cpu/fpu.h>
 #include <cpu/pic.h>
+#include <cpu/smp.h>
 #include <cpu/control.h>
+#include <cpu/lapic.h>
+#include <cpu/ioapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
@@ -12,8 +15,9 @@
 #include <mm/blk.h>
 #include <drv/drv.h>
 #include <mm/vmm.h>
-#include <sched/pit.h>
 #include <sched/scheduler.h>
+#include <sched/hpet.h>
+#include <sched/time.h>
 #include <sys/syscall.h>
 #include <fw/bootloader.h>
 #include <fw/acpi.h>
@@ -26,45 +30,45 @@ void kmain();
 // entry point of the kernel
 void _start()
 {
-    fpuInit(); // initialize the fpu
+    fpuInit(); // initialise the fpu
 
-    bootloaderInit(); // initialize the bootloader interface
+    framebufferInit(); // initialise framebuffer
 
-    initrdInit(); // initialize the initrd
+    initrdInit(); // initialise the initrd
 
-    serialInit(); // initialize the serial port
+    serialInit(); // initialise the serial port
 
-    pmmInit(); // initialize the physical memory manager
+    pmmInit(); // initialise the physical memory manager
 
-    blkInit(); // initialize the block allocator
+    blkInit(); // initialise the block allocator
 
-    framebufferInit(); // initialize framebuffer
+    smpBootstrap(); // bootstrap the cpus
 
-    gdtInit(); // initialize the gdt
+    acpiInit(); // initialise the acpi interface
 
-    idtInit(); // initialize the idt
+    hpetInit(); // initialise the hpet
 
-    vmmInit(); // initialize the virtual memory manager
+    timeSource(); // switch to best time source
 
-    vfsInit(); // initialize the virtual filesystem
+    picInit(); // initialise the pic chips
+
+    lapicInit(true); // initalize the advanced intrerupt controller
+
+    ioapicInit(); // initialise the external interrupt controller
+
+    vfsInit(); // initialise the virtual filesystem
 
     initrdMount(); // mount the initrd
 
-    picInit(); // initialize the pic chips
+    schedInit(); // create initial tasks
 
-    pitInit(); // initialize the timer
+    drvInit(); // initialise the driver manager
 
-    schedulerInit(); // initialize the scheduler
+    inputInit(); // initialise the input subsystem
 
-    drvInit(); // initialize the driver manager
+    sockInit(); // initialise the ipc (sockets)
 
-    acpiInit(); // initialize the acpi interface
-
-    inputInit(); // initialize the input subsystem
-
-    sockInit(); // initialize the ipc (sockets)
-
-    syscallInit(); // initialize system calls
+    syscallInit(); // initialise system calls
 
     kmain(); // call main
 

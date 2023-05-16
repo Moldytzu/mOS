@@ -4,17 +4,172 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define SOCKET_SIZE 4096
+#define DRIVERS
 
 uint64_t sockID = 0;
 void *sockBuffer = NULL;
 bool verbose = true;
 bool safe = false;
-char *shell;
+char *shell = "/init/msh.mx";
 char *cfg;
-char *drivers[512]; // 512 max drivers should be enough for now
-uint8_t driverIdx = 0;
+
+// todo: move this in a dedicated library
+char *cfgGet(const char *name)
+{
+    char *start = cfg;
+    char *end = cfg + 4096;
+
+    while (start < end)
+    {
+        if (memcmp(start, name, strlen(name)) != 0 || memcmp(start + strlen(name), " = ", strlen(" = ")) != 0) // check for the name then for the " = " suffix
+        {
+            start++;
+            continue;
+        }
+
+        char *value = start + strlen(name) + strlen(" = "); // get address of operand
+        return value;
+    }
+
+    return NULL;
+}
+
+bool cfgBool(const char *name)
+{
+    char *value = cfgGet(name);
+
+    if (!value)
+        return false;
+
+    return *value == '1';
+}
+
+char *cfgStr(const char *name)
+{
+    char *start = cfgGet(name);
+    char *end = cfg + 4096;
+
+    if (!start || *start != '\"')
+        return "?";
+
+    start++; // skip to contents
+
+    char *strStart = start;
+
+    // find end of string
+    while (start < end)
+    {
+        if (*start == '\"') // terminate string
+        {
+            *start = '\0';
+            return strStart;
+        }
+        start++;
+    }
+
+    return "?";
+}
+
+uint32_t cfgUint(const char *name)
+{
+    char *start = cfgGet(name);
+    char *end = cfg + 4096;
+
+    if (!start)
+        return 0;
+
+    char *strStart = start;
+
+    // find end of string
+    while (start < end)
+    {
+        if (*start >= '0' && *start <= '9') // we want to find first invalid character (not a number)
+        {
+            start++;
+            continue;
+        }
+
+        *start = '\0';
+        return abs(atoi(strStart));
+    }
+
+    return 0;
+}
+
+void parseCFG()
+{
+    // display a welcome message
+    puts("m Init System is setting up your enviroment\n");
+
+    // buffer for config file
+    uint64_t fd, size;
+    cfg = malloc(4096);
+    assert(cfg != NULL);
+
+    fd = sys_open("/init/init.cfg"); // open the file
+    assert(fd != 0);
+
+    sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
+    assert(size != 0);
+
+    memset(cfg, 0, 4096);               // clear the buffer
+    sys_read(cfg, min(size, 4096), fd); // read the file
+
+    safe = cfgBool("SAFE");
+    verbose = cfgBool("VERBOSE") | safe; // verbose mode is forced on by safe
+    shell = cfgStr("SHELL");
+
+    uint32_t screenX = cfgUint("SCREEN_WIDTH");
+    uint32_t screenY = cfgUint("SCREEN_HEIGHT");
+
+    if(!screenX | !screenY) // invalid resolution
+    {
+        // set a fail-safe resolution
+        screenX = 640;
+        screenY = 480;
+    }
+
+    if (safe) // safe mode doesn't initialise drivers
+        return;
+
+    // start drivers set in config
+    char *drivers = cfgStr("DRIVERS");
+    uint16_t driversLen = strlen(drivers);
+
+    // the drivers string is in the form "driver;driver2;driver3 etc etc"
+    char *start = drivers;
+    for (int i = 0; i < driversLen; i++)
+    {
+        if (drivers[i] == ' ') // ignore whitespace (improves readability)
+        {
+            start++;
+            continue;
+        }
+
+        if (drivers[i] == ';') // start each driver after the separator
+        {
+            drivers[i] = '\0';                                     // terminate string
+            sys_driver(SYS_DRIVER_START, (uint64_t)(start), 0, 0); // start the driver
+
+            if (verbose)
+                printf("Started driver %s\n", start);
+
+            start = drivers + i + 1;
+        }
+    }
+
+    if(verbose)
+        printf("Setting screen resolution to %ux%u\n",screenX,screenY);
+
+    for(int i = 0; i < 20; i++) // it is not guranteed the fb driver has started so we try 20 times to set the resolution (todo: ask the kernel)
+    {
+        sys_display(SYS_DISPLAY_SET, screenX, screenY);
+        sys_yield();
+    }
+}
 
 void eventLoop()
 {
@@ -42,106 +197,14 @@ void eventLoop()
     }
 
     memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
-}
 
-void parseCFG()
-{
-    // buffer for config file
-    uint64_t fd, size;
-    cfg = malloc(4096);
-    assert(cfg != NULL);
-
-    sys_open("/init/init.cfg", &fd); // open the file
-    assert(fd != 0);
-
-    sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
-    assert(size != 0);
-
-    memset(cfg, 0, 4096);               // clear the buffer
-    sys_read(cfg, min(size, 4096), fd); // read the file
-
-    memset(drivers, 0, sizeof(drivers)); // clear the driver addresses
-
-    shell = "/init/msh.sh"; // set a default hard-coded shell location
-
-    // todo: make this code easier to read
-    for (int i = 0; i < 4096; i++)
-    {
-        // check for verbose flag
-        if (memcmp(cfg + i, "VERBOSE = ", strlen("VERBOSE = ")) == 0)
-        {
-            verbose = cfg[i + strlen("VERBOSE = ")] == '1';
-            i += strlen("VERBOSE = ");
-        }
-
-        // check for safe flag
-        if (memcmp(cfg + i, "SAFE = ", strlen("SAFE = ")) == 0)
-        {
-            safe = cfg[i + strlen("SAFE = ")] == '1';
-            i += strlen("SAFE = ");
-        }
-
-        // check for driver path
-        if (memcmp(cfg + i, "DRIVER \"", strlen("DRIVER \"")) == 0)
-        {
-            // calculate length of the driver path
-            size_t len = 0;
-            for (; cfg[i + strlen("DRIVER \"") + len] != '\"'; len++)
-                ;
-
-            // terminate the string
-            cfg[i + strlen("DRIVER \"") + len] = '\0';
-
-            // set the pointer
-            drivers[driverIdx++] = cfg + strlen("DRIVER \"") + i;
-
-            i += strlen("DRIVER \"") + len;
-        }
-
-        // check for driver path
-        if (memcmp(cfg + i, "SHELL \"", strlen("SHELL \"")) == 0)
-        {
-            // calculate length of the driver path
-            size_t len = 0;
-            for (; cfg[i + strlen("SHELL \"") + len] != '\"'; len++)
-                ;
-
-            // terminate the string
-            cfg[i + strlen("SHELL \"") + len] = '\0';
-
-            // set the pointer
-            shell = cfg + strlen("SHELL \"") + i;
-
-            i += strlen("SHELL \"") + len;
-        }
-    }
-
-    if (safe)
-        verbose = true; // force verbose to true if we're in safe mode
-
-    if (verbose)
-        puts("m Init System is setting up your enviroment\n"); // display a welcome screen
-
-    // start the drivers if safe mode isn't enabled
-    if (safe)
-        return;
-
-    for (int i = 0; i < driverIdx; i++)
-    {
-        if (verbose)
-            printf("Starting driver from %s\n", drivers[i]); // for some reason it shows null
-
-        sys_driver(SYS_DRIVER_START, (uint64_t)(drivers[i]), 0, 0);
-    }
+    sys_yield();
 }
 
 int main(int argc, char **argv)
 {
     // ensure that the pid is 1
-    uint64_t initPID;
-    sys_pid(0, SYS_PID_GET, &initPID);
-
-    if (initPID != 1)
+    if (sys_pid_get() != 1)
     {
         puts("The init system has to be launched as PID 1!\n");
         sys_exit(1);
@@ -150,28 +213,8 @@ int main(int argc, char **argv)
     // set tty display mode
     sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
 
-    puts("Attention! mOS is an FOSS operating system (licensed under the MIT license) that doesn't gurantee any compatibility with existing software nor stability as it is in a pre-alpha stage. We strongly advise to test this OS only in virtual machines.\n"); // display a disclaimer
-
     // parse the config
     parseCFG();
-
-    if (!safe)
-    {
-        sys_display(SYS_DISPLAY_SET, 1024, 768); // set screen resolution to 1024x768
-        sys_yield();
-
-        // wait for the change to happen
-        for (int i = 0; i < 5; i++)
-        {
-            uint64_t width, height;
-            sys_display(SYS_DISPLAY_GET, (uint64_t)&width, (uint64_t)&height); // get old resolution
-
-            if (width == 1024 && height == 768)
-                break;
-
-            sys_yield();
-        }
-    }
 
     // create a socket for ipc
     sys_socket(SYS_SOCKET_CREATE, (uint64_t)&sockID, 0, 0);

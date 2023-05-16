@@ -84,17 +84,17 @@ extern "C" {
 
 // Support for the decimal notation floating point conversion specifiers (%f, %F)
 #ifndef PRINTF_SUPPORT_DECIMAL_SPECIFIERS
-#define PRINTF_SUPPORT_DECIMAL_SPECIFIERS 1
+#define PRINTF_SUPPORT_DECIMAL_SPECIFIERS 0
 #endif
 
 // Support for the exponential notation floating point conversion specifiers (%e, %g, %E, %G)
 #ifndef PRINTF_SUPPORT_EXPONENTIAL_SPECIFIERS
-#define PRINTF_SUPPORT_EXPONENTIAL_SPECIFIERS 1
+#define PRINTF_SUPPORT_EXPONENTIAL_SPECIFIERS 0
 #endif
 
 // Support for the length write-back specifier (%n)
 #ifndef PRINTF_SUPPORT_WRITEBACK_SPECIFIER
-#define PRINTF_SUPPORT_WRITEBACK_SPECIFIER 1
+#define PRINTF_SUPPORT_WRITEBACK_SPECIFIER 0
 #endif
 
 // Default precision for the floating point conversion specifiers (the C standard sets this at 6)
@@ -129,7 +129,7 @@ extern "C" {
 
 
 #define PRINTF_PREFER_DECIMAL     false
-#define PRINTF_PREFER_EXPONENTIAL true
+#define PRINTF_PREFER_EXPONENTIAL false
 
 ///////////////////////////////////////////////////////////////////////////////
 

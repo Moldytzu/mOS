@@ -3,13 +3,6 @@
 
 pstruct
 {
-    uint16_t size;
-    uint64_t offset;
-}
-gdt_descriptor_t;
-
-pstruct
-{
     uint16_t limit;
     uint16_t base;
     uint8_t base2;
@@ -45,7 +38,20 @@ pstruct
 }
 gdt_tss_t;
 
-void gdtCreateSegment(uint8_t access);
+pstruct
+{
+    uint16_t size;
+    gdt_segment_t *entries;
+    void *tss;
+
+    /*
+    NOTE: this is a non-standard structure.
+    The cpu accesses only first two fields and we use a third for convenience of packing together both the gdt and the tss.
+    */
+}
+gdt_descriptor_t;
+
 void gdtInit();
-gdt_segment_t *gdtGet();
-gdt_tss_t *tssGet();
+void gdtInstall(uint16_t procID);
+gdt_descriptor_t *gdtGet();
+gdt_tss_t **tssGet();

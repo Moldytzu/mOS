@@ -24,12 +24,13 @@ pstruct
 }
 framebuffer_cursor_info_t;
 
+void framebufferBenchmark();
 void framebufferInit();
+void framebufferInitDoubleBuffer();
+void framebufferUpdate();
 void framebufferFlush();
 void framebufferClear(uint32_t colour);
-void framebufferLoadFont(const char *name);
-void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour);
-void framebufferPlotc(char c, uint32_t x, uint32_t y);
+void framebufferZero();
 void framebufferWrite(const char *str);
 void framebufferWritec(char c);
 framebuffer_cursor_info_t framebufferGetCursor();

@@ -4,21 +4,26 @@
 #include <cpu/fpu.h>
 #include <cpu/pic.h>
 #include <cpu/control.h>
+#include <cpu/smp.h>
+#include <cpu/lapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
 #include <drv/input.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
-#include <sched/pit.h>
 #include <sched/scheduler.h>
 #include <sys/syscall.h>
 #include <fw/bootloader.h>
 #include <fw/acpi.h>
 #include <fs/vfs.h>
 #include <subsys/socket.h>
+#include <subsys/vt.h>
 #include <main/panic.h>
 #include <elf/elf.h>
+#include <misc/logger.h>
+#include <lai/helpers/pm.h>
+#include <lai/helpers/sci.h>
 
 // kernel main, called after init
 void kmain()
@@ -45,12 +50,20 @@ void kmain()
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
 
-    schedulerEnable(); // enable the schduler and jump in userspace
+#ifdef K_FB_DOUBLE_BUFFER
+    framebufferInitDoubleBuffer();
+#endif
+    smpJumpUserspace(); // send all cores to userspace
+    schedEnable();
 }
 
 void panick_impl(const char *file, size_t line, const char *msg)
 {
-    printk("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
+#ifdef K_SMP
+    lapicNMI(); // send nmis
+#endif
+
+    logError("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
 
 #ifdef K_PANIC_REBOOT
     for (volatile size_t i = 0; i < 0xFFFFFFF; i++)

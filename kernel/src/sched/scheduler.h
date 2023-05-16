@@ -2,47 +2,46 @@
 #include <misc/utils.h>
 #include <cpu/idt.h>
 #include <mm/vmm.h>
-#include <subsys/vt.h>
-
-#define TASK_STATE_RUNNING 0
 
 #define TASK_BASE_ADDRESS 0xA000000000
 #define TASK_BASE_ALLOC 0xB000000000
 
-struct sched_task
+typedef struct
 {
-    char name[512];                         // name
-    char cwd[512];                          // current working directory
-    uint8_t state;                          // current state
-    uint32_t id;                            // task ID (TID)
-    vmm_page_table_t *pageTable;            // pointer to the page table
-    idt_intrerrupt_stack_t intrerruptStack; // the last intrerrupt stack
-    uint8_t simdContext[512];               // simd context (contains sse and fpu information)
-    uint32_t terminal;                      // task terminal
-    void *lastVirtualAddress;               // last virtual address of the allocation
-    char *enviroment;                       // enviroment variables
-    uint32_t syscallUsage;                  // the count of syscalls issued by the task in a cycle
-    uint8_t overallCPUpercent;              // percent of the cpu used
-    bool elf;                               // is elf
-    uint64_t elfSize;                       // size of the executable
-    void *elfBase;                          // base of the executable
-    void *stackBase;                        // base of the stack
-    uint64_t stackSize;                     // size of the stack
-    bool isDriver;                          // is driver
+    // metadata
+    uint32_t core;
+    uint32_t id;
+    uint32_t terminal;
+    uint8_t state;
+    char name[128];
+    char cwd[512];
+    bool isDriver;
+    bool isElf;
 
+    // context
+    uint8_t simdContext[512];
+    idt_intrerrupt_stack_t registers;
+    vmm_page_table_t *pageTable;
+    uint64_t lastVirtualAddress;
+    char *enviroment;
+
+    // internal
+    void *stackBase;
+    void *elfBase;
+    size_t elfSize;
+    uint32_t quantumLeft;
     void **allocated;              // allocated pages
     uint32_t allocatedIndex;       // current index
     uint32_t allocatedBufferPages; // pages used by the buffer
 
-    struct sched_task *previous; // previous task
-    struct sched_task *next;     // next task
-};
+    void *next;
+    void *prev;
+} sched_task_t;
 
-void schedulerSchedule(idt_intrerrupt_stack_t *stack);
-void schedulerInit();
-void schedulerEnable();
-void schedulerSetTerminal(uint32_t tid, uint32_t terminal);
-void schedulerKill(uint32_t tid);
-struct sched_task *schedulerAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
-struct sched_task *schedulerGet(uint32_t tid);
-struct sched_task *schedulerGetCurrent();
+void schedEnable();
+sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
+void schedSchedule(idt_intrerrupt_stack_t *stack);
+void schedInit();
+sched_task_t *schedGetCurrent(uint32_t core);
+sched_task_t *schedGet(uint32_t id);
+void schedKill(uint32_t id);
