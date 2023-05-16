@@ -26,6 +26,8 @@ framebuffer_cursor_info_t;
 
 void framebufferBenchmark();
 void framebufferInit();
+void framebufferInitDoubleBuffer();
+void framebufferUpdate();
 void framebufferFlush();
 void framebufferClear(uint32_t colour);
 void framebufferZero();

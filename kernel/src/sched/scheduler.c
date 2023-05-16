@@ -189,6 +189,9 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
                     case VT_DISPLAY_TTY0:
                         framebufferZero();
                         framebufferWrite(vtGet(0)->buffer);
+#ifdef K_FB_DOUBLE_BUFFER
+                        framebufferUpdate();
+#endif
                         break;
                     case VT_DISPLAY_KERNEL:
                     default: // doesn't update the framebuffer and lets the kernel write things to it

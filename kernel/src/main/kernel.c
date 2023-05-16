@@ -50,6 +50,9 @@ void kmain()
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
 
+#ifdef K_FB_DOUBLE_BUFFER
+    framebufferInitDoubleBuffer();
+#endif
     smpJumpUserspace(); // send all cores to userspace
     schedEnable();
 }

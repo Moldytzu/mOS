@@ -63,6 +63,9 @@ void logInfo(const char *fmt, ...)
         PRINT_SERIAL(); // do the printing on serial
 #endif
     });
+#ifdef K_FB_DOUBLE_BUFFER
+    framebufferUpdate();
+#endif
 }
 
 void logWarn(const char *fmt, ...)
@@ -74,6 +77,9 @@ void logWarn(const char *fmt, ...)
         PRINT_SERIAL(); // do the printing on serial
 #endif
     });
+#ifdef K_FB_DOUBLE_BUFFER
+    framebufferUpdate();
+#endif
 }
 
 void logError(const char *fmt, ...)
@@ -85,6 +91,9 @@ void logError(const char *fmt, ...)
         PRINT_SERIAL(); // do the printing on serial
 #endif
     });
+#ifdef K_FB_DOUBLE_BUFFER
+    framebufferUpdate();
+#endif
 }
 
 void logDbg(int level, const char *fmt, ...)
@@ -97,4 +106,7 @@ void logDbg(int level, const char *fmt, ...)
         PRINT_SERIAL(); // do the printing on serial
 #endif
     });
+#ifdef K_FB_DOUBLE_BUFFER
+    framebufferUpdate();
+#endif
 }
