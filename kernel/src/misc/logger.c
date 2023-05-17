@@ -7,7 +7,7 @@ locker_t loggerLock;
 uint32_t logOldColour;
 
 #define PREFIX_COLOUR 0xD0D0D0
-#define DEBUG_COLOUR 0xD0D000
+#define DEBUG_COLOUR 0x3BADFF
 #define INFO_COLOUR 0x10B010
 #define WARN_COLOUR 0xD07000
 #define ERROR_COLOUR 0xFF2020
