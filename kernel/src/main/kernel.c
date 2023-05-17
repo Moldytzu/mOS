@@ -10,6 +10,7 @@
 #include <drv/framebuffer.h>
 #include <drv/initrd.h>
 #include <drv/input.h>
+#include <drv/ahci.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
@@ -46,6 +47,10 @@ void kmain()
         currentNode = currentNode->next; // next node
     } while (currentNode);
 #endif
+
+    ahciInit();
+
+    while (1);
 
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
