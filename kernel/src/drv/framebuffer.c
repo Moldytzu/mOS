@@ -97,13 +97,14 @@ void framebufferFlush()
         framebuffer.height = ctx->currentYres;
         framebuffer.pitch = ctx->currentXres * 4;
 
-        memcpy(&back, &framebuffer, sizeof(struct limine_framebuffer)); // sync metadata (fixme: this might be a race condition??)
-        framebufferInitDoubleBuffer();                                  // quickly generate a new buffer
+        memcpy(&back, &framebuffer, sizeof(struct limine_framebuffer)); // sync metadata
 
         // map the framebuffer
         for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
             vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
     });
+
+    framebufferInitDoubleBuffer(); // quickly generate a new buffer
 }
 
 // clear the framebuffer with a colour
@@ -120,7 +121,11 @@ inline void framebufferClear(uint32_t colour)
 void framebufferInitDoubleBuffer()
 {
 #ifdef K_FB_DOUBLE_BUFFER
-    back.address = pmmPages((back.pitch * back.height) / PMM_PAGE + 1);
+    size_t fbPages = (back.pitch * back.height) / PMM_PAGE + 1;
+    lock(fbLock, {
+        back.address = pmmPages(fbPages);
+    });
+    logInfo("allocated %d pages for back buffer", fbPages);
 #endif
 }
 
