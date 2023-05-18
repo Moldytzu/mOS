@@ -202,6 +202,7 @@ void ahciPortRead(ahci_port_t *port, void *buffer, uint64_t sector, uint32_t sec
     cmdHeader->commandFISlen = sizeof(ahci_fis_reg_host_device_t) / sizeof(uint32_t);     // command fis size
     cmdHeader->write = 0;                                                                 // indicate this is a read
     cmdHeader->regionDescriptorTableLen = 1;                                              // we have only one prdt
+    cmdHeader->commandBaseLow = (uint32_t)(uint64_t)port->commandListBaseLow;
 
     ahci_command_table_t *commandTable = (void *)(uint64_t)cmdHeader->commandBaseLow; // todo: or with high address
     zero(commandTable, sizeof(ahci_command_table_t));
@@ -209,11 +210,12 @@ void ahciPortRead(ahci_port_t *port, void *buffer, uint64_t sector, uint32_t sec
     commandTable->prdt[0].baseHigh = (uint32_t)((uint64_t)buffer >> 32);
     commandTable->prdt[0].byteCount = sectorCount * 512 - 1;
 
-    ahci_fis_reg_host_device_t *fis = (ahci_fis_reg_host_device_t *)(&commandTable->commandFIS);
+    ahci_fis_reg_host_device_t *fis = (ahci_fis_reg_host_device_t *)(port->fisBaseLow);
     zero(fis, sizeof(ahci_fis_reg_host_device_t));
-    fis->fisType = 0x27;     // host -> device
-    fis->commandControl = 1; // is command
-    fis->command = 0x25;     // READ DMA EXT
+    fis->fisType = 0x27;          // host -> device
+    fis->command = 0x25;          // READ DMA EXT
+    fis->commandControl = 1;      // is command
+    fis->deviceRegister = 1 << 6; // enable LBA mode
 
     fis->lba0 = (uint8_t)sector;
     fis->lba1 = (uint8_t)(sector >> 8);
@@ -221,8 +223,6 @@ void ahciPortRead(ahci_port_t *port, void *buffer, uint64_t sector, uint32_t sec
     fis->lba3 = (uint8_t)(sector >> 24);
     fis->lba4 = (uint8_t)(sector >> 32);
     fis->lba5 = (uint8_t)(sector >> 40);
-
-    fis->deviceRegister = 1 << 6; // enable LBA mode
 
     fis->countLow = (uint8_t)sectorCount;
     fis->countHigh = (uint8_t)(sectorCount >> 8);
@@ -233,7 +233,7 @@ void ahciPortRead(ahci_port_t *port, void *buffer, uint64_t sector, uint32_t sec
 
     port->commandIssue = 1; // issue command
 
-    while (port->commandIssue != 0)
+    while (port->commandIssue != 0 && !ahciPortIsIdle(port))
         timeSleepMilis(1);
 
     ahciPortStop(port);
@@ -309,7 +309,7 @@ void ahciInit()
 
         pi >>= 1;
 
-        if(ahciPort(i)->signature != 0x101 /*SATA*/)
+        if (ahciPort(i)->signature != 0x101 /*SATA*/)
             continue;
 
         portImplemented[i] = true;
@@ -352,7 +352,8 @@ void ahciInit()
 
         ahciPortStop(port);
 
-        uint64_t address = (uint64_t)pmmPage(); // todo: i'm not sure how much memory should I allocate
+        uint64_t address = (uint64_t)pmmPage();
+        vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
         port->commandListBaseLow = address & 0xFFFFFFFF;
         port->commandListBaseHigh = (address >> 32) & 0xFFFFFFFF;
 
@@ -363,15 +364,14 @@ void ahciInit()
             cmdHeader[i].regionDescriptorTableLen = 8; // 8 dwords
 
             address = (uint64_t)pmmPage();
-            address += i << 8;
-
-            zero((void *)address, 256);
+            vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
 
             cmdHeader[i].commandBaseLow = address & 0xFFFFFFFF;
             cmdHeader[i].commandBaseHigh = (address >> 32) & 0xFFFFFFFF;
         }
 
         address = (uint64_t)pmmPage(); // todo: neither here
+        vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
         port->fisBaseLow = address & 0xFFFFFFFF;
         port->fisBaseHigh = (address >> 32) & 0xFFFFFFFF;
 
