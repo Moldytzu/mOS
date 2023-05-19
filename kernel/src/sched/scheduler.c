@@ -169,6 +169,13 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     lock(schedLock, {
         if (!taskKilled[id])
         {
+            if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the core don't reschedule
+            {
+                vmmSwap((void *)lastTask[id]->registers.cr3);
+                release(schedLock);
+                return;
+            }
+
             if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
             {
                 lastTask[id]->quantumLeft--;
