@@ -232,7 +232,12 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
         // get next id
         lastTask[id] = lastTask[id]->next;
         if (!lastTask[id])
-            lastTask[id] = &queueStart[id];
+        {
+            if(queueStart[id].next && id != 0) // start queue after the common task to improve efficiency (note: first core has to hit the common task to do house keeping tasks like updating the framebuffer)
+                lastTask[id] = (sched_task_t *)queueStart[id].next;
+            else
+                lastTask[id] = &queueStart[id];
+        }
 
         // copy new state
         memcpy(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t));
