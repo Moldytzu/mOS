@@ -37,13 +37,40 @@ void commonTask()
     }
 }
 
+// determine length of tasks
+uint16_t queueLen(uint16_t core)
+{
+    uint16_t len = 0;
+    sched_task_t *t = &queueStart[core];
+
+    while(t->next)
+    {
+        len++;
+        t = (sched_task_t *)t->next;
+    }
+
+    return len;
+}
+
 // determine to which core we should add the the task
 ifunc uint16_t nextCore()
 {
-    if (lastCore == maxCore)
-        lastCore = 0;
+    // introducing LoadBalancing™:
+    // find least used core and add task to it
 
-    return lastCore++;
+    uint16_t leastUsedCore = 0;
+    uint16_t leastUsedLen = 1000;
+    for(int i = 0; i < maxCore; i++)
+    {
+        if(queueLen(i) < leastUsedLen)
+        {
+            leastUsedLen = queueLen(i);
+            leastUsedCore = i;
+        }
+    }
+
+    return leastUsedCore;
+
 }
 
 // first task of a core
