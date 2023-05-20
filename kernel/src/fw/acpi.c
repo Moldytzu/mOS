@@ -113,23 +113,35 @@ uint64_t pciGetFunctionsNum()
     return pciIndex;
 }
 
+// reboot without acpi 
+void rebootFallback()
+{
+    while(inb(0x64) & 0b10) // spin until input buffer of the 8042 is empty
+        pause();
+
+    outb(0x64, 0xFE); // send 0xFE (command to pulse line 0xE that is connected to cpu's reset) to the 8042
+}
+
 // reboot using acpi
 void acpiReboot()
 {
 #ifdef K_ACPI_LAI
     lai_acpi_reset();
 #else
-    logError("Reboot unsupported. LAI support is disabled.");
+    logError("Reboot unsupported. LAI support is disabled. Trying fallback.");
+    rebootFallback();
     hang();
 #endif
 }
 
+// shutdown using acpi
 void acpiShutdown()
 {
 #ifdef K_ACPI_LAI
     lai_enter_sleep(5);
 #else
-    logError("Shutdown unsupported. LAI support is disabled.");
+    logError("Shutdown unsupported. LAI support is disabled. Rebooting instead.");
+    rebootFallback();
     hang();
 #endif
 }

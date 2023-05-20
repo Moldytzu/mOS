@@ -13,11 +13,7 @@ void power(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_
         acpiReboot();
         break;
     case 1: // shutdown
-        hang();
-        // TODO: implement this
-        break;
-    case 2: // get uptime
-        // TODO: implement this
+        acpiShutdown();
         break;
     default:
         break;
