@@ -202,6 +202,9 @@ void pmmInit()
         if (entry->length < 128 * 1024) // don't bother with very small chunks
             continue;
 
+        if (entry->base < 1 * 1024 * 1024) // don't allocate in legacy real mode addressing space
+            continue;
+
         // populate the pool metadata
         pmm_pool_t *pool = &pools[poolCount++];
         pool->bitmapBytes = entry->length / PMM_PAGE / 8 + 2; // we divide the memory regions in pages (4 KiB chunks) then we will calculate the bytes in which we can write (add 2 bytes to be sure we don't go in allocable memory)
