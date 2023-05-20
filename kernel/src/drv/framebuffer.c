@@ -176,12 +176,11 @@ ifunc void newline()
     if (cursor.Y + font->height + 1 >= back.height) // we can't write further
     {
 #ifdef K_FB_SCROLL
-        // todo: optimise this by not reading video memory
         cursor.Y -= font->height + 1; // move back to the last line
 
-        size_t fbSize = back.pitch * back.height;  // size in bytes of the frame buffer
-        size_t offset = font->height * back.pitch; // get offset of the second line
-        size_t bytes = fbSize - offset;            // calculate the bytes to be copied
+        size_t fbSize = back.pitch * back.height;        // size in bytes of the frame buffer
+        size_t offset = (font->height + 1) * back.pitch; // get offset of the second line
+        size_t bytes = fbSize - offset;                  // calculate the bytes to be copied
 
         memcpy64(back.address, back.address + offset, bytes / 8); // do the actual copy (todo: use memmove here)
 
