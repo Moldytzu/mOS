@@ -1,5 +1,6 @@
 CORES = $(shell nproc)
 DISK = image.disk
+DISK_SIZE = 512 # this is in MB
 GDBFLAGS ?= -tui -q -x gdb.script
 QEMUFLAGS ?= -M q35,smm=off -m 512M -smp 4 -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int,trace:ahci_dma_prepare_buf_fail,trace:ahci_cmd_done,trace:ahci_start_dma,trace:ahci_dma_prepare_buf,trace:ahci_dma_rw_buf -vga vmware
 QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S
@@ -79,7 +80,7 @@ kernel:
 
 # create mbr partition table and format a primary fat32 partition
 $(DISK):
-	dd if=/dev/zero of=./$(DISK) bs=1M count=128
+	dd if=/dev/zero of=./$(DISK) bs=1M count=$(DISK_SIZE)
 	parted -s ./$(DISK) mklabel msdos
 	parted -s ./$(DISK) mkpart primary fat32 1% 100%
 	sudo kpartx -a ./$(DISK)
@@ -90,10 +91,11 @@ image: $(DISK) limine kernel libc $(APPS) $(DRIVERS) initrd
 	sudo kpartx -a ./$(DISK)
 	sudo mkdir -p /mnt
 	sudo mkdir -p /mnt/mOS
+	sudo mount /dev/mapper/loop*p1 /mnt/mOS
 	sudo mkdir -p /mnt/mOS/EFI
 	sudo mkdir -p /mnt/mOS/EFI/BOOT
-	sudo mount /dev/mapper/loop*p1 /mnt/mOS
-	sudo cp out/kernel.elf limine/limine.sys /mnt/mOS/
+	sudo cp out/kernel.elf /mnt/mOS/
+	sudo cp limine/limine.sys /mnt/mOS/
 	sudo cp limine/BOOTX64.EFI /mnt/mOS/EFI/BOOT/
 	cd roots/img && sudo cp -r . /mnt/mOS
 	limine/limine-deploy ./$(DISK)
