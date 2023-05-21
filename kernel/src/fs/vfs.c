@@ -44,6 +44,13 @@ void vfsAdd(struct vfs_node_t node)
         }
     }
     memcpy64(currentNode, &node, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // copy the node information
+
+#ifdef K_VFS_DEBUG
+    char buffer[512];
+    zero(buffer, sizeof(buffer));
+    vfsGetPath((uint64_t)&node, buffer);
+    logDbg(LOG_SERIAL_ONLY, "vfs: adding node %s", buffer);
+#endif
 }
 
 // remove a node
@@ -65,6 +72,10 @@ uint64_t vfsOpen(const char *name)
 {
     if (!name || *name != '/' || !strlen(name)) // non-existent path
         return 0;
+
+#ifdef K_VFS_DEBUG
+    logDbg(LOG_SERIAL_ONLY, "vfs: opening %s", name);
+#endif
 
     struct vfs_node_t *currentNode = &rootNode;
     const char tmp[128 /* mount name */ + 128 /* path */];

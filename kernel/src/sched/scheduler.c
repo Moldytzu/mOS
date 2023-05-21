@@ -43,7 +43,7 @@ uint16_t queueLen(uint16_t core)
     uint16_t len = 0;
     sched_task_t *t = &queueStart[core];
 
-    while(t->next)
+    while (t->next)
     {
         len++;
         t = (sched_task_t *)t->next;
@@ -60,9 +60,9 @@ ifunc uint16_t nextCore()
 
     uint16_t leastUsedCore = 0;
     uint16_t leastUsedLen = 1000;
-    for(int i = 0; i < maxCore; i++)
+    for (int i = 0; i < maxCore; i++)
     {
-        if(queueLen(i) < leastUsedLen)
+        if (queueLen(i) < leastUsedLen)
         {
             leastUsedLen = queueLen(i);
             leastUsedCore = i;
@@ -70,7 +70,6 @@ ifunc uint16_t nextCore()
     }
 
     return leastUsedCore;
-
 }
 
 // first task of a core
@@ -172,6 +171,10 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     else
         memcpy(t->cwd, cwd, min(strlen(cwd), 512)); // copy the current working directory
 
+#ifdef K_SCHED_DEBUG
+    logDbg(LOG_SERIAL_ONLY, "sched: adding task %s", t->name);
+#endif
+
     lock(schedLock, {
         sched_task_t *last = schedLast(id); // get last task
 
@@ -247,6 +250,10 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
             // set new quantum
             lastTask[id]->quantumLeft = K_SCHED_MIN_QUANTUM;
 
+#ifdef K_SCHED_DEBUG
+            logDbg(LOG_SERIAL_ONLY, "sched: saving task %s", lastTask[id]->name);
+#endif
+
             // save old state
             memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
 
@@ -260,11 +267,15 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
         lastTask[id] = lastTask[id]->next;
         if (!lastTask[id])
         {
-            if(queueStart[id].next && id != 0) // start queue after the common task to improve efficiency (note: first core has to hit the common task to do house keeping tasks like updating the framebuffer)
+            if (queueStart[id].next && id != 0) // start queue after the common task to improve efficiency (note: first core has to hit the common task to do house keeping tasks like updating the framebuffer)
                 lastTask[id] = (sched_task_t *)queueStart[id].next;
             else
                 lastTask[id] = &queueStart[id];
         }
+
+#ifdef K_SCHED_DEBUG
+        logDbg(LOG_SERIAL_ONLY, "sched: loading task %s", lastTask[id]->name);
+#endif
 
         // copy new state
         memcpy(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t));
@@ -292,6 +303,7 @@ void schedInit()
     for (int i = 0; i < maxCore; i++) // set start of the queues to the common task
     {
         sched_task_t *t = &queueStart[i];
+        memcpy(t->name, "common task", strlen("common task"));
         t->registers.rflags = 0b1000000010; // interrupts
         t->registers.cs = 8;
         t->registers.ss = 16;

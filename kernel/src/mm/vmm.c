@@ -248,7 +248,7 @@ void vmmDestroy(vmm_page_table_t *table)
     pmmDeallocate(table);
 
 #ifdef K_VMM_DEBUG
-    printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, toKB(pmmTotal().available - a));
+    printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, (pmmTotal().available - a) / 1024);
 #endif
 }
 

@@ -34,7 +34,7 @@ void kmain()
     pmm_pool_t total = pmmTotal();
 
     // display the memory available
-    printks("memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB; pool count= %d;\n\r", toMB(total.available + total.used), toMB(total.available), toMB(total.used), toKB(total.bitmapBytes), total.lastPageIndex);
+    printks("memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB;\n\r", (total.available + total.used) / 1024 / 1024, (total.available) / 1024 / 1024, (total.used) / 1024 / 1024, (total.bitmapBytes) / 1024);
 #endif
 
 #ifdef K_VFS_DEBUG
@@ -48,7 +48,7 @@ void kmain()
     } while (currentNode);
 #endif
 
-#if 1
+#if 0
     ahciInit();
 
     while (1);

@@ -113,10 +113,10 @@ uint64_t pciGetFunctionsNum()
     return pciIndex;
 }
 
-// reboot without acpi 
+// reboot without acpi
 void rebootFallback()
 {
-    while(inb(0x64) & 0b10) // spin until input buffer of the 8042 is empty
+    while (inb(0x64) & 0b10) // spin until input buffer of the 8042 is empty
         pause();
 
     outb(0x64, 0xFE); // send 0xFE (command to pulse line 0xE that is connected to cpu's reset) to the 8042
@@ -149,11 +149,9 @@ void acpiShutdown()
 // init lai
 void laiInit()
 {
-#ifdef K_ACPI_LAI
     lai_set_acpi_revision(revision);
     lai_create_namespace();
     lai_enable_acpi(1); // use the lapic
-#endif
 }
 
 // initialize the acpi subsystem
@@ -173,7 +171,13 @@ void acpiInit()
     else if (revision >= 2)
         sdt = (void *)rsdp->xsdt;
 
+#ifdef K_ACPI_DEBUG
+    logDbg(LOG_SERIAL_ONLY, "acpi: revision %d", revision);
+#endif
+
+#ifdef K_ACPI_LAI
     laiInit();
+#endif
 
     // get mcfg
     mcfg = (acpi_mcfg_t *)acpiGet("MCFG", 0);

@@ -16,11 +16,8 @@
 #define K_ELF_DEBUG     // elf debug messages
 #define K_ACPI_DEBUG    // acpi debug messages
 #define K_SCHED_DEBUG   // scheduler debug messages
-#define K_INPUT_DEBUG   // input subsystem debug messages
 #define K_VMM_DEBUG     // virtual memory manager debug messages
 #define K_PMM_DEBUG     // physical memory manager debug messages
-#define K_HEAP_DEBUG    // heap debug messages
-#define K_BLDR_DEBUG    // bootloader debug messages
 #define K_SOCK_DEBUG    // socket debug messages
 #endif
 

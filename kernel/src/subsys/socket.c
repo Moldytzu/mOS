@@ -26,7 +26,7 @@ struct sock_socket *sockCreate()
     currentSocket->id = lastSockID++;    // set the ID
 
 #ifdef K_SOCK_DEBUG
-    printks("sock: creating new socket with ID %d\n\r", currentSocket->id);
+    logDbg(LOG_SERIAL_ONLY, "sock: creating new socket with ID %d\n\r", currentSocket->id);
 #endif
 
     return currentSocket;
@@ -53,7 +53,7 @@ void sockAppend(struct sock_socket *sock, const char *str, size_t count)
     });
 
 #ifdef K_SOCK_DEBUG
-    printks("sock: appended %d bytes to socket %d\n\r", count, sock->id);
+    logDbg(LOG_SERIAL_ONLY, "sock: appended %d bytes to socket %d\n\r", count, sock->id);
 #endif
 }
 

@@ -2,6 +2,7 @@
 #include <mm/pmm.h>
 #include <mm/blk.h>
 #include <mm/vmm.h>
+#include <misc/logger.h>
 
 struct vt_terminal rootTerminal;
 uint32_t lastID = 0;
@@ -30,7 +31,7 @@ struct vt_terminal *vtCreate()
     currentTerminal->id = lastID++;        // set the ID
 
 #ifdef K_VT_DEBUG
-    printks("vt: creating new terminal with ID %d\n\r", currentTerminal->id);
+    logDbg(LOG_SERIAL_ONLY, "vt: creating new terminal with ID %d\n\r", currentTerminal->id);
 #endif
 
     return currentTerminal;
@@ -58,7 +59,7 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
         refresh = true; // set refresh flag
 
 #ifdef K_VT_DEBUG
-    printks("vt: appended %d bytes to terminal %d\n\r", count, vt->id);
+    logDbg(LOG_SERIAL_ONLY, "vt: appended %d bytes to terminal %d\n\r", count, vt->id);
 #endif
 }
 
