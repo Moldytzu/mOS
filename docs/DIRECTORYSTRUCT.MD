@@ -2,6 +2,7 @@
 - mOS (root)
     - apps (preinstalled applications' source code)
     - docs (documentation)
+        - dsfs (Damn Simple File System specifications)
     - driver (preinstalled drivers' source code)
     - kernel (kernel source code)
         - cpu (cpu related stuff)
