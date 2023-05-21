@@ -48,7 +48,7 @@ void kmain()
     } while (currentNode);
 #endif
 
-#if 0
+#if 1
     ahciInit();
 
     while (1);
