@@ -25,6 +25,9 @@ run-smp-debug: image
 run-no-smp: image
 	qemu-system-x86_64 -M q35,smm=off -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -m 512M
 
+run-old: image
+	qemu-system-x86_64 -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int
+
 run-bochs: image
 	bochs -q
 

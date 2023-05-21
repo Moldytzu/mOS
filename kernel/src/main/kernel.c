@@ -11,6 +11,7 @@
 #include <drv/initrd.h>
 #include <drv/input.h>
 #include <drv/ahci.h>
+#include <drv/ata.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
@@ -46,6 +47,10 @@ void kmain()
             printks("vfs: found %s%s on %s\n\r", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
         currentNode = currentNode->next; // next node
     } while (currentNode);
+#endif
+
+#if 1
+    ataInit();
 #endif
 
 #if 0
