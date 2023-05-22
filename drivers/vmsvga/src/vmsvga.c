@@ -151,7 +151,7 @@ bool initVMSVGA()
 {
     device = (drv_pci_header0_t *)sys_pci_get(SVGA_PCI_VENDOR, SVGA_PCI_DEVICE);
 
-    if (!device) // the device isn't present
+    if (!device || !device->BAR0 || !readRegister(SVGA_REG_FIFO_START)) // the device isn't present
         return false;
 
     device->Command |= 0x7; // enable memory space, io space and bus mastering
