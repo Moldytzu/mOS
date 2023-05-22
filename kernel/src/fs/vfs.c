@@ -1,4 +1,5 @@
 #include <fs/vfs.h>
+#include <fs/fat.h>
 #include <mm/blk.h>
 #include <misc/logger.h>
 
@@ -63,7 +64,19 @@ void vfsAddDrive(vfs_drive_t drive)
     logDbg(LOG_SERIAL_ONLY, "vfs: registering drive %s on %s (%d MB)", drive.friendlyName, drive.interface, (uint64_t)drive.sectors * VFS_SECTOR / 1024 / 1024);
    
     for (int i = 0; i < 4; i++)
+    {
+        if(!drive.partitions[i].startLBA)
+            continue;
+
         logDbg(LOG_SERIAL_ONLY, "vfs: partition %d starts at %d (%d MB)", i, drive.partitions[i].startLBA, (uint64_t)drive.partitions[i].sectors * VFS_SECTOR / 1024 / 1024);
+
+        fat_bpb_t bpb;
+        zero(&bpb, sizeof(bpb));
+        drive.read(&bpb, drive.partitions[i].startLBA, 1);
+
+        if(fatIsValid(&bpb))
+            logDbg(LOG_SERIAL_ONLY, "is fat!");
+    }
 
 #endif
     drives[lastDrive++] = drive;
