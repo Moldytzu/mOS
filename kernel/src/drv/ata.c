@@ -92,6 +92,16 @@ bool ataRead(uint8_t drive, void *buffer, uint64_t sector, uint16_t sectorCount)
     return true;
 }
 
+void ataVFSReadMaster(void *buffer, uint64_t sector, uint64_t count)
+{
+    ataRead(ATA_DRIVE_MASTER, buffer, sector, count);
+}
+
+void ataVFSReadSlave(void *buffer, uint64_t sector, uint64_t count)
+{
+    ataRead(ATA_DRIVE_SLAVE, buffer, sector, count);
+}
+
 // gets sectors of the drive
 uint64_t ataSectors(uint8_t drive)
 {
@@ -159,13 +169,34 @@ void ataInit()
     {
         size_t sectors = ataSectors(ATA_DRIVE_MASTER);
         logInfo("ata: drive 0 has %d sectors (%d MB)", sectors, (sectors * ATA_SECTOR) / 1024 / 1024);
-    
+
         // register in vfs the drive
         vfs_drive_t drive;
         zero(&drive, sizeof(drive));
         drive.interface = "ata";
         drive.friendlyName = "master";
         drive.sectors = sectors;
+        drive.read = ataVFSReadMaster;
+
+        vfs_mbr_t firstSector;
+        ataRead(ATA_DRIVE_MASTER, &firstSector, 0, 1);
+
+        if(vfsCheckMBR(&firstSector)) // check if mbr is valid 
+        {
+            int part = 0;
+            for(int i = 0; i < 4; i++) // parse all the partitions
+            {
+                vfs_mbr_partition_t *partition = &firstSector.partitions[i];
+                if(!partition->startSector)
+                    continue;
+
+                vfs_partition_t *vfsPart = &drive.partitions[part++];
+                vfsPart->startLBA = partition->startSector;
+                vfsPart->endLBA = partition->startSector + partition->sectors;
+                vfsPart->sectors = partition->sectors;
+            }
+        }
+
         vfsAddDrive(drive);
     }
 

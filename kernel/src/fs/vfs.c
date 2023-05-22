@@ -61,6 +61,10 @@ void vfsAddDrive(vfs_drive_t drive)
 {
 #ifdef K_VFS_DEBUG
     logDbg(LOG_SERIAL_ONLY, "vfs: registering drive %s on %s (%d MB)", drive.friendlyName, drive.interface, (uint64_t)drive.sectors * VFS_SECTOR / 1024 / 1024);
+   
+    for (int i = 0; i < 4; i++)
+        logDbg(LOG_SERIAL_ONLY, "vfs: partition %d starts at %d (%d MB)", i, drive.partitions[i].startLBA, (uint64_t)drive.partitions[i].sectors * VFS_SECTOR / 1024 / 1024);
+
 #endif
     drives[lastDrive++] = drive;
 }
@@ -185,4 +189,10 @@ void vfsGetPath(uint64_t fd, void *buffer)
 
     memcpy((void *)buffer, node->filesystem->mountName, strlen(node->filesystem->mountName));
     memcpy((void *)(buffer + strlen(node->filesystem->mountName)), node->path, strlen(node->path));
+}
+
+// check if mbr sector is valid
+bool vfsCheckMBR(vfs_mbr_t *sector)
+{
+    return sector->signature == VFS_MBR_SIGNATURE;
 }

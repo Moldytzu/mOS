@@ -2,8 +2,32 @@
 #include <misc/utils.h>
 
 #define VFS_SECTOR 512
+#define VFS_MBR_SIGNATURE 0xAA55
 
 struct vfs_node_t;
+
+pstruct
+{
+    uint8_t attributes;
+    uint16_t chs1;
+    uint8_t chs2;
+    uint8_t type;
+    uint16_t chs3;
+    uint8_t chs4;
+    uint32_t startSector;
+    uint32_t sectors;
+}
+vfs_mbr_partition_t;
+
+pstruct
+{
+    uint8_t bootstrap[440];
+    uint32_t diskID;
+    uint16_t reserved;
+    vfs_mbr_partition_t partitions[4];
+    uint16_t signature;
+}
+vfs_mbr_t;
 
 pstruct
 {
@@ -59,3 +83,4 @@ bool vfsExists(const char *name);
 struct vfs_node_t *vfsNodes();
 void vfsAddDrive(vfs_drive_t drive);
 vfs_drive_t *vfsGetDrives();
+bool vfsCheckMBR(vfs_mbr_t *sector);
