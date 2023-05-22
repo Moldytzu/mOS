@@ -25,10 +25,12 @@
 // commands
 #define ATA_CMD_IDENTIFY_PIO 0xEC
 #define ATA_CMD_READ_SECTORS_EXT_PIO 0x24
+#define ATA_CMD_READ_SECTORS_PIO 0x20
 
 // status flags
 #define ATA_STATUS_BSY 0x80
 #define ATA_STATUS_DRQ 0x08
+#define ATA_STATUS_RDY 0x40
 #define ATA_STATUS_ERR 0x01
 
 bool presentDrives[2];
@@ -53,37 +55,43 @@ uint8_t ataStatus()
     return inb(ATA_STATUS);
 }
 
-// performs a 48 bit pio lba read
+void ataWaitBsy()
+{
+    while (ataStatus() & ATA_STATUS_BSY)
+        pause();
+}
+
+void ataWaitRdy()
+{
+    while (!(ataStatus() & ATA_STATUS_RDY))
+        pause();
+}
+
+// performs a 28 bit pio lba read
 bool ataRead(uint8_t drive, void *buffer, uint64_t sector, uint16_t sectorCount)
 {
     if (drive == ATA_DRIVE_MASTER)
-        ataSelect(0x40);
+        ataSelect(0xE0 | ((sector >> 24) & 0xF));
     else
-        ataSelect(0x50);
+        ataSelect(0xF0 | ((sector >> 24) & 0xF));
 
-    outb(ATA_SECTOR_COUNT, sector >> 8);        // send high byte of the sector count
-    outb(ATA_SECTOR_NUMBER, sector >> (8 * 4)); // send 4th byte of lba
-    outb(ATA_CYL_LOW, sector >> (8 * 5));       // send 5th byte of lba
-    outb(ATA_CYL_HIGH, sector >> (8 * 6));      // send 6th byte of lba
-    outb(ATA_SECTOR_COUNT, sector);             // send low byte of the sector count
-    outb(ATA_SECTOR_NUMBER, sector >> (8 * 1)); // send 1st byte of lba
-    outb(ATA_CYL_LOW, sector >> (8 * 2));       // send 2nd byte of lba
-    outb(ATA_CYL_HIGH, sector >> (8 * 3));      // send 3rd byte of lba
+    ataWaitBsy();
 
-    ataCommand(ATA_CMD_READ_SECTORS_EXT_PIO); // send the read command
+    outb(ATA_SECTOR_COUNT, sectorCount);  // send sector count
+    outb(ATA_SECTOR_NUMBER, sector);      // send low byte of lba
+    outb(ATA_CYL_LOW, sector >> 8);       // send middle byte of lba
+    outb(ATA_CYL_HIGH, sector >> 16);     // send high byte of lba
+    ataCommand(ATA_CMD_READ_SECTORS_PIO); // issue command
 
     uint16_t *words = (uint16_t *)buffer;
 
     for (int i = 0; i < sectorCount; i++)
     {
-        while (ataStatus() & ATA_STATUS_BSY) // wait for drive to process our command
-        {
-            if (ataStatus() & ATA_STATUS_DRQ)
-                break;
+        ataWaitBsy();
+        ataWaitRdy();
 
-            if (ataStatus() & ATA_STATUS_ERR) // read error
-                return false;
-        }
+        if (ataStatus() & ATA_STATUS_ERR) // read error
+            return false;
 
         for (size_t i = 0; i < ATA_SECTOR / sizeof(uint16_t); i++) // read data
             *(words++) = inw(ATA_DATA);
@@ -181,13 +189,13 @@ void ataInit()
         vfs_mbr_t firstSector;
         ataRead(ATA_DRIVE_MASTER, &firstSector, 0, 1);
 
-        if(vfsCheckMBR(&firstSector)) // check if mbr is valid 
+        if (vfsCheckMBR(&firstSector)) // check if mbr is valid
         {
             int part = 0;
-            for(int i = 0; i < 4; i++) // parse all the partitions
+            for (int i = 0; i < 4; i++) // parse all the partitions
             {
                 vfs_mbr_partition_t *partition = &firstSector.partitions[i];
-                if(!partition->startSector)
+                if (!partition->startSector)
                     continue;
 
                 vfs_partition_t *vfsPart = &drive.partitions[part++];
