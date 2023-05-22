@@ -8,11 +8,14 @@ struct vfs_node_t rootNode; // root of the linked list
 uint64_t lastNode = 0;
 
 vfs_fs_t rootFS;
+vfs_drive_t drives[128];
+size_t lastDrive = 0;
 
 // initialize the subsystem
 void vfsInit()
 {
     zero(&rootFS, sizeof(rootFS)); // clear the root filesystem
+    zero(drives, sizeof(drives));  // zero all drives
 
     // metadata of the rootfs
     rootFS.name = "rootfs";
@@ -51,6 +54,21 @@ void vfsAdd(struct vfs_node_t node)
     vfsGetPath((uint64_t)&node, buffer);
     logDbg(LOG_SERIAL_ONLY, "vfs: adding node %s", buffer);
 #endif
+}
+
+// add a drive node
+void vfsAddDrive(vfs_drive_t drive)
+{
+#ifdef K_VFS_DEBUG
+    logDbg(LOG_SERIAL_ONLY, "vfs: registering drive %s on %s (%d MB)", drive.friendlyName, drive.interface, (uint64_t)drive.sectors * VFS_SECTOR / 1024 / 1024);
+#endif
+    drives[lastDrive++] = drive;
+}
+
+// get all available drives
+vfs_drive_t *vfsGetDrives()
+{
+    return drives;
 }
 
 // remove a node

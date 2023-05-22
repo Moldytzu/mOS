@@ -1,7 +1,29 @@
 #pragma once
 #include <misc/utils.h>
 
+#define VFS_SECTOR 512
+
 struct vfs_node_t;
+
+pstruct
+{
+    uint32_t startLBA; // starting
+    uint32_t endLBA;   // and ending sectors
+    uint32_t sectors;
+}
+vfs_partition_t;
+
+pstruct
+{
+    const char *interface;
+    const char *friendlyName;
+    uint32_t sectors;
+    void (*read)(void *, uint64_t, uint64_t);  // buffer, sector, count
+    void (*write)(void *, uint64_t, uint64_t); // buffer, sector, count
+
+    vfs_partition_t partitions[4]; // for mbr are enough (TODO: support gpt!!!!)
+}
+vfs_drive_t;
 
 pstruct
 {
@@ -35,3 +57,5 @@ void vfsRemove(struct vfs_node_t *node);
 void vfsGetPath(uint64_t fd, void *buffer);
 bool vfsExists(const char *name);
 struct vfs_node_t *vfsNodes();
+void vfsAddDrive(vfs_drive_t drive);
+vfs_drive_t *vfsGetDrives();

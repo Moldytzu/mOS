@@ -2,6 +2,7 @@
 #include <cpu/io.h>
 #include <misc/logger.h>
 #include <mm/pmm.h>
+#include <fs/vfs.h>
 
 // constants
 #define ATA_SECTOR 512
@@ -156,12 +157,16 @@ void ataInit()
 
     if (presentDrives[0])
     {
-        logInfo("ata: drive 0 has %d sectors (%d MB)", ataSectors(ATA_DRIVE_MASTER), (ataSectors(ATA_DRIVE_MASTER) * ATA_SECTOR) / 1024 / 1024);
-
-        char *buffer = (char *)pmmPage();
-        ataRead(ATA_DRIVE_MASTER, (char *)buffer, 0, 4); // read an entire page
-        for (int i = 0; i < 4096; i++)
-            printks("%c", buffer[i]);
+        size_t sectors = ataSectors(ATA_DRIVE_MASTER);
+        logInfo("ata: drive 0 has %d sectors (%d MB)", sectors, (sectors * ATA_SECTOR) / 1024 / 1024);
+    
+        // register in vfs the drive
+        vfs_drive_t drive;
+        zero(&drive, sizeof(drive));
+        drive.interface = "ata";
+        drive.friendlyName = "master";
+        drive.sectors = sectors;
+        vfsAddDrive(drive);
     }
 
     if (presentDrives[1])
