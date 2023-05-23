@@ -182,6 +182,7 @@ pstruct
 
 acpi_pci_descriptor_t *pciGetFunctions();
 uint64_t pciGetFunctionsNum();
+bool pciECAM();
 
 acpi_sdt_t *acpiGet(const char *sig, int index);
 void acpiInit();

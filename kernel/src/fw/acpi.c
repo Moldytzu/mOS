@@ -113,6 +113,12 @@ uint64_t pciGetFunctionsNum()
     return pciIndex;
 }
 
+// checks if pcie ecam is supported by machine
+bool pciECAM()
+{
+    return mcfg;
+}
+
 // reboot without acpi
 void rebootFallback()
 {

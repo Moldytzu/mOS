@@ -77,6 +77,12 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
 
         acpi_pci_header_t **header = (acpi_pci_header_t **)PHYSICAL(arg1);
 
+        if(!pciECAM()) // pcie not available
+        {
+            *header = NULL;
+            return;
+        }
+
         volatile acpi_pci_descriptor_t *functions = pciGetFunctions();
         volatile uint64_t num = pciGetFunctionsNum();
 
