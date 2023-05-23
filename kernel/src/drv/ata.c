@@ -182,7 +182,7 @@ void ataInit()
         vfs_drive_t drive;
         zero(&drive, sizeof(drive));
         drive.interface = "ata";
-        drive.friendlyName = "master";
+        drive.friendlyName = "0";
         drive.sectors = sectors;
         drive.read = ataVFSReadMaster;
 

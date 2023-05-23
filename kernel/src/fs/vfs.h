@@ -51,12 +51,13 @@ vfs_drive_t;
 
 pstruct
 {
+    void *context;         // filesystem dependent context
     const char *name;      // friendly name of the filesystem
     const char *mountName; // mount point
     uint8_t (*open)(struct vfs_node_t *);
     void (*close)(struct vfs_node_t *);
-    void (*read)(struct vfs_node_t *, void *, uint64_t, uint64_t);
-    void (*write)(struct vfs_node_t *, void *, uint64_t, uint64_t);
+    void (*read)(struct vfs_node_t *, void *, uint64_t, uint64_t); // node, buffer, size, offset
+    void (*write)(struct vfs_node_t *, void *, uint64_t, uint64_t); // node, buffer, size, offset
 }
 vfs_fs_t;
 

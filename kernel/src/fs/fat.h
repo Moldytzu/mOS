@@ -1,5 +1,6 @@
 #pragma once
 #include <misc/utils.h>
+#include <fs/vfs.h>
 
 pstruct
 {
@@ -34,4 +35,12 @@ pstruct
     uint16_t bootSignature;
 } fat_bpb_t;
 
+pstruct
+{
+    fat_bpb_t *bpb;
+    vfs_drive_t *drive;
+    size_t partition;
+} fat_context_t;
+
 bool fatIsValid(fat_bpb_t *bpb);
+bool fatCreate(fat_bpb_t *bpb, vfs_drive_t *drive, size_t partition);
