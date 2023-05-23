@@ -60,10 +60,11 @@ void vfsAdd(struct vfs_node_t node)
 // add a drive node
 void vfsAddDrive(vfs_drive_t drive)
 {
-#ifdef K_VFS_DEBUG
     drives[lastDrive++] = drive;
 
+#ifdef K_VFS_DEBUG
     logDbg(LOG_SERIAL_ONLY, "vfs: registered drive %s on %s (%d MB)", drive.friendlyName, drive.interface, (uint64_t)drive.sectors * VFS_SECTOR / 1024 / 1024);
+#endif
 
     // create a node for the drive
     struct vfs_node_t driveNode;
@@ -78,7 +79,9 @@ void vfsAddDrive(vfs_drive_t drive)
         if (!drive.partitions[i].startLBA)
             continue;
 
+#ifdef K_VFS_DEBUG
         logDbg(LOG_SERIAL_ONLY, "vfs: partition %d starts at %d (%d MB)", i, drive.partitions[i].startLBA, (uint64_t)drive.partitions[i].sectors * VFS_SECTOR / 1024 / 1024);
+#endif
 
         // try to create a fat partition
         fat_bpb_t bpb;
@@ -87,8 +90,6 @@ void vfsAddDrive(vfs_drive_t drive)
 
         fatCreate(&bpb, &drives[lastDrive - 1], i);
     }
-
-#endif
 }
 
 // get all available drives
