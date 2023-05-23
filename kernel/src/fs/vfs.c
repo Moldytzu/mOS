@@ -62,12 +62,20 @@ void vfsAddDrive(vfs_drive_t drive)
 {
 #ifdef K_VFS_DEBUG
     drives[lastDrive++] = drive;
-    
+
     logDbg(LOG_SERIAL_ONLY, "vfs: registered drive %s on %s (%d MB)", drive.friendlyName, drive.interface, (uint64_t)drive.sectors * VFS_SECTOR / 1024 / 1024);
-   
+
+    // create a node for the drive
+    struct vfs_node_t driveNode;
+    zero(&driveNode, sizeof(driveNode));
+    driveNode.filesystem = &rootFS; // maybe we could create a devfs that can provide raw read/write functionality? (todo: implement this)
+    memcpy(driveNode.path, drive.interface, strlen(drive.interface));
+    memcpy(driveNode.path + strlen(drive.interface), drive.friendlyName, strlen(drive.friendlyName));
+    vfsAdd(driveNode);
+
     for (int i = 0; i < 4; i++)
     {
-        if(!drive.partitions[i].startLBA)
+        if (!drive.partitions[i].startLBA)
             continue;
 
         logDbg(LOG_SERIAL_ONLY, "vfs: partition %d starts at %d (%d MB)", i, drive.partitions[i].startLBA, (uint64_t)drive.partitions[i].sectors * VFS_SECTOR / 1024 / 1024);
@@ -81,7 +89,6 @@ void vfsAddDrive(vfs_drive_t drive)
     }
 
 #endif
-    
 }
 
 // get all available drives
