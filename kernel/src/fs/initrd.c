@@ -1,4 +1,4 @@
-#include <drv/initrd.h>
+#include <fs/initrd.h>
 #include <fw/bootloader.h>
 #include <fs/vfs.h>
 #include <misc/logger.h>

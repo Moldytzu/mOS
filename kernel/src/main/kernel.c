@@ -8,7 +8,6 @@
 #include <cpu/lapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
-#include <drv/initrd.h>
 #include <drv/input.h>
 #include <drv/ahci.h>
 #include <drv/ata.h>
@@ -19,6 +18,7 @@
 #include <fw/bootloader.h>
 #include <fw/acpi.h>
 #include <fs/vfs.h>
+#include <fs/initrd.h>
 #include <subsys/socket.h>
 #include <subsys/vt.h>
 #include <main/panic.h>

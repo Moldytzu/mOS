@@ -1,6 +1,6 @@
 #include <drv/framebuffer.h>
-#include <drv/initrd.h>
 #include <drv/drv.h>
+#include <fs/initrd.h>
 #include <fw/bootloader.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>

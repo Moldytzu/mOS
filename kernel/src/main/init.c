@@ -9,7 +9,6 @@
 #include <cpu/ioapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
-#include <drv/initrd.h>
 #include <drv/input.h>
 #include <mm/pmm.h>
 #include <mm/blk.h>
@@ -20,6 +19,7 @@
 #include <sched/time.h>
 #include <sys/syscall.h>
 #include <fw/bootloader.h>
+#include <fs/initrd.h>
 #include <fw/acpi.h>
 #include <fs/vfs.h>
 #include <subsys/socket.h>
