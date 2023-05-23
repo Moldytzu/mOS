@@ -129,18 +129,18 @@ bga_resolution_t getResolution()
 }
 
 void _mdrvmain()
-{
+{   
+    if (!detectBGA())
+    {
+        printf("bga: failed to initialise!\n");
+        abort();
+    }
+
     fb = (drv_type_framebuffer_t *)sys_drv_announce(SYS_DRIVER_TYPE_FRAMEBUFFER); // announce that we are a framebuffer
 
     if(!fb)
     {
         printf("bga: failed to announce!\n");
-        abort();
-    }
-
-    if (!detectBGA())
-    {
-        printf("bga: failed to initialise!\n");
         abort();
     }
 

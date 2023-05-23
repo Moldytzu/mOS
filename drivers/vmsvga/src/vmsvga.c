@@ -196,17 +196,17 @@ bool initVMSVGA()
 
 void _mdrvmain()
 {
+    if (!initVMSVGA()) // try to initialise the device
+    {
+        printf("vmsvga: failed to initialise device!\n");
+        abort();
+    }
+
     fb = (drv_type_framebuffer_t *)sys_drv_announce(SYS_DRIVER_TYPE_FRAMEBUFFER); // announce that we are a framebuffer
 
     if (!fb)
     {
         printf("vmsvga: failed to announce!\n");
-        abort();
-    }
-
-    if (!initVMSVGA()) // try to initialise the device
-    {
-        printf("vmsvga: failed to initialise device!\n");
         abort();
     }
 

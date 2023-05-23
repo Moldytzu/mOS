@@ -344,17 +344,17 @@ bool initController()
 
 void _mdrvmain()
 {
+    if (!initController()) // initialise the controller
+    {
+        printf("ps2: failed to initialise!\n");
+        abort();
+    }
+
     contextStruct = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT); // announce that we are an input-related driver
 
     if (!contextStruct)
     {
         printf("ps2: failed to announce!\n");
-        abort();
-    }
-
-    if (!initController()) // initialise the controller
-    {
-        printf("ps2: failed to initialise!\n");
         abort();
     }
 
