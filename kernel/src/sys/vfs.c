@@ -1,6 +1,17 @@
 #include <sys/sys.h>
 #include <fs/vfs.h>
 
+// count characters in str
+size_t count(const char *str, char c)
+{
+    size_t cnt = 0;
+    while (*str++)
+        if (*str == c)
+            cnt++;
+
+    return cnt;
+}
+
 // vfs (rsi = call, rdx = arg1, r8 = retVal)
 void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_t *task)
 {
@@ -67,6 +78,10 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
         tmp = PHYSICAL(arg1); // tmp is a backup for the name
         char *retChar = (char *)retAddr;
 
+        char path[512];
+
+        logDbg(LOG_SERIAL_ONLY, "vfs: listing directory for %s", tmp);
+
         currentNode = vfsNodes();
         do
         {
@@ -75,26 +90,29 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
 
             name = tmp; // reset the pointer
 
-            if (memcmp(name, currentNode->filesystem->mountName, min(strlen(currentNode->filesystem->mountName), strlen(currentNode->path))) != 0) // compare the mount name
-                goto next1;
+            zero(path, sizeof(path));
+            vfsGetPath((uint64_t)currentNode, path);
 
-            name += strlen(currentNode->filesystem->mountName); // move the pointer after the mount name
+            bool starts = strstarts(path, name);                        // checks if path starts with the same characters
+            bool hasSameSlashes = count(path, '/') == count(name, '/'); // check if the path and name has the same number of slashes
+            bool endsInSlash = path[strlen(path) - 1] == '/';           // check if the path is a directory
 
-            if (!strstarts((const char *)currentNode->path, name)) // compare the path
-                goto next1;
-
-            if (strstarts(tmp, currentNode->filesystem->mountName) && strcmp((const char *)(tmp + strlen(currentNode->filesystem->mountName)), currentNode->path) == 0) // skip the node if the full path is equal to the path name
-                goto next1;
-
-            if (!strstarts(tmp, currentNode->filesystem->mountName)) // if the name doesn't start with the mount name then copy it
+            if (starts && (hasSameSlashes /* this prevents going in subdirectories */ || endsInSlash /* this lets only directories */))
             {
-                memcpy(retChar, (void *)(currentNode->filesystem->mountName + 1), strlen(currentNode->filesystem->mountName) - 1); // copy the mount name without the delimiter
-                retChar += strlen(currentNode->filesystem->mountName);                                                             // move the pointer forward
+                if (strlen(currentNode->path) == 0 && !hasSameSlashes) // append mount name for partitions or nodes without path that aren't the one we search in
+                {
+                    memcpy(retChar, currentNode->filesystem->mountName + 1 /*mount name starts with /, maybe we want to cut the requested directory instead*/, strlen(currentNode->filesystem->mountName) - 1); // copy the path
+                    retChar += strlen(currentNode->filesystem->mountName) - 1;                                                                                                                                  // move the pointer forward
+                }
+                else
+                {
+                    memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
+                    retChar += strlen(currentNode->path);                          // move the pointer forward
+                }
+
+                *(retChar++) = ' '; // append a space
             }
 
-            memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
-            retChar += strlen(currentNode->path);                          // move the pointer forward
-            *(retChar++) = ' ';                                            // append a space
         next1:
             currentNode = currentNode->next; // next node
         } while (currentNode);
