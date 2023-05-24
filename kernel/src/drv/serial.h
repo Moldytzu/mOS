@@ -17,8 +17,11 @@
 ifunc void serialWritec(char c)
 {
 #ifdef K_COM_ENABLE
-    while (!(inb(COM1 + 5) & 0b100000))
+
+#ifdef K_COM_WAIT
+    while (!(inb(COM1 + 5) & 0b100000)) // wait for transmission buffer to be empty (wait for bit THRE in line status register)
         ;
+#endif
 
     if (c == '\n')
         outb(COM1, '\r');

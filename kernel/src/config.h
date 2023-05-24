@@ -34,6 +34,7 @@
 #define K_COM_ENABLE     // enable support for serial
 #define K_COM_BAUD_DIV 1 // divisor of the baud rate (base is 115200)
 #define K_COM_LOG        // kernel logger on serial
+#define K_COM_WAIT       // wait for serial transmission to be done (has to be enabled on real hardware for reliable serial)
 
 // Scheduler
 #define K_SCHED_MIN_QUANTUM 1  // minimum quantum of each task
