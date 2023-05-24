@@ -5,6 +5,7 @@
 #include <mm/blk.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
+#include <misc/logger.h>
 
 // load an elf
 sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
@@ -25,7 +26,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     }
 
 #ifdef K_ELF_DEBUG
-    printks("elf: found %s at 0x%p with the entry offset at 0x%p\n\r", path, elf, elf->e_entry - TASK_BASE_ADDRESS);
+    logDbg(LOG_SERIAL_ONLY, "elf: found %s at 0x%p with the entry offset at 0x%p", path, elf, elf->e_entry - TASK_BASE_ADDRESS);
 #endif
 
     if (fdSize % 4096 != 0) // make sure the executable size is divisible by a page
@@ -42,7 +43,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         if (phdr->p_type == PT_LOAD) // section to be loaded
         {
 #ifdef K_ELF_DEBUG
-            printks("elf: phdr at virtual 0x%p (physical 0x%p) with size %d bytes\n\r", phdr->p_vaddr, phdr->p_paddr, phdr->p_memsz);
+            logDbg(LOG_SERIAL_ONLY, "elf: phdr at virtual 0x%p (physical 0x%p) with size %d bytes", phdr->p_vaddr, phdr->p_paddr, phdr->p_memsz);
 #endif
             vfsRead(fd, (void *)((uint64_t)buffer + phdr->p_vaddr - TASK_BASE_ADDRESS), phdr->p_memsz, phdr->p_offset); // copy the program header to the buffer using the vfs
         }

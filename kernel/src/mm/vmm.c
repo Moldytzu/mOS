@@ -195,7 +195,7 @@ vmm_page_table_t *vmmCreateTable(bool full)
     vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
     vmmMap(newTable, APIC_BASE, APIC_BASE, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
 
-    logDbg(LOG_ALWAYS, "vmm: wasted %d KB on a new page table", (a - pmmTotal().available) / 1024);
+    logDbg(LOG_SERIAL_ONLY, "vmm: wasted %d KB on a new page table", (a - pmmTotal().available) / 1024);
 
     return newTable; // return the created table
 }
@@ -248,7 +248,7 @@ void vmmDestroy(vmm_page_table_t *table)
     pmmDeallocate(table);
 
 #ifdef K_VMM_DEBUG
-    printks("vmm: destroyed page table at 0x%p and saved %d kb\n\r", table, (pmmTotal().available - a) / 1024);
+    logDbg(LOG_SERIAL_ONLY, "vmm: destroyed page table at 0x%p and saved %d kb", table, (pmmTotal().available - a) / 1024);
 #endif
 }
 

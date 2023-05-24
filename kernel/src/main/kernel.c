@@ -35,7 +35,7 @@ void kmain()
     pmm_pool_t total = pmmTotal();
 
     // display the memory available
-    printks("memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB;\n\r", (total.available + total.used) / 1024 / 1024, (total.available) / 1024 / 1024, (total.used) / 1024 / 1024, (total.bitmapBytes) / 1024);
+    logDbg(LOG_SERIAL_ONLY, "memory: total= %d MB; available= %d MB; used= %d MB; bitmap reserved= %d KB;", (total.available + total.used) / 1024 / 1024, (total.available) / 1024 / 1024, (total.used) / 1024 / 1024, (total.bitmapBytes) / 1024);
 #endif
 
 #ifdef K_VFS_DEBUG
@@ -44,7 +44,7 @@ void kmain()
     do
     {
         if (currentNode->filesystem)
-            printks("vfs: found %s%s on %s\n\r", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
+           logDbg(LOG_SERIAL_ONLY, "vfs: found %s%s on %s", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
         currentNode = currentNode->next; // next node
     } while (currentNode);
 #endif
