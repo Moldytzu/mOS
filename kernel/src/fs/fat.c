@@ -4,17 +4,25 @@
 #include <mm/pmm.h>
 
 #define CONTEXT(x) ((fat_context_t *)(x))
+#define CLUSTER(x) (x.clusterHigh << 16 | x.clusterLow)
 
 bool fatIsValid(fat_bpb_t *bpb)
 {
     return bpb->bootSignature == VFS_MBR_SIGNATURE;
 }
 
+// read handler
 void fatFSRead(struct vfs_node_t *node, void *buffer, uint64_t size, uint64_t offset)
 {
 }
 
-bool isFree(fat_dir_t dir)
+// open handler
+uint8_t fatFSOpen(struct vfs_node_t *node)
+{
+    return 1;
+}
+
+bool fatDirValid(fat_dir_t dir)
 {
     return dir.name[0] == 0 || dir.name[0] == 0xE5;
 }
@@ -40,39 +48,42 @@ void fatMap(struct vfs_node_t *root)
     if (fs->rootDirectoryEntries != 0 || clusters <= 65526) // not FAT32
         return;
 
-    fat_dir_t *rootDirectory = pmmPage();
+    fat_dir_t *entries = pmmPage();
 
-    CONTEXT(root->filesystem->context)->drive->read(rootDirectory, parition.startLBA + rootDirectoryStartSector, 4096 / VFS_SECTOR);
-    for (int i = 0; !isFree(rootDirectory[i]); i++)
+    CONTEXT(root->filesystem->context)->drive->read(entries, parition.startLBA + rootDirectoryStartSector, 4096 / VFS_SECTOR);
+    for (int i = 0; !fatDirValid(entries[i]); i++)
     {
-        if (rootDirectory[i].attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
+        fat_dir_t entry = entries[i];
+
+        if (entry.attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
             continue;
 
-        if (*(uint8_t *)&rootDirectory[i].attributes == 0xF) // long file name entry (todo: parse that)
+        if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry (todo: parse that)
             continue;
 
-        uint32_t cluster = rootDirectory[i].clusterHigh << 16 | rootDirectory[i].clusterLow;
+        uint32_t cluster = CLUSTER(entry);
 
         int last = 0; // get last character that isn't a space
         for (; last < 8; last++)
-            if (rootDirectory[i].name[last] == ' ')
+            if (entry.name[last] == ' ')
                 break;
 
         // parse 8.3 file name
         char name[12];
         zero(name, sizeof(name));
-        memcpy(name, rootDirectory[i].name, last);             // copy the text before the extension
-        name[last] = '.';                                      // put the extension dot
-        memcpy(name + last + 1, &rootDirectory[i].name[8], 3); // copy the extension
+        memcpy(name, entry.name, last);             // copy the text before the extension
+        name[last] = '.';                           // put the extension dot
+        memcpy(name + last + 1, &entry.name[8], 3); // copy the extension
 
         for (int i = 0; i < 12; i++) // lower all the characters
             name[i] = tolower(name[i]);
 
-        printks("name: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, rootDirectory[i].attributes, cluster, rootDirectory[i].size);
+        printks("name: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, entry.attributes, cluster, entry.size);
 
         struct vfs_node_t node;             // create a node
         zero(&node, sizeof(node));          // zero it
         node.filesystem = root->filesystem; // set the filesystem
+        node.size = entry.size;             // set the size
         memcpy(node.path, name, 12);        // copy the name
         vfsAdd(node);
     }
@@ -112,6 +123,7 @@ bool fatCreate(fat_bpb_t *bpb, vfs_drive_t *drive, size_t partition)
 
     // set handlers
     filesystem->read = fatFSRead;
+    filesystem->open = fatFSOpen;
 
     // create root node
     struct vfs_node_t rootNode;
