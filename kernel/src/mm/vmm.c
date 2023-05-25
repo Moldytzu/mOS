@@ -207,6 +207,9 @@ void vmmDestroy(vmm_page_table_t *table)
     uint64_t a = pmmTotal().available;
 #endif
 
+    if(!table)
+        return;
+
     // deallocate sub-tables
     for (int pdp = 0; pdp < 512; pdp++)
     {
