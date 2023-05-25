@@ -77,7 +77,7 @@ uint64_t vfsSize(uint64_t fd);
 void vfsClose(uint64_t fd);
 void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset);
 void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset);
-void vfsAdd(struct vfs_node_t node);
+struct vfs_node_t *vfsAdd(struct vfs_node_t node);
 void vfsRemove(struct vfs_node_t *node);
 void vfsGetPath(uint64_t fd, void *buffer);
 bool vfsExists(const char *name);

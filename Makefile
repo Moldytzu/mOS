@@ -84,7 +84,7 @@ $(DISK):
 	parted -s ./$(DISK) mklabel msdos
 	parted -s ./$(DISK) mkpart primary fat32 1% 100%
 	sudo kpartx -a ./$(DISK)
-	sudo mkfs -t vfat /dev/mapper/loop*p1
+	sudo mkfs.fat -F 32 /dev/mapper/loop*p1
 	sudo kpartx -d ./$(DISK)
 
 image: $(DISK) limine kernel libc $(APPS) $(DRIVERS) initrd 

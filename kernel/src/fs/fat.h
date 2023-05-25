@@ -21,7 +21,7 @@ pstruct
     uint32_t sectorsPerFat;
     uint16_t flags;
     uint16_t version;
-    uint32_t clusterNumber;
+    uint32_t rootClusterNumber;
     uint16_t sectorNumberFSInfo;
     uint16_t backupBootSector;
     uint8_t reserved2[12];
@@ -34,6 +34,33 @@ pstruct
     uint8_t bootCode[420];
     uint16_t bootSignature;
 } fat_bpb_t;
+
+pstruct
+{
+    unsigned readOnly : 1;
+    unsigned hidden : 1;
+    unsigned system : 1;
+    unsigned volumeID : 1;
+    unsigned directory : 1;
+    unsigned archive : 1;
+    unsigned reserved : 2;
+} fat_attributes_t;
+
+pstruct
+{
+    char name[11];
+    fat_attributes_t attributes;
+    uint8_t flags;
+    uint8_t timeResolution;
+    uint16_t creationTime;
+    uint16_t creationDate;
+    uint16_t lastAccessDate;
+    uint16_t clusterHigh;
+    uint16_t lastWriteTime;
+    uint16_t lastWriteDate;
+    uint16_t clusterLow;
+    uint32_t size;
+} fat_dir_t;
 
 pstruct
 {

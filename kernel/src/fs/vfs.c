@@ -29,7 +29,7 @@ void vfsInit()
 }
 
 // add a node
-void vfsAdd(struct vfs_node_t node)
+struct vfs_node_t *vfsAdd(struct vfs_node_t node)
 {
     uint64_t id = lastNode++;
     node.id = id;
@@ -55,6 +55,8 @@ void vfsAdd(struct vfs_node_t node)
     vfsGetPath((uint64_t)&node, buffer);
     logDbg(LOG_SERIAL_ONLY, "vfs: adding node %s", buffer);
 #endif
+
+    return currentNode;
 }
 
 // add a drive node
