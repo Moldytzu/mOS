@@ -6,6 +6,14 @@
 #define CONTEXT(x) ((fat_context_t *)(x))
 #define CLUSTER(x) (x.clusterHigh << 16 | x.clusterLow)
 
+#define FAT_START(fs) (fs->reservedSectors)
+#define FAT_SECTORS(fs) (fs->sectorsPerFat * fs->fats)
+#define FAT_ROOT_START(fs) (FAT_START(fs) + FAT_SECTORS(fs))
+#define FAT_ROOT_SECTORS(fs) ((32 * fs->rootDirectoryEntries + fs->bytesPerSector - 1) / fs->bytesPerSector)
+#define FAT_DATA_START(fs) (FAT_ROOT_START(fs) + FAT_ROOT_SECTORS(fs))
+#define FAT_DATA_SECTORS(fs) (fs->totalSectors32 - FAT_DATA_START(fs))
+#define FAT_CLUSTERS(fs) (FAT_DATA_SECTORS(fs) / fs->sectorsPerCluster)
+
 bool fatIsValid(fat_bpb_t *bpb)
 {
     return bpb->bootSignature == VFS_MBR_SIGNATURE;
@@ -34,23 +42,12 @@ void fatMap(struct vfs_node_t *root)
     vfs_partition_t parition = CONTEXT(root->filesystem->context)->drive->partitions[partitionIdx];
     fat_bpb_t *fs = CONTEXT(root->filesystem->context)->bpb;
 
-    uint32_t fatStartSector = fs->reservedSectors;
-    uint32_t fatSectors = fs->sectorsPerFat * fs->fats;
-
-    uint32_t rootDirectoryStartSector = fatStartSector + fatSectors;
-    uint32_t rootDirectorySectors = (32 * fs->rootDirectoryEntries + fs->bytesPerSector - 1) / fs->bytesPerSector;
-
-    uint32_t dataStartSector = rootDirectoryStartSector + rootDirectorySectors;
-    uint32_t dataSectors = fs->totalSectors32 - dataStartSector;
-
-    uint32_t clusters = dataSectors / fs->sectorsPerCluster;
-
-    if (fs->rootDirectoryEntries != 0 || clusters <= 65526) // not FAT32
+    if (fs->rootDirectoryEntries != 0 || FAT_CLUSTERS(fs) <= 65526) // not FAT32
         return;
 
     fat_dir_t *entries = pmmPage();
 
-    CONTEXT(root->filesystem->context)->drive->read(entries, parition.startLBA + rootDirectoryStartSector, 4096 / VFS_SECTOR);
+    CONTEXT(root->filesystem->context)->drive->read(entries, parition.startLBA + FAT_ROOT_START(fs), 4096 / VFS_SECTOR);
     for (int i = 0; !fatDirValid(entries[i]); i++)
     {
         fat_dir_t entry = entries[i];
