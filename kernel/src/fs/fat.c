@@ -42,7 +42,7 @@ void fatMap(struct vfs_node_t *root)
 
     fat_dir_t *rootDirectory = pmmPage();
 
-    CONTEXT(root->filesystem->context)->drive->read(rootDirectory, parition.startLBA + rootDirectoryStartSector, 1);
+    CONTEXT(root->filesystem->context)->drive->read(rootDirectory, parition.startLBA + rootDirectoryStartSector, 4096 / VFS_SECTOR);
     for (int i = 0; !isFree(rootDirectory[i]); i++)
     {
         if (rootDirectory[i].attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
@@ -58,23 +58,22 @@ void fatMap(struct vfs_node_t *root)
             if (rootDirectory[i].name[last] == ' ')
                 break;
 
+        // parse 8.3 file name
         char name[12];
         zero(name, sizeof(name));
-        memcpy(name, rootDirectory[i].name, last);
-        name[last] = '.';
-        memcpy(name + last + 1, &rootDirectory[i].name[8], 3);
+        memcpy(name, rootDirectory[i].name, last);             // copy the text before the extension
+        name[last] = '.';                                      // put the extension dot
+        memcpy(name + last + 1, &rootDirectory[i].name[8], 3); // copy the extension
 
-        for(int i = 0; i < 12; i++)
+        for (int i = 0; i < 12; i++) // lower all the characters
             name[i] = tolower(name[i]);
 
-        printks("name: %s", name);
+        printks("name: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, rootDirectory[i].attributes, cluster, rootDirectory[i].size);
 
-        printks("; attr: 0x%x; cluster: 0x%x; size: %d b\n", rootDirectory[i].attributes, cluster, rootDirectory[i].size);
-
-        struct vfs_node_t node;
-        zero(&node, sizeof(node));
-        node.filesystem = root->filesystem;
-        memcpy(node.path, name, 12);
+        struct vfs_node_t node;             // create a node
+        zero(&node, sizeof(node));          // zero it
+        node.filesystem = root->filesystem; // set the filesystem
+        memcpy(node.path, name, 12);        // copy the name
         vfsAdd(node);
     }
 }

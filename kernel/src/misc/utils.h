@@ -110,7 +110,7 @@ ifunc void strrev(char *str)
 }
 
 // lower an uppercase character
-char tolower(char c)
+ifunc char tolower(char c)
 {
     if(between(c, 'A', 'Z'))
         return c + 32;
