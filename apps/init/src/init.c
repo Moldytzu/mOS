@@ -125,7 +125,7 @@ void parseCFG()
     uint32_t screenX = cfgUint("SCREEN_WIDTH");
     uint32_t screenY = cfgUint("SCREEN_HEIGHT");
 
-    if(!screenX | !screenY) // invalid resolution
+    if (!screenX | !screenY) // invalid resolution
     {
         // set a fail-safe resolution
         screenX = 640;
@@ -153,6 +153,7 @@ void parseCFG()
         {
             drivers[i] = '\0';                                     // terminate string
             sys_driver(SYS_DRIVER_START, (uint64_t)(start), 0, 0); // start the driver
+            sys_yield();                                           // then wait
 
             if (verbose)
                 printf("Started driver %s\n", start);
@@ -161,14 +162,13 @@ void parseCFG()
         }
     }
 
-    if(verbose)
-        printf("Setting screen resolution to %ux%u\n",screenX,screenY);
+    if (verbose)
+        printf("Setting screen resolution to %ux%u\n", screenX, screenY);
 
-    for(int i = 0; i < 20; i++) // it is not guranteed the fb driver has started so we try 20 times to set the resolution (todo: ask the kernel)
-    {
-        sys_display(SYS_DISPLAY_SET, screenX, screenY);
+    for (int i = 0; i < 20; i++) // wait 20 cycles for the video driver to start (todo: ask the kernel)
         sys_yield();
-    }
+
+    sys_display(SYS_DISPLAY_SET, screenX, screenY);
 }
 
 void eventLoop()
