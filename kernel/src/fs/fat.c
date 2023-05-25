@@ -64,6 +64,9 @@ void fatMap(struct vfs_node_t *root)
         name[last] = '.';
         memcpy(name + last + 1, &rootDirectory[i].name[8], 3);
 
+        for(int i = 0; i < 12; i++)
+            name[i] = tolower(name[i]);
+
         printks("name: %s", name);
 
         printks("; attr: 0x%x; cluster: 0x%x; size: %d b\n", rootDirectory[i].attributes, cluster, rootDirectory[i].size);

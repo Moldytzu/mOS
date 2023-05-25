@@ -109,6 +109,15 @@ ifunc void strrev(char *str)
     }
 }
 
+// lower an uppercase character
+char tolower(char c)
+{
+    if(between(c, 'A', 'Z'))
+        return c + 32;
+    
+    return c;
+}
+
 // copy memory (8 bits)
 ifunc void memcpy8(void *dest, void *src, size_t count)
 {
