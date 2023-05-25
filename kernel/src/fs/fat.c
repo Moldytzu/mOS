@@ -39,15 +39,16 @@ bool fatDirValid(fat_dir_t dir)
 void fatMap(struct vfs_node_t *root)
 {
     size_t partitionIdx = CONTEXT(root->filesystem->context)->partition;
-    vfs_partition_t parition = CONTEXT(root->filesystem->context)->drive->partitions[partitionIdx];
+    vfs_partition_t partition = CONTEXT(root->filesystem->context)->drive->partitions[partitionIdx];
     fat_bpb_t *fs = CONTEXT(root->filesystem->context)->bpb;
+    fat_context_t *context = CONTEXT(root->filesystem->context);
 
     if (fs->rootDirectoryEntries != 0 || FAT_CLUSTERS(fs) <= 65526) // not FAT32
         return;
 
     fat_dir_t *entries = pmmPage();
 
-    CONTEXT(root->filesystem->context)->drive->read(entries, parition.startLBA + FAT_ROOT_START(fs), 4096 / VFS_SECTOR);
+    context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), 4096 / VFS_SECTOR);
     for (int i = 0; !fatDirValid(entries[i]); i++)
     {
         fat_dir_t entry = entries[i];
@@ -57,8 +58,6 @@ void fatMap(struct vfs_node_t *root)
 
         if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry (todo: parse that)
             continue;
-
-        uint32_t cluster = CLUSTER(entry);
 
         int last = 0; // get last character that isn't a space
         for (; last < 8; last++)
@@ -75,7 +74,16 @@ void fatMap(struct vfs_node_t *root)
         for (int i = 0; i < 12; i++) // lower all the characters
             name[i] = tolower(name[i]);
 
-        printks("name: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, entry.attributes, cluster, entry.size);
+        char *contents = pmmPage();
+        
+        size_t sector = partition.startLBA + (CLUSTER(entry) - 2) * fs->sectorsPerCluster + FAT_DATA_START(fs);
+        context->drive->read(contents, sector, 1);
+        
+        printks("name: %s; attr: 0x%x; cluster: 0x%x; size: %d b; sector %d\n", name, entry.attributes, CLUSTER(entry), entry.size, sector);
+        
+        for (int j = 0; j < 16; j++)
+            printks("%c", contents[j]);
+        printks("\n");
 
         struct vfs_node_t node;             // create a node
         zero(&node, sizeof(node));          // zero it
