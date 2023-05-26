@@ -53,7 +53,7 @@ void kmain()
     ataInit();
 #endif
 
-#if 0
+#if 1
     ahciInit();
 
     while (1);

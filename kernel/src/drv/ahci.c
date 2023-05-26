@@ -60,15 +60,14 @@ pstruct
     uint32_t commandIssue;
     uint32_t sataNotification;
     uint32_t fisSwitchControl;
-    uint32_t deviceSleep;
-    uint32_t reserved2;
-    uint32_t vendorSpecific;
+    uint32_t reserved2[11];
+    uint32_t vendorSpecific[4];
 }
 ahci_port_t;
 
 pstruct
 {
-    unsigned commandFISlen : 4;
+    unsigned commandFISlen : 5;
     unsigned atapi : 1;
     unsigned write : 1;
     unsigned prefetchable : 1;
@@ -121,7 +120,7 @@ pstruct
     uint32_t baseHigh;
     uint32_t reserved;
     uint32_t byteCount : 22;
-    uint32_t reserved0;
+    uint32_t reserved0 : 9;
     uint32_t interruptOnCompletion : 1;
 }
 ahci_prdt_t;
@@ -131,7 +130,7 @@ pstruct
     uint8_t commandFIS[64];
     uint8_t atapiCommand[16];
     uint8_t reserved[48];
-    ahci_prdt_t prdt[];
+    ahci_prdt_t prdt[1];
 }
 ahci_command_table_t;
 
@@ -239,10 +238,10 @@ void ahciPortRead(ahci_port_t *port, void *buffer, uint64_t sector, uint32_t sec
 
     ahci_fis_reg_host_device_t *fis = (ahci_fis_reg_host_device_t *)(port->fisBaseLow);
     zero(fis, sizeof(ahci_fis_reg_host_device_t));
-    fis->fisType = 0x27;                               // host -> device
-    fis->command = 0x25;                               // READ DMA EXT
-    fis->commandControl = 1;                           // is command
-    fis->deviceRegister = (sector >> 24) & 0xF | 0x40; // enable LBA mode
+    fis->fisType = 0x27;          // host -> device
+    fis->command = 0x25;          // READ DMA EXT
+    fis->commandControl = 1;      // is command
+    fis->deviceRegister = 1 << 6; // enable LBA mode
     fis->isoCommandCompletion = 1;
 
     fis->lba0 = (uint8_t)sector;
