@@ -131,10 +131,8 @@ uint64_t vfsOpen(const char *name)
         if (!currentNode->filesystem)
             goto next;
 
-        // memory functions equivalent of sprintf("%s%s"...);
         zero((void *)tmp, sizeof(tmp));
-        memcpy((void *)tmp, currentNode->filesystem->mountName, strlen(currentNode->filesystem->mountName));
-        memcpy((void *)(tmp + strlen(currentNode->filesystem->mountName)), currentNode->path, strlen(currentNode->path));
+        sprintf((char *)tmp, "%s%s", currentNode->filesystem->mountName, currentNode->path); // maybe we could call vfsGetPath?
 
         if (strcmp(tmp, name) != 0) // compare the temp and the name
             goto next;
@@ -212,8 +210,7 @@ void vfsGetPath(uint64_t fd, void *buffer)
     if (!ISVALID(node))
         return;
 
-    memcpy((void *)buffer, node->filesystem->mountName, strlen(node->filesystem->mountName));
-    memcpy((void *)(buffer + strlen(node->filesystem->mountName)), node->path, strlen(node->path));
+    sprintf(buffer, "%s%s", node->filesystem->mountName, node->path);
 }
 
 // check if mbr sector is valid

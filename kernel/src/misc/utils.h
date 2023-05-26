@@ -30,7 +30,10 @@
         atomicRelease(&l); \
     }
 #else
-#define lock(l, cmds) {cmds}
+#define lock(l, cmds) \
+    {                 \
+        cmds          \
+    }
 #define release(l)
 #endif
 
@@ -112,9 +115,9 @@ ifunc void strrev(char *str)
 // lower an uppercase character
 ifunc char tolower(char c)
 {
-    if(between(c, 'A', 'Z'))
+    if (between(c, 'A', 'Z'))
         return c + 32;
-    
+
     return c;
 }
 
@@ -195,6 +198,9 @@ void printk(const char *fmt, ...);
 void printks(const char *fmt, ...);
 void printk_impl(const char *fmt, va_list list);
 void printks_impl(const char *fmt, va_list list);
+
+// sprintf
+void sprintf(char *str, const char *fmt, ...);
 
 // inline assembly shortcuts
 ifunc void cli()

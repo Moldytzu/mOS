@@ -120,6 +120,47 @@ void printks(const char *fmt, ...)
     va_end(list);
 }
 
+void sprintf(char *str, const char *fmt, ...)
+{
+    va_list list;
+    va_start(list, fmt);
+    for (size_t i = 0; fmt[i]; i++)
+    {
+        if (fmt[i] != '%')
+        {
+            *(str++) = fmt[i];
+            continue;
+        }
+
+        switch (fmt[i + 1])
+        {
+        case 'd': // decimal
+            const char *dec = to_string(va_arg(list, uint64_t));
+            for (size_t j = 0; j < strlen(dec); j++)
+                *(str++) = dec[j];
+            break;
+        case 'p': // pointer/hex
+        case 'x':
+            const char *hex = to_hstring(va_arg(list, uint64_t));
+            for (size_t j = 0; j < strlen(hex); j++)
+                *(str++) = hex[j];
+            break;
+        case 's': // string
+            const char *s = va_arg(list, const char *);
+            for (size_t j = 0; j < strlen(s); j++)
+                *(str++) = s[j];
+            break;
+        case 'c': // char
+            *(str++) = va_arg(list, int);
+            break;
+        default:
+            break;
+        }
+        i++;
+    }
+    va_end(list);
+}
+
 // copy memory
 void *memcpy(void *dest, const void *src, size_t num)
 {
