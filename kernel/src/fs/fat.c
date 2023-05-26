@@ -126,8 +126,14 @@ void fatFSRead(struct vfs_node_t *node, void *buffer, uint64_t size, uint64_t of
     vfs_partition_t partition = context->drive->partitions[partitionIdx];
     fat_bpb_t *fs = context->bpb;
 
+    size_t pages = size / PMM_PAGE + 1;
+    size_t sectors = size / VFS_SECTOR + 1;
     size_t sector = partition.startLBA + (CLUSTER(entry) - 2) * fs->sectorsPerCluster + FAT_DATA_START(fs);
-    context->drive->read(buffer, sector, 1); // todo: respect size and offset (todo: read to a buffer)
+
+    void *tmp = pmmPages(pages);                // allocate a temporary buffer
+    context->drive->read(tmp, sector, sectors); // call the drive
+    memcpy(buffer, tmp + offset, size);         // copy the sector
+    pmmDeallocatePages(tmp, pages);             // deallocate
 }
 
 // open handler
