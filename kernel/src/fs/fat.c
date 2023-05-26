@@ -36,8 +36,23 @@ void fatParseSFN(char *name, fat_dir_t *entry)
     name[last] = '.';                            // put the extension dot
     memcpy(name + last + 1, &entry->name[8], 3); // copy the extension
 
+#ifdef K_FAT_LOWER_SFN
     for (int i = 0; i < 12; i++) // lower all the characters
         name[i] = tolower(name[i]);
+#endif
+}
+
+size_t fatParseLFN(char *name, fat_lfn_t *entry)
+{
+    size_t index = 0;
+    for (int i = 0; i < 5; i++)
+        name[index++] = entry->name1[i] & 0xFF;
+    for (int i = 0; i < 6; i++)
+        name[index++] = entry->name2[i] & 0xFF;
+    for (int i = 0; i < 2; i++)
+        name[index++] = entry->name3[i] & 0xFF;
+
+    return entry->order & ~0x40; // clean up to get the order
 }
 
 fat_dir_t fatGetEntry(struct vfs_node_t *node)
@@ -123,15 +138,20 @@ void fatMap(struct vfs_node_t *root)
         {
             fat_lfn_t lfn = *(fat_lfn_t *)&entry;
 
-            printks("lfn: ");
-            for (int i = 0; i < 5; i++)
-                printks("%c", lfn.name1[i] & 0xFF);
-            for (int i = 0; i < 6; i++)
-                printks("%c", lfn.name2[i] & 0xFF);
-            for (int i = 0; i < 2; i++)
-                printks("%c", lfn.name3[i] & 0xFF);
+            char name[256];
+            zero(name, sizeof(name));
 
-            printks("\n");
+            size_t order = lfn.order & ~0x40; // strip out the bit that indicates the owner
+
+            for (int k = 0; k < order; k++)
+            {
+                fat_lfn_t l = *(fat_lfn_t *)&entries[i + k];
+                fatParseLFN(name + 13 * (order - 1 - k), &l); // parse then reverse its location because lfns are sequencially ordered (from x to 1 where x is a natural number)
+            }
+
+            printks("lfn: %x %s\n", order, name);
+
+            i += order - 1;
 
             continue;
         }
@@ -150,6 +170,9 @@ void fatMap(struct vfs_node_t *root)
         memcpy(node.path, name, 12);        // copy the name
         vfsAdd(node);
     }
+
+    while (1)
+        ;
 
     pmmDeallocate(entries);
 }
