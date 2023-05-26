@@ -119,13 +119,29 @@ void fatMap(struct vfs_node_t *root)
         if (entry.attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
             continue;
 
-        if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry (todo: parse that)
+        if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry
+        {
+            fat_lfn_t lfn = *(fat_lfn_t *)&entry;
+
+            printks("lfn: ");
+            for (int i = 0; i < 5; i++)
+                printks("%c", lfn.name1[i] & 0xFF);
+            for (int i = 0; i < 6; i++)
+                printks("%c", lfn.name2[i] & 0xFF);
+            for (int i = 0; i < 2; i++)
+                printks("%c", lfn.name3[i] & 0xFF);
+
+            printks("\n");
+
             continue;
+        }
 
         // parse 8.3 file name
-        char name[12];
+        char name[13];
         zero(name, sizeof(name));
         fatParseSFN(name, &entry);
+
+        printks("name: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, entry.attributes, CLUSTER(entry), entry.size);
 
         struct vfs_node_t node;             // create a node
         zero(&node, sizeof(node));          // zero it

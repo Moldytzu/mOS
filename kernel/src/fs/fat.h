@@ -64,6 +64,18 @@ pstruct
 
 pstruct
 {
+    uint8_t order;
+    uint16_t name1[5];
+    fat_attributes_t attributes;
+    uint8_t lfnType;
+    uint8_t checksum;
+    uint16_t name2[6];
+    uint16_t reserved;
+    uint16_t name3[2];
+} fat_lfn_t;
+
+pstruct
+{
     fat_bpb_t *bpb;
     vfs_drive_t *drive;
     size_t partition;
