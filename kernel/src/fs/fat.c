@@ -126,6 +126,7 @@ void fatMap(struct vfs_node_t *root)
 
     fat_dir_t *entries = pmmPage();
 
+    char lname[256];
     context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), 4096 / VFS_SECTOR);
     for (int i = 0; fatDirValid(entries[i]); i++)
     {
@@ -138,18 +139,17 @@ void fatMap(struct vfs_node_t *root)
         {
             fat_lfn_t lfn = *(fat_lfn_t *)&entry;
 
-            char name[256];
-            zero(name, sizeof(name));
+            zero(lname, sizeof(lname));
 
             size_t order = lfn.order & ~0x40; // strip out the bit that indicates the owner
 
             for (int k = 0; k < order; k++)
             {
                 fat_lfn_t l = *(fat_lfn_t *)&entries[i + k];
-                fatParseLFN(name + 13 * (order - 1 - k), &l); // parse then reverse its location because lfns are sequencially ordered (from x to 1 where x is a natural number)
+                fatParseLFN(lname + 13 * (order - 1 - k), &l); // parse then reverse its location because lfns are sequencially ordered (from x to 1 where x is a natural number)
             }
 
-            printks("lfn: %x %s\n", order, name);
+            printks("lfn: %x %s\n", order, lname);
 
             i += order - 1;
 
@@ -161,18 +161,21 @@ void fatMap(struct vfs_node_t *root)
         zero(name, sizeof(name));
         fatParseSFN(name, &entry);
 
-        printks("name: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, entry.attributes, CLUSTER(entry), entry.size);
+        printks("name: %s; lname: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, lname, entry.attributes, CLUSTER(entry), entry.size);
 
         struct vfs_node_t node;             // create a node
         zero(&node, sizeof(node));          // zero it
         node.filesystem = root->filesystem; // set the filesystem
         node.size = entry.size;             // set the size
-        memcpy(node.path, name, 12);        // copy the name
-        vfsAdd(node);
-    }
 
-    while (1)
-        ;
+        if (strlen(lname))
+            memcpy(node.path, lname, min(strlen(lname), 127)); // copy the long name
+        else
+            memcpy(node.path, name, 12); // copy the short name
+
+        vfsAdd(node);
+        zero(lname, sizeof(lname));
+    }
 
     pmmDeallocate(entries);
 }
