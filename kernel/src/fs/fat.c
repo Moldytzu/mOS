@@ -64,6 +64,8 @@ fat_dir_t fatGetEntry(struct vfs_node_t *node)
     fat_dir_t *entries = pmmPage();
 
     context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), 4096 / VFS_SECTOR);
+
+    char lname[256];
     for (int i = 0; fatDirValid(entries[i]); i++)
     {
         fat_dir_t entry = entries[i];
@@ -71,14 +73,35 @@ fat_dir_t fatGetEntry(struct vfs_node_t *node)
         if (entry.attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
             continue;
 
-        if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry (todo: parse that)
-            continue;
+        if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry
+        {
+            fat_lfn_t lfn = *(fat_lfn_t *)&entry;
 
+            zero(lname, sizeof(lname));
+
+            size_t order = lfn.order & ~0x40; // strip out the bit that indicates the owner
+
+            for (int k = 0; k < order; k++)
+            {
+                fat_lfn_t l = *(fat_lfn_t *)&entries[i + k];
+                fatParseLFN(lname + 13 * (order - 1 - k), &l); // parse then reverse its location because lfns are sequencially ordered (from x to 1 where x is a natural number)
+            }
+
+            printks("lfn: %x %s\n", order, lname);
+
+            i += order - 1;
+
+            continue;
+        }
+
+        // parse 8.3 file name
         char name[12];
         zero(name, sizeof(name));
-        fatParseSFN(name, &entry); // parse the name
+        fatParseSFN(name, &entry);
 
-        if (strcmp(node->path, name) != 0) // compare the names
+        printks("name: %s; lname: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, lname, entry.attributes, CLUSTER(entry), entry.size);
+
+        if (strcmp(node->path, lname) != 0 && strcmp(node->path, name) != 0) // compare the names
             continue;
 
         pmmDeallocate(entries);
