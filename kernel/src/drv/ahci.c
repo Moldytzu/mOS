@@ -6,264 +6,154 @@
 #include <mm/pmm.h>
 #include <sched/time.h>
 
-pstruct
-{
-    uint16_t VendorID;
-    uint16_t DeviceID;
-    uint16_t Command;
-    uint16_t Status;
-    uint8_t RevisionID;
-    uint8_t ProgramInterface;
-    uint8_t Subclass;
-    uint8_t Class;
-    uint8_t CacheLineSize;
-    uint8_t LatencyTimer;
-    uint8_t HeaderType;
-    uint8_t BIST;
-    uint32_t BAR0;
-    uint32_t BAR1;
-    uint32_t BAR2;
-    uint32_t BAR3;
-    uint32_t BAR4;
-    uint32_t BAR5;
-    uint32_t CardBusCISPtr;
-    uint16_t SubsystemVendorID;
-    uint16_t SubsystemID;
-    uint16_t ExpansionRomBaseAddr;
-    uint16_t CapabilitiesPtr;
-    uint16_t Rsv0;
-    uint16_t Rsv1;
-    uint16_t Rsv2;
-    uint8_t IntreruptLine;
-    uint8_t IntreruptPin;
-    uint8_t MinGrant;
-    uint8_t MaxLatency;
-}
-drv_pci_header0_t;
-
-pstruct
-{
-    uint32_t commandListBaseLow;
-    uint32_t commandListBaseHigh;
-    uint32_t fisBaseLow;
-    uint32_t fisBaseHigh;
-    uint32_t interruptStatus;
-    uint32_t interruptEnable;
-    uint32_t commandStatus;
-    uint32_t reserved;
-    uint32_t taskFileData;
-    uint32_t signature;
-    uint32_t sataStatus;
-    uint32_t sataControl;
-    uint32_t sataError;
-    uint32_t sataActive;
-    uint32_t commandIssue;
-    uint32_t sataNotification;
-    uint32_t fisSwitchControl;
-    uint32_t reserved2[11];
-    uint32_t vendorSpecific[4];
-}
-ahci_port_t;
-
-pstruct
-{
-    unsigned commandFISlen : 5;
-    unsigned atapi : 1;
-    unsigned write : 1;
-    unsigned prefetchable : 1;
-    unsigned reset : 1;
-    unsigned bist : 1;
-    unsigned clearBusyOk : 1;
-    unsigned reserved : 1;
-    unsigned portMultiplier : 4;
-    uint16_t regionDescriptorTableLen;
-    uint32_t regionDescriptorByteCount;
-    uint32_t commandBaseLow;
-    uint32_t commandBaseHigh;
-    uint32_t reserved0[4];
-}
-ahci_command_header_t;
-
-pstruct
-{
-    uint8_t fisType;
-
-    uint8_t portMultiplier : 4;
-    uint8_t reserved0 : 3;
-    uint8_t commandControl : 1;
-
-    uint8_t command;
-    uint8_t featureLow;
-
-    uint8_t lba0;
-    uint8_t lba1;
-    uint8_t lba2;
-    uint8_t deviceRegister;
-
-    uint8_t lba3;
-    uint8_t lba4;
-    uint8_t lba5;
-    uint8_t featureHigh;
-
-    uint8_t countLow;
-    uint8_t countHigh;
-    uint8_t isoCommandCompletion;
-    uint8_t control;
-
-    uint8_t reserved1[4];
-}
-ahci_fis_reg_host_device_t;
-
-pstruct
-{
-    uint32_t base;
-    uint32_t baseHigh;
-    uint32_t reserved;
-    uint32_t byteCount : 22;
-    uint32_t reserved0 : 9;
-    uint32_t interruptOnCompletion : 1;
-}
-ahci_prdt_t;
-
-pstruct
-{
-    uint8_t commandFIS[64];
-    uint8_t atapiCommand[16];
-    uint8_t reserved[48];
-    ahci_prdt_t prdt[1];
-}
-ahci_command_table_t;
-
-void *ahciABAR;                       // ahci's pci bar 5
+ahci_hba_mem_t *abar;                 // ahci's pci bar 5
 drv_pci_header0_t *ahciBase;          // base pointer to pci header
 acpi_pci_descriptor_t ahciDescriptor; // descriptor that houses the header and the address
 bool portImplemented[32];             // stores which ports are present
 uint8_t portsImplemented = 0;         // stores how many ports are present
 uint32_t commandSlots = 0;            // stores how many command slots the ahci hba supports
+void *abase;                          // adressing space for buffers
 
-// read from abar at offset
-uint32_t ahciRead(uint32_t offset)
+// find a free command list slot
+int ahciPortSlot(ahci_port_t *port)
 {
-    return *(uint32_t *)((uint64_t)ahciABAR + offset);
-}
-
-// write to abar at offset
-void ahciWrite(uint32_t offset, uint32_t data)
-{
-    *(uint32_t *)((uint64_t)ahciABAR + offset) = data;
-}
-
-// get pointer base address as shown by bits set in PI
-ahci_port_t *ahciPort(uint8_t bit)
-{
-    return (ahci_port_t *)((uint64_t)ahciABAR + 0x100 + 0x80 * bit);
-}
-
-uint32_t ahciPortCommandSlot(ahci_port_t *port)
-{
-    uint32_t slots = (port->sataControl | port->commandIssue); // if bits in sata controll and command issue then the slot is free
-    for (uint32_t i = 0; i < commandSlots; i++)
+    // if not set in SACT and CI, the slot is free
+    uint32_t slots = (port->sact | port->ci);
+    for (int i = 0; i < commandSlots; i++)
     {
         if ((slots & 1) == 0)
             return i;
         slots >>= 1;
     }
-    return 0xFFFFFF;
+    return -1;
 }
 
-// force a port in idle
-void ahciPortStop(ahci_port_t *port)
+// read using dma from a port
+bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf)
 {
-    // disable fis and disable commands
-    port->commandIssue &= ~(0x1);  // unset start bit (bit 0)
-    port->commandIssue &= ~(0x10); // unset fis receive enable (bit 4)
+    port->is = (uint32_t)-1;       // clear interrupts
+    int slot = ahciPortSlot(port); // allocate a slot
+    if (slot == -1)
+        return false;
 
-    // spec recommends waiting 500 miliseconds for this to happen and if after that time period the bits weren't disable we should perform a hba reset or a port reset
-    // for sake of speed and simplicity we just have a while loop
+    ahci_command_header_t *cmdheader = (ahci_command_header_t *)port->clb;
+    cmdheader += slot;
+    cmdheader->cfl = sizeof(ahci_fis_h2d_t) / sizeof(uint32_t); // Command FIS size
+    cmdheader->w = 0;                                           // Read from device
+    cmdheader->prdtl = (uint16_t)((count - 1) >> 4) + 1;        // PRDT entries count
 
-    // wait for fis running and command running to be clear
-    while (port->commandIssue & 0x4000 || port->commandIssue & 0x8000)
-        timeSleepMilis(1);
+    ahci_tbl_t *cmdtbl = (ahci_tbl_t *)(cmdheader->ctba);
+    memset(cmdtbl, 0, sizeof(ahci_tbl_t) + (cmdheader->prdtl - 1) * sizeof(ahci_prdt_t));
+
+    int i = 0;
+    // 8K bytes (16 sectors) per PRDT
+    for (; i < cmdheader->prdtl - 1; i++)
+    {
+        cmdtbl->prdt_entry[i].dba = (uint32_t)(uint64_t)buf;
+        cmdtbl->prdt_entry[i].dbc = 8 * 1024 - 1; // 8K bytes (this value should always be set to 1 less than the actual value)
+        cmdtbl->prdt_entry[i].i = 1;
+        buf += 4 * 1024; // 4K words
+        count -= 16;     // 16 sectors
+    }
+    // Last entry
+    cmdtbl->prdt_entry[i].dba = (uint32_t)(uint64_t)buf;
+    cmdtbl->prdt_entry[i].dbc = count * 512 - 1; // 512 bytes per sector
+    cmdtbl->prdt_entry[i].i = 1;
+
+    // Setup command
+    ahci_fis_h2d_t *cmdfis = (ahci_fis_h2d_t *)(&cmdtbl->cfis);
+
+    cmdfis->fis_type = FIS_TYPE_REG_H2D;   // host -> device
+    cmdfis->c = 1;                         // is command
+    cmdfis->command = ATA_CMD_READ_DMA_EX; // read with dma
+    cmdfis->device = 1 << 6;               // LBA mode
+
+    cmdfis->lba0 = (uint8_t)startl;
+    cmdfis->lba1 = (uint8_t)(startl >> 8);
+    cmdfis->lba2 = (uint8_t)(startl >> 16);
+    cmdfis->lba3 = (uint8_t)(startl >> 24);
+    cmdfis->lba4 = (uint8_t)starth;
+    cmdfis->lba5 = (uint8_t)(starth >> 8);
+
+    cmdfis->countl = count & 0xFF;
+    cmdfis->counth = (count >> 8) & 0xFF;
+
+    // wait for the port to be idle
+    while ((port->tfd & (ATA_DEV_BUSY | ATA_DEV_DRQ)))
+        pause();
+
+    port->ci = 1 << slot; // issue command
+
+    // wait for completion
+    while (1)
+        if ((port->ci & (1 << slot)) == 0)
+            break;
+
+    return true;
 }
 
-// start a port
+// read from abar at offset
+uint32_t ahciRead(uint32_t offset)
+{
+    return *(uint32_t *)((uint64_t)abar + offset);
+}
+
+// write to abar at offset
+void ahciWrite(uint32_t offset, uint32_t data)
+{
+    *(uint32_t *)((uint64_t)abar + offset) = data;
+}
+
+// get pointer base address as shown by bits set in PI
+ahci_port_t *ahciPort(uint8_t bit)
+{
+    return (ahci_port_t *)((uint64_t)abar + 0x100 + 0x80 * bit);
+}
+
+// start command engine
 void ahciPortStart(ahci_port_t *port)
 {
-    while (port->commandIssue & 0x8000)
-        ; // wait for commands to not be running
+    // Wait until CR (bit15) is cleared
+    while (port->cmd & HBA_PxCMD_CR)
+        ;
 
-    port->commandIssue |= 0x11; // set start bit (bit 0) and fis receive enable (bit 4)
-    port->interruptEnable = 1;
+    // Set FRE (bit 4) and ST (bit 0)
+    port->cmd |= (HBA_PxCMD_FRE | HBA_PxCMD_ST);
 }
 
-// determine if a port is idle
-bool ahciPortIsIdle(ahci_port_t *port)
+// stop command engine
+void ahciPortStop(ahci_port_t *port)
 {
-    return !(port->commandIssue & 0) && !(port->commandIssue & 0x8000) && !(port->commandIssue & 0x10); // a port is idle if fis receive enable, command list running and start are clear
+    // clear ST (bit 0) and FRE (bit 4)
+    port->cmd &= ~(HBA_PxCMD_ST | HBA_PxCMD_FRE);
+
+    // wait until FR (bit 14), CR (bit 15) are cleared
+    while (port->cmd & HBA_PxCMD_FR || port->cmd & HBA_PxCMD_CR)
+        ;
 }
 
-void ahciPortRead(ahci_port_t *port, void *buffer, uint64_t sector, uint32_t sectorCount)
+void ahciPortAllocate(ahci_port_t *port, int portno)
 {
-    // todo: don't use magic numbers
-    port->interruptStatus = 0xFFFFFFFF; // clear interrupts
+    ahciPortStop(port); // stop command engine
 
-    uint32_t slot = ahciPortCommandSlot(port);
-    if (slot == 0xFFFFFF) // fail (todo: maybe we could return bool instead of void to indicate error status??)
-        return;
+    port->clb = (uint32_t)(uint64_t)abase + (portno << 10);
+    port->clbu = 0;
+    zero((void *)port->clb, 1024);
 
-    logInfo("slot %x is available", slot);
+    port->fb = (uint32_t)(uint64_t)abase + (32 << 10) + (portno << 8);
+    port->fbu = 0;
+    zero((void *)port->fb, 256);
 
-    ahci_command_header_t *cmdHeader = (ahci_command_header_t *)((uint64_t)port->commandListBaseHigh << 32 | port->commandListBaseLow);
-    cmdHeader += slot;                                                                // jump to the correct command slot
-    cmdHeader->commandFISlen = sizeof(ahci_fis_reg_host_device_t) / sizeof(uint32_t); // command fis size
-    cmdHeader->write = 0;                                                             // indicate this is a read
-    cmdHeader->regionDescriptorTableLen = (uint16_t)((sectorCount - 1) >> 4) + 1;
-
-    ahci_command_table_t *commandTable = (void *)((uint64_t)cmdHeader->commandBaseHigh << 32 | cmdHeader->commandBaseLow);
-    uint32_t count = sectorCount;
-    int i = 0;
-    for (; i < cmdHeader->regionDescriptorTableLen - 1; i++)
+    ahci_command_header_t *cmdheader = (ahci_command_header_t *)(port->clb);
+    for (int i = 0; i < 32; i++)
     {
-        commandTable->prdt[i].base = (uint32_t)(uint64_t)buffer;
-        commandTable->prdt[i].baseHigh = (uint32_t)((uint64_t)buffer >> 32);
-        commandTable->prdt[i].byteCount = 8 * 1024 - 1;
-        commandTable->prdt[i].interruptOnCompletion = 1;
-        buffer += (2 * VMM_PAGE) / sizeof(uint16_t); // two pages
-        count -= 16;
+        cmdheader[i].prdtl = 8;
+        cmdheader[i].ctba = (uint32_t)(uint64_t)abase + (40 << 10) + (portno << 13) + (i << 8);
+        cmdheader[i].ctbau = 0;
+        zero((void *)cmdheader[i].ctba, 256);
     }
-    commandTable->prdt[i].base = (uint32_t)(uint64_t)buffer;
-    commandTable->prdt[i].baseHigh = (uint32_t)((uint64_t)buffer >> 32);
-    commandTable->prdt[i].byteCount = count * 512 - 1;
-    commandTable->prdt[i].interruptOnCompletion = 1;
 
-    ahci_fis_reg_host_device_t *fis = (ahci_fis_reg_host_device_t *)(port->fisBaseLow);
-    zero(fis, sizeof(ahci_fis_reg_host_device_t));
-    fis->fisType = 0x27;          // host -> device
-    fis->command = 0x25;          // READ DMA EXT
-    fis->commandControl = 1;      // is command
-    fis->deviceRegister = 1 << 6; // enable LBA mode
-    fis->isoCommandCompletion = 1;
-
-    fis->lba0 = (uint8_t)sector;
-    fis->lba1 = (uint8_t)(sector >> 8);
-    fis->lba2 = (uint8_t)(sector >> 16);
-    fis->lba3 = (uint8_t)(sector >> 24);
-    fis->lba4 = (uint8_t)(sector >> 32);
-    fis->lba5 = (uint8_t)(sector >> 40);
-
-    fis->countLow = (uint8_t)sectorCount & 0xFF;
-    fis->countHigh = (uint8_t)(sectorCount >> 8);
-
-    // wait for drive to be ready
-    while (port->taskFileData & (0x80 /*ata busy*/ | 0x08 /*ata drq*/))
-        timeSleepMilis(1);
-
-    port->commandIssue |= 1 << slot; // issue command
-
-    while (port->commandIssue & (1 << slot) && !ahciPortIsIdle(port) && port->interruptStatus)
-        timeSleepMilis(1);
-
-    logInfo("error is %x", port->sataError);
+    ahciPortStart(port); // start command engine
 }
 
 void ahciInit()
@@ -294,11 +184,12 @@ void ahciInit()
     logInfo("ahci: detected controller at %d.%d.%d", ahciDescriptor.bus, ahciDescriptor.device, ahciDescriptor.function);
 
     // enable access to internal registers
-    ahciBase->Command |= 0b10000010111;                                                    // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
-    ahciABAR = (void *)(uint64_t)(ahciBase->BAR5 & 0xFFFFE000);                            // get base address
-    vmmMap(vmmGetBaseTable(), ahciABAR, ahciABAR, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
+    ahciBase->Command |= 0b10000010111;                                                            // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
+    abar = (void *)(uint64_t)(ahciBase->BAR5 & 0xFFFFE000);                                        // get base address
+    vmmMap(vmmGetBaseTable(), (void *)abar, (void *)abar, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
+    abase = pmmPages(80);                                                                          // 320k of space for all the ports
 
-    logDbg(LOG_ALWAYS, "ahci: abar is at %p", ahciABAR);
+    logDbg(LOG_ALWAYS, "ahci: abar is at %p", abar);
 
     // don't allow 32 bit only ahci controllers
     uint32_t cap = ahciRead(0x0); // read host capabilities
@@ -321,12 +212,10 @@ void ahciInit()
     // INITIALISATION (ahci 1.3.1 spec page 112)
 
     // 1. Indicate that system software is AHCI aware by setting GHC.AE to ‘1’.
-
-    uint32_t control = ahciRead(0x4);     // enable ahci mode
+    uint32_t control = ahciRead(0x4);
     ahciWrite(0x4, control | 0x80000000); // set ahci enable bit
 
     // 2. Determine which ports are implemented by the HBA, by reading the PI register
-
     uint32_t pi = ahciRead(0xC);    // read ports implemented
     for (size_t i = 0; i < 32; i++) // each bit represents a port's presence
     {
@@ -335,7 +224,7 @@ void ahciInit()
 
         pi >>= 1;
 
-        if (ahciPort(i)->signature != 0x101 /*SATA*/)
+        if (ahciPort(i)->sig != SATA_SIG_ATA)
             continue;
 
         portImplemented[i] = true;
@@ -344,31 +233,12 @@ void ahciInit()
 
     logDbg(LOG_ALWAYS, "ahci: %d sata port(s) implemented", portsImplemented);
 
-    // 3. Ensure that the controller is not in the running state by reading and examining each implemented port’s PxCMD register
-
-    // todo: we don't check for the controller to be idle. we probably want to do that
-
-    for (int p = 0; p < 32; p++)
-    {
-        if (portImplemented[p] == false)
-            continue;
-
-        ahci_port_t *port = ahciPort(p);
-        if (!ahciPortIsIdle(port))
-        {
-            ahciPortStop(port);
-            logDbg(LOG_ALWAYS, "ahci: port %d wasn't idle so we forced it to be.", p);
-        }
-    }
-
     // 4. Determine how many command slots the HBA supports, by reading CAP.NCS
-
     commandSlots = (ahciRead(0x0) >> 8) & 0x1F;
 
     logDbg(LOG_ALWAYS, "ahci: %d command slots supported", commandSlots);
 
-    // 5. For each implemented port, system software shall allocate memory
-
+    // prepare ports for commands
     for (int p = 0; p < 32; p++)
     {
         if (portImplemented[p] == false)
@@ -376,48 +246,17 @@ void ahciInit()
 
         ahci_port_t *port = ahciPort(p);
 
-        ahciPortStop(port);
-
-        uint64_t address = (uint64_t)pmmPage();
-        vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
-        port->commandListBaseLow = address & 0xFFFFFFFF;
-        port->commandListBaseHigh = (address >> 32) & 0xFFFFFFFF;
-
-        // allocate all command lists
-        ahci_command_header_t *cmdHeader = (ahci_command_header_t *)address;
-        for (int i = 0; i < 32; i++)
-        {
-            cmdHeader[i].regionDescriptorTableLen = 8; // 8 dwords
-
-            address = (uint64_t)pmmPage();
-            vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
-
-            cmdHeader[i].commandBaseLow = address & 0xFFFFFFFF;
-            cmdHeader[i].commandBaseHigh = (address >> 32) & 0xFFFFFFFF;
-        }
-
-        address = (uint64_t)pmmPage(); // todo: neither here
-        vmmMap(vmmGetBaseTable(), (void *)address, (void *)address, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
-        port->fisBaseLow = address & 0xFFFFFFFF;
-        port->fisBaseHigh = (address >> 32) & 0xFFFFFFFF;
-
-        ahciPortStart(port);
+        ahciPortStop((ahci_port_t *)port);        // 3. Ensure that the controller is not in the running state by reading and examining each implemented port’s PxCMD register
+        ahciPortAllocate((ahci_port_t *)port, p); // 5. For each implemented port, system software shall allocate memory
+        port->serr = 0xFFFFFFFF;                  // 6. For each implemented port, clear the PxSERR register, by writing ‘1s’ to each implemented bit location.
     }
 
-    // 6. For each implemented port, clear the PxSERR register, by writing ‘1s’ to each implemented bit location.
-    for (int p = 0; p < 32; p++)
-    {
-        if (portImplemented[p] == false)
-            continue;
+    // 7. Determine which events should cause an interrupt, and set each implemented port’s PxIE register with the appropriate enables. (todo: we don't want this at the moment, maybe when we create an I/O scheduler)
 
-        ahci_port_t *port = ahciPort(p);
-        port->sataError = 0xFFFFFFFF;
-    }
-
-    // 7. todo: Determine which events should cause an interrupt, and set each implemented port’s PxIE register with the appropriate enables.
-
+    // INITIALISATION complete
     logInfo("ahci: initialised controller");
 
+    // read from all the ports
     for (int p = 0; p < 32; p++)
     {
         if (portImplemented[p] == false)
@@ -425,14 +264,11 @@ void ahciInit()
 
         ahci_port_t *port = ahciPort(p);
         char *buffer = pmmPages(1);
-        ahciPortRead(port, buffer, 0, 4);
+        ahciPortRead((ahci_port_t *)port, 0, 0, 4, (uint16_t *)buffer);
 
         for (int i = 0; i < 4096; i++)
             serialWritec(buffer[i]);
     }
 
     logInfo("ahci: read data");
-
-    while (1)
-        ;
 }

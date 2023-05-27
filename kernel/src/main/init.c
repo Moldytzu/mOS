@@ -9,6 +9,8 @@
 #include <cpu/ioapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
+#include <drv/ahci.h>
+#include <drv/ata.h>
 #include <drv/input.h>
 #include <mm/pmm.h>
 #include <mm/blk.h>
@@ -59,6 +61,10 @@ void _start()
     vfsInit(); // initialise the virtual filesystem
 
     initrdMount(); // mount the initrd
+
+    ataInit(); // initialise ide/ata pio hard drives
+
+    ahciInit(); // initialise ahci controller
 
     schedInit(); // create initial tasks
 

@@ -9,8 +9,6 @@
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
 #include <drv/input.h>
-#include <drv/ahci.h>
-#include <drv/ata.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
@@ -47,16 +45,6 @@ void kmain()
            logDbg(LOG_SERIAL_ONLY, "vfs: found %s%s on %s", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
         currentNode = currentNode->next; // next node
     } while (currentNode);
-#endif
-
-#if 1
-    ataInit();
-#endif
-
-#if 1
-    ahciInit();
-
-    while (1);
 #endif
 
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
