@@ -209,5 +209,37 @@ void ataInit()
     }
 
     if (presentDrives[1])
-        logInfo("ata: drive 0 has %d sectors (%d MB)", ataSectors(ATA_DRIVE_SLAVE), (ataSectors(ATA_DRIVE_SLAVE) * ATA_SECTOR) / 1024 / 1024);
+    {
+        size_t sectors = ataSectors(ATA_DRIVE_SLAVE);
+        logInfo("ata: drive 1 has %d sectors (%d MB)", sectors, (sectors * ATA_SECTOR) / 1024 / 1024);
+
+        // register in vfs the drive
+        vfs_drive_t drive;
+        zero(&drive, sizeof(drive));
+        drive.interface = "ata";
+        drive.friendlyName = "1";
+        drive.sectors = sectors;
+        drive.read = ataVFSReadSlave;
+
+        vfs_mbr_t firstSector;
+        ataRead(ATA_DRIVE_SLAVE, &firstSector, 0, 1);
+
+        if (vfsCheckMBR(&firstSector)) // check if mbr is valid
+        {
+            int part = 0;
+            for (int i = 0; i < 4; i++) // parse all the partitions
+            {
+                vfs_mbr_partition_t *partition = &firstSector.partitions[i];
+                if (!partition->startSector)
+                    continue;
+
+                vfs_partition_t *vfsPart = &drive.partitions[part++];
+                vfsPart->startLBA = partition->startSector;
+                vfsPart->endLBA = partition->startSector + partition->sectors;
+                vfsPart->sectors = partition->sectors;
+            }
+        }
+
+        vfsAddDrive(drive);
+    }
 }
