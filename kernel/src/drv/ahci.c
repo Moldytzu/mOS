@@ -5,6 +5,13 @@
 #include <mm/vmm.h>
 #include <mm/pmm.h>
 #include <sched/time.h>
+#include <fs/vfs.h>
+
+#define GEN_HANDLER_READ(port)                                                         \
+    void aport##port##read(void *buffer, uint64_t sector, uint64_t count)              \
+    {                                                                                  \
+        ahciPortRead(ahciPort(port), sector, sector >> 32, count, (uint16_t *)buffer); \
+    }
 
 ahci_hba_mem_t *abar;                 // ahci's pci bar 5
 drv_pci_header0_t *ahciBase;          // base pointer to pci header
@@ -156,6 +163,42 @@ void ahciPortAllocate(ahci_port_t *port, int portno)
     ahciPortStart(port); // start command engine
 }
 
+GEN_HANDLER_READ(0)
+GEN_HANDLER_READ(1)
+GEN_HANDLER_READ(2)
+GEN_HANDLER_READ(3)
+GEN_HANDLER_READ(4)
+GEN_HANDLER_READ(5)
+GEN_HANDLER_READ(6)
+GEN_HANDLER_READ(7)
+GEN_HANDLER_READ(8)
+GEN_HANDLER_READ(9)
+GEN_HANDLER_READ(10)
+GEN_HANDLER_READ(11)
+GEN_HANDLER_READ(12)
+GEN_HANDLER_READ(13)
+GEN_HANDLER_READ(14)
+GEN_HANDLER_READ(15)
+GEN_HANDLER_READ(16)
+GEN_HANDLER_READ(17)
+GEN_HANDLER_READ(18)
+GEN_HANDLER_READ(19)
+GEN_HANDLER_READ(20)
+GEN_HANDLER_READ(21)
+GEN_HANDLER_READ(22)
+GEN_HANDLER_READ(23)
+GEN_HANDLER_READ(24)
+GEN_HANDLER_READ(25)
+GEN_HANDLER_READ(26)
+GEN_HANDLER_READ(27)
+GEN_HANDLER_READ(28)
+GEN_HANDLER_READ(29)
+GEN_HANDLER_READ(30)
+GEN_HANDLER_READ(31)
+
+void (*ahciReads[])(void *, uint64_t, uint64_t) = {
+    aport0read, aport1read, aport2read, aport3read, aport4read, aport5read, aport6read, aport7read, aport8read, aport9read, aport10read, aport11read, aport12read, aport13read, aport14read, aport15read, aport16read, aport17read, aport18read, aport19read, aport20read, aport21read, aport22read, aport23read, aport24read, aport25read, aport26read, aport27read, aport28read, aport29read, aport30read, aport31read};
+
 void ahciInit()
 {
     ahciBase = NULL;
@@ -263,12 +306,35 @@ void ahciInit()
             continue;
 
         ahci_port_t *port = ahciPort(p);
-        char *buffer = pmmPages(1);
-        ahciPortRead((ahci_port_t *)port, 0, 0, 4, (uint16_t *)buffer);
 
-        for (int i = 0; i < 4096; i++)
-            serialWritec(buffer[i]);
+        // register the drive in vfs
+        vfs_drive_t drive;
+        zero(&drive, sizeof(drive));
+        drive.interface = "ahci";
+        drive.friendlyName = pmmPage();
+        drive.read = ahciReads[p];
+        const char *str = to_string(p);
+        memcpy((void *)drive.friendlyName, str, strlen(str));
+
+        vfs_mbr_t *firstSector = pmmPage();
+        ahciPortRead(port, 0, 0, 1, (uint16_t *)firstSector);
+
+        if (vfsCheckMBR(firstSector)) // check if mbr is valid
+        {
+            int part = 0;
+            for (int i = 0; i < 4; i++) // parse all the partitions
+            {
+                vfs_mbr_partition_t *partition = &firstSector->partitions[i];
+                if (!partition->startSector)
+                    continue;
+
+                vfs_partition_t *vfsPart = &drive.partitions[part++];
+                vfsPart->startLBA = partition->startSector;
+                vfsPart->endLBA = partition->startSector + partition->sectors;
+                vfsPart->sectors = partition->sectors;
+            }
+        }
+
+        vfsAddDrive(drive);
     }
-
-    logInfo("ahci: read data");
 }
