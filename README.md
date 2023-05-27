@@ -18,6 +18,9 @@
     - 15+ system calls accessible in userspace
     - Driver infrastructure
     - Symmetric multiprocessing support
+    - FAT32 support
+    - AHCI support
+    - ATA/IDE support
 
 ## Building and running
 See [BUILDING.md](./docs/BUILDING.md)
