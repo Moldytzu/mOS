@@ -9,6 +9,6 @@ ifunc void tlbFlushAll()
 
 ifunc void tlbFlush(void *page)
 {
-    asm volatile("invlpg (%0)" ::"r"(page)
-                 : "memory");
+    iasm("invlpg (%0)" ::"r"(page)
+         : "memory");
 }
