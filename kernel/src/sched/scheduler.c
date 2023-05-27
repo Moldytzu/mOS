@@ -226,6 +226,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
                     case VT_DISPLAY_TTY0:
                         framebufferZero();
                         framebufferWrite(vtGet(0)->buffer);
+                        framebufferWritec(K_FB_CURSOR);
 #ifdef K_FB_DOUBLE_BUFFER
                         framebufferUpdate();
 #endif
