@@ -7,10 +7,13 @@
 #include <sched/time.h>
 #include <fs/vfs.h>
 
-#define GEN_HANDLER_READ(port)                                                         \
-    void aport##port##read(void *buffer, uint64_t sector, uint64_t count)              \
-    {                                                                                  \
-        ahciPortRead(ahciPort(port), sector, sector >> 32, count, (uint16_t *)buffer); \
+#define GEN_HANDLER_READ(port)                                                      \
+    void aport##port##read(void *buffer, uint64_t sector, uint64_t count)           \
+    {                                                                               \
+        void *tmp = pmmPage();                                                      \
+        ahciPortRead(ahciPort(port), sector, sector >> 32, count, (uint16_t *)tmp); \
+        memcpy(buffer, tmp, count *VFS_SECTOR);                                     \
+        pmmDeallocate(tmp);                                                         \
     }
 
 ahci_hba_mem_t *abar;                 // ahci's pci bar 5
@@ -317,7 +320,7 @@ void ahciInit()
         memcpy((void *)drive.friendlyName, str, strlen(str));
 
         vfs_mbr_t *firstSector = pmmPage();
-        ahciPortRead(port, 0, 0, 1, (uint16_t *)firstSector);
+        ahciReads[p](firstSector, 0, 1);
 
         if (vfsCheckMBR(firstSector)) // check if mbr is valid
         {
