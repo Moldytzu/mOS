@@ -218,7 +218,8 @@ void _mdrvmain()
 
     while (1)
     {
-        sys_yield(); // don't waste time here
+        for(int i = 0; i < 10; i++) // don't waste time here by yielding
+            sys_yield();
 
         updateScreen(); // send command to the device that we want the screen to be updated
 

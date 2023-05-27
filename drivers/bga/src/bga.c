@@ -152,7 +152,8 @@ void _mdrvmain()
 
     while (1)
     {
-        sys_yield();
+        for(int i = 0; i < 10; i++) // don't waste time here by yielding
+            sys_yield();
 
         // wait for the kernel to request another resolution
         if (fb->requestedXres && fb->requestedXres && fb->currentXres == fb->requestedXres && fb->currentYres == fb->requestedYres)
