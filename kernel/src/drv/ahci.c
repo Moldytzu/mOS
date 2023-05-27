@@ -38,6 +38,42 @@ int ahciPortSlot(ahci_port_t *port)
     return -1;
 }
 
+// read from abar at offset
+uint32_t ahciRead(uint32_t offset)
+{
+    return *(uint32_t *)((uint64_t)abar + offset);
+}
+
+// write to abar at offset
+void ahciWrite(uint32_t offset, uint32_t data)
+{
+    *(uint32_t *)((uint64_t)abar + offset) = data;
+}
+
+// get pointer base address as shown by bits set in PI
+ahci_port_t *ahciPort(uint8_t bit)
+{
+    return (ahci_port_t *)((uint64_t)abar + 0x100 + 0x80 * bit);
+}
+
+// start command engine
+void ahciPortStart(ahci_port_t *port)
+{
+    // Set FRE (bit 4) and ST (bit 0)
+    port->cmd |= (HBA_PxCMD_FRE | HBA_PxCMD_ST);
+}
+
+// stop command engine
+void ahciPortStop(ahci_port_t *port)
+{
+    // clear ST (bit 0) and FRE (bit 4)
+    port->cmd &= ~(HBA_PxCMD_ST | HBA_PxCMD_FRE);
+
+    // wait until FR (bit 14), CR (bit 15) are cleared
+    while (port->cmd & HBA_PxCMD_FR || port->cmd & HBA_PxCMD_CR)
+        ;
+}
+
 // read using dma from a port
 bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf)
 {
@@ -88,6 +124,8 @@ bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t 
     cmdfis->countl = count & 0xFF;
     cmdfis->counth = (count >> 8) & 0xFF;
 
+    ahciPortStart(port);
+
     // wait for the port to be idle
     while ((port->tfd & (ATA_DEV_BUSY | ATA_DEV_DRQ)))
         pause();
@@ -99,47 +137,9 @@ bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t 
         if ((port->ci & (1 << slot)) == 0)
             break;
 
+    ahciPortStop(port);
+
     return true;
-}
-
-// read from abar at offset
-uint32_t ahciRead(uint32_t offset)
-{
-    return *(uint32_t *)((uint64_t)abar + offset);
-}
-
-// write to abar at offset
-void ahciWrite(uint32_t offset, uint32_t data)
-{
-    *(uint32_t *)((uint64_t)abar + offset) = data;
-}
-
-// get pointer base address as shown by bits set in PI
-ahci_port_t *ahciPort(uint8_t bit)
-{
-    return (ahci_port_t *)((uint64_t)abar + 0x100 + 0x80 * bit);
-}
-
-// start command engine
-void ahciPortStart(ahci_port_t *port)
-{
-    // Wait until CR (bit15) is cleared
-    while (port->cmd & HBA_PxCMD_CR)
-        ;
-
-    // Set FRE (bit 4) and ST (bit 0)
-    port->cmd |= (HBA_PxCMD_FRE | HBA_PxCMD_ST);
-}
-
-// stop command engine
-void ahciPortStop(ahci_port_t *port)
-{
-    // clear ST (bit 0) and FRE (bit 4)
-    port->cmd &= ~(HBA_PxCMD_ST | HBA_PxCMD_FRE);
-
-    // wait until FR (bit 14), CR (bit 15) are cleared
-    while (port->cmd & HBA_PxCMD_FR || port->cmd & HBA_PxCMD_CR)
-        ;
 }
 
 void ahciPortAllocate(ahci_port_t *port, int portno)
