@@ -185,6 +185,8 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     return t;
 }
 
+uint8_t simdContext[512][K_MAX_CORES];
+
 // do the context switch
 void schedSchedule(idt_intrerrupt_stack_t *stack)
 {
@@ -193,8 +195,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
     uint64_t id = smpID();
 
-    uint8_t simdContext[512];
-    iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
+    iasm("fxsave %0 " ::"m"(simdContext[id])); // save simd context
 
     lock(schedLock, {
         if (!taskKilled[id])
