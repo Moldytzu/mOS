@@ -2,7 +2,7 @@ CORES = $(shell nproc)
 DISK = image.disk
 DISK_SIZE = 512 # this is in MB
 GDBFLAGS ?= -tui -q -x gdb.script
-QEMUFLAGS ?= -M q35,smm=off -m 512M -smp 4 -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int,trace:ahci_dma_prepare_buf_fail,trace:ahci_cmd_done,trace:ahci_start_dma,trace:ahci_dma_prepare_buf,trace:ahci_dma_rw_buf -vga vmware
+QEMUFLAGS ?= -M q35,smm=off -m 512M -smp 4 -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
 QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)
