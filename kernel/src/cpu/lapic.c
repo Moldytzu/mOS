@@ -74,7 +74,7 @@ void lapicInit(bool bsp)
     // reset important registers to a known state before enabling the apic (not required by any spec)
     lapicWrite(APIC_REG_DFR, 0xFF000000);
     lapicWrite(APIC_REG_LDR, 0x01000000);
-    lapicWrite(APIC_REG_SIV, 0x1FF); // software enable apic and set the spurious vector to 0xFF
+    lapicWrite(APIC_REG_SIV, 0x120); // software enable apic and set the spurious vector to 0x20
     lapicWrite(APIC_REG_TPR, 0);
 
     // enable the lapic
@@ -86,7 +86,7 @@ void lapicInit(bool bsp)
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
 
-    // calibrate timer for ~1 kHz (todo: real hardware crashes here, not sure why)
+    // calibrate timer for the frequency specified in config
     lapicWrite(APIC_REG_TIMER_DIV, 0b1011);            // divide by 1
     lapicWrite(APIC_REG_TIMER_INITCNT, 10000000);      // enable timer
     lapicWrite(APIC_REG_LVT_TIMER, APIC_TIMER_VECTOR); // one shot mode
