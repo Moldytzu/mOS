@@ -54,6 +54,7 @@ void acpiEnumeratePCI()
     if (!mcfg)
         return;
 
+#ifdef K_PCIE
     size_t entries = (mcfg->header.length - sizeof(acpi_mcfg_t)) / sizeof(acpi_pci_config_t);
     for (int i = 0; i < entries; i++)
     {
@@ -101,6 +102,7 @@ void acpiEnumeratePCI()
             }
         }
     }
+#endif
 }
 
 acpi_pci_descriptor_t *pciGetFunctions()
@@ -185,6 +187,7 @@ void acpiInit()
     laiInit();
 #endif
 
+#ifdef K_PCIE
     // get mcfg
     mcfg = (acpi_mcfg_t *)acpiGet("MCFG", 0);
 
@@ -200,4 +203,5 @@ void acpiInit()
     {
         logError("acpi: failed to enumerate pci bus");
     }
+#endif
 }

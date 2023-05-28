@@ -4,6 +4,8 @@
 #include <mm/pmm.h>
 #include <fs/vfs.h>
 
+#ifdef K_ATA
+
 // constants
 #define ATA_SECTOR 512
 
@@ -243,3 +245,4 @@ void ataInit()
         vfsAddDrive(drive);
     }
 }
+#endif

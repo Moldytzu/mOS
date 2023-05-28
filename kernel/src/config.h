@@ -44,12 +44,17 @@
 // ###########################################
 
 // Scheduler
-#define K_SCHED_MIN_QUANTUM 1  // minimum quantum of each task
-#define K_STACK_SIZE 64 * 1024 // userspace stack size
+#define K_SCHED_MIN_QUANTUM 1 // minimum quantum of each task
+#define K_STACK_SIZE 8 * 1024 // userspace stack size
 
 // ###########################################
 // Devices
 // ###########################################
+
+// =================
+// Busses
+// =================
+#define K_PCIE // enable PCIe ECAM support
 
 // =================
 // Console
@@ -66,10 +71,17 @@
 // =================
 
 // --------
-// Filesystem
+// Interfaces
+// --------
+#define K_AHCI // PCIe AHCI support
+#define K_ATA  // ATA/IDE support
+
+// --------
+// Filesystems
 // --------
 
 // FAT32
+#define K_FAT           // enable FAT32 support
 #define K_FAT_LOWER_SFN // short file names are always uppercase, force lowering them
 
 // =================
@@ -87,7 +99,6 @@
 
 // ACPI
 // #define K_ACPI_LAI // enables lai support (enables experimental aml support)
-
 
 // ###########################################
 // Miscellaneous

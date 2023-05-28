@@ -62,9 +62,13 @@ void _start()
 
     initrdMount(); // mount the initrd
 
+#ifdef K_ATA
     ataInit(); // initialise ide/ata pio hard drives
+#endif
 
+#ifdef K_AHCI
     ahciInit(); // initialise ahci controller
+#endif
 
     schedInit(); // create initial tasks
 

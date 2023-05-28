@@ -3,6 +3,8 @@
 #include <misc/logger.h>
 #include <mm/pmm.h>
 
+#ifdef K_FAT
+
 #define CONTEXT(x) ((fat_context_t *)(x))
 #define CLUSTER(x) (x.clusterHigh << 16 | x.clusterLow)
 
@@ -246,3 +248,4 @@ bool fatCreate(fat_bpb_t *bpb, vfs_drive_t *drive, size_t partition)
 
     return true;
 }
+#endif

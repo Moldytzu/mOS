@@ -85,12 +85,16 @@ void vfsAddDrive(vfs_drive_t drive)
         logDbg(LOG_SERIAL_ONLY, "vfs: partition %d starts at %d (%d MB)", i, drive.partitions[i].startLBA, (uint64_t)drive.partitions[i].sectors * VFS_SECTOR / 1024 / 1024);
 #endif
 
+#ifdef K_FAT
+
         // try to create a fat partition
         fat_bpb_t bpb;
         zero(&bpb, sizeof(bpb));
         drive.read(&bpb, drive.partitions[i].startLBA, 1);
 
         fatCreate(&bpb, &drives[lastDrive - 1], i);
+
+#endif
     }
 }
 

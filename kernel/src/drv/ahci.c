@@ -7,6 +7,8 @@
 #include <sched/time.h>
 #include <fs/vfs.h>
 
+#ifdef K_AHCI
+
 #define GEN_HANDLER_READ(port)                                                      \
     void aport##port##read(void *buffer, uint64_t sector, uint64_t count)           \
     {                                                                               \
@@ -341,3 +343,5 @@ void ahciInit()
         vfsAddDrive(drive);
     }
 }
+
+#endif
