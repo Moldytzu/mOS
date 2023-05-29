@@ -146,7 +146,7 @@ bool isShifted = false;
 // keyboard scancode handler
 void kbHandle(uint8_t scancode)
 {
-    if (scancode > 0xDF)
+    if (scancode > 0xDF) // over what we expect
         return;
 
     // find the first empty in the buffer
@@ -158,7 +158,7 @@ void kbHandle(uint8_t scancode)
     if (i == 15) // filled buffer
         return;  // drop key
 
-    if (scancode == 0xBA) // caps lock released
+    if (scancode == 0x3A + 0x80) // caps lock released
     {
         isShifted = !isShifted;
         return;
@@ -175,6 +175,9 @@ void kbHandle(uint8_t scancode)
         isShifted = false;
         return;
     }
+
+    if (scancode > sizeof(scanCodeSet1)) // not in scan code set
+        return;
 
     if (isShifted)
         contextStruct->keys[i] = scanCodeSet1Shifted[scancode - 1]; // set the key at that index
