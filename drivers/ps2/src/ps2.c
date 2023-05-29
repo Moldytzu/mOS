@@ -34,6 +34,7 @@
 
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
+char scanCodeSet1Shifted[] = "\e1234567890-=\b\tQWERTYUIOP{}\n\0ASDFGHJKL:\"~\0|ZXCVBNM<>?\0*\0 ";
 bool controllerPresent = false;
 
 bool port1Present = false;
@@ -140,19 +141,45 @@ void kbInit()
     }
 }
 
+bool isShifted = false;
+
 // keyboard scancode handler
 void kbHandle(uint8_t scancode)
 {
-    if (scancode <= sizeof(scanCodeSet1))
-    {
-        // find the first empty in the buffer
-        int i = 0;
-        for (; i < 16; i++)
-            if (!contextStruct->keys[i])
-                break;
+    if (scancode > 0xDF)
+        return;
 
-        contextStruct->keys[i] = scanCodeSet1[scancode - 1]; // set the key at that index
+    // find the first empty in the buffer
+    int i = 0;
+    for (; i < 16; i++)
+        if (!contextStruct->keys[i])
+            break;
+
+    if (i == 15) // filled buffer
+        return;  // drop key
+
+    if (scancode == 0xBA) // caps lock released
+    {
+        isShifted = !isShifted;
+        return;
     }
+
+    if (scancode == 0x2A || scancode == 0x36) // left+right shift
+    {
+        isShifted = true;
+        return;
+    }
+
+    if (scancode == 0x2A + 0x80 || scancode == 0x36 + 0x80) // left+right shift released
+    {
+        isShifted = false;
+        return;
+    }
+
+    if (isShifted)
+        contextStruct->keys[i] = scanCodeSet1Shifted[scancode - 1]; // set the key at that index
+    else
+        contextStruct->keys[i] = scanCodeSet1[scancode - 1]; // set the key at that index
 }
 
 void ps2Port1Handler()
@@ -349,6 +376,8 @@ void _mdrvmain()
         printf("ps2: failed to initialise!\n");
         abort();
     }
+
+    isShifted = false;
 
     contextStruct = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT); // announce that we are an input-related driver
 
