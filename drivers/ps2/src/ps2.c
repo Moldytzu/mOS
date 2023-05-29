@@ -68,11 +68,16 @@ drv_type_input_t *contextStruct;
         waitInput();            \
         outb(PS2_COMMAND, cmd); \
     }
-#define port1Write(data) write(data)
+#define port1Write(data) \
+    {                    \
+        waitInput();     \
+        write(data);     \
+    }
 #define port2Write(data)            \
     {                               \
         waitInput();                \
         command(PS2_CTRL_WRITE_P2); \
+        waitInput();                \
         write(data);                \
     }
 #define flush()       \
@@ -87,56 +92,34 @@ void kbInit()
     // write to the right port
     if (port1Type == PS2_TYPE_KEYBOARD)
     {
-        waitInput();
         port1Write(0xF6); // set default parameters
 
-        // flush the buffer
-        waitOutput();
-        flush();
+        flush(); // flush the buffer
 
-        port1Write(0xF0); // set scan code set 1
-
+        port1Write(0xF0);           // set scan code set 1
         for (int i = 0; i < 2; i++) // wait for the keyboard to send 0xFA 0xFA
-        {
-            waitOutput();
             flush();
-        }
 
-        waitInput();
         port1Write(0xF3); // set typematic rate
-        waitOutput();
         flush();
 
-        waitInput();
         port1Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
-        waitOutput();
         flush();
     }
     else if (port2Type == PS2_TYPE_KEYBOARD)
     {
-        waitInput();
         port2Write(0xF6); // set default parameters
 
-        // flush the buffer
-        waitOutput();
-        flush();
+        flush(); // flush the buffer
 
-        port2Write(0xF0); // set scan code set 1
-
+        port2Write(0xF0);           // set scan code set 1
         for (int i = 0; i < 2; i++) // wait for the keyboard to send 0xFA 0xFA
-        {
-            waitOutput();
             flush();
-        }
 
-        waitInput();
         port2Write(0xF3); // set typematic rate
-        waitOutput();
         flush();
 
-        waitInput();
         port2Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
-        waitOutput();
         flush();
     }
 }
@@ -214,6 +197,12 @@ int ps2DecodeBytes(uint8_t *reply)
         return PS2_TYPE_INVALID;
 }
 
+bool ps2Trace(const char *msg)
+{
+    printf("ps2: %s\n");
+    return false;
+}
+
 // initialize the controller
 bool initController()
 {
@@ -222,10 +211,10 @@ bool initController()
 
     // disable the devices
     command(PS2_CTRL_DISABLE_P1);
-    command(PS2_CTRL_DISABLE_P2);
+    flush();
 
-    // flush the output buffer
-    output();
+    command(PS2_CTRL_DISABLE_P2);
+    flush();
 
     // disable irqs in config byte
     {
@@ -245,7 +234,7 @@ bool initController()
     waitOutput(); // wait for the test to be done
 
     if (output() != 0x55) // if the controller didn't reply with OK it means that it isn't present
-        return false;
+        return ps2Trace("controller failed self-test");
 
     // test the first port
     command(PS2_CTRL_TEST_P1);
@@ -258,7 +247,7 @@ bool initController()
     port2Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
 
     if (!port1Present && !port2Present) // give up if there aren't any port present
-        return false;
+        return ps2Trace("failed to detect ports");
 
     // enable the devices
     if (port1Present)
@@ -287,6 +276,7 @@ bool initController()
         flush();
 
         uint8_t reply[2] = {0, 0};
+        waitOutput();
         reply[0] = output(); // fill the buffer with the response word
         waitOutput();
         reply[1] = output();
@@ -315,6 +305,7 @@ bool initController()
         flush();
 
         uint8_t reply[2] = {0, 0};
+        waitOutput();
         reply[0] = output(); // fill the buffer with the response word
         waitOutput();
         reply[1] = output();
