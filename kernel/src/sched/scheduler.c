@@ -350,22 +350,23 @@ void schedKill(uint32_t id)
 
     // remove task from list
     lock(schedLock, {
-        task = schedGet(id);                 // get task structure from id
+        task = schedGet(id); // get task structure from id
+
+        // release resources
+        for (int i = 0; i < task->allocatedIndex; i++)
+            if (task->allocated[i] != NULL)
+                pmmDeallocate(task->allocated[i]);
+
+        pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
+        pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
+        pmmDeallocatePages(task->stackBase, K_STACK_SIZE / VMM_PAGE + 1);
+        pmmDeallocate(task->enviroment);
+        vmmDestroy(task->pageTable);
+        blkDeallocate(task);
+
         TASK(task->prev)->next = task->next; // remove task from its list
         taskKilled[smpID()] = true;          // signal that we have killed a task (todo: make it so we know which task was killed so we can kill other tasks beside the current running one)
     });
-
-    // release resources
-    for (int i = 0; i < task->allocatedIndex; i++)
-        if (task->allocated[i] != NULL)
-            pmmDeallocate(task->allocated[i]);
-
-    pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
-    pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
-    pmmDeallocatePages(task->stackBase, K_STACK_SIZE / VMM_PAGE + 1);
-    pmmDeallocate(task->enviroment);
-    vmmDestroy(task->pageTable);
-    blkDeallocate(task);
 }
 
 // enable the scheduler for the current core
