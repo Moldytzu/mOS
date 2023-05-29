@@ -192,6 +192,14 @@ int main(int argc, char **argv)
         do
         {
             sys_input(SYS_INPUT_KEYBOARD, &chr); // read a character off the keyboard buffer
+            
+            if(chr == '\b') // handle backspace
+            {
+                kBuffer[--kIdx] = 0;
+                printf(" -> %s", kBuffer); // print the prompt
+                continue;
+            }
+            
             if (chr)
             {
                 putchar(chr);
