@@ -8,7 +8,7 @@
 void *malloc(size_t s)
 {
     uint64_t address;
-    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&address, 0); // allocate
+    sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&address, s / 4096 + 1); // allocate
     return (void *)address;
 }
 
