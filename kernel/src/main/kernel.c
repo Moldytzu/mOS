@@ -22,8 +22,6 @@
 #include <main/panic.h>
 #include <elf/elf.h>
 #include <misc/logger.h>
-#include <lai/helpers/pm.h>
-#include <lai/helpers/sci.h>
 
 // kernel main, called after init
 void kmain()

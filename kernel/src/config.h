@@ -98,7 +98,7 @@
 // ###########################################
 
 // ACPI
-// #define K_ACPI_LAI // enables lai support (enables experimental aml support)
+
 
 // ###########################################
 // Miscellaneous

@@ -8,8 +8,6 @@
 #include <drv/serial.h>
 #include <subsys/vt.h>
 #include <main/panic.h>
-#include <lai/helpers/pm.h>
-#include <lai/helpers/sci.h>
 #include <stdnoreturn.h>
 #include <fw/acpi.h>
 
@@ -238,16 +236,6 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
                     }
                 }
             }
-
-#ifdef K_ACPI_LAI
-            // handle sci events like power button
-            if (id == 0 && lastTask[id] == &queueStart[id])
-            {
-                uint16_t event = lai_get_sci_event();
-                if (event == ACPI_POWER_BUTTON)
-                    acpiShutdown();
-            }
-#endif
 
             // set new quantum
             lastTask[id]->quantumLeft = K_SCHED_MIN_QUANTUM;

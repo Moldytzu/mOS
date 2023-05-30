@@ -6,10 +6,6 @@
 #include <cpu/idt.h>
 #include <main/panic.h>
 #include <misc/logger.h>
-#include <lai/core.h>
-#include <lai/host.h>
-#include <lai/helpers/sci.h>
-#include <lai/helpers/pm.h>
 
 uint8_t revision;
 acpi_rsdp_hdr_t *rsdp;
@@ -133,33 +129,17 @@ void rebootFallback()
 // reboot using acpi
 void acpiReboot()
 {
-#ifdef K_ACPI_LAI
-    lai_acpi_reset();
-#else
-    logError("Reboot unsupported. LAI support is disabled. Trying fallback.");
+    logError("ACPI Reboot unsupported. Trying fallback.");
     rebootFallback();
     hang();
-#endif
 }
 
 // shutdown using acpi
 void acpiShutdown()
 {
-#ifdef K_ACPI_LAI
-    lai_enter_sleep(5);
-#else
-    logError("Shutdown unsupported. LAI support is disabled. Rebooting instead.");
-    rebootFallback();
+    logError("ACPI Shutdown unsupported. Rebooting instead.");
+    acpiReboot();
     hang();
-#endif
-}
-
-// init lai
-void laiInit()
-{
-    lai_set_acpi_revision(revision);
-    lai_create_namespace();
-    lai_enable_acpi(1); // use the lapic
 }
 
 // initialize the acpi subsystem
@@ -181,10 +161,6 @@ void acpiInit()
 
 #ifdef K_ACPI_DEBUG
     logDbg(LOG_SERIAL_ONLY, "acpi: revision %d", revision);
-#endif
-
-#ifdef K_ACPI_LAI
-    laiInit();
 #endif
 
 #ifdef K_PCIE

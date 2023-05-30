@@ -8,7 +8,6 @@ FONT := ../kfont.psf
 # c compiler flags particular for the kernel
 INTERNALCFLAGS :=              \
 	-I./src/                   \
-	-I./src/vendor/lai/include \
 	-Wno-int-to-pointer-cast   \
 
 # linker flags particular for the kernel
@@ -33,7 +32,6 @@ all: $(KERNEL)
 
 vendor:
 	-curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o src/limine.h
-	-git clone https://github.com/managarm/lai.git src/vendor/lai
 
 # Link rules for the final kernel executable.
 $(KERNEL): $(OBJS)
@@ -53,7 +51,7 @@ $(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJS) src/limine.h src/vendor/lai
+	rm -rf $(KERNEL) $(OBJS) src/limine.h
 
 .PHONY: setup
 setup: vendor
