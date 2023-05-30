@@ -42,9 +42,14 @@ void inputFlush()
 
             // append the key to every terminal in a loop
             currentTerminal = startTerminal;
+
             while (currentTerminal)
             {
                 vtkbAppend(currentTerminal, c);
+
+                if (!currentTerminal->next) // for some reason this fixes a crash
+                    break;
+
                 currentTerminal = currentTerminal->next;
             }
         }
