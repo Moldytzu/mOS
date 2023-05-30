@@ -49,7 +49,7 @@ int main(int argc, char **argv)
         printf("allocated %s\n", to_hstring((uint64_t)buffer)); // for some reason the %x format is broken in libc
 
         uint64_t used, available;
-        sys_mem(SYS_MEM_INFO, (uint64_t)&used, (uint64_t)&available);
+        sys_perf(SYS_PERF_GET_MEMORY, (uint64_t)&used, (uint64_t)&available);
 
         printf("used %d kB, available %d kB\n", used / 1024, available / 1024);
 
