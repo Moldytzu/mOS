@@ -44,15 +44,24 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
         return;
 
     lock(vt->lock, {
+        char *buffer = (char *)vt->buffer;     // vt buffer
         const char *input = str;               // input buffer
-        if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow
+        if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow (todo: reallocate)
         {
             zero((void *)vt->buffer, VMM_PAGE); // clear the buffer
             vt->bufferIdx = 0;                  // reset the index
         }
 
-        memcpy8((void *)((uint64_t)vt->buffer + vt->bufferIdx), (void *)input, count); // copy the buffer
-        vt->bufferIdx += count;                                                        // increment the index
+        for (size_t i = 0; i < count; i++) // copy the buffer
+        {
+            if(*input == '\b') // handle ascii backspace
+            {
+                buffer[--vt->bufferIdx] = '\0'; // zero the buffer early
+                continue;
+            }
+
+            buffer[vt->bufferIdx++] = *(input++); // set the byte
+        }
     });
 
     if (vt == &rootTerminal)

@@ -192,17 +192,17 @@ int main(int argc, char **argv)
         do
         {
             sys_input(SYS_INPUT_KEYBOARD, &chr); // read a character off the keyboard buffer
-            
-            if(chr == '\b') // handle backspace
+
+            if (chr == '\b') // handle backspace
             {
-                if(!kIdx)
+                if (!kIdx) // don't overrun buffer
                     continue;
 
-                kBuffer[--kIdx] = 0;
-                printf(" -> %s", kBuffer); // print the prompt
+                kBuffer[--kIdx] = 0; // clear last character in buffer
+                putchar('\b');       // remove last character
                 continue;
             }
-            
+
             if (chr)
             {
                 putchar(chr);
