@@ -195,6 +195,9 @@ int main(int argc, char **argv)
             
             if(chr == '\b') // handle backspace
             {
+                if(!kIdx)
+                    continue;
+
                 kBuffer[--kIdx] = 0;
                 printf(" -> %s", kBuffer); // print the prompt
                 continue;
