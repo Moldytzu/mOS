@@ -10,20 +10,20 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t 
         if (!INBOUNDARIES(arg1)) // prevent crashing
             return;
 
-        // pages to allocate
-        size_t pages = arg2;
+        size_t pages = arg2; // pages to allocate
         if (!pages)
             pages = 1;
 
-        // todo: make it so the application can allocate smaller chunks of memory (maybe implement an allocator for each task based on the one present in mm/blk.c?)
-        void *page = pmmPages(pages);                                                                                                                           // allocate a page
-        for (int i = 0; i < pages; i++)                                                                                                                         // map pages
-            vmmMap((void *)task->pageTable, (void *)(task->lastVirtualAddress + i * 4096), (void *)((uint64_t)page + i * 4096), VMM_ENTRY_RW | VMM_ENTRY_USER); // map it
+        void *page = pmmPages(pages); // allocate the pages
+
+        // map pages
+        for (int i = 0; i < pages; i++)
+            vmmMap((void *)task->pageTable, (void *)(task->lastVirtualAddress + i * 4096), (void *)((uint64_t)page + i * 4096), VMM_ENTRY_RW | VMM_ENTRY_USER);
 
         *(uint64_t *)PHYSICAL(arg1) = task->lastVirtualAddress; // give the application the virtual address
         task->lastVirtualAddress += 4096 * pages;               // increment the last virtual address
 
-        if (task->allocatedIndex == ((task->allocatedBufferPages * VMM_PAGE) / 8) - pages) // reallocation needed when we overflow
+        if (task->allocatedIndex == ((task->allocatedBufferPages * VMM_PAGE) / 8) - pages) // reallocation needed when we overflow (todo: here we might overflow)
         {
             task->allocated = pmmReallocate(task->allocated, task->allocatedBufferPages, task->allocatedBufferPages + 1);
             task->allocatedBufferPages++;
