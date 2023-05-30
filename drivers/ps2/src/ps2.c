@@ -343,6 +343,15 @@ bool initController()
         write(cfg);
     }
 
+    // initialize the keyboard
+    kbInit();
+
+    printf("ps2: detected %d ports\n", (uint8_t)(port1Present + port2Present));
+    return true;
+}
+
+void setupHandlers()
+{
     // set the intrerrupt handlers
     if (port1Present)
     {
@@ -355,23 +364,17 @@ bool initController()
         sys_idt_set(ps2Port2Handler, 0x22); // todo: allocate idt vectors
         sys_driver(SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR, 12, 0x22, 0);
     }
-
-    // initialize the keyboard
-    kbInit();
-
-    printf("ps2: detected %d ports\n", (uint8_t)(port1Present + port2Present));
-    return true;
 }
 
 void _mdrvmain()
 {
+    isShifted = false;
+
     if (!initController()) // initialise the controller
     {
         printf("ps2: failed to initialise!\n");
         abort();
     }
-
-    isShifted = false;
 
     contextStruct = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT); // announce that we are an input-related driver
 
@@ -380,6 +383,8 @@ void _mdrvmain()
         printf("ps2: failed to announce!\n");
         abort();
     }
+
+    setupHandlers();
 
     printf("ps2: started ps2 driver!\n");
 
