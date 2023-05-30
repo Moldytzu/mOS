@@ -30,7 +30,7 @@
 #define PS2_CTRL_WRITE_P2 0xD4
 
 // constants
-#define PS2_TIMEOUT_YIELDS 10
+#define PS2_TIMEOUT_YIELDS 3
 
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
