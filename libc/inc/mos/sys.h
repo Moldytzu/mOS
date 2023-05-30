@@ -20,7 +20,6 @@
 #define SYS_PID_SLEEP 6
 
 #define SYS_MEM_ALLOCATE 0
-#define SYS_MEM_INFO 1
 
 #define SYS_VFS_FILE_EXISTS 0
 #define SYS_VFS_DIRECTORY_EXISTS 1
@@ -38,6 +37,9 @@
 
 #define SYS_TIME_GET_UPTIME_NANOS 0
 
+#define SYS_PERF_GET_MEMORY 0
+#define SYS_PERF_GET_CPU 1
+
 #define SYS_EXIT 0
 #define SYS_WRITE 1
 #define SYS_READ 2
@@ -53,6 +55,7 @@
 #define SYS_POWER 12
 #define SYS_DRIVER 13
 #define SYS_TIME 14
+#define SYS_PERF 15
 
 typedef struct __attribute__((packed))
 {
@@ -84,4 +87,5 @@ void sys_close(uint64_t fd);
 void sys_socket(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 void sys_power(uint8_t call, uint64_t arg1, uint64_t arg2);
 void sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
+void sys_perf(uint8_t call, uint64_t arg1, uint64_t arg2);
 void sys_yield();

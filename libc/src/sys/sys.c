@@ -1,7 +1,7 @@
 #include <mos/sys.h>
 
 void sys_exit(uint64_t status)
-{       
+{
     _syscall(SYS_EXIT, status, 0, 0, 0, 0);
 }
 
@@ -94,4 +94,9 @@ uint64_t sys_pid_get()
     uint64_t pid;
     sys_pid(0, SYS_PID_GET, &pid);
     return pid;
+}
+
+void sys_perf(uint8_t call, uint64_t arg1, uint64_t arg2)
+{
+    _syscall(SYS_PERF, call, arg1, arg2, 0, 0);
 }
