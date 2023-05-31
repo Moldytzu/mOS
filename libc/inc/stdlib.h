@@ -1,11 +1,6 @@
 #pragma once
-#include <stdint.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdatomic.h>
-#include <stddef.h>
-#include <stdfix.h>
-#include <stdnoreturn.h>
+
+// page 318 of https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf
 
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
