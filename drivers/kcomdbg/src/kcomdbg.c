@@ -62,6 +62,17 @@ void handleInput()
     } while (lastChar != '\n' && kindex != 255);
 }
 
+void strrev(char *str)
+{
+    size_t len = strlen(str);
+    for (int i = 0, j = len - 1; i < j; i++, j--)
+    {
+        const char a = str[i];
+        str[i] = str[j];
+        str[j] = a;
+    }
+}
+
 // convert to a string (base 16) (taken directly from kernel)
 char to_hstringout[32];
 const char *to_hstring(uint64_t val)
