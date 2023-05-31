@@ -6,5 +6,6 @@
 
 #define EDOM 0
 #define ERANGE 0
+#define EISDIR 0
 
 extern int errno;

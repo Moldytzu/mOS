@@ -6,13 +6,15 @@
 #define EXIT_SUCCESS 0
 #define RAND_MAX 32768
 
+#define NULL ((void *)0)
+
 void abort();
 void exit(int status);
 int abs(int x);
 long int labs(long int x);
 int atoi(const char *str);
 long atol(const char *str);
-void *malloc(size_t s);
+void *malloc(unsigned long s);
 void free(void *ptr);
 int max(int a, int b);
 int min(int a, int b);
