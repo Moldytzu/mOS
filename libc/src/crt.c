@@ -1,5 +1,7 @@
 #include <mos/sys.h>
 
+int errno;
+
 extern int main(int argc, char **argv);
 
 void _mmain(int argc, char **argv) // main function

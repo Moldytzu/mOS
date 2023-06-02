@@ -16,3 +16,13 @@ void free(void *ptr)
 {
     return;
 }
+
+void *calloc(size_t nmemb, size_t size)
+{
+    return malloc(size * nmemb);
+}
+
+void *realloc(void *ptr, size_t size)
+{
+    return malloc(size);
+}

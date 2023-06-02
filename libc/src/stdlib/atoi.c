@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <mos/sys.h>
+#include <stdio.h>
 
 int atoi(const char *str)
 {
@@ -25,4 +25,10 @@ long atol(const char *str)
         result = result * 10 + str[i] - '0';
 
     return result;
+}
+
+double atof(const char *nptr)
+{
+    puts("atof stub\n");
+    return 0;
 }
