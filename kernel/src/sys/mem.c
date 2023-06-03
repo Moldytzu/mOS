@@ -1,6 +1,9 @@
 #include <sys/sys.h>
 #include <mm/pmm.h>
 
+#define ADDRESSES_IN_PAGES(x) (x * VMM_PAGE / sizeof(uint64_t))
+#define PAGES_IN_ADDRESSES(x) (x * sizeof(uint64_t) / VMM_PAGE)
+
 // mem (rsi = call, rdx = arg1, r8 = arg2)
 void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t *task)
 {
@@ -23,14 +26,19 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t 
         *(uint64_t *)PHYSICAL(arg1) = task->lastVirtualAddress; // give the application the virtual address
         task->lastVirtualAddress += 4096 * pages;               // increment the last virtual address
 
-        if (task->allocatedIndex == ((task->allocatedBufferPages * VMM_PAGE) / 8) - pages) // reallocation needed when we overflow (todo: here we might overflow)
+        size_t addresses = ADDRESSES_IN_PAGES(task->allocatedBufferPages); // addresses we can store
+
+        // check for possible overflow
+        if (task->allocatedIndex + pages >= addresses)
         {
-            task->allocated = pmmReallocate(task->allocated, task->allocatedBufferPages, task->allocatedBufferPages + 1);
-            task->allocatedBufferPages++;
+            size_t newPages = PAGES_IN_ADDRESSES(pages) + 1;
+            task->allocated = pmmReallocate(task->allocated, task->allocatedBufferPages, task->allocatedBufferPages + newPages);
+            task->allocatedBufferPages += newPages;
         }
 
+        // store addresses so we can clean up later
         for (int i = 0; i < pages; i++)
-            task->allocated[task->allocatedIndex++] = (void *)((uint64_t)page + i * 4096); // keep evidence of the page
+            task->allocated[task->allocatedIndex++] = (void *)((uint64_t)page + i * 4096); 
         break;
     default:
         break;
