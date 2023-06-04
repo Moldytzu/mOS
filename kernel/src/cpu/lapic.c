@@ -21,27 +21,8 @@ bool isEnabled = false;
 void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
     vmmSwap(vmmGetBaseTable());
-
-    if (hpetMillis() / 1000 != lastSeconds[smpID()])
-    {
-        lapicTPS[smpID()] = __tps[smpID()];
-
-        // logInfo("%d", lapicTPS[smpID()]);
-
-        __tps[smpID()] = 0;
-    }
-
-    __tps[smpID()]++;
-    lastSeconds[smpID()] = hpetMillis() / 1000;
-
     schedSchedule(stack);
-
     lapicEOI();
-}
-
-uint64_t *lapicGetTPS()
-{
-    return lapicTPS;
 }
 
 void lapicWrite(uint64_t offset, uint32_t value)
