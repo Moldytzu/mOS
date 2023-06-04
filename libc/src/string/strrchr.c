@@ -5,7 +5,7 @@ char *strrchr(const char *s, int c)
 {
     while(*s++)
         if(*s == c)
-            return s;
+            return (char *)s;
     
     return NULL;
 }

@@ -10,13 +10,13 @@ char *strstr(const char *s1, const char *s2)
         return NULL;
 
     if (!targetLen)
-        return s1;
+        return (char *)s1;
 
     do
     {
         len = strlen(s1);
         if(memcmp(s1,s2, targetLen) == 0)
-            return s1;
+            return (char *)s1;
 
         s1++;
     } while (len > targetLen);
