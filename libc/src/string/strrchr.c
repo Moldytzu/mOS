@@ -3,5 +3,9 @@
 
 char *strrchr(const char *s, int c)
 {
-    puts("strrchr stub\n");
+    while(*s++)
+        if(*s == c)
+            return s;
+    
+    return NULL;
 }
