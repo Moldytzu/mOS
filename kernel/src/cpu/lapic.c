@@ -20,6 +20,8 @@ bool isEnabled = false;
 
 void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
+    vmmSwap(vmmGetBaseTable());
+
     if (hpetMillis() / 1000 != lastSeconds[smpID()])
     {
         lapicTPS[smpID()] = __tps[smpID()];

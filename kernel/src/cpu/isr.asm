@@ -55,7 +55,7 @@ BaseHandlerEntry%1:
 %endmacro
 
 global lapicEntry, SyscallHandlerEntry
-extern PITHandler, syscallHandler, ps2Port1Handler, ps2Port2Handler, exceptionHandler
+extern syscallHandler, exceptionHandler, lapicHandleTimer
 
 %assign i 0
 %rep 256
@@ -74,15 +74,14 @@ SyscallHandlerEntry:
     o64 sysret ; return to userspace
 
 lapicEntry:
-    cld      ; clear direction flag as the sysv abi mandates
-    cli      ; disable intrerrupts
-    push rax ; push an arbitrary error code
-    PUSH_REG
-    mov rdi, rsp  ; give the stack frame
-    mov rsi, 0x20 ; give a fake intrerrupt number
-    call exceptionHandler
-    POP_REG
-    pop rax ; pop the error code from earlier
+    cld                   ; clear direction flag as the sysv abi mandates
+    cli                   ; disable intrerrupts
+    push rax              ; push an arbitrary error code
+    PUSH_REG              ; save all general purpose registers + cr3
+    mov rdi, rsp          ; pass the stack frame
+    call lapicHandleTimer ; handle the timer
+    POP_REG               ; restore registers
+    pop rax               ; pop the error code from earlier
     iretq
 
 section .data

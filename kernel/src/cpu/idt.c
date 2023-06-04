@@ -101,9 +101,6 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
 
     switch (int_num)
     {
-    case APIC_TIMER_VECTOR: // apic timer interrupt
-        return lapicHandleTimer(stack);
-
     case APIC_NMI_VECTOR: // this halts the cpus in case of a kernel panic
         return hang();
 
