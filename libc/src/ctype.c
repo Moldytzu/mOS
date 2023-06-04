@@ -3,73 +3,74 @@
 
 int toupper(int c)
 {
-    puts("toupper stub\n");
-    return 0;
+    if (islower(c))
+        return c - 'a' + 'A';
+    return c;
 }
+
 int tolower(int c)
 {
-    puts("tolower stub\n");
-    return 0;
+    if (isupper(c))
+        return c - 'A' + 'a';
+    return c;
 }
+
 int isxdigit(int c)
 {
-    puts("isxdigit stub\n");
-    return 0;
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
+
 int isupper(int c)
 {
-    puts("isupper stub\n");
-    return 0;
+    return c >= 'A' && c <= 'Z';
 }
-int isspace(int c)
-{
-    puts("isspace stub\n");
-    return 0;
-}
-int ispunct(int c)
-{
-    puts("ispunct stub\n");
-    return 0;
-}
-int isprint(int c)
-{
-    puts("isprint stub\n");
-    return 0;
-}
+
 int islower(int c)
 {
-    puts("islower stub\n");
-    return 0;
+    return c >= 'a' && c <= 'z';
 }
+
+int isspace(int c)
+{
+    return c == ' ' || c == '\t';
+}
+
+int ispunct(int c)
+{
+    return (c >= '!' && c <= '@') || (c >= '[' && c <= '`') || (c >= '{' && c <= '~');
+}
+
+int isprint(int c)
+{
+    return c >= ' ' && c <= '~';
+}
+
 int isgraph(int c)
 {
-    puts("isgraph stub\n");
-    return 0;
+    return isprint(c);
 }
+
 int isdigit(int c)
 {
-    puts("isdigit stub\n");
-    return 0;
+    return c >= '0' && c <= '9';
 }
+
 int iscntrl(int c)
 {
-    puts("iscntrl stub\n");
-    return 0;
+    return !isprint(c);
 }
+
 int isblank(int c)
 {
-    puts("isblank stub\n");
-    return 0;
+    return isspace(c);
 }
 
 int isalpha(int c)
 {
-    puts("isalpha stub\n");
-    return 0;
+    return isupper(c) || islower(c);
 }
 
 int isalnum(int c)
 {
-    puts("isalnum stub\n");
-    return 0;
+    return isalpha(c) || isdigit(c);
 }
