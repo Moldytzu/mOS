@@ -20,7 +20,7 @@ int redirectTableMeta[256];
 // change gate information
 void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
 {
-    idt_gate_descriptor_t *gate = &gates[entry]; // select the gate
+    idt_gate_descriptor_t *gate = &gates[entry];    // select the gate
     if (gate->segmentselector == 0)                 // detect if we didn't touch the gate
         idtr.size += sizeof(idt_gate_descriptor_t); // if we didn't we can safely increase the size
 
@@ -31,8 +31,10 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
     gate->offset3 = (uint32_t)(((uint64_t)handler & 0xffffffff00000000) >> 32);
 
     // enable ists
-    if (user)
-        gate->ist = 2; // separate ists
+    if (entry == APIC_TIMER_VECTOR)
+        gate->ist = 3;
+    else if (user)
+        gate->ist = 2;
     else
         gate->ist = 1;
 }
@@ -70,6 +72,7 @@ void idtInstall(uint8_t procID)
     gdt_tss_t *tss = tssGet()[procID];
     tss->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
     tss->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
+    tss->ist[2] = (uint64_t)pmmPage() + VMM_PAGE;
 
     iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 }

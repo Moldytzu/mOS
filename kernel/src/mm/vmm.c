@@ -159,6 +159,7 @@ vmm_page_table_t *vmmCreateTable(bool full)
             vmmMap(newTable, (void *)tss, (void *)tss, VMM_ENTRY_RW);                               // tss struct
             vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, VMM_ENTRY_RW); // kernel ist
             vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // userspace ist
+            vmmMap(newTable, (void *)tss->ist[2] - 4096, (void *)tss->ist[2] - 4096, VMM_ENTRY_RW); // context switch ist
 
             vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW);   // gdt entries
             vmmMap(newTable, &gdtGet()[i], &gdtGet()[i], VMM_ENTRY_RW); // gdtr
@@ -207,7 +208,7 @@ void vmmDestroy(vmm_page_table_t *table)
     uint64_t a = pmmTotal().available;
 #endif
 
-    if(!table)
+    if (!table)
         return;
 
     // deallocate sub-tables
