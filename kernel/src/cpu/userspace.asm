@@ -3,11 +3,11 @@ bits 64
 section .text
 
 global sysretInit, callWithPageTable, callWithStack
-extern SyscallHandlerEntry
+extern syscallHandlerEntry
 
 ; initialize the sysret/syscall functionality
 sysretInit:
-	mov rax, SyscallHandlerEntry ; syscall handler entry
+	mov rax, syscallHandlerEntry ; syscall handler entry
 	mov	rdx, rax
 	shr	rdx, 0x20
 	mov rcx, 0xC0000082 ; LSTAR

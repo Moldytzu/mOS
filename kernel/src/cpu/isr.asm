@@ -41,20 +41,20 @@ bits 64
 %endmacro
 
 %macro GEN_HANDLER 1
-global BaseHandlerEntry%1
+global __baseHandler%1
 
-BaseHandlerEntry%1:
-    cld ; clear direction flag as the sysv abi mandates
-    cli ; disable intrerrupts
-    PUSH_REG
-    mov rdi, rsp ; give the handler the stack frame
-    mov rsi, %1 ; give the intrerrupt number
-    call exceptionHandler
-    POP_REG
-    iretq
+__baseHandler%1:
+    cld                   ; clear direction flag as the sysv abi mandates
+    cli                   ; disable intrerrupts
+    PUSH_REG              ; save old registers
+    mov rdi, rsp          ; give the handler the stack frame
+    mov rsi, %1           ; give the intrerrupt number
+    call exceptionHandler ; call the handler
+    POP_REG               ; restore registers
+    iretq                 ; return to previous context
 %endmacro
 
-global lapicEntry, SyscallHandlerEntry
+global lapicEntry, syscallHandlerEntry, int_table
 extern syscallHandler, exceptionHandler, lapicHandleTimer
 
 %assign i 0
@@ -63,7 +63,7 @@ GEN_HANDLER i
 %assign i i+1
 %endrep
 
-SyscallHandlerEntry:
+syscallHandlerEntry:
     cld                 ; clear direction flag as the sysv abi mandates
     push rax            ; push an arbitrary error code
     PUSH_REG            ; save old registers
@@ -82,13 +82,12 @@ lapicEntry:
     call lapicHandleTimer ; handle the timer
     POP_REG               ; restore registers
     pop rax               ; pop the error code from earlier
-    iretq
+    iretq                 ; return to context
 
 section .data
 int_table:
 %assign i 0
 %rep 256
-    dq BaseHandlerEntry%+i
+    dq __baseHandler%+i
 %assign i i+1
 %endrep
-[GLOBAL int_table]
