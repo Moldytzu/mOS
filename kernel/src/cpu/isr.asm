@@ -64,14 +64,14 @@ GEN_HANDLER i
 %endrep
 
 SyscallHandlerEntry:
-    cld      ; clear direction flag as the sysv abi mandates
-    push rax ; push an arbitrary error code
-    PUSH_REG
-    mov rdi, rsp
+    cld                 ; clear direction flag as the sysv abi mandates
+    push rax            ; push an arbitrary error code
+    PUSH_REG            ; save old registers
+    mov rdi, rsp        ; point to the stack frame
     call syscallHandler ; call the syscall handler
-    POP_REG
-    add rsp, 8 ; pop the error code from earlier
-    o64 sysret ; return to userspace
+    POP_REG             ; restore registers
+    pop rax             ; pop the error code from earlier
+    o64 sysret          ; return to userspace
 
 lapicEntry:
     cld                   ; clear direction flag as the sysv abi mandates
