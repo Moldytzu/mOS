@@ -1,7 +1,7 @@
 # machine settings
-CORES = $(shell nproc) # cores available for os
-DISK_SIZE = 512        # disk image size in megabytes (applies only when removing the disk image)
-MEMORY = 1G            # memory allocated
+CORES = 2        # cores available for os
+DISK_SIZE = 512  # disk image size in megabytes (applies only when removing the disk image)
+MEMORY = 1G      # memory allocated
 
 DISK = image.disk
 GDBFLAGS ?= -tui -q -x gdb.script
@@ -44,13 +44,13 @@ run-debug: image
 	pkill -f qemu-system-x86_64
 	reset
 
-run-efi:
+run-efi: image
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) 
 
-run-efi-kvm:
+run-efi-kvm: image
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) --enable-kvm -cpu host
 
-run-efi-debug:
+run-efi-debug: image
 	qemu-system-x86_64 -bios ovmf/ovmf.fd $(QEMUFLAGS) -no-reboot -no-shutdown -d int -M smm=off -D out/qemu.out -s -S &
 	gdb-multiarch $(GDBFLAGS) out/kernel.elf
 	pkill -f qemu-system-x86_64
