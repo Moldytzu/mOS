@@ -188,6 +188,9 @@ vmm_page_table_t *vmmCreateTable(bool full)
 
         for (size_t i = 0; i < entry->length; i += 4096)
         {
+            if(entry->type == LIMINE_MEMMAP_USABLE && (entry->length < 128 * 1024 || entry->base < 1 * 1024 * 1024)) // don't map entries we don't even allocate in
+                break;
+
             vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), VMM_ENTRY_RW);
             
             if(entry->type != LIMINE_MEMMAP_USABLE) // we don't expect physical memory to be mapped in virtual memory
