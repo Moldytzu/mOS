@@ -1,8 +1,11 @@
-CORES = $(shell nproc)
+# machine settings
+CORES = $(shell nproc) # cores available for os
+DISK_SIZE = 512        # disk image size in megabytes (applies only when removing the disk image)
+MEMORY = 1G            # memory allocated
+
 DISK = image.disk
-DISK_SIZE = 512 # this is in MB
 GDBFLAGS ?= -tui -q -x gdb.script
-QEMUFLAGS ?= -M q35,smm=off -m 1G -smp 4 -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
+QEMUFLAGS ?= -M q35,smm=off -m $(MEMORY) -smp $(CORES) -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
 QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)
@@ -18,16 +21,16 @@ run: image
 	qemu-system-x86_64 $(QEMUFLAGS) 
 
 run-smp-debug: image
-	qemu-system-x86_64 $(QEMUFLAGS) $(QEMUDEBUG) -smp 4 &
+	qemu-system-x86_64 $(QEMUFLAGS) $(QEMUDEBUG) -smp $(CORES) &
 	gdb-multiarch -tui -q -x smpgdb.script out/kernel.elf
 	pkill -f qemu-system-x86_64
 	reset
 
 run-no-smp: image
-	qemu-system-x86_64 -M q35,smm=off -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -m 512M
+	qemu-system-x86_64 -M q35,smm=off -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -m $(MEMORY)
 
 run-old: image
-	qemu-system-x86_64 -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int
+	qemu-system-x86_64 -cpu core2duo -hda $(DISK) -m $(MEMORY) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int
 
 run-bochs: image
 	bochs -q
