@@ -171,6 +171,10 @@ vmm_page_table_t *vmmCreateTable(bool full)
     {
         struct limine_memmap_entry *entry = memMap->entries[i];
 
+        uint64_t start = entry->base;
+        if (start % 4096)
+            start -= start % 4096;
+
         if (entry->type != LIMINE_MEMMAP_KERNEL_AND_MODULES && !full) // don't map any type of memory besides kernel
             continue;
 
@@ -183,18 +187,18 @@ vmm_page_table_t *vmmCreateTable(bool full)
         if (entry->type == LIMINE_MEMMAP_FRAMEBUFFER)
         {
             for (size_t i = 0; i < entry->length; i += 4096)
-                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
+                vmmMap(newTable, (void *)(start + i), (void *)(start + i), VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
         }
 
         for (size_t i = 0; i < entry->length; i += 4096)
         {
-            if(entry->type == LIMINE_MEMMAP_USABLE && (entry->length < 128 * 1024 || entry->base < 1 * 1024 * 1024)) // don't map entries we don't even allocate in
+            if (entry->type == LIMINE_MEMMAP_USABLE && (entry->length < 128 * 1024 || start < 1 * 1024 * 1024)) // don't map entries we don't even allocate in
                 break;
 
-            vmmMap(newTable, (void *)(entry->base + i), (void *)(entry->base + i), VMM_ENTRY_RW);
-            
-            if(entry->type != LIMINE_MEMMAP_USABLE) // we don't expect physical memory to be mapped in virtual memory
-                vmmMap(newTable, (void *)(entry->base + i + hhdm), (void *)(entry->base + i), VMM_ENTRY_RW);
+            vmmMap(newTable, (void *)(start + i), (void *)(start + i), VMM_ENTRY_RW);
+
+            if (entry->type != LIMINE_MEMMAP_USABLE) // we don't expect physical memory to be mapped in virtual memory
+                vmmMap(newTable, (void *)(start + i + hhdm), (void *)(start + i), VMM_ENTRY_RW);
         }
     }
 
