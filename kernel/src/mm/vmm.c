@@ -13,6 +13,7 @@
 
 #define PAGE_ADDR(x) ((vmm_page_table_t *)(x & 0xFFFFFFFFFF000))
 
+size_t kpdp = 0;
 vmm_page_table_t *baseTable;
 
 // initialize the virtual memory manager
@@ -20,6 +21,8 @@ void vmmInit()
 {
     baseTable = vmmCreateTable(true); // create the base table with hhdm
     vmmSwap(baseTable);               // swap the table
+
+    kpdp = vmmIndex(bootloaderGetKernelAddress()->virtual_base).PDP; // store pdp entry of kernel
 
     logInfo("vmm: loaded a new page table");
 }
@@ -151,7 +154,8 @@ vmm_page_table_t *vmmCreateTable(bool full)
     // map system tables for non-kernel tables (kernel tables have everything mapped)
     if (!full)
     {
-        for (int i = 0; i < smpCores(); i++) // map gdt and tss of each core
+        // map tss and gdt
+        for (int i = 0; i < smpCores(); i++)
         {
             gdt_tss_t *tss = tssGet()[i];
             gdt_descriptor_t gdt = gdtGet()[i];
@@ -161,49 +165,51 @@ vmm_page_table_t *vmmCreateTable(bool full)
             vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // userspace ist
             vmmMap(newTable, (void *)tss->ist[2] - 4096, (void *)tss->ist[2] - 4096, VMM_ENTRY_RW); // context switch ist
 
-            vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW);   // gdt entries
-            vmmMap(newTable, &gdtGet()[i], &gdtGet()[i], VMM_ENTRY_RW); // gdtr
+            vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW); // gdt entries
         }
-    }
 
-    // map memory map entries as kernel rw
-    for (size_t i = 0; i < memMap->entry_count; i++)
+        // map idt and apic
+        vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
+        vmmMap(newTable, APIC_BASE, APIC_BASE, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
+
+        // copy kernel higher half
+        newTable->entries[kpdp] = baseTable->entries[kpdp];
+    }
+    else
     {
-        struct limine_memmap_entry *entry = memMap->entries[i];
-
-        uint64_t start = entry->base;
-        if (start % 4096)
-            start -= start % 4096;
-
-        if (entry->type != LIMINE_MEMMAP_KERNEL_AND_MODULES && !full) // don't map any type of memory besides kernel
-            continue;
-
-        if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
+        // map memory map entries as kernel rw
+        for (size_t i = 0; i < memMap->entry_count; i++)
         {
-            for (size_t i = 0; i < entry->length; i += 4096)
-                vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW);
-        }
+            struct limine_memmap_entry *entry = memMap->entries[i];
 
-        if (entry->type == LIMINE_MEMMAP_FRAMEBUFFER)
-        {
-            for (size_t i = 0; i < entry->length; i += 4096)
-                vmmMap(newTable, (void *)(start + i), (void *)(start + i), VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
-        }
+            uint64_t start = entry->base;
+            if (start % 4096)
+                start -= start % 4096;
 
-        for (size_t i = 0; i < entry->length; i += 4096)
-        {
             if (entry->type == LIMINE_MEMMAP_USABLE && (entry->length < 128 * 1024 || start < 1 * 1024 * 1024)) // don't map entries we don't even allocate in
-                break;
+                continue;
 
-            vmmMap(newTable, (void *)(start + i), (void *)(start + i), VMM_ENTRY_RW);
+            if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
+            {
+                for (size_t i = 0; i < entry->length; i += 4096)
+                    vmmMap(newTable, (void *)(kaddr->virtual_base + i), (void *)(kaddr->physical_base + i), VMM_ENTRY_RW);
+            }
 
-            if (entry->type != LIMINE_MEMMAP_USABLE) // we don't expect physical memory to be mapped in virtual memory
-                vmmMap(newTable, (void *)(start + i + hhdm), (void *)(start + i), VMM_ENTRY_RW);
+            if (entry->type == LIMINE_MEMMAP_FRAMEBUFFER)
+            {
+                for (size_t i = 0; i < entry->length; i += 4096)
+                    vmmMap(newTable, (void *)(start + i), (void *)(start + i), VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
+            }
+
+            for (size_t i = 0; i < entry->length; i += 4096)
+            {
+                vmmMap(newTable, (void *)(start + i), (void *)(start + i), VMM_ENTRY_RW);
+
+                if (entry->type != LIMINE_MEMMAP_USABLE) // we don't expect physical memory to be mapped in virtual memory
+                    vmmMap(newTable, (void *)(start + i + hhdm), (void *)(start + i), VMM_ENTRY_RW);
+            }
         }
     }
-
-    vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
-    vmmMap(newTable, APIC_BASE, APIC_BASE, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
 
     logDbg(LOG_SERIAL_ONLY, "vmm: wasted %d KB on a new page table", (a - pmmTotal().available) / 1024);
 
@@ -223,6 +229,9 @@ void vmmDestroy(vmm_page_table_t *table)
     // deallocate sub-tables
     for (int pdp = 0; pdp < 512; pdp++)
     {
+        if (pdp == kpdp) // don't deallocate kernel higher-half
+            continue;
+
         uint64_t pdpValue = table->entries[pdp];
 
         if (!pdpValue)
