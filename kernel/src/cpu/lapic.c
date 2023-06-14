@@ -20,9 +20,9 @@ bool isEnabled = false;
 
 void lapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
-    vmmSwap(vmmGetBaseTable());
-    schedSchedule(stack);
-    lapicEOI();
+    vmmSwap(vmmGetBaseTable()); // swap to base table
+    lapicEOI();                 // send end of interrupt
+    schedSchedule(stack);       // reschedule
 }
 
 void lapicWrite(uint64_t offset, uint32_t value)

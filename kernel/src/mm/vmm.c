@@ -168,9 +168,8 @@ vmm_page_table_t *vmmCreateTable(bool full)
             vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW); // gdt entries
         }
 
-        // map idt and apic
+        // map idt gates
         vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
-        vmmMap(newTable, APIC_BASE, APIC_BASE, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
 
         // copy kernel higher half
         newTable->entries[kpdp] = baseTable->entries[kpdp];
