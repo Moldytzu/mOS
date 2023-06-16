@@ -55,8 +55,6 @@ void syscallHandler(idt_intrerrupt_stack_t *registers)
 
     if (registers->rdi < (sizeof(syscallHandlers) / sizeof(void *)))                                      // check if the syscall is in range
         syscallHandlers[registers->rdi](registers->rsi, registers->rdx, registers->r8, registers->r9, t); // call the handler
-
-    vmmSwap((void *)registers->cr3); // swap the page table back
 }
 
 // init syscall handling
