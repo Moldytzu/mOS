@@ -48,13 +48,13 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
         const char *input = str;               // input buffer
         if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow (todo: reallocate)
         {
-            zero((void *)vt->buffer, VMM_PAGE); // clear the buffer
-            vt->bufferIdx = 0;                  // reset the index
+            memsetPage((void *)vt->buffer, 0, 1); // clear the buffer
+            vt->bufferIdx = 0;                    // reset the index
         }
 
         for (size_t i = 0; i < count; i++) // copy the buffer
         {
-            if(*input == '\b') // handle ascii backspace
+            if (*input == '\b') // handle ascii backspace
             {
                 buffer[--vt->bufferIdx] = '\0'; // zero the buffer early
                 continue;
