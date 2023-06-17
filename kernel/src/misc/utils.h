@@ -87,6 +87,9 @@ static void memset64(void *dest, uint64_t data, size_t count)
         *(uint64_t *)dest = data;
 }
 
+// memset an entire page using sse2
+extern void memsetPage(void *dest, uint64_t data, size_t c);
+
 // set memory to 0
 static void zero(void *dest, size_t count)
 {

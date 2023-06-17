@@ -37,7 +37,7 @@ void pmmBenchmark()
 
     end = hpetMillis();
 
-    logInfo("pmm: deallocation %d KB/ms", (PMM_BENCHMARK_SIZE * PMM_PAGE / 1024) / (end - start));
+    logInfo("pmm: deallocation %d KB/ms", (PMM_BENCHMARK_SIZE * PMM_PAGE / 1024) / (end - start + 1));
 
     pmmDbgDump();
 
@@ -109,7 +109,7 @@ void *pmmPages(uint64_t pages)
                 pool->available -= PMM_PAGE * pages;
                 pool->used += PMM_PAGE * pages;
 
-                zero((void *)((uint64_t)pool->alloc + i * PMM_PAGE), PMM_PAGE * pages); // initialise memory
+                memsetPage((void *)((uint64_t)pool->alloc + i * PMM_PAGE), 0, pages); // initialise memory
 
                 release(pmmLock);
 
