@@ -1,4 +1,4 @@
 #pragma once
 #include <misc/utils.h>
 
-void fpuInit();
+extern void fpuInit();

@@ -1,12 +1,11 @@
 bits 64
 
-global sseInit, x87Init
+global fpuInit
 
-x87Init:
+fpuInit:
     fninit ; init x87
-    ret
-
-sseInit:    
+    
+    ; enable SSE
     mov rax, cr0
     and ax, 0xFFFB ; clear CR0.EM
     or rax, 0x2 ; set CR0.MP
