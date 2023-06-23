@@ -57,7 +57,7 @@ run-efi-debug: image
 	reset
 
 limine:
-	-git clone https://github.com/limine-bootloader/limine.git --branch=v4.x-branch-binary --depth=1
+	-git clone https://github.com/limine-bootloader/limine.git --branch=v5.x-branch-binary --depth=1
 	make -C limine
 
 initrd:
@@ -90,7 +90,7 @@ $(DISK):
 	sudo mkfs.fat -F 32 /dev/mapper/loop*p1
 	sudo kpartx -d ./$(DISK)
 
-image: $(DISK) limine kernel libc $(APPS) $(DRIVERS) initrd 
+image: $(DISK) umount limine kernel libc $(APPS) $(DRIVERS) initrd 
 	sudo kpartx -a ./$(DISK)
 	sudo mkdir -p /mnt
 	sudo mkdir -p /mnt/mOS
@@ -98,10 +98,10 @@ image: $(DISK) limine kernel libc $(APPS) $(DRIVERS) initrd
 	sudo mkdir -p /mnt/mOS/EFI
 	sudo mkdir -p /mnt/mOS/EFI/BOOT
 	sudo cp out/kernel.elf /mnt/mOS/
-	sudo cp limine/limine.sys /mnt/mOS/
+	sudo cp limine/limine-bios.sys /mnt/mOS/
 	sudo cp limine/BOOTX64.EFI /mnt/mOS/EFI/BOOT/
 	cd roots/img && sudo cp -r . /mnt/mOS
-	limine/limine-deploy ./$(DISK)
+	limine/limine bios-install ./$(DISK)
 	sudo umount /dev/mapper/loop*p1
 	sudo kpartx -d ./$(DISK)
 
@@ -112,8 +112,8 @@ mount:
 	sudo mount /dev/mapper/loop*p1 /mnt/mOS
 
 umount:
-	sudo umount /dev/mapper/loop*p1
-	sudo kpartx -d ./$(DISK)
+	-sudo umount /dev/mapper/loop*p1
+	-sudo kpartx -d ./$(DISK)
 
 clean:
 	chmod +x ./clean.sh
