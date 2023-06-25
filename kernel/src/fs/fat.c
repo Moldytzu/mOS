@@ -131,8 +131,6 @@ fat_dir_t fatGetEntry(struct vfs_node_t *node)
                 fatParseLFN(lname + 13 * (order - 1 - k), &l); // parse then reverse its location because lfns are sequencially ordered (from x to 1 where x is a natural number)
             }
 
-            printks("lfn: %x %s\n", order, lname);
-
             i += order - 1;
 
             continue;
@@ -143,16 +141,16 @@ fat_dir_t fatGetEntry(struct vfs_node_t *node)
         zero(name, sizeof(name));
         fatParseSFN(name, &entry);
 
-        printks("name: %s; lname: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, lname, entry.attributes, CLUSTER(entry), entry.size);
+        logDbg(LOG_SERIAL_ONLY, "fat: found entry %s with size %d b", lname, entry.size);
 
         if (strcmp(node->path, lname) != 0 && strcmp(node->path, name) != 0) // compare the names
             continue;
 
-        pmmDeallocate(entries);
+        pmmDeallocatePages(entries, pages);
         return entry;
     }
 
-    pmmDeallocate(entries);
+    pmmDeallocatePages(entries, pages);
     fat_dir_t d;
     zero(&d, sizeof(d));
     return d;
@@ -227,8 +225,6 @@ void fatMap(struct vfs_node_t *root)
                 fatParseLFN(lname + 13 * (order - 1 - k), &l); // parse then reverse its location because lfns are sequencially ordered (from x to 1 where x is a natural number)
             }
 
-            printks("lfn: %x %s\n", order, lname);
-
             i += order - 1;
 
             continue;
@@ -239,7 +235,7 @@ void fatMap(struct vfs_node_t *root)
         zero(name, sizeof(name));
         fatParseSFN(name, &entry);
 
-        printks("name: %s; lname: %s; attr: 0x%x; cluster: 0x%x; size: %d b\n", name, lname, entry.attributes, CLUSTER(entry), entry.size);
+        logDbg(LOG_SERIAL_ONLY, "fat: found entry %s with size %d b", lname, entry.size);
 
         struct vfs_node_t node;             // create a node
         zero(&node, sizeof(node));          // zero it
@@ -255,7 +251,7 @@ void fatMap(struct vfs_node_t *root)
         zero(lname, sizeof(lname));
     }
 
-    pmmDeallocate(entries);
+    pmmDeallocatePages(entries, pages);
 }
 
 // create a new fat context
