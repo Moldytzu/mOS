@@ -8,7 +8,7 @@
 #include <misc/logger.h>
 
 uint8_t revision;
-acpi_rsdp_hdr_t *rsdp;
+acpi_rsdp_t *rsdp;
 acpi_sdt_t *sdt;
 acpi_mcfg_t *mcfg;
 
@@ -33,9 +33,9 @@ acpi_sdt_t *acpiGet(const char *sig, int index)
 
         // xsdt uses 64 bit pointers while rsdt uses 32 bit pointers
         if (xsdt)
-            t = (acpi_sdt_t *)(((uint64_t *)(((acpi_xsdt_hdr_t *)sdt)->entries))[i]);
+            t = (acpi_sdt_t *)(((uint64_t *)(((acpi_xsdt_t *)sdt)->entries))[i]);
         else
-            t = (acpi_sdt_t *)(((uint32_t *)(((acpi_xsdt_hdr_t *)sdt)->entries))[i]);
+            t = (acpi_sdt_t *)(((uint32_t *)(((acpi_xsdt_t *)sdt)->entries))[i]);
 
         if (memcmp8((void *)sig, t->signature, 4) == 0 && index-- == 0) // compare the signatures
             return t;
@@ -129,7 +129,23 @@ void rebootFallback()
 // reboot using acpi
 void acpiReboot()
 {
-    logError("ACPI Reboot unsupported. Trying fallback.");
+    // page 81 of ACPI spec 6.5 (August 29 2023)
+    acpi_fadt_t *fadt = (acpi_fadt_t *)acpiGet("FACP", 0);
+    uint8_t RESET_VALUE = fadt->resetValue;
+    switch (fadt->reset.addressSpace)
+    {
+    case ACPI_GAS_ACCESS_MEMORY:
+        *((uint8_t *)fadt->reset.address) = fadt->resetValue;
+        break;
+    case ACPI_GAS_ACCESS_IO:
+        outb((uint16_t)fadt->reset.address & 0xFFFF, fadt->resetValue);
+        break;
+    default:
+        panick("acpi: unsupported fadt reset address space (expected System Memory or System I/O)");
+        break;
+    }
+
+    logError("acpi: reboot unsupported. trying fallback.");
     rebootFallback();
     hang();
 }
@@ -137,7 +153,7 @@ void acpiReboot()
 // shutdown using acpi
 void acpiShutdown()
 {
-    logError("ACPI Shutdown unsupported. Rebooting instead.");
+    logError("acpi: shutdown unsupported. rebooting instead.");
     acpiReboot();
     hang();
 }
@@ -146,7 +162,7 @@ void acpiShutdown()
 void acpiInit()
 {
     // get rsdp
-    rsdp = (acpi_rsdp_hdr_t *)bootloaderGetRSDP();
+    rsdp = (acpi_rsdp_t *)bootloaderGetRSDP();
 
     vmmMap(vmmGetBaseTable(), rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), VMM_ENTRY_RW); // properly map the rsdp
 
