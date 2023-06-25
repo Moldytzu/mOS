@@ -21,9 +21,14 @@ bool fatIsValid(fat_bpb_t *bpb)
     return bpb->bootSignature == VFS_MBR_SIGNATURE;
 }
 
+bool fatDirLast(fat_dir_t dir)
+{
+    return dir.name[0] == 0;
+}
+
 bool fatDirValid(fat_dir_t dir)
 {
-    return dir.name[0] != 0 && dir.name[0] != 0xE5;
+    return !fatDirLast(dir) || (dir.name[0] != 0x05 && dir.name[0] != 0xE5);
 }
 
 void fatParseSFN(char *name, fat_dir_t *entry)
@@ -70,7 +75,7 @@ fat_dir_t fatGetEntry(struct vfs_node_t *node)
     context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), 4096 / VFS_SECTOR);
 
     char lname[256];
-    for (int i = 0; i < maxEntries; i++)
+    for (int i = 0; !fatDirLast(entries[i]); i++)
     {
         fat_dir_t entry = entries[i];
 
@@ -165,7 +170,7 @@ void fatMap(struct vfs_node_t *root)
 
     char lname[256];
     context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), PMM_PAGE / VFS_SECTOR);
-    for (int i = 0; i < maxEntries; i++)
+    for (int i = 0; !fatDirLast(entries[i]); i++)
     {
         fat_dir_t entry = entries[i];
 
