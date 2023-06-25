@@ -153,8 +153,8 @@ void acpiReboot()
 // shutdown using acpi
 void acpiShutdown()
 {
-    logError("acpi: shutdown unsupported. rebooting instead.");
-    acpiReboot();
+    logError("acpi: shutdown unsupported.");
+    panick("It is safe to shutdown computer!");
     hang();
 }
 
