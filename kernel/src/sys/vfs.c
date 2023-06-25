@@ -93,11 +93,12 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             zero(path, sizeof(path));
             vfsGetPath((uint64_t)currentNode, path);
 
-            bool starts = strstarts(path, name);                        // checks if path starts with the same characters
+            bool listFile = path[strlen(name) - 1] != '/';              // check if we list a file
+            bool starts = strstarts(path, name);                        // check if path starts with the same characters
             bool hasSameSlashes = count(path, '/') == count(name, '/'); // check if the path and name has the same number of slashes
             bool endsInSlash = path[strlen(path) - 1] == '/';           // check if the path is a directory
 
-            if (starts && (hasSameSlashes /* this prevents going in subdirectories */ || endsInSlash /* this lets only directories */))
+            if (starts && (hasSameSlashes /* this prevents going in subdirectories */ || endsInSlash /* this lets only directories */) && !listFile)
             {
                 if (strlen(currentNode->path) == 0 && !hasSameSlashes) // append mount name for partitions or nodes without path that aren't the one we search in
                 {
@@ -111,6 +112,12 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
                 }
 
                 *(retChar++) = ' '; // append a space
+            }
+            else if (listFile && strcmp(path, name) == 0) // we list a file so we only show it
+            {
+                memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the local path
+                retChar += strlen(currentNode->path);                          // move the pointer forward
+                break;
             }
 
         next1:
