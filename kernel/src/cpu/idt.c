@@ -74,6 +74,10 @@ void idtInstall(uint8_t procID)
     tss->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
     tss->ist[2] = (uint64_t)pmmPage() + VMM_PAGE;
 
+    tss->rsp[0] = (uint64_t)pmmPage() + VMM_PAGE;
+    tss->rsp[1] = (uint64_t)pmmPage() + VMM_PAGE;
+    tss->rsp[2] = (uint64_t)pmmPage() + VMM_PAGE;
+
     iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 }
 
