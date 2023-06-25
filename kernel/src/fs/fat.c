@@ -63,14 +63,19 @@ fat_dir_t fatGetEntry(struct vfs_node_t *node)
     size_t partitionIdx = context->partition;
     vfs_partition_t partition = context->drive->partitions[partitionIdx];
     fat_bpb_t *fs = context->bpb;
+
     fat_dir_t *entries = pmmPage();
+    size_t maxEntries = PMM_PAGE / sizeof(fat_dir_t); // todo: determine max number of entries
 
     context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), 4096 / VFS_SECTOR);
 
     char lname[256];
-    for (int i = 0; fatDirValid(entries[i]); i++)
+    for (int i = 0; i < maxEntries; i++)
     {
         fat_dir_t entry = entries[i];
+
+        if (!fatDirValid(entry)) // invalid entry
+            continue;
 
         if (entry.attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
             continue;
@@ -156,12 +161,16 @@ void fatMap(struct vfs_node_t *root)
         return;
 
     fat_dir_t *entries = pmmPage();
+    size_t maxEntries = PMM_PAGE / sizeof(fat_dir_t); // todo: determine max number of entries
 
     char lname[256];
-    context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), 4096 / VFS_SECTOR);
-    for (int i = 0; fatDirValid(entries[i]); i++)
+    context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), PMM_PAGE / VFS_SECTOR);
+    for (int i = 0; i < maxEntries; i++)
     {
         fat_dir_t entry = entries[i];
+
+        if (!fatDirValid(entry)) // invalid entry
+            continue;
 
         if (entry.attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
             continue;
