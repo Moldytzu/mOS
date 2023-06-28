@@ -184,6 +184,26 @@ uint8_t fatFSOpen(struct vfs_node_t *node)
     return 1;
 }
 
+void mapSubdirectory(struct vfs_node_t *root, fat_dir_t *entries, size_t i)
+{
+    fat_dir_t entry = entries[i];
+
+    struct vfs_node_t node;             // create a node
+    zero(&node, sizeof(node));          // zero it
+    node.filesystem = root->filesystem; // set the filesystem
+
+    size_t nameSize = 0;
+    for(; entry.name[nameSize] != ' '; nameSize++); // determine the size of the name
+
+    memcpy(node.path, entry.name, nameSize); // copy the name
+    node.path[nameSize] = '/';
+
+    char path[64];
+    zero(&path, 64);
+    vfsGetPath((uint64_t)vfsAdd(node), path); // create the node
+    logDbg(LOG_SERIAL_ONLY, "fat: found directory %s, mounted at %s", entry.name, path);
+}
+
 // map nodes in the vfs
 void fatMap(struct vfs_node_t *root)
 {
@@ -209,7 +229,10 @@ void fatMap(struct vfs_node_t *root)
             continue;
 
         if (entry.attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
+        {
+            mapSubdirectory(root, entries, i);
             continue;
+        }
 
         if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry
         {
