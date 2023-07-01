@@ -24,3 +24,6 @@
 
 ## Building and running
 See [BUILDING.md](./docs/BUILDING.md)
+
+## Font
+The default terminal font is [Hack](https://github.com/source-foundry/Hack), licensed under the MIT License.
