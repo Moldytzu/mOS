@@ -5,7 +5,7 @@ MEMORY = 1G      # memory allocated
 
 DISK = image.disk
 GDBFLAGS ?= -tui -q -x gdb.script
-QEMUFLAGS ?= -M q35,smm=off -m $(MEMORY) -smp $(CORES) -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware
+QEMUFLAGS ?= -M q35,smm=off -m $(MEMORY) -smp $(CORES) -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d int -vga vmware
 QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)
@@ -27,10 +27,10 @@ run-smp-debug: image
 	reset
 
 run-no-smp: image
-	qemu-system-x86_64 -M q35,smm=off -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int -vga vmware -m $(MEMORY)
+	qemu-system-x86_64 -M q35,smm=off -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d int -vga vmware -m $(MEMORY)
 
 run-old: image
-	qemu-system-x86_64 -cpu core2duo -hda $(DISK) -m $(MEMORY) -boot c -serial mon:stdio -D out/qemu.out -d guest_errors,cpu_reset,int
+	qemu-system-x86_64 -cpu core2duo -hda $(DISK) -m $(MEMORY) -boot c -serial mon:stdio -D out/qemu.out -d int
 
 run-bochs: image
 	bochs -q
