@@ -200,7 +200,6 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
         {
             if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the core don't reschedule
             {
-                vmmSwap((void *)lastTask[id]->registers.cr3);
                 release(schedLock);
                 return;
             }
@@ -274,8 +273,6 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
         memcpy(simdContext, &lastTask[id]->simdContext, 512);
 
         iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context
-
-        vmmSwap((void *)lastTask[id]->registers.cr3);
     });
 }
 
