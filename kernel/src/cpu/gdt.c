@@ -58,13 +58,13 @@ void gdtInstallTSS(uint16_t procID)
 
     segment->access = 0b10001001; // set the access byte
 
-    segment->base = (uint64_t)gdtr[procID].tss & 0x000000000000FFFF; // set the base address of the tss
-    segment->base2 = ((uint64_t)gdtr[procID].tss & 0x0000000000FF0000) >> 16;
-    segment->base3 = ((uint64_t)gdtr[procID].tss & 0x00000000FF000000) >> 24;
-    segment->base3 = ((uint64_t)gdtr[procID].tss & 0xFFFFFFFF00000000) >> 32;
+    uint64_t address = (uint64_t)gdtr[procID].tss;
+    segment->base = (uint16_t)address;
+    segment->base2 = (uint8_t)(address >> 16);
+    segment->base3 = (uint8_t)(address >> 24);
+    segment->base4 = (uint32_t)(address >> 32);
 
-    segment->limit = sizeof(gdt_tss_t) & 0xFFFF; // set the limit of the tss
-    segment->limit2 = (sizeof(gdt_tss_t) & 0xF000) >> 16;
+    segment->limit = sizeof(gdt_tss_t); // set the limit of the tss
 
     gdtr[procID].size += sizeof(gdt_system_segment_t); // add the size of gdt_system_segment
 }
