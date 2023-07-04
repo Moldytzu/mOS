@@ -18,13 +18,13 @@ void *redirectTable[256];
 int redirectTableMeta[256];
 
 // change gate information
-void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
+void idtSetGate(void *handler, uint8_t entry)
 {
     idt_gate_descriptor_t *gate = &gates[entry];    // select the gate
     if (gate->segmentselector == 0)                 // detect if we didn't touch the gate
         idtr.size += sizeof(idt_gate_descriptor_t); // if we didn't we can safely increase the size
 
-    gate->attributes = attributes;                                     // set the attributes
+    gate->attributes = 0xEE;                                           // set the attributes (set gate type to 64-bit interrupt, dpl to 3 and present bit)
     gate->segmentselector = (8 * 1);                                   // set the kernel code selector from gdt
     gate->offset = (uint16_t)((uint64_t)handler & 0x000000000000ffff); // offset to the entry
     gate->offset2 = (uint16_t)(((uint64_t)handler & 0x00000000ffff0000) >> 16);
@@ -33,8 +33,6 @@ void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user)
     // enable ists
     if (entry == APIC_TIMER_VECTOR)
         gate->ist = 3;
-    else if (user)
-        gate->ist = 2;
     else
         gate->ist = 1;
 }
@@ -54,7 +52,7 @@ void idtInit(uint16_t procID)
     idtr.offset = (uint64_t)gates; // set the offset to the data
     idtr.size = 0;                 // reset the size
     for (int i = 0; i < 0xFF; i++) // set all exception irqs to the base handler
-        idtSetGate((void *)int_table[i], i, IDT_InterruptGateU, true);
+        idtSetGate((void *)int_table[i], i);
 
     idtr.size--; // decrement to comply with the spec
 

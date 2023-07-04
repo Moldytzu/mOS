@@ -2,17 +2,6 @@
 #include <misc/utils.h>
 #include <drv/framebuffer.h>
 
-// attributes
-#define IDT_InterruptGate 0b10001110
-#define IDT_InterruptGateU 0b11101110
-#define IDT_CallGate 0b10001100
-#define IDT_CallGateU 0b11101100
-#define IDT_TrapGate 0b10001111
-#define IDT_TrapGateU 0b11101111
-
-// exceptions
-#define IDT_DE 0
-
 pstruct
 {
     uint16_t size;
@@ -59,7 +48,7 @@ pstruct
 }
 idt_intrerrupt_stack_t;
 
-void idtSetGate(void *handler, uint8_t entry, uint8_t attributes, bool user);
+void idtSetGate(void *handler, uint8_t entry);
 void idtInit(uint16_t procID);
 void idtInstall(uint8_t procID);
 void idtRedirect(void *handler, uint8_t entry, uint32_t tid);
