@@ -292,7 +292,7 @@ bool initController()
 
         if (port1Type == PS2_TYPE_INVALID)
         {
-            printf("ps2: guessing keyboard\n");
+            puts("ps2: guessing keyboard\n");
             port1Type = PS2_TYPE_KEYBOARD;
         }
     }
@@ -321,7 +321,7 @@ bool initController()
 
         if (port2Type == PS2_TYPE_INVALID)
         {
-            printf("ps2: guessing keyboard\n");
+            puts("ps2: guessing keyboard\n");
             port2Type = PS2_TYPE_KEYBOARD;
         }
     }
@@ -373,7 +373,7 @@ void _mdrvmain()
 
     if (!initController()) // initialise the controller
     {
-        printf("ps2: failed to initialise!\n");
+        puts("ps2: failed to initialise!\n");
         abort();
     }
 
@@ -381,13 +381,13 @@ void _mdrvmain()
 
     if (!contextStruct)
     {
-        printf("ps2: failed to announce!\n");
+        puts("ps2: failed to announce!\n");
         abort();
     }
 
     setupHandlers();
 
-    printf("ps2: started ps2 driver!\n");
+    puts("ps2: started ps2 driver!\n");
 
     // flush the context endlessly
     while (1)

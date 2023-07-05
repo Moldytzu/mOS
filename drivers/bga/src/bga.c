@@ -133,7 +133,7 @@ void _mdrvmain()
 {   
     if (!detectBGA())
     {
-        printf("bga: failed to initialise!\n");
+        puts("bga: failed to initialise!\n");
         abort();
     }
 
@@ -141,7 +141,7 @@ void _mdrvmain()
 
     if(!fb)
     {
-        printf("bga: failed to announce!\n");
+        puts("bga: failed to announce!\n");
         abort();
     }
 
@@ -149,7 +149,7 @@ void _mdrvmain()
 
     sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
-    printf("bga: initialised\n");
+    puts("bga: initialised\n");
 
     while (1)
     {

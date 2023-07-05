@@ -183,6 +183,8 @@ void _mdrvmain()
     comWrites("\nmOS serial kernel debugger initialised.\n");
     comWrites("Type help for more information\n");
 
+    puts("kcomdbg: launched debug console on serial COM1\n");
+
     while (1)
     {
         memset(kbuffer, 0, sizeof(kbuffer));

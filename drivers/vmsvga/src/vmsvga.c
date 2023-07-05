@@ -199,7 +199,7 @@ void _mdrvmain()
 {
     if (!initVMSVGA()) // try to initialise the device
     {
-        printf("vmsvga: failed to initialise device!\n");
+        puts("vmsvga: failed to initialise device!\n");
         abort();
     }
 
@@ -207,7 +207,7 @@ void _mdrvmain()
 
     if (!fb)
     {
-        printf("vmsvga: failed to announce!\n");
+        puts("vmsvga: failed to announce!\n");
         abort();
     }
 
@@ -215,7 +215,7 @@ void _mdrvmain()
 
     sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
-    printf("vmsvga: initialised\n");
+    puts("vmsvga: initialised\n");
 
     while (1)
     {
