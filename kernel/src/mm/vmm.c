@@ -161,14 +161,11 @@ vmm_page_table_t *vmmCreateTable(bool full)
             gdt_descriptor_t gdt = gdtGet()[i];
 
             vmmMap(newTable, (void *)tss, (void *)tss, VMM_ENTRY_RW);                               // tss struct
-            vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, VMM_ENTRY_RW); // kernel ist
-            vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // userspace ist
-            vmmMap(newTable, (void *)tss->ist[2] - 4096, (void *)tss->ist[2] - 4096, VMM_ENTRY_RW); // context switch ist
+            vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, VMM_ENTRY_RW); // context switch ist
+            vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // general interrupt ist
 
             vmmMap(newTable, (void *)tss->rsp[0] - 4096, (void *)tss->rsp[0] - 4096, VMM_ENTRY_RW); // kernel stack
-            vmmMap(newTable, (void *)tss->rsp[1] - 4096, (void *)tss->rsp[1] - 4096, VMM_ENTRY_RW); // 
-            vmmMap(newTable, (void *)tss->rsp[2] - 4096, (void *)tss->rsp[2] - 4096, VMM_ENTRY_RW); //
-
+            
             vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW); // gdt entries
         }
 

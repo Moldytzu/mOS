@@ -32,9 +32,9 @@ void idtSetGate(void *handler, uint8_t entry)
 
     // enable ists
     if (entry == XAPIC_TIMER_VECTOR)
-        gate->ist = 3;
-    else
         gate->ist = 1;
+    else
+        gate->ist = 2;
 }
 
 void *idtGet()
@@ -68,13 +68,10 @@ void idtInstall(uint8_t procID)
 {
     // setup ist
     gdt_tss_t *tss = tssGet()[procID];
-    tss->ist[0] = (uint64_t)pmmPage() + VMM_PAGE;
-    tss->ist[1] = (uint64_t)pmmPage() + VMM_PAGE;
-    tss->ist[2] = (uint64_t)pmmPage() + VMM_PAGE;
+    tss->ist[0] = (uint64_t)pmmPage() + VMM_PAGE; // context switch ist
+    tss->ist[1] = (uint64_t)pmmPage() + VMM_PAGE; // interrupt ist
 
-    tss->rsp[0] = (uint64_t)pmmPage() + VMM_PAGE;
-    tss->rsp[1] = (uint64_t)pmmPage() + VMM_PAGE;
-    tss->rsp[2] = (uint64_t)pmmPage() + VMM_PAGE;
+    tss->rsp[0] = (uint64_t)pmmPage() + VMM_PAGE; // kernel stack
 
     iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 }
