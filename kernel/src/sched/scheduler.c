@@ -1,7 +1,7 @@
 #include <sched/scheduler.h>
 #include <misc/logger.h>
 #include <cpu/smp.h>
-#include <cpu/lapic.h>
+#include <cpu/xapic.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <mm/blk.h>

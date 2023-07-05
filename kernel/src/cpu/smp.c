@@ -2,7 +2,7 @@
 #include <cpu/atomic.h>
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
-#include <cpu/lapic.h>
+#include <cpu/xapic.h>
 #include <cpu/fpu.h>
 #include <fw/bootloader.h>
 #include <drv/serial.h>
@@ -48,7 +48,7 @@ void cpuStart(struct limine_smp_info *cpu)
 
     tlbFlushAll();
 
-    lapicInit(false);
+    xapicInit(false);
     syscallInit(); // enable system calls
 
     tlbFlushAll();

@@ -55,7 +55,7 @@ __baseHandler%1:
 %endmacro
 
 global lapicEntry, syscallHandlerEntry, int_table
-extern syscallHandler, exceptionHandler, lapicHandleTimer
+extern syscallHandler, exceptionHandler, xapicHandleTimer
 
 %assign i 0
 %rep 256
@@ -79,7 +79,7 @@ lapicEntry:
     push rax              ; push an arbitrary error code
     PUSH_REG              ; save all general purpose registers + cr3
     mov rdi, rsp          ; pass the stack frame
-    call lapicHandleTimer ; handle the timer
+    call xapicHandleTimer ; handle the timer
     POP_REG               ; restore registers
     pop rax               ; pop the error code from earlier
     iretq                 ; return to context

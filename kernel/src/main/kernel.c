@@ -5,7 +5,7 @@
 #include <cpu/pic.h>
 #include <cpu/control.h>
 #include <cpu/smp.h>
-#include <cpu/lapic.h>
+#include <cpu/xapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
 #include <drv/input.h>
@@ -58,7 +58,7 @@ void kmain()
 void panick_impl(const char *file, size_t line, const char *msg)
 {
 #ifdef K_SMP
-    lapicNMI(); // send nmis
+    xapicNMI(); // send nmis
 #endif
 
     logError("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);

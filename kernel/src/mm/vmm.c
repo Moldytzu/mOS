@@ -6,7 +6,7 @@
 #include <cpu/gdt.h>
 #include <cpu/smp.h>
 #include <cpu/atomic.h>
-#include <cpu/lapic.h>
+#include <cpu/xapic.h>
 #include <main/panic.h>
 #include <misc/logger.h>
 #include <sched/hpet.h>

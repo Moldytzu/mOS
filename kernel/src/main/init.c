@@ -5,7 +5,7 @@
 #include <cpu/pic.h>
 #include <cpu/smp.h>
 #include <cpu/control.h>
-#include <cpu/lapic.h>
+#include <cpu/xapic.h>
 #include <cpu/ioapic.h>
 #include <drv/serial.h>
 #include <drv/framebuffer.h>
@@ -54,7 +54,7 @@ void _start()
 
     picInit(); // initialise the pic chips
 
-    lapicInit(true); // initalize the advanced intrerupt controller
+    xapicInit(true); // initalize the advanced intrerupt controller
 
     ioapicInit(); // initialise the external interrupt controller
 

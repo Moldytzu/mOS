@@ -2,7 +2,7 @@
 #include <cpu/gdt.h>
 #include <cpu/pic.h>
 #include <cpu/smp.h>
-#include <cpu/lapic.h>
+#include <cpu/xapic.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <drv/serial.h>
@@ -31,7 +31,7 @@ void idtSetGate(void *handler, uint8_t entry)
     gate->offset3 = (uint32_t)(((uint64_t)handler & 0xffffffff00000000) >> 32);
 
     // enable ists
-    if (entry == APIC_TIMER_VECTOR)
+    if (entry == XAPIC_TIMER_VECTOR)
         gate->ist = 3;
     else
         gate->ist = 1;
@@ -106,7 +106,7 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
 
     switch (int_num)
     {
-    case APIC_NMI_VECTOR: // this halts the cpus in case of a kernel panic
+    case XAPIC_NMI_VECTOR: // this halts the cpus in case of a kernel panic
         return hang();
 
     default:
@@ -116,7 +116,7 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
     if (redirectTable[int_num] && schedGet(redirectTableMeta[int_num])) // there is a request to redirect intrerrupt to a driver (todo: replace this with a struct)
     {
         callWithPageTable((uint64_t)redirectTable[int_num], (uint64_t)schedGet(redirectTableMeta[int_num])->pageTable); // give control to the driver
-        lapicEOI();                                                                                                     // todo: send eoi only if the task asks us in the syscall
+        xapicEOI();                                                                                                     // todo: send eoi only if the task asks us in the syscall
         return;                                                                                                         // don't execute rest of the handler
     }
 
