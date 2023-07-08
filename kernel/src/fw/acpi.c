@@ -6,14 +6,12 @@
 #include <cpu/idt.h>
 #include <main/panic.h>
 #include <misc/logger.h>
+#include <drv/pcie.h>
 
 uint8_t revision;
 acpi_rsdp_t *rsdp;
 acpi_sdt_t *sdt;
 acpi_mcfg_t *mcfg;
-
-acpi_pci_descriptor_t *pciFuncs = NULL;
-uint16_t pciIndex = 0;
 
 // get a descriptor table with a signature
 acpi_sdt_t *acpiGet(const char *sig, int index)
@@ -42,73 +40,6 @@ acpi_sdt_t *acpiGet(const char *sig, int index)
     }
 
     return NULL; // return nothing
-}
-
-// enumerate the pci bus using mcfg and ecam
-void acpiEnumeratePCI()
-{
-    if (!mcfg)
-        return;
-
-#ifdef K_PCIE
-    size_t entries = (mcfg->header.length - sizeof(acpi_mcfg_t)) / sizeof(acpi_pci_config_t);
-    for (int i = 0; i < entries; i++)
-    {
-        // enumerate each bus
-        for (int bus = mcfg->buses[i].startBus; bus < mcfg->buses[i].endBus; bus++)
-        {
-            uint64_t busBase = mcfg->buses[i].base;
-            acpi_pci_header_t *baseHeader = (acpi_pci_header_t *)busBase;
-            vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, VMM_ENTRY_RW); // map the header
-
-            // check for non-existent bus
-            if (baseHeader->device == UINT16_MAX || baseHeader->device == 0)
-                continue;
-
-            // enumerate each device
-            for (int device = 0; device < 32; device++)
-            {
-                acpi_pci_header_t *deviceHeader = (acpi_pci_header_t *)(busBase + (bus << 20 | device << 15));
-                vmmMap(vmmGetBaseTable(), deviceHeader, deviceHeader, VMM_ENTRY_RW); // map the header
-
-                // check for non-existent device
-                if (deviceHeader->device == UINT16_MAX || deviceHeader->device == 0)
-                    continue;
-
-                // enumerate each function
-                for (int function = 0; function < 8; function++)
-                {
-                    acpi_pci_header_t *functionHeader = (acpi_pci_header_t *)(busBase + (bus << 20 | device << 15 | function << 12));
-
-                    // check for non-existent function
-                    vmmMap(vmmGetBaseTable(), functionHeader, functionHeader, VMM_ENTRY_RW); // map the header
-
-                    if (functionHeader->device == UINT16_MAX || functionHeader->device == 0)
-                        continue;
-
-                    logInfo("acpi: found pci function %x:%x at %d.%d.%d", functionHeader->vendor, functionHeader->device, bus, device, function);
-
-                    // build the descriptor
-                    acpi_pci_descriptor_t d;
-                    d.bus = bus, d.device = device, d.function = function, d.header = functionHeader;
-
-                    // put it in our list of pci functions (overflows at 372 descriptors thus we don't have to check anything since it's unlikely to have so many pci functions)
-                    pciFuncs[pciIndex++] = d;
-                }
-            }
-        }
-    }
-#endif
-}
-
-acpi_pci_descriptor_t *pciGetFunctions()
-{
-    return pciFuncs;
-}
-
-uint64_t pciGetFunctionsNum()
-{
-    return pciIndex;
 }
 
 // checks if pcie ecam is supported by machine
@@ -182,17 +113,9 @@ void acpiInit()
     // get mcfg
     mcfg = (acpi_mcfg_t *)acpiGet("MCFG", 0);
 
-    // enumerate PCI bus if MCFG is present
-    if (mcfg)
-    {
-        pciFuncs = pmmPage(); // allocate a buffer hold the functions
-        acpiEnumeratePCI();   // do the enumeration
-
-        logInfo("acpi: detected %d pci functions", pciIndex);
-    }
+    if(mcfg)
+        pcieEnumerateECAM(mcfg);
     else
-    {
-        logError("acpi: failed to enumerate pci bus");
-    }
+        logWarn("acpi: MCFG table wasn't found, PCIe support will not be available");
 #endif
 }

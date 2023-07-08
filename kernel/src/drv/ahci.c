@@ -1,6 +1,6 @@
 #include <drv/ahci.h>
 #include <drv/serial.h>
-#include <fw/acpi.h>
+#include <drv/pcie.h>
 #include <misc/logger.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
@@ -18,13 +18,13 @@
         pmmDeallocate(tmp);                                                         \
     }
 
-ahci_hba_mem_t *abar;                 // ahci's pci bar 5
-drv_pci_header0_t *ahciBase;          // base pointer to pci header
-acpi_pci_descriptor_t ahciDescriptor; // descriptor that houses the header and the address
-bool portImplemented[32];             // stores which ports are present
-uint8_t portsImplemented = 0;         // stores how many ports are present
-uint32_t commandSlots = 0;            // stores how many command slots the ahci hba supports
-void *abase;                          // adressing space for buffers
+ahci_hba_mem_t *abar;                      // ahci's pci bar 5
+drv_pci_header0_t *ahciBase;               // base pointer to pci header
+pcie_function_descriptor_t ahciDescriptor; // descriptor that houses the header and the address
+bool portImplemented[32];                  // stores which ports are present
+uint8_t portsImplemented = 0;              // stores how many ports are present
+uint32_t commandSlots = 0;                 // stores how many command slots the ahci hba supports
+void *abase;                               // adressing space for buffers
 
 // find a free command list slot
 int ahciPortSlot(ahci_port_t *port)
@@ -209,8 +209,8 @@ void ahciInit()
     ahciBase = NULL;
     zero(portImplemented, sizeof(portImplemented));
 
-    acpi_pci_descriptor_t *pciDescriptors = pciGetFunctions();
-    size_t n = pciGetFunctionsNum();
+    pcie_function_descriptor_t *pciDescriptors = pcieDescriptors();
+    size_t n = pcieCountDescriptors();
 
     // probe to get ahci base
     for (size_t i = 0; i < n; i++)

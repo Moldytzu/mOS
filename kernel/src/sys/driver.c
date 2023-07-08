@@ -3,7 +3,7 @@
 #include <drv/framebuffer.h>
 #include <drv/drv.h>
 #include <drv/input.h>
-#include <fw/acpi.h>
+#include <drv/pcie.h>
 #include <elf/elf.h>
 #include <cpu/ioapic.h>
 
@@ -75,16 +75,16 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
         if (!INBOUNDARIES(arg1))
             return;
 
-        acpi_pci_header_t **header = (acpi_pci_header_t **)PHYSICAL(arg1);
+        pcie_ecam_header_t **header = (pcie_ecam_header_t **)PHYSICAL(arg1);
 
-        if(!pciECAM()) // pcie not available
+        if(!pcieIsPresent()) // check for pcie availability
         {
             *header = NULL;
             return;
         }
 
-        volatile acpi_pci_descriptor_t *functions = pciGetFunctions();
-        volatile uint64_t num = pciGetFunctionsNum();
+        pcie_function_descriptor_t *functions = pcieDescriptors();
+        size_t num = pcieCountDescriptors();
 
         // search for the pci device
         for (int i = 0; i < num; i++)

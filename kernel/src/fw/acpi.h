@@ -133,32 +133,6 @@ acpi_mcfg_t;
 
 pstruct
 {
-    uint16_t vendor;
-    uint16_t device;
-    uint16_t command;
-    uint16_t status;
-    uint8_t revision;
-    uint8_t programInterface;
-    uint8_t subclass;
-    uint8_t class;
-    uint8_t cacheLineSize;
-    uint8_t latencyTimer;
-    uint8_t headerType;
-    uint8_t BIST;
-}
-acpi_pci_header_t;
-
-pstruct
-{
-    acpi_pci_header_t *header;
-    uint8_t bus;
-    uint8_t device;
-    uint8_t function;
-}
-acpi_pci_descriptor_t;
-
-pstruct
-{
     acpi_sdt_t header;
     uint8_t revision;
     uint8_t comparatorCount : 5;
@@ -180,10 +154,6 @@ pstruct
     uint32_t flags;
 }
 acpi_madt_t;
-
-acpi_pci_descriptor_t *pciGetFunctions();
-uint64_t pciGetFunctionsNum();
-bool pciECAM();
 
 acpi_sdt_t *acpiGet(const char *sig, int index);
 void acpiInit();
