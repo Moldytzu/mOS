@@ -129,9 +129,8 @@ void rebootFallback()
 // reboot using acpi
 void acpiReboot()
 {
-    // page 81 of ACPI spec 6.5 (August 29 2023)
+    // page 81 of ACPI spec 6.5 (August 29 2022)
     acpi_fadt_t *fadt = (acpi_fadt_t *)acpiGet("FACP", 0);
-    uint8_t RESET_VALUE = fadt->resetValue;
     switch (fadt->reset.addressSpace)
     {
     case ACPI_GAS_ACCESS_MEMORY:
