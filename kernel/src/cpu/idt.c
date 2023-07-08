@@ -24,11 +24,13 @@ void idtSetGate(void *handler, uint8_t entry)
     if (gate->segmentselector == 0)                 // detect if we didn't touch the gate
         idtr.size += sizeof(idt_gate_descriptor_t); // if we didn't we can safely increase the size
 
-    gate->attributes = 0xEE;                                           // set the attributes (set gate type to 64-bit interrupt, dpl to 3 and present bit)
-    gate->segmentselector = (8 * 1);                                   // set the kernel code selector from gdt
-    gate->offset = (uint16_t)((uint64_t)handler & 0x000000000000ffff); // offset to the entry
-    gate->offset2 = (uint16_t)(((uint64_t)handler & 0x00000000ffff0000) >> 16);
-    gate->offset3 = (uint32_t)(((uint64_t)handler & 0xffffffff00000000) >> 32);
+    uint64_t base = (uint64_t)handler; // address of handler
+
+    gate->attributes = 0xEE;     // set the attributes (set gate type to 64-bit interrupt, dpl to 3 and present bit)
+    gate->segmentselector = 0x8; // set the kernel code selector from gdt
+    gate->offset = base;         // first 16 bits of address
+    gate->offset2 = base >> 16;  // second 16 bits of address
+    gate->offset3 = base >> 32;  // last 32 bits of address
 
     // enable ists
     if (entry == XAPIC_TIMER_VECTOR)
