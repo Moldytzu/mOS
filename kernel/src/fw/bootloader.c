@@ -32,7 +32,7 @@ static volatile struct limine_smp_request smp_request = {
 static volatile struct limine_stack_size_request stack_request = {
     .id = LIMINE_STACK_SIZE_REQUEST,
     .revision = 0,
-    .stack_size = 16 * 1024};
+    .stack_size = 4 * 1024};
 
 struct limine_file *bootloaderGetModule(const char *name)
 {
