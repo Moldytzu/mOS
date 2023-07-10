@@ -44,26 +44,22 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             return;
         }
 
-        const char *name, *tmp;
+        const char *target = PHYSICAL(arg1); // target directory
+        char fullPath[512];                  // full path of node
 
-        tmp = PHYSICAL(arg1); // tmp is a backup for the name
         currentNode = vfsNodes();
-        do
+        do // iterate over all nodes
         {
             if (!currentNode->filesystem)
                 goto next;
 
-            name = tmp; // reset the pointer
+            zero(fullPath, sizeof(fullPath));
+            vfsGetPath((uint64_t)currentNode, fullPath);
 
-            if (!strstarts(name, currentNode->filesystem->mountName)) // compare the mount name
-                goto next;
-
-            name += strlen(currentNode->filesystem->mountName); // move the pointer after the mount name
-
-            if (strstarts((const char *)currentNode->path, name)) // compare the path
+            if (strcmp(target, fullPath) == 0) // compare full paths
             {
-                *retAddr = true; // exists
-                return;          // return to the application
+                *retAddr = true; // found it
+                return;
             }
 
         next:
@@ -71,6 +67,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
         } while (currentNode);
 
         *retAddr = false; // doesn't exist
+
         break;
     }
     case 2: // list directory
