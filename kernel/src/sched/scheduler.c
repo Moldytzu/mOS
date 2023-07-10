@@ -131,11 +131,13 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     t->elfSize = execSize;
 
     // handle c arguments
+    argc = min(argc, K_SCHED_MAX_ARGUMENTS);
+
     t->registers.rdi = 1 + argc; // arguments count the path + the optional arguments
     t->registers.rsi = t->registers.rsp;
 
-    void **arguments = (void **)t->registers.rsi;                     // buffer in which we will put our 30 max arguments
-    char *str = (char *)(t->registers.rsi + (30 * sizeof(uint64_t))); // buffer with which we will copy the strings
+    void **arguments = (void **)t->registers.rsi;                                        // buffer in which we will put our arguments
+    char *str = (char *)(t->registers.rsi + (K_SCHED_MAX_ARGUMENTS * sizeof(uint64_t))); // buffer with which we will copy the strings
 
     memcpy(str, name, strlen(name)); // copy name
     arguments[0] = str;              // point to it
@@ -149,11 +151,11 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         memcpy(str, argv[i], len); // copy argument
         arguments[i + 1] = str;    // point to it
 
+        if ((uint64_t)str + len >= t->registers.rsp + VMM_PAGE) // don't overflow
+            break;
+
         str += len;    // move after text
         *str++ = '\0'; // terminate string
-
-        if ((uint64_t)str >= t->registers.rsp + VMM_PAGE) // don't overflow
-            break;
     }
 
     // memory fields

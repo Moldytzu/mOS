@@ -44,8 +44,9 @@
 // ###########################################
 
 // Scheduler
-#define K_SCHED_MIN_QUANTUM 1 // minimum quantum of each task
-#define K_STACK_SIZE 8 * 1024 // userspace stack size
+#define K_SCHED_MIN_QUANTUM 1    // minimum quantum of each task
+#define K_SCHED_MAX_ARGUMENTS 32 // maximum arguemnt
+#define K_STACK_SIZE 8 * 1024    // userspace stack size
 
 // ###########################################
 // Devices
@@ -98,7 +99,6 @@
 // ###########################################
 
 // ACPI
-
 
 // ###########################################
 // Miscellaneous

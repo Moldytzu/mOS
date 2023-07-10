@@ -5,13 +5,15 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define MAX_ARGUMENTS 31
+
 uint64_t pid;
 uint16_t pathLen = 0;
 const char *path;
 const char *enviroment;
 const char *cmdBuffer;
 char *cwdBuffer;
-char *arguments[32];
+char *arguments[MAX_ARGUMENTS];
 int argumentsCount = 0;
 
 void handleInput(const char *buffer)
@@ -23,20 +25,21 @@ void handleInput(const char *buffer)
 
     int i = 0;
     argumentsCount = 0;
-    // split the buffer
+
+    // split the buffer at every space
     while (*buffer)
     {
-        if (*buffer == ' ') // split
+        if (*buffer == ' ') // delimiter
         {
-            argumentsCount++; // switch the buffer
+            argumentsCount++; // increment the count of arguments
 
-            memset(arguments[argumentsCount], 0, 4096); // clear the argument
-
-            if (argumentsCount > 32) // don't overrun
+            if (argumentsCount > MAX_ARGUMENTS) // don't overrun
             {
                 argumentsCount--;
                 break;
             }
+
+            memset(arguments[argumentsCount], 0, 4096); // clear the argument
 
             i = 0;    // reset index
             buffer++; // skip character
@@ -158,7 +161,7 @@ int main(int argc, char **argv)
         sys_pid(pid, SYS_PID_SET_CWD, (uint64_t *)argv[1]); // set the current working directory to the argument
 
     // allocate the arguments buffers
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < MAX_ARGUMENTS; i++)
     {
         arguments[i] = malloc(4096);
         assert(arguments[i] != NULL); // assert that the buffer is valid
