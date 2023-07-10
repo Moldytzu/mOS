@@ -20,11 +20,11 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
 
     struct vfs_node_t *currentNode;
     uint64_t *retAddr = PHYSICAL(retVal);
-    const char *name, *tmp;
 
     switch (call)
     {
     case 0: // file path exists
+    {
         if (!INBOUNDARIES(arg1))
         {
             *retAddr = 0;
@@ -35,12 +35,16 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
         *retAddr = fd > 0;                     // if the fd is valid then the file exists
         vfsClose(fd);                          // close
         break;
+    }
     case 1: // directory path exists
+    {
         if (!INBOUNDARIES(arg1))
         {
             *retAddr = 0;
             return;
         }
+
+        const char *name, *tmp;
 
         tmp = PHYSICAL(arg1); // tmp is a backup for the name
         currentNode = vfsNodes();
@@ -68,21 +72,23 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
 
         *retAddr = false; // doesn't exist
         break;
+    }
     case 2: // list directory
+    {
         if (!INBOUNDARIES(arg1))
         {
             *retAddr = 0;
             return;
         }
 
-        tmp = PHYSICAL(arg1); // tmp is a backup for the name
-        char *retChar = (char *)retAddr;
+        const char *target = PHYSICAL(arg1); // target directory to list
+        char *retChar = (char *)retAddr;     // return array
 
-        char path[512];
+        char fullPath[512]; // full path of node
 
-        logDbg(LOG_SERIAL_ONLY, "vfs: listing directory for %s", tmp);
+        logDbg(LOG_SERIAL_ONLY, "vfs: listing directory for %s", target);
 
-        if (strlen(tmp) < 1) // invalid path
+        if (strlen(target) < 1) // invalid path
             break;
 
         currentNode = vfsNodes();
@@ -91,22 +97,20 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             if (!currentNode->filesystem)
                 goto next1;
 
-            name = tmp; // reset the pointer
+            zero(fullPath, sizeof(fullPath));
+            vfsGetPath((uint64_t)currentNode, fullPath);
 
-            zero(path, sizeof(path));
-            vfsGetPath((uint64_t)currentNode, path);
-
-            bool listFile = name[strlen(name) - 1] != '/';         // check if we list a file
-            bool sameStart = strstarts(path, name);                // check if path starts with the same characters
-            bool sameDepth = count(path, '/') == count(name, '/'); // check if the path and name has the same number of slashes
-            bool isDirectory = path[strlen(path) - 1] == '/';      // check if the path is a directory
+            bool listFile = target[strlen(target) - 1] != '/';           // check if we list a file
+            bool sameStart = strstarts(fullPath, target);                // check if path starts with the same characters
+            bool sameDepth = count(fullPath, '/') == count(target, '/'); // check if the path and name has the same number of slashes
+            bool isDirectory = fullPath[strlen(fullPath) - 1] == '/';    // check if the path is a directory
 
             if (isDirectory)
-                sameDepth = count(path, '/') == count(name, '/') + 1;
+                sameDepth = count(fullPath, '/') == count(target, '/') + 1;
 
-            // logDbg(LOG_SERIAL_ONLY, "vfs: target: %s; current: %s; %d%d%d%d", tmp, path, listFile, sameStart, sameDepth, isDirectory);
+            // logDbg(LOG_SERIAL_ONLY, "vfs: target: %s; current: %s; %d%d%d%d", target, fullPath, listFile, sameStart, sameDepth, isDirectory);
 
-            if (listFile && strcmp(name, path) == 0) // check for identical comparison when listing a file
+            if (listFile && strcmp(target, fullPath) == 0) // check for identical comparison when listing a file
             {
                 memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
                 return;
@@ -114,7 +118,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
 
             if (sameStart && sameDepth)
             {
-                char *localPath = path + strlen(name);         // get the local path
+                char *localPath = fullPath + strlen(target);   // get the local path
                 memcpy(retChar, localPath, strlen(localPath)); // copy the local path
                 retChar += strlen(localPath);                  // move the pointer forward
                 *(retChar++) = ' ';                            // append a space
@@ -125,9 +129,12 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
         } while (currentNode);
 
         break;
+    }
     case 3: // size of descriptor
+    {
         *retAddr = vfsSize(arg1);
         break;
+    }
     default:
         break;
     }
