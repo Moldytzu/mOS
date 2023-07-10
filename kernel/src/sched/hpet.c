@@ -60,8 +60,11 @@ void hpetInit()
 {
     hpet = (acpi_hpet_t *)acpiGet("HPET", 0);
 
-    if (!hpet || hpet->base.addressSpace != ACPI_GAS_ACCESS_MEMORY) // didn't find it or it uses an unsupported addressing space
-        return;
+    if(!hpet)
+        panick("Failed to detect HPET");
+
+    if (hpet->base.addressSpace != ACPI_GAS_ACCESS_MEMORY) // didn't find it or it uses an unsupported addressing space
+        panick("Unknown HPET address space");
 
     vmmMap(vmmGetBaseTable(), (void *)hpet->base.address, (void *)hpet->base.address, VMM_ENTRY_RW); // map it
 
