@@ -82,6 +82,9 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
 
         logDbg(LOG_SERIAL_ONLY, "vfs: listing directory for %s", tmp);
 
+        if (strlen(tmp) < 1) // invalid path
+            break;
+
         currentNode = vfsNodes();
         do
         {
