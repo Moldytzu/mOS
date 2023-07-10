@@ -96,31 +96,28 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             zero(path, sizeof(path));
             vfsGetPath((uint64_t)currentNode, path);
 
-            bool listFile = path[strlen(name) - 1] != '/';              // check if we list a file
-            bool starts = strstarts(path, name);                        // check if path starts with the same characters
-            bool hasSameSlashes = count(path, '/') == count(name, '/'); // check if the path and name has the same number of slashes
-            bool endsInSlash = path[strlen(path) - 1] == '/';           // check if the path is a directory
+            bool listFile = name[strlen(name) - 1] != '/';         // check if we list a file
+            bool sameStart = strstarts(path, name);                // check if path starts with the same characters
+            bool sameDepth = count(path, '/') == count(name, '/'); // check if the path and name has the same number of slashes
+            bool isDirectory = path[strlen(path) - 1] == '/';      // check if the path is a directory
 
-            if (starts && (hasSameSlashes /* this prevents going in subdirectories */ || endsInSlash /* this lets only directories */) && !listFile)
+            if (isDirectory)
+                sameDepth = count(path, '/') == count(name, '/') + 1;
+
+            // logDbg(LOG_SERIAL_ONLY, "vfs: target: %s; current: %s; %d%d%d%d", tmp, path, listFile, sameStart, sameDepth, isDirectory);
+
+            if (listFile && strcmp(name, path) == 0) // check for identical comparison when listing a file
             {
-                if (strlen(currentNode->path) == 0 && !hasSameSlashes) // append mount name for partitions or nodes without path that aren't the one we search in
-                {
-                    memcpy(retChar, currentNode->filesystem->mountName + 1 /*mount name starts with /, maybe we want to cut the requested directory instead*/, strlen(currentNode->filesystem->mountName) - 1); // copy the path
-                    retChar += strlen(currentNode->filesystem->mountName) - 1;                                                                                                                                  // move the pointer forward
-                }
-                else
-                {
-                    memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
-                    retChar += strlen(currentNode->path);                          // move the pointer forward
-                }
-
-                *(retChar++) = ' '; // append a space
+                memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
+                return;
             }
-            else if (listFile && strcmp(path, name) == 0) // we list a file so we only show it
+
+            if (sameStart && sameDepth)
             {
-                memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the local path
-                retChar += strlen(currentNode->path);                          // move the pointer forward
-                break;
+                char *localPath = path + strlen(name);         // get the local path
+                memcpy(retChar, localPath, strlen(localPath)); // copy the local path
+                retChar += strlen(localPath);                  // move the pointer forward
+                *(retChar++) = ' ';                            // append a space
             }
 
         next1:
