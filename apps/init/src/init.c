@@ -171,7 +171,7 @@ void parseCFG()
     sys_display(SYS_DISPLAY_SET, screenX, screenY);
 }
 
-void eventLoop()
+void handleSocket()
 {
     sys_socket(SYS_SOCKET_READ, sockID, (uint64_t)sockBuffer, SOCKET_SIZE); // read the whole socket
     if (!*(char *)sockBuffer)                                               // if empty give up
@@ -181,19 +181,21 @@ void eventLoop()
     {
         printf("%s has crashed!\n", sockBuffer + 6 /*skip "crash "*/);
     }
-
-    if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
+    else if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Shutdowning...");
         sys_power(SYS_POWER_SHUTDOWN, 0, 0);
     }
-
-    if (strcmp(sockBuffer, "reboot") == 0) // shutdown command
+    else if (strcmp(sockBuffer, "reboot") == 0) // shutdown command
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Rebooting...");
         sys_power(SYS_POWER_REBOOT, 0, 0);
+    }
+    else
+    {
+        printf("Unknown socket packet: %s\n", sockBuffer);
     }
 
     memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
@@ -239,7 +241,7 @@ int main(int argc, char **argv)
 
         do
         {
-            eventLoop(); // run the event loop
+            handleSocket(); // handle the socket
 
             sys_pid(pid, SYS_PID_STATUS, &status); // get the status of the pid
         } while (status == 0);                     // wait for the pid to be stopped
