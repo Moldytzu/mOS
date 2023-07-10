@@ -16,7 +16,7 @@ sys_exec_packet_t;
 // exec (rsi = path, rdx = pid, r8 = packet)
 void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_t *task)
 {
-    if (!INBOUNDARIES(path) || !INBOUNDARIES(pid) || !INBOUNDARIES(packet)) // prevent a crash
+    if (!IS_MAPPED(path) || !IS_MAPPED(pid) || !IS_MAPPED(packet)) // prevent a crash
         return;
 
     uint64_t *ret = PHYSICAL(pid);
@@ -27,12 +27,12 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
         return;
 
     // convert virtual addresses to physical addresses
-    if (input->argc && INBOUNDARIES(input->argv))
+    if (input->argc && IS_MAPPED(input->argv))
     {
         input->argv = PHYSICAL(input->argv);
 
         for (int i = 0; i < input->argc; i++)
-            if (INBOUNDARIES(input->argv[i]))
+            if (IS_MAPPED(input->argv[i]))
                 input->argv[i] = PHYSICAL(input->argv[i]);
     }
 

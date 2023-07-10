@@ -15,7 +15,7 @@ size_t count(const char *str, char c)
 // vfs (rsi = call, rdx = arg1, r8 = retVal)
 void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_t *task)
 {
-    if (!INBOUNDARIES(retVal)) // prevent crashing
+    if (!IS_MAPPED(retVal)) // prevent crashing
         return;
 
     struct vfs_node_t *currentNode;
@@ -25,7 +25,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
     {
     case 0: // file path exists
     {
-        if (!INBOUNDARIES(arg1))
+        if (!IS_MAPPED(arg1))
         {
             *retAddr = 0;
             return;
@@ -38,7 +38,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
     }
     case 1: // directory path exists
     {
-        if (!INBOUNDARIES(arg1))
+        if (!IS_MAPPED(arg1))
         {
             *retAddr = 0;
             return;
@@ -72,7 +72,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
     }
     case 2: // list directory
     {
-        if (!INBOUNDARIES(arg1))
+        if (!IS_MAPPED(arg1))
         {
             *retAddr = 0;
             return;

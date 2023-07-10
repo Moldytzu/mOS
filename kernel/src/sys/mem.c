@@ -11,7 +11,7 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t 
     switch (call)
     {
     case 0:                      // mem allocate
-        if (!INBOUNDARIES(arg1)) // prevent crashing
+        if (!IS_MAPPED(arg1)) // prevent crashing
             return;
 
         size_t pages = arg2; // pages to allocate

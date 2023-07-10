@@ -123,15 +123,26 @@ void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
     vmm_page_table_t *pdp, *pd, *pt;
 
     uint64_t currentEntry = table->entries[index.PDP]; // index pdp
-    pdp = PAGE_ADDR(currentEntry);                     // continue
+    if (!currentEntry)
+        return NULL;
+
+    pdp = PAGE_ADDR(currentEntry); // continue
 
     currentEntry = pdp->entries[index.PD]; // index pd
-    pd = PAGE_ADDR(currentEntry);          // continue
+    if (!currentEntry)
+        return NULL;
+
+    pd = PAGE_ADDR(currentEntry); // continue
 
     currentEntry = pd->entries[index.PT]; // index pt
-    pt = PAGE_ADDR(currentEntry);         // continue
+    if (!currentEntry)
+        return NULL;
+
+    pt = PAGE_ADDR(currentEntry); // continue
 
     currentEntry = pt->entries[index.P]; // index p
+    if (!currentEntry)
+        return NULL;
 
     return (void *)(((uint64_t)PAGE_ADDR(currentEntry) >> 12) * VMM_PAGE + ((uint64_t)virtualAddress % VMM_PAGE)); // get the address
 }
@@ -165,7 +176,7 @@ vmm_page_table_t *vmmCreateTable(bool full)
             vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // general interrupt ist
 
             vmmMap(newTable, (void *)tss->rsp[0] - 4096, (void *)tss->rsp[0] - 4096, VMM_ENTRY_RW); // kernel stack
-            
+
             vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW); // gdt entries
         }
 

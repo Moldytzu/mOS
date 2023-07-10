@@ -19,7 +19,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
     switch (call)
     {
     case 0: // driver start
-        if (!INBOUNDARIES(arg1))
+        if (!IS_MAPPED(arg1))
             return;
 
         uint64_t fd = openRelativePath(PHYSICAL(arg1), task);
@@ -34,7 +34,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
         break;
 
     case 1: // driver announce
-        if (!INBOUNDARIES(arg2))
+        if (!IS_MAPPED(arg2))
             return;
 
         uint64_t *ret = PHYSICAL(arg2);
@@ -61,7 +61,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
         break;
 
     case 3: // redirect idt gate
-        if (!INBOUNDARIES(arg1))
+        if (!IS_MAPPED(arg1))
             return;
 
         idtRedirect((void *)arg1, arg2, task->id); // redirect int arg2 to arg1
@@ -72,7 +72,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
         break;
 
     case 5: // get pci header
-        if (!INBOUNDARIES(arg1))
+        if (!IS_MAPPED(arg1))
             return;
 
         pcie_ecam_header_t **header = (pcie_ecam_header_t **)PHYSICAL(arg1);

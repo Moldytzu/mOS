@@ -5,7 +5,7 @@
 // write (rsi = buffer, rdx = count, r8 = fd)
 void write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, sched_task_t *task)
 {
-    if (!INBOUNDARIES(buffer) && count > 1) // prevent a crash
+    if (!IS_MAPPED(buffer) && count > 1) // prevent a crash
         return;
 
     const char *charBuffer = (const char *)PHYSICAL(buffer); // get physical address of the buffer

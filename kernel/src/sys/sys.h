@@ -12,10 +12,7 @@
 #define SYS_STDIN 1
 
 #define PHYSICAL(virtual) ((void *)(vmmGetPhys((void *)task->pageTable, (void *)(virtual))))
-#define STACK alignD(task->registers.rsp, 4096)
-#define INSTACK(address) between(address, STACK - K_STACK_SIZE, STACK + K_STACK_SIZE)
-#define INAPPLICATION(address) between(address, TASK_BASE_ADDRESS, task->lastVirtualAddress + 4096)
-#define INBOUNDARIES(address) (INSTACK(((uint64_t)address)) || INAPPLICATION(((uint64_t)address)))
+#define IS_MAPPED(address) ((uint64_t)PHYSICAL(address) > 0)
 #define DEFINE_SYSCALL(x) void x(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
 
 uint64_t openRelativePath(const char *path, sched_task_t *task);

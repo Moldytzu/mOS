@@ -4,7 +4,7 @@
 // input (rsi = device type, rdx = return pointer)
 void input(uint64_t deviceType, uint64_t returnPtr, uint64_t r8, uint64_t r9, sched_task_t *task)
 {
-    if (!INBOUNDARIES(returnPtr)) // prevent crashing
+    if (!IS_MAPPED(returnPtr)) // prevent crashing
         return;
 
     char *ret = (char *)PHYSICAL(returnPtr); // return pointer

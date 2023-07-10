@@ -18,22 +18,22 @@ void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, sched_task_t
         *retAddr = t->state; // give the state in which that pid is in
         break;
     case 1:                        // get pid enviroment
-        if (!INBOUNDARIES(retVal)) // available only in the allocated memory
+        if (!IS_MAPPED(retVal)) // available only in the allocated memory
             break;
         memcpy(PHYSICAL(retVal), t->enviroment, 4096); // copy the enviroment
         break;
     case 2:                        // set pid enviroment
-        if (!INBOUNDARIES(retVal)) // available only in the allocated memory
+        if (!IS_MAPPED(retVal)) // available only in the allocated memory
             break;
         memcpy(t->enviroment, PHYSICAL(retVal), 4096); // copy the enviroment
         break;
     case 3:                        // get current pid
-        if (!INBOUNDARIES(retVal)) // prevent crashing
+        if (!IS_MAPPED(retVal)) // prevent crashing
             return;
         *retAddr = task->id; // the id
         break;
     case 4:                        // get current working directory
-        if (!INBOUNDARIES(retVal)) // available only in the allocated memory
+        if (!IS_MAPPED(retVal)) // available only in the allocated memory
             break;
 
         task->cwd[0] = '/'; // make sure the cwd starts with /
@@ -41,7 +41,7 @@ void pid(uint64_t pid, uint64_t info, uint64_t retVal, uint64_t r9, sched_task_t
         memcpy(PHYSICAL(retVal), task->cwd, min(strlen(task->cwd), 512)); // copy the buffer
         break;
     case 5:                        // set current working directory
-        if (!INBOUNDARIES(retVal)) // available only in the allocated memory
+        if (!IS_MAPPED(retVal)) // available only in the allocated memory
             break;
 
         zero(task->cwd, 512);

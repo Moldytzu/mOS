@@ -4,7 +4,7 @@
 // read (rsi = buffer, rdx = count, r8 = fd)
 void read(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, sched_task_t *task)
 {
-    if (!INBOUNDARIES(buffer)) // prevent a crash
+    if (!IS_MAPPED(buffer)) // prevent a crash
         return;
 
     void *charBuffer = PHYSICAL(buffer); // get physical address of the buffer
