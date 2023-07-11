@@ -124,7 +124,7 @@ apt:
 	sudo apt upgrade -y
 
 deps: apt
-	sudo apt install gdb gdb-multiarch build-essential nasm xorriso qemu-system-x86 python3 -y
+	sudo apt install gdb gdb-multiarch build-essential nasm xorriso qemu-system-x86 python3 curl wget bash -y
 
 toolchain:
 	-git clone https://github.com/Moldytzu/cross-compiler-builder.git
