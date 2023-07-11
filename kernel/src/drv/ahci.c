@@ -352,12 +352,17 @@ void ahciInit()
             continue;
 
         ahci_port_t *port = ahciPort(p);
-        uint8_t *response = pmmPage();
+        uint16_t *response = pmmPage();
         ahciPortIdentify(port, response);
 
+        // page 111 of ATA8-ACS (revision 4a from 21 of May 2007)
+
         printks("ahci port %d identification packet: ", p);
-        for (int i = 0; i < 512; i++)
-            printks("%c ", response[i]);
+        for (int i = 0; i < 256; i++)
+            printks("%x ", response[i]);
+        printks(" model number: ");
+        for (int i = 27; i < 46; i++)
+            printks("%c%c", response[i] >> 8, response[i]);
         printks("\n");
     }
 
