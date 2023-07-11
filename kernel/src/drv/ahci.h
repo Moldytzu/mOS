@@ -15,6 +15,7 @@
 #define HBA_PxCMD_CR 0x8000
 
 #define ATA_CMD_READ_DMA_EX 0x25
+#define ATA_CMD_IDENTIFY_DEVICE 0xEC
 
 pstruct
 {

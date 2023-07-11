@@ -76,6 +76,25 @@ void ahciPortStop(ahci_port_t *port)
         ;
 }
 
+// send command
+void ahciPortSendCommand(ahci_port_t *port, int slot)
+{
+    ahciPortStart(port);
+
+    // wait for the port to be idle
+    while ((port->tfd & (ATA_DEV_BUSY | ATA_DEV_DRQ)))
+        pause();
+
+    port->ci = 1 << slot; // issue command
+
+    // wait for completion
+    while (1)
+        if ((port->ci & (1 << slot)) == 0)
+            break;
+
+    ahciPortStop(port);
+}
+
 // read using dma from a port
 bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf)
 {
@@ -126,24 +145,46 @@ bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t 
     cmdfis->countl = count & 0xFF;
     cmdfis->counth = (count >> 8) & 0xFF;
 
-    ahciPortStart(port);
-
-    // wait for the port to be idle
-    while ((port->tfd & (ATA_DEV_BUSY | ATA_DEV_DRQ)))
-        pause();
-
-    port->ci = 1 << slot; // issue command
-
-    // wait for completion
-    while (1)
-        if ((port->ci & (1 << slot)) == 0)
-            break;
-
-    ahciPortStop(port);
+    ahciPortSendCommand(port, slot); // send command
 
     return true;
 }
 
+bool ahciPortIdentify(ahci_port_t *port, void *buf)
+{
+    port->is = (uint32_t)-1;       // clear interrupts
+    int slot = ahciPortSlot(port); // allocate a slot
+    if (slot == -1)
+        return false;
+
+    ahci_command_header_t *cmdheader = (ahci_command_header_t *)port->clb;
+    cmdheader += slot;
+    cmdheader->cfl = sizeof(ahci_fis_h2d_t) / sizeof(uint32_t); // Command FIS size
+    cmdheader->w = 0;                                           // Read from device
+    cmdheader->prdtl = 1;                                       // PRDT entries count
+
+    ahci_tbl_t *cmdtbl = (ahci_tbl_t *)(cmdheader->ctba);
+    memset(cmdtbl, 0, sizeof(ahci_tbl_t) + (cmdheader->prdtl - 1) * sizeof(ahci_prdt_t));
+
+    // tell the hba where we want to store the packet
+    cmdtbl->prdt_entry[0].dba = (uint32_t)(uint64_t)buf; // self explainatory
+    cmdtbl->prdt_entry[0].dbc = 512 - 1;                 // 256 words
+    cmdtbl->prdt_entry[0].i = 1;                         // issue an interrupt on completion
+
+    // Setup command
+    ahci_fis_h2d_t *cmdfis = (ahci_fis_h2d_t *)(&cmdtbl->cfis);
+
+    cmdfis->fis_type = FIS_TYPE_REG_H2D;       // host -> device
+    cmdfis->c = 1;                             // is command
+    cmdfis->command = ATA_CMD_IDENTIFY_DEVICE; // identify device
+    cmdfis->device = 0;
+
+    ahciPortSendCommand(port, slot); // send command
+
+    return true;
+}
+
+// allocate memory for each port
 void ahciPortAllocate(ahci_port_t *port, int portno)
 {
     ahciPortStop(port); // stop command engine
@@ -304,7 +345,23 @@ void ahciInit()
     // INITIALISATION complete
     logInfo("ahci: initialised controller");
 
-    // read from all the ports
+    // identify all devices
+    for (int p = 0; p < 32; p++)
+    {
+        if (portImplemented[p] == false)
+            continue;
+
+        ahci_port_t *port = ahciPort(p);
+        uint8_t *response = pmmPage();
+        ahciPortIdentify(port, response);
+
+        printks("ahci port %d identification packet: ", p);
+        for (int i = 0; i < 512; i++)
+            printks("%c ", response[i]);
+        printks("\n");
+    }
+
+    // map all drives in the vfs
     for (int p = 0; p < 32; p++)
     {
         if (portImplemented[p] == false)
