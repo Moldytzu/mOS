@@ -198,4 +198,86 @@ typedef struct
     ahci_prdt_t prdt_entry[1]; // Physical region descriptor table entries, 0 ~ 65535
 } ahci_tbl_t;
 
+// page 111 of ATA8-ACS (revision 4a from 21 of May 2007)
+pstruct
+{
+    uint16_t reserved[10];
+    uint8_t serialNumber[20]; // 10 words
+    uint16_t reserved2[3];
+    uint8_t firmwareRevision[8]; // 4 words
+    uint8_t modelNumber[40];     // 20 words
+    uint8_t maximumSectorsPerDRQ;
+    uint8_t always80h;
+    uint16_t trustedComputingFeatures;
+    uint16_t capabilities;
+    uint16_t capabilities2;
+    uint32_t reserved3;
+    uint16_t freeFallControlSensivity;
+    uint16_t reserved4[5];
+    uint8_t maximumSectorsPerDRQ2; // why????
+    uint8_t reserved5;
+    uint32_t totalNumberOfSectors;
+    uint16_t reserved6[13];
+    uint16_t queueDepth;
+    uint16_t sataCapabilties;
+    uint16_t reserved7;
+    uint16_t sataFeaturesSupported;
+    uint16_t sataFeaturesEnabled;
+    uint16_t majorRevisionNumber;
+    uint16_t minorRevisionNumber;
+    uint16_t commandSetSupported;
+    uint16_t commandSetsSupported;
+    uint16_t commandSetFeatureSupported;
+    uint16_t commandSetFeatureEnabledSupported; // what?????????????
+    uint16_t commandSetFeatureEnabledSupported2;
+    uint16_t commandSetFeatureEnabledSupported3;
+    uint16_t ultraDMAmodes;
+    uint16_t timeForSecurityErase;
+    uint16_t timeForEnhancedSecurityErase;
+    uint16_t currentAdvancedPowerManagementValue;
+    uint16_t masterPasswordIdentifier;
+    uint16_t hardwareResetResult;
+    uint16_t acousticManagement;
+    uint16_t streamMinimumRequestSize;
+    uint16_t streamingTransferTimeDMA;
+    uint16_t streamingAccessLatency;
+    uint32_t streamingPerformanceGranularity;
+    uint64_t totalNumberUserAddressableSectors48;
+    uint16_t streamingTransferTimePIO;
+    uint16_t reserved8;
+    uint16_t physicalSectorSizeLogicalSectorSize;
+    uint16_t interseekDelayISO7779acousticTesting;
+    uint16_t uniqueID[4];
+    uint16_t worldWideNameExtension128bit[4];
+    uint16_t reserved9;
+    uint32_t wordsPerLogicalSector;
+    uint16_t supportedSettings;
+    uint16_t commandSetFeatureEnabledSupported4;
+    uint16_t reserved10[7];
+    uint16_t securityStatus;
+    uint16_t reserved11[31];
+    uint16_t cfaPowerMode1;
+    uint16_t reserved12[15];
+    uint8_t currentMediaSerialNumber[60];
+    uint16_t sctCommandTransport;
+    uint32_t reserved13;
+    uint16_t alignmentLogicalBlocks;
+    uint32_t writeReadVerifySectorCountMode3Only;
+    uint32_t verifySectorCountMode2Only;
+    uint16_t nvCacheCapabilites;
+    uint32_t nvCacheSize;
+    uint16_t nominalMediaRotationRate;
+    uint16_t reserved14;
+    uint32_t nvCacheOptions;
+    uint16_t reserved15;
+    uint16_t transportMajorRevisionNumber;
+    uint16_t transportMinorRevisionNumber;
+    uint16_t reserved16[10];
+    uint16_t minimumNumberOf512ByteUnitsPerDownloadMicrocodeCommandForMode03h;
+    uint16_t maximumNumberOf512ByteUnitsPerDownloadMicrocodeCommandForMode03h;
+    uint16_t reserved17[19];
+    uint16_t integrityWord;
+}
+ata_identify_device_packet_t;
+
 void ahciInit();
