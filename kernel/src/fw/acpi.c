@@ -57,6 +57,15 @@ void rebootFallback()
     outb(0x64, 0xFE); // send 0xFE (command to pulse line 0xE that is connected to cpu's reset) to the 8042
 }
 
+// shutdown without acpi
+void shutdownFallback()
+{
+    // these work only in hypervisors and emulators
+    outw(0xB004, 0x2000);
+    outw(0x604, 0x2000);
+    outw(0x4004, 0x3400);
+}
+
 // reboot using acpi
 void acpiReboot()
 {
@@ -83,7 +92,11 @@ void acpiReboot()
 // shutdown using acpi
 void acpiShutdown()
 {
-    logError("acpi: shutdown unsupported.");
+    logError("acpi: shutdown unsupported. trying emulator-only fallback.");
+
+    shutdownFallback();
+
+    logError("acpi: fallback failed.");
     panick("It is safe to shutdown computer!");
     hang();
 }
