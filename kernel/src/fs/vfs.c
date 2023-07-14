@@ -129,16 +129,16 @@ uint64_t vfsOpen(const char *name)
 #endif
 
     struct vfs_node_t *currentNode = &rootNode;
-    const char tmp[128 /* mount name */ + 128 /* path */];
+    char fullPath[128 /* mount name */ + 128 /* path */];
     do
     {
         if (!currentNode->filesystem)
             goto next;
 
-        zero((void *)tmp, sizeof(tmp));
-        sprintf((char *)tmp, "%s%s", currentNode->filesystem->mountName, currentNode->path); // maybe we could call vfsGetPath?
+        zero((void *)fullPath, sizeof(fullPath));
+        vfsGetPath((uint64_t)currentNode, fullPath);
 
-        if (strcmp(tmp, name) != 0) // compare the temp and the name
+        if (strcmp(fullPath, name) != 0) // compare the paths
             goto next;
 
         if (!currentNode->filesystem->open) // check if the handler exists
@@ -208,7 +208,7 @@ bool vfsExists(const char *name)
 }
 
 // gets full path of a node
-void vfsGetPath(uint64_t fd, void *buffer)
+void vfsGetPath(uint64_t fd, char *buffer)
 {
     struct vfs_node_t *node = (struct vfs_node_t *)fd;
     if (!ISVALID(node))

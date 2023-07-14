@@ -79,7 +79,7 @@ void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset);
 void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset);
 struct vfs_node_t *vfsAdd(struct vfs_node_t node);
 void vfsRemove(struct vfs_node_t *node);
-void vfsGetPath(uint64_t fd, void *buffer);
+void vfsGetPath(uint64_t fd, char *buffer);
 bool vfsExists(const char *name);
 struct vfs_node_t *vfsNodes();
 void vfsAddDrive(vfs_drive_t drive);
