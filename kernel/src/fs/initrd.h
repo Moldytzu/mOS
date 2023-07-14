@@ -16,13 +16,6 @@ pstruct
 }
 dsfs_entry_t;
 
-pstruct
-{
-    dsfs_header_t header;
-    dsfs_entry_t firstEntry;
-}
-dsfs_fs_t;
-
 void initrdInit();
 void initrdMount();
-void *initrdGet(const char *name);
+dsfs_entry_t *initrdGet(const char *name);
