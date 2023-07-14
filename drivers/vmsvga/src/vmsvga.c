@@ -67,11 +67,6 @@ uint32_t vramSize = 0;
 
 uint32_t fbOffset = 0;
 
-void iowait() // wait for io operation to take place by yielding
-{
-    sys_yield();
-}
-
 uint32_t readRegister(uint32_t reg)
 {
     outl(ioBase + SVGA_INDEX, reg);  // point to the register
@@ -100,8 +95,6 @@ void resetFIFO()
     fifo[SVGA_FIFO_NEXT_CMD] = fifo[SVGA_FIFO_MIN]; // next command
     fifo[SVGA_FIFO_STOP] = fifo[SVGA_FIFO_MIN];     // stop at command
 
-    iowait();
-
     writeRegister(SVGA_REG_CONFIG_DONE, 1);
 }
 
@@ -123,8 +116,6 @@ void updateScreen()
     writeFIFO(fb->currentYres);
 
     waitFIFO();
-
-    iowait();
 }
 
 bool setResolution(uint32_t xres, uint32_t yres)
@@ -136,8 +127,6 @@ bool setResolution(uint32_t xres, uint32_t yres)
     writeRegister(SVGA_REG_HEIGHT, yres);
     writeRegister(SVGA_REG_BPP, 32);   // 32 bits per pixel (4 bytes per pixel as the kernel is using)
     writeRegister(SVGA_REG_ENABLE, 1); // make sure the device is enabled
-
-    iowait();
 
     // update the metadata
     fbOffset = readRegister(SVGA_REG_FB_OFFSET);      // read the offset to the guest buffer
@@ -219,7 +208,7 @@ void _mdrvmain()
 
     while (1)
     {
-        for(int i = 0; i < 10; i++) // don't waste time here by yielding
+        for (int i = 0; i < 10; i++) // don't waste time here by yielding
             sys_yield();
 
         updateScreen(); // send command to the device that we want the screen to be updated
