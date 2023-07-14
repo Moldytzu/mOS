@@ -30,8 +30,7 @@ char *cfgGet(const char *name)
             continue;
         }
 
-        char *value = start + strlen(name) + strlen(" = "); // get address of operand
-        return value;
+        return start + strlen(name) + strlen(" = "); // return address of operand
     }
 
     return NULL;
@@ -52,10 +51,10 @@ char *cfgStr(const char *name)
     char *start = cfgGet(name);
     char *end = cfg + 4096;
 
-    if (!start || *start != '\"')
+    if (!start || *start != '\"') // not found or broken format
         return "?";
 
-    start++; // skip to contents
+    start++; // skip quotes
 
     char *strStart = start;
 
@@ -118,6 +117,7 @@ void parseCFG()
     memset(cfg, 0, 4096);               // clear the buffer
     sys_read(cfg, min(size, 4096), fd); // read the file
 
+    // parse the config
     safe = cfgBool("SAFE");
     verbose = cfgBool("VERBOSE") | safe; // verbose mode is forced on by safe
     shell = cfgStr("SHELL");
@@ -140,33 +140,29 @@ void parseCFG()
     uint16_t driversLen = strlen(drivers);
 
     // the drivers string is in the form "driver;driver2;driver3 etc etc"
-    char *start = drivers;
+    char *currentDriver = drivers;
     for (int i = 0; i < driversLen; i++)
     {
         if (drivers[i] == ' ') // ignore whitespace (improves readability)
         {
-            start++;
+            currentDriver++;
             continue;
         }
 
         if (drivers[i] == ';') // start each driver after the separator
         {
-            drivers[i] = '\0';                                     // terminate string
-            sys_driver(SYS_DRIVER_START, (uint64_t)(start), 0, 0); // start the driver
-            sys_yield();                                           // then wait
+            drivers[i] = '\0';                                             // terminate string
+            sys_driver(SYS_DRIVER_START, (uint64_t)(currentDriver), 0, 0); // start the driver
 
             if (verbose)
-                printf("Started driver %s\n", start);
+                printf("Started driver %s\n", currentDriver);
 
-            start = drivers + i + 1;
+            currentDriver = drivers + i + 1; // point to the new driver
         }
     }
 
     if (verbose)
         printf("Setting screen resolution to %ux%u\n", screenX, screenY);
-
-    for (int i = 0; i < 20; i++) // wait 20 cycles for the video driver to start (todo: ask the kernel)
-        sys_yield();
 
     sys_display(SYS_DISPLAY_SET, screenX, screenY);
 }
@@ -250,6 +246,8 @@ int main(int argc, char **argv)
             puts("The shell has stopped. Relaunching it.\n");
     }
 
-    while (1) // the init system never returns
-        sys_yield();
+    printf("Init system execution jumped out of event loop. Probably a bug!");
+
+    while (1)
+        ;
 }
