@@ -36,18 +36,13 @@ struct vfs_node_t *vfsAdd(struct vfs_node_t node)
 
     struct vfs_node_t *currentNode = &rootNode; // first node
 
-    if (currentNode->filesystem) // check if the root node is valid
-    {
-        while (currentNode->next) // get last node
-            currentNode = currentNode->next;
+    while (currentNode->next) // point to the last node
+        currentNode = currentNode->next;
 
-        if (currentNode->filesystem)
-        {
-            currentNode->next = blkBlock(sizeof(struct vfs_node_t)); // allocate next node if the current node is valid
-            currentNode = currentNode->next;                         // set current node to the newly allocated node
-        }
-    }
-    memcpy64(currentNode, &node, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // copy the node information
+    currentNode->next = blkBlock(sizeof(struct vfs_node_t)); // allocate a new node
+    currentNode = currentNode->next;                         // point to the new node
+
+    memcpy64(currentNode, &node, sizeof(struct vfs_node_t) / sizeof(uint64_t)); // copy the node metadata
 
 #ifdef K_VFS_DEBUG
     char buffer[512];
@@ -56,7 +51,7 @@ struct vfs_node_t *vfsAdd(struct vfs_node_t node)
     logDbg(LOG_SERIAL_ONLY, "vfs: adding node %s", buffer);
 #endif
 
-    return currentNode;
+    return currentNode; // return its address
 }
 
 // add a drive node
