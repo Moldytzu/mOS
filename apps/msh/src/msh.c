@@ -8,10 +8,9 @@
 #define MAX_ARGUMENTS 31
 
 uint64_t pid;
-uint16_t pathLen = 0;
-const char *path;
-const char *enviroment;
-const char *cmdBuffer;
+char *path;
+char *enviroment;
+char *cmdBuffer;
 char *cwdBuffer;
 char *arguments[MAX_ARGUMENTS];
 int argumentsCount = 0;
@@ -29,7 +28,7 @@ void handleInput(const char *buffer)
     // split the buffer at every space
     while (*buffer)
     {
-        if (*buffer == ' ') // delimiter
+        if (*buffer == ' ') // when we hit a space then we switch to the next argument buffer
         {
             argumentsCount++; // increment the count of arguments
 
@@ -42,10 +41,11 @@ void handleInput(const char *buffer)
             memset(arguments[argumentsCount], 0, 4096); // clear the argument
 
             i = 0;    // reset index
-            buffer++; // skip character
+            buffer++; // skip space
             continue;
         }
-        arguments[argumentsCount][i++] = *(buffer++);
+
+        arguments[argumentsCount][i++] = *(buffer++); // copy byte by byte in the corresponding buffer
     }
 
     if (strcmp(arguments[0], "exit") == 0) // exit command
@@ -64,17 +64,17 @@ void handleInput(const char *buffer)
             for (int i = strlen(cwdBuffer) - 2; cwdBuffer[i] != '/'; cwdBuffer[i--] = '\0')
                 ; // step back to last delimiter
         }
-        else if (*arguments[1] == '/') // full path
+        else if (*arguments[1] == '/') // go to full path
         {
             memset(cwdBuffer, 0, 4096);                            // clear the buffer
             memcpy(cwdBuffer, arguments[1], strlen(arguments[1])); // copy the buffer
         }
-        else
+        else // relative path
         {
             if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
                 cwdBuffer[strlen(cwdBuffer)] = '/';
 
-            memcpy(cwdBuffer + strlen(cwdBuffer), arguments[1], strlen(arguments[1])); // copy the buffer
+            sprintf(cwdBuffer, "%s%s", cwdBuffer, arguments[1]); // combine the current working directory buffer with the relative path
         }
 
         if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
@@ -96,20 +96,19 @@ void handleInput(const char *buffer)
     }
 
     // append the extension if it doesn't exist
-    if (memcmp(arguments[0] + strlen(arguments[0]) - 3, ".mx", 3) != 0)
-        memcpy((void *)(arguments[0] + strlen(arguments[0])), ".mx\0", 4); // copy the extension (including the NULL)
+    if (strlen(arguments[0]) < strlen(".mx") || memcmp(arguments[0] + strlen(arguments[0]) - 3, ".mx", 3) != 0) // check for size and for last 3 bytes to match
+        memcpy(arguments[0] + strlen(arguments[0]), ".mx", 4);                                                  // copy the extension (including the NULL)
 
-    memset((void *)cmdBuffer, 0, 4096);                            // clear the buffer
-    memcpy((void *)cmdBuffer, arguments[0], strlen(arguments[0])); // copy the input
+    memset(cmdBuffer, 0, 4096);                            // clear the buffer
+    memcpy(cmdBuffer, arguments[0], strlen(arguments[0])); // copy the input
 
     uint64_t status = sys_open(arguments[0]);
 
+    // try to append the path
     if (!status)
     {
-        // try to append the path
-        memset((void *)cmdBuffer, 0, 4096);
-        memcpy((void *)(cmdBuffer + pathLen), arguments[0], strlen(arguments[0])); // copy the input
-        memcpy((void *)cmdBuffer, path, pathLen);                                  // copy the path
+        memset(cmdBuffer, 0, 4096);
+        sprintf(cmdBuffer, "%s%s", path, arguments[0]); // combine the path and the input
 
         uint64_t status = sys_open(cmdBuffer);
         if (status && strlen(cmdBuffer))
@@ -121,15 +120,20 @@ void handleInput(const char *buffer)
 
 execute:
     uint64_t newPid;
-    char *argv[31];
-    argumentsCount = min(30, argumentsCount); // clamp the value to 30 arguments
-    for (int i = 0; i < argumentsCount; i++)
+
+    char *argv[MAX_ARGUMENTS];
+    argumentsCount = min(MAX_ARGUMENTS - 1, argumentsCount); // clamp the value to the maximum
+
+    for (int i = 0; i < argumentsCount; i++) // prepare the argument vector
         argv[i] = arguments[i + 1];
-    sys_exec_packet_t p = {0, enviroment, cwdBuffer, argumentsCount, argv};
-    sys_exec(cmdBuffer, &newPid, &p);
+
+    sys_exec_packet_t p = {0, enviroment, cwdBuffer, argumentsCount, argv}; // prepare a packet
+    sys_exec(cmdBuffer, &newPid, &p);                                       // send the kernel the packet
+
     do
     {
         sys_pid(newPid, SYS_PID_STATUS, &status); // get the status of the pid
+        sys_yield();                              // don't waste cpu time
     } while (status == 0);                        // wait for the pid to be stopped
 }
 
@@ -177,8 +181,13 @@ int main(int argc, char **argv)
     if (memcmp(path, "PATH=", 5) == 0) // check if the path is available by comparing again the bytes
     {
         path += 5; // skip the PATH= part
-        for (pathLen = 0; path[pathLen] != '|'; pathLen++)
-            ; // calculate the path len
+
+        // determine the path len
+        uint16_t len;
+        for (len = 0; path[len] != '|'; len++)
+            ;
+
+        path[len] = 0; // terminate path
     }
 
     // main loop
