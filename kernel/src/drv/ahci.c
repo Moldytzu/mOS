@@ -294,8 +294,12 @@ void ahciInit()
 
         logDbg(LOG_ALWAYS, "ahci: waiting for ownership to change");
 
-        while (ahciRead(0x28) & 0x1) // wait for the bios to transfer ownership
+        size_t timeout = 100;
+        while ((ahciRead(0x28) & 0x1) && --timeout) // wait for the bios to transfer ownership
             timeSleepMilis(1);
+
+        if(!timeout)
+            logWarn("ahci: ownership change timed out (maybe firmware bug?)");
     }
 
     // INITIALISATION (ahci 1.3.1 spec page 112)
