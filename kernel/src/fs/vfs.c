@@ -66,12 +66,12 @@ void vfsAddDrive(vfs_drive_t drive)
     // create a node for the drive
     struct vfs_node_t driveNode;
     zero(&driveNode, sizeof(driveNode));
-    driveNode.filesystem = &rootFS; // maybe we could create a devfs that can provide raw read/write functionality? (todo: implement this)
-    memcpy(driveNode.path, drive.interface, strlen(drive.interface));
-    memcpy(driveNode.path + strlen(drive.interface), drive.friendlyName, strlen(drive.friendlyName));
+    driveNode.filesystem = &rootFS;                                       // maybe we could create a devfs that can provide raw read/write functionality? (todo: implement this)
+    sprintf(driveNode.path, "%s%s", drive.interface, drive.friendlyName); // copy the name
+
     vfsAdd(driveNode);
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++) // MBR only supported 4 partitions
     {
         if (!drive.partitions[i].startLBA)
             continue;
