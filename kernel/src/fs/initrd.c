@@ -3,9 +3,12 @@
 #include <fs/vfs.h>
 #include <misc/logger.h>
 
+// reference implementation of DSFS 1.0b specification
+
 #define FIRST_ENTRY (dsfs_entry_t *)((uint64_t)dsfs + sizeof(dsfs_header_t))
 #define CONTENTS_OF(x) (void *)((uint64_t)x + sizeof(dsfs_entry_t))
 #define NEXT_ENTRY_OF(x) ((dsfs_entry_t *)((uint64_t)x + sizeof(dsfs_entry_t) + x->size))
+#define IS_LAST(x) (x->size == 0 && entry->name[0] == 0)
 
 dsfs_header_t *dsfs;
 vfs_fs_t dsfsFS;
@@ -56,7 +59,7 @@ void initrdMount()
     dsfsFS.name = "dsfs";
     dsfsFS.mountName = "/init/";
     dsfsFS.open = dsfsFSOpen;
-    dsfsFS.read = dsfsFSRead; 
+    dsfsFS.read = dsfsFSRead;
 
     dsfs_entry_t *entry = FIRST_ENTRY; // point to the first entry
 
@@ -65,7 +68,7 @@ void initrdMount()
     node.filesystem = &dsfsFS;              // set the filesystem
     vfsAdd(node);                           // create the mount
 
-    for (uint32_t i = 0; i < dsfs->entries; i++) // iterate over all entries of the filesystem
+    while (!IS_LAST(entry)) // while this isn't the end of the chain
     {
         node.size = entry->size;                                 // set the size
         memcpy64(node.path, entry->name, 56 / sizeof(uint64_t)); // copy the file path
@@ -80,7 +83,7 @@ dsfs_entry_t *initrdGet(const char *name)
 {
     dsfs_entry_t *entry = FIRST_ENTRY; // point to the first entry
 
-    for (uint32_t i = 0; i < dsfs->entries; i++) // iterate over all entries of the filesystem
+    while (!IS_LAST(entry)) // while this isn't the end of the chain
     {
         if (memcmp(entry->name, name, strlen(name)) == 0) // compare the names
             return entry;                                 // return the address
