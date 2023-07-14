@@ -3,6 +3,8 @@
 #include <drv/drv.h>
 #include <subsys/vt.h>
 
+extern struct limine_framebuffer framebuffer; // structure implemented in drv/framebuffer.c, holds global information about the GPU framebuffer
+
 // display (rsi = call, rdx = arg1, r8 = arg2)
 void display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t *task)
 {
@@ -19,11 +21,12 @@ void display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_tas
         drvUpdateReference(DRV_TYPE_FB, &newCtx);
         break;
     case 2: // display get resolution
-        if (!IS_MAPPED(arg1) || !IS_MAPPED(arg2) || !drvQueryActive(DRV_TYPE_FB))
+        if (!IS_MAPPED(arg1) || !IS_MAPPED(arg2))
             return;
 
-        *(uint64_t *)PHYSICAL(arg1) = ((drv_context_fb_t *)drvQueryActive(DRV_TYPE_FB))->currentXres;
-        *(uint64_t *)PHYSICAL(arg2) = ((drv_context_fb_t *)drvQueryActive(DRV_TYPE_FB))->currentYres;
+        // pass information from the global framebuffer
+        *(uint64_t *)PHYSICAL(arg1) = framebuffer.width;
+        *(uint64_t *)PHYSICAL(arg2) = framebuffer.height;
     default:
         break;
     }
