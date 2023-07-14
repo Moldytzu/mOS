@@ -104,15 +104,11 @@ bool setResolution(uint32_t xres, uint32_t yres)
     writeRegister(BGA_REG_BPP, 32);    // set 32 bits per pixel
     enableVBE();                       // enable vbe
 
-    sys_yield(); // wait for the emulator to do its thing
-
     // update the metadata
     fb->base = (void *)(uint64_t)device->BAR0; // set the base address
 
     fb->currentXres = xres;
     fb->currentYres = yres;
-
-    sys_yield(); // wait for the emulator to do its thing
 
     return true;
 }
@@ -125,7 +121,6 @@ bga_resolution_t getResolution()
     res.y = readRegister(BGA_REG_YRES);
     enableVBE(); // enable vbe
 
-    sys_yield(); // wait for the emulator to do its thing
     return res;
 }
 
