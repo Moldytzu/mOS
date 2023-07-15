@@ -12,6 +12,8 @@ pstruct
     uint64_t available;   // available bytes
     uint64_t used;        // used bytes
     uint64_t bitmapBytes; // bytes used by the bitmap
+
+    locker_t lock; // spinlock
 }
 pmm_pool_t;
 

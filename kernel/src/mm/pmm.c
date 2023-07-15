@@ -8,7 +8,6 @@
 
 uint8_t poolCount = 0;
 pmm_pool_t pools[256]; // 256 pools should be enough
-locker_t pmmLock;      // todo: replace this with a per-pool loc
 
 #define PMM_BENCHMARK_SIZE 256 * 48
 
@@ -67,15 +66,15 @@ void pmmDbgDump()
 
 void *pmmPages(uint64_t pages)
 {
-    lock(pmmLock, {
-        for (int i = 0; i < poolCount; i++)
-        {
-            // find an available pool
-            if (pools[i].available < PMM_PAGE)
-                continue;
+    for (int i = 0; i < poolCount; i++)
+    {
+        // find an available pool
+        if (pools[i].available < PMM_PAGE)
+            continue;
 
-            pmm_pool_t *pool = &pools[i];
+        pmm_pool_t *pool = &pools[i];
 
+        lock(pool->lock, {
             for (size_t i = 0; i < pool->bitmapBytes * 8; i++)
             {
                 if (((uint64_t *)pool->base)[i / bitsof(uint64_t)] == UINT64_MAX) // if the qword is all set then skip it (speeds up allocation by a lot)
@@ -111,12 +110,12 @@ void *pmmPages(uint64_t pages)
 
                 memsetPage((void *)((uint64_t)pool->alloc + i * PMM_PAGE), 0, pages); // initialise memory
 
-                release(pmmLock);
+                release(pool->lock);
 
                 return (void *)((uint64_t)pool->alloc + i * PMM_PAGE);
             }
-        }
-    });
+        });
+    }
 
     panick("Out of memory!");
 
@@ -130,21 +129,21 @@ void *pmmPage()
 
 void pmmDeallocate(void *page)
 {
-    lock(pmmLock, {
-        int i = 0;
-        for (;
-             i < poolCount &&                                                                              // don't overflow
-             !between((uint64_t)page, (uint64_t)pools[i].alloc, (uint64_t)pools[i].alloc + pools[i].size); // make sure the page is in the pool boundaries
-             i++)
-        {
-        }
+    int i = 0;
+    for (;
+         i < poolCount &&                                                                              // don't overflow
+         !between((uint64_t)page, (uint64_t)pools[i].alloc, (uint64_t)pools[i].alloc + pools[i].size); // make sure the page is in the pool boundaries
+         i++)
+    {
+    }
 
+    lock(pools[i].lock, {
         uint64_t idx = (uint64_t)(page - pools[i].alloc) / PMM_PAGE;
 
         if (!bmpGet(pools[i].base, idx)) // don't deallocate second time
         {
             logWarn("pmm: failed to deallocate");
-            release(pmmLock);
+            release(pools[i].lock);
             return;
         }
 
@@ -234,14 +233,12 @@ pmm_pool_t pmmTotal()
 
     zero(&total, sizeof(pmm_pool_t));
 
-    lock(pmmLock, {
-        for (int i = 0; i < poolCount; i++) // loop thru each pool
-        {
-            total.available += pools[i].available; // add each useful property
-            total.used += pools[i].used;
-            total.bitmapBytes += pools[i].bitmapBytes;
-        }
-    });
+    for (int i = 0; i < poolCount; i++) // loop thru each pool
+    {
+        total.available += pools[i].available; // add each useful property
+        total.used += pools[i].used;
+        total.bitmapBytes += pools[i].bitmapBytes;
+    }
 
     return total; // and return the total
 }
