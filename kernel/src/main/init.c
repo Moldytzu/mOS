@@ -34,11 +34,11 @@ void _start()
 {
     fpuInit(); // initialise the fpu
 
+    serialInit(); // initialise the serial port
+
     framebufferInit(); // initialise framebuffer
 
     initrdInit(); // initialise the initrd
-
-    serialInit(); // initialise the serial port
 
     pmmInit(); // initialise the physical memory manager
 

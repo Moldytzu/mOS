@@ -16,7 +16,7 @@ void serialInit()
 
     outb(COM1 + 2, 0b111); // fifo control register (enable fifo, clear them, disable dma ,trigger at 1 character)
 
-    logInfo("com1: %d baud", COM_BAUD_BASE / K_COM_BAUD_DIV);
+    logDbg(LOG_SERIAL_ONLY, "com1: %d baud", COM_BAUD_BASE / K_COM_BAUD_DIV);
 #endif
 }
 
