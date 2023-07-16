@@ -10,16 +10,7 @@
 
 locker_t blkLock;
 blk_header_t *start = NULL;
-
-blk_header_t *last()
-{
-    blk_header_t *current = start;
-
-    while (current->next)
-        current = current->next;
-
-    return current;
-}
+blk_header_t *last = NULL;
 
 void expand(uint16_t pages)
 {
@@ -27,11 +18,12 @@ void expand(uint16_t pages)
     blk_header_t *newBlock = (blk_header_t *)pmmPages(pages);
     newBlock->free = true;
     newBlock->size = (PMM_PAGE * pages) - HEADER_PAD;
-    newBlock->prev = last();
+    newBlock->prev = last;
     newBlock->signature = BLK_HEADER_SIGNATURE;
 
     // add it in the chain
-    last()->next = newBlock;
+    last->next = newBlock;
+    last = last->next;
 }
 
 void blkMerge()
@@ -56,7 +48,7 @@ void dbgDump()
 void blkInit()
 {
     // create first block
-    start = (blk_header_t *)pmmPages(BLK_EXPAND_INCREMENT);
+    start = last = (blk_header_t *)pmmPages(BLK_EXPAND_INCREMENT);
     start->signature = BLK_HEADER_SIGNATURE;
     start->free = true;
     start->size = (BLK_EXPAND_INCREMENT * PMM_PAGE) - HEADER_PAD;
