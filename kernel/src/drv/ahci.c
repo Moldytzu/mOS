@@ -273,10 +273,10 @@ void ahciInit()
     logInfo("ahci: detected controller at %d.%d.%d", ahciDescriptor.bus, ahciDescriptor.device, ahciDescriptor.function);
 
     // enable access to internal registers
-    ahciBase->Command |= 0b10000010111;                                                            // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
-    abar = (void *)(uint64_t)(ahciBase->BAR5 & 0xFFFFE000);                                        // get base address
-    vmmMap(vmmGetBaseTable(), (void *)abar, (void *)abar, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
-    abase = pmmPages(80);                                                                          // 320k of space for all the ports
+    ahciBase->Command |= 0b10000010111;                                               // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
+    abar = (void *)(uint64_t)(ahciBase->BAR5 & 0xFFFFE000);                           // get base address
+    vmmMapKernel((void *)abar, (void *)abar, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
+    abase = pmmPages(80);                                                             // 320k of space for all the ports
 
     logDbg(LOG_ALWAYS, "ahci: abar is at %p", abar);
 
@@ -298,7 +298,7 @@ void ahciInit()
         while ((ahciRead(0x28) & 0x1) && --timeout) // wait for the bios to transfer ownership
             timeSleepMilis(1);
 
-        if(!timeout)
+        if (!timeout)
             logWarn("ahci: ownership change timed out (maybe firmware bug?)");
     }
 

@@ -22,7 +22,7 @@ void pcieEnumerateECAM(acpi_mcfg_t *mcfg)
         {
             uint64_t busBase = mcfg->buses[i].base;
             pcie_ecam_header_t *baseHeader = (pcie_ecam_header_t *)busBase;
-            vmmMap(vmmGetBaseTable(), baseHeader, baseHeader, VMM_ENTRY_RW); // map the header
+            vmmMapKernel(baseHeader, baseHeader, VMM_ENTRY_RW); // map the header
 
             // check for non-existent bus
             if (baseHeader->device == UINT16_MAX || baseHeader->device == 0)
@@ -32,7 +32,7 @@ void pcieEnumerateECAM(acpi_mcfg_t *mcfg)
             for (int device = 0; device < 32; device++)
             {
                 pcie_ecam_header_t *deviceHeader = (pcie_ecam_header_t *)(busBase + (bus << 20 | device << 15));
-                vmmMap(vmmGetBaseTable(), deviceHeader, deviceHeader, VMM_ENTRY_RW); // map the header
+                vmmMapKernel(deviceHeader, deviceHeader, VMM_ENTRY_RW); // map the header
 
                 // check for non-existent device
                 if (deviceHeader->device == UINT16_MAX || deviceHeader->device == 0)
@@ -44,7 +44,7 @@ void pcieEnumerateECAM(acpi_mcfg_t *mcfg)
                     pcie_ecam_header_t *functionHeader = (pcie_ecam_header_t *)(busBase + (bus << 20 | device << 15 | function << 12));
 
                     // check for non-existent function
-                    vmmMap(vmmGetBaseTable(), functionHeader, functionHeader, VMM_ENTRY_RW); // map the header
+                    vmmMapKernel(functionHeader, functionHeader, VMM_ENTRY_RW); // map the header
 
                     if (functionHeader->device == UINT16_MAX || functionHeader->device == 0)
                         continue;

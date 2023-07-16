@@ -60,11 +60,11 @@ void hpetInit()
 {
     hpet = (acpi_hpet_t *)acpiGet("HPET", 0);
 
-    if(!hpet)
+    if (!hpet)
     {
         logInfo("hpet: failed to detect");
         return;
-    }    
+    }
 
     if (hpet->base.addressSpace != ACPI_GAS_ACCESS_MEMORY)
     {
@@ -72,7 +72,7 @@ void hpetInit()
         return;
     }
 
-    vmmMap(vmmGetBaseTable(), (void *)hpet->base.address, (void *)hpet->base.address, VMM_ENTRY_RW); // map it
+    vmmMapKernel((void *)hpet->base.address, (void *)hpet->base.address, VMM_ENTRY_RW); // map it
 
     // calculate the scale
     uint64_t hpetFemto = (hpetRead(HPET_OFFSET_GENERAL_CAPABILITIES) >> 32) & 0xFFFFFFFF;

@@ -107,7 +107,7 @@ void acpiInit()
     // get rsdp
     rsdp = (acpi_rsdp_t *)bootloaderGetRSDP();
 
-    vmmMap(vmmGetBaseTable(), rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), VMM_ENTRY_RW); // properly map the rsdp
+    vmmMapKernel(rsdp, (void *)((uint64_t)rsdp - (uint64_t)bootloaderGetHHDM()), VMM_ENTRY_RW); // properly map the rsdp
 
     // parse the version field
     revision = rsdp->version;
@@ -126,7 +126,7 @@ void acpiInit()
     // get mcfg
     mcfg = (acpi_mcfg_t *)acpiGet("MCFG", 0);
 
-    if(mcfg)
+    if (mcfg)
         pcieEnumerateECAM(mcfg);
     else
         logWarn("acpi: MCFG table wasn't found, PCIe support will not be available");

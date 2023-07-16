@@ -27,6 +27,12 @@ void vmmInit()
     logInfo("vmm: loaded a new page table");
 }
 
+// map for address for kernel
+void vmmMapKernel(void *virtualAddress, void *physicalAddress, uint64_t flags)
+{
+    vmmMap(baseTable, virtualAddress, physicalAddress, flags);
+}
+
 // set flags of some entries given by the indices
 ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, uint64_t flags)
 {
@@ -116,7 +122,7 @@ void *vmmGetBaseTable()
 }
 
 // get physical address of a virtual address
-void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress)
+void *vmmGetPhysical(vmm_page_table_t *table, void *virtualAddress)
 {
     // get physical memory address form virtual memory address
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables

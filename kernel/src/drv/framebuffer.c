@@ -101,7 +101,7 @@ void framebufferFlush()
 
         // map the framebuffer
         for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
-            vmmMap(vmmGetBaseTable(), framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
+            vmmMapKernel(framebuffer.address + i, framebuffer.address + i, VMM_ENTRY_RW | VMM_ENTRY_WRITE_THROUGH);
     });
 
     framebufferInitDoubleBuffer(); // quickly generate a new buffer

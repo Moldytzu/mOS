@@ -88,7 +88,7 @@ void ioapicInit()
         case 1: // I/O APIC
             ioapic = (ioapic_t *)e;
             ioapicBase = (void *)((uint64_t)ioapic->address);
-            vmmMap(vmmGetBaseTable(), ioapicBase, ioapicBase, VMM_ENTRY_RW);
+            vmmMapKernel(ioapicBase, ioapicBase, VMM_ENTRY_RW);
             break;
         case 2: // IO/APIC Interrupt Source Override
             interruptOverrides[interruptOverridesIdx++] = (ioapic_iso_t *)e;

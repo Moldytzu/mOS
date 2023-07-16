@@ -49,7 +49,7 @@ void xapicInit(bool bsp)
         outb(PIC_SLAVE_DAT, 0b11111111);
 
         // map the base
-        vmmMap(vmmGetBaseTable(), XAPIC_BASE, XAPIC_BASE, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
+        vmmMapKernel(XAPIC_BASE, XAPIC_BASE, VMM_ENTRY_RW | VMM_ENTRY_CACHE_DISABLE);
 
         isEnabled = true;
     }
@@ -70,8 +70,8 @@ void xapicInit(bool bsp)
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
 
     // calibrate timer for the frequency specified in config
-    xapicWrite(XAPIC_REG_TIMER_DIV, 0b1011);            // divide by 1
-    xapicWrite(XAPIC_REG_TIMER_INITCNT, 10000000);      // enable timer
+    xapicWrite(XAPIC_REG_TIMER_DIV, 0b1011);             // divide by 1
+    xapicWrite(XAPIC_REG_TIMER_INITCNT, 10000000);       // enable timer
     xapicWrite(XAPIC_REG_LVT_TIMER, XAPIC_TIMER_VECTOR); // one shot mode
 
     xapicWrite(XAPIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // initialise with -1
@@ -80,8 +80,8 @@ void xapicInit(bool bsp)
     uint32_t ticks = 0xFFFFFFFF - *((uint32_t *)((uint8_t *)XAPIC_BASE + XAPIC_REG_TIMER_CURRENTCNT));
 
     xapicWrite(XAPIC_REG_LVT_TIMER, 0b100000000000000000 | XAPIC_TIMER_VECTOR); // periodic mode
-    xapicWrite(XAPIC_REG_TIMER_DIV, 0b1011);                                   // divide by 1
-    xapicWrite(XAPIC_REG_TIMER_INITCNT, ticks);                                // go!
+    xapicWrite(XAPIC_REG_TIMER_DIV, 0b1011);                                    // divide by 1
+    xapicWrite(XAPIC_REG_TIMER_INITCNT, ticks);                                 // go!
 
     // setup idt entry (only needed to do once)
     if (bsp)

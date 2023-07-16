@@ -23,7 +23,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
             return;
 
         uint64_t fd = openRelativePath(PHYSICAL(arg1), task);
-        if(!fd)
+        if (!fd)
             return;
 
         char path[512];
@@ -77,7 +77,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
 
         pcie_ecam_header_t **header = (pcie_ecam_header_t **)PHYSICAL(arg1);
 
-        if(!pcieIsPresent()) // check for pcie availability
+        if (!pcieIsPresent()) // check for pcie availability
         {
             *header = NULL;
             return;
@@ -93,7 +93,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
                 continue;
 
             // map it
-            vmmMap(vmmGetBaseTable(), functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
+            vmmMapKernel(functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
             vmmMap((void *)task->pageTable, functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
 
             if (functions[i].header->vendor == arg2 && functions[i].header->device == arg3)

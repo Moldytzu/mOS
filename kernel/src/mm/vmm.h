@@ -62,8 +62,9 @@ ifunc void vmmSwap(void *newTable)
 }
 
 // mapping
+void vmmMapKernel(void *virtualAddress, void *physicalAddress, uint64_t flags);
 void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, uint64_t flags);
 void vmmUnmap(vmm_page_table_t *table, void *virtualAddress);
 void *vmmGetBaseTable();
-void *vmmGetPhys(vmm_page_table_t *table, void *virtualAddress);
+void *vmmGetPhysical(vmm_page_table_t *table, void *virtualAddress);
 void vmmDestroy(vmm_page_table_t *table);
