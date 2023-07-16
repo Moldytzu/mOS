@@ -41,7 +41,7 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
 
         *ret = (uint64_t)drvRegister(task->id, arg1);
 
-        vmmMap((vmm_page_table_t *)task->pageTable, (void *)*ret, (void *)*ret, VMM_ENTRY_RW | VMM_ENTRY_USER); // map address
+        vmmMap(task->pageTable, (void *)*ret, (void *)*ret, VMM_ENTRY_RW | VMM_ENTRY_USER); // map address
 
         break;
 
@@ -64,13 +64,20 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
         if (!IS_MAPPED(arg1))
             return;
 
+        if (arg2 > 0xFF || arg2 < 0x21) // don't let drivers mess up exceptions and the xapic handler
+            break;
+
         idtRedirect((void *)arg1, arg2, task->id); // redirect int arg2 to arg1
 
         break;
-    case 4:                                // reset idt gate
+    case 4: // reset idt gate
+    {
+        if (arg1 > 0xFF || arg1 < 0x21) // don't let drivers mess up exceptions and the xapic handler
+            break;
+
         idtRedirect(NULL, arg1, task->id); // nullify
         break;
-
+    }
     case 5: // get pci header
         if (!IS_MAPPED(arg1))
             return;
@@ -92,12 +99,12 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
             if (!functions[i].header)
                 continue;
 
-            // map it
-            vmmMapKernel(functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
-            vmmMap((void *)task->pageTable, functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
-
-            if (functions[i].header->vendor == arg2 && functions[i].header->device == arg3)
+            if (functions[i].header->vendor == arg2 && functions[i].header->device == arg3) // check it
             {
+                // map it
+                vmmMapKernel(functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
+                vmmMap((void *)task->pageTable, functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
+
                 *header = functions[i].header; // pass the header
                 return;
             }
@@ -109,7 +116,10 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
         vmmMap((void *)task->pageTable, (void *)arg1, (void *)arg1, VMM_ENTRY_RW | VMM_ENTRY_USER);
         break;
 
-    case 7: // redirect irq to vector
+    case 7:                             // redirect irq to vector
+        if (arg2 > 0xFF || arg2 < 0x21) // don't let drivers mess up exceptions and the xapic handler
+            break;
+
         ioapicRedirectIRQ(arg1, arg2, smpID());
         break;
 
