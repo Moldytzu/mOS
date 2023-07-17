@@ -359,6 +359,9 @@ void schedKill(uint32_t id)
 // enable the scheduler for the current core
 void schedEnable()
 {
+    if (smpID())
+        logInfo("Jumping in userspace");
+
     _enabled = true;
     callWithStack(commonTask, (void *)lastTask[smpID()]->registers.rsp);
     while (1)
