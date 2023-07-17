@@ -1,4 +1,5 @@
 #include <sched/hpet.h>
+#include <sched/time.h>
 #include <fw/acpi.h>
 #include <mm/vmm.h>
 #include <main/panic.h>
@@ -84,4 +85,6 @@ void hpetInit()
     hpetWrite(HPET_OFFSET_GENERAL_CONFIGURATION, 0b1);                             // enable counter
 
     logInfo("hpet: initialised");
+
+    timeSource();
 }

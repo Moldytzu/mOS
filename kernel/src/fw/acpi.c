@@ -7,6 +7,7 @@
 #include <main/panic.h>
 #include <misc/logger.h>
 #include <drv/pcie.h>
+#include <sched/hpet.h>
 
 uint8_t revision;
 acpi_rsdp_t *rsdp;
@@ -121,6 +122,8 @@ void acpiInit()
 #ifdef K_ACPI_DEBUG
     logDbg(LOG_SERIAL_ONLY, "acpi: revision %d", revision);
 #endif
+
+    hpetInit(); // initialise the hpet
 
 #ifdef K_PCIE
     // get mcfg

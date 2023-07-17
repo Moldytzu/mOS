@@ -17,8 +17,6 @@
 #include <drv/drv.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
-#include <sched/hpet.h>
-#include <sched/time.h>
 #include <sys/syscall.h>
 #include <fw/bootloader.h>
 #include <fs/initrd.h>
@@ -47,10 +45,6 @@ void _start()
     smpBootstrap(); // bootstrap the cpus
 
     acpiInit(); // initialise the acpi interface
-
-    hpetInit(); // initialise the hpet
-
-    timeSource(); // switch to best time source
 
     picInit(); // initialise the pic chips
 
