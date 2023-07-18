@@ -74,8 +74,11 @@ void *pmmPages(uint64_t pages)
 
         pmm_pool_t *pool = &pools[i];
 
+        bool retried = false;
+
+    retry:
         lock(pool->lock, {
-            for (size_t i = 0; i < pool->bitmapBytes * 8; i++)
+            for (size_t i = pool->lastAllocatedIndex; i < pool->bitmapBytes * 8; i++)
             {
                 if (((uint64_t *)pool->base)[i / bitsof(uint64_t)] == UINT64_MAX) // if the qword is all set then skip it (speeds up allocation by a lot)
                 {
@@ -104,6 +107,8 @@ void *pmmPages(uint64_t pages)
                 for (size_t k = i; k < i + pages; k++)
                     bmpSet(pool->base, k);
 
+                pool->lastAllocatedIndex = i; // remember the page
+
                 // update metadata
                 pool->available -= PMM_PAGE * pages;
                 pool->used += PMM_PAGE * pages;
@@ -115,6 +120,14 @@ void *pmmPages(uint64_t pages)
                 return (void *)((uint64_t)pool->alloc + i * PMM_PAGE);
             }
         });
+
+        // try again starting at the beginning
+        if (retried)
+            break;
+
+        pool->lastAllocatedIndex = 0;
+        retried = true;
+        goto retry;
     }
 
     panick("Out of memory!");
