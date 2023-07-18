@@ -208,6 +208,8 @@ int main(int argc, char **argv)
         sys_exit(1);
     }
 
+    uint64_t kernelStartupTime = sys_time_uptime_nanos() / 1000000;
+
     // set tty display mode
     sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
 
@@ -224,6 +226,10 @@ int main(int argc, char **argv)
 
     // start a shell
     const char *enviroment = "PATH=/init/|"; // the basic enviroment
+
+    uint64_t userspaceStartupTime = sys_time_uptime_nanos() / 1000000;
+
+    printf("Startup finished in %dms (kernel) + %dms (userspace) = %dms\n", kernelStartupTime, userspaceStartupTime - kernelStartupTime, userspaceStartupTime);
 
     while (1)
     {
