@@ -1,4 +1,5 @@
 #include <sched/scheduler.h>
+#include <sched/hpet.h>
 #include <misc/logger.h>
 #include <cpu/smp.h>
 #include <cpu/xapic.h>
@@ -10,6 +11,8 @@
 #include <main/panic.h>
 #include <stdnoreturn.h>
 #include <fw/acpi.h>
+
+// #define BENCHMARK
 
 #define TASK(x) ((sched_task_t *)x)
 
@@ -224,11 +227,24 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
                         // todo: copy the user display framebuffer to the global framebuffer
                         break;
                     case VT_DISPLAY_TTY0:
+#ifdef BENCHMARK
+                        uint64_t a = hpetMillis();
+#endif
                         framebufferZero();
+#ifdef BENCHMARK
+                        uint64_t b = hpetMillis();
+#endif
                         framebufferWrite(vtGet(0)->buffer);
+#ifdef BENCHMARK
+                        uint64_t c = hpetMillis();
+#endif
                         framebufferWritec(K_FB_CURSOR);
 #ifdef K_FB_DOUBLE_BUFFER
                         framebufferUpdate();
+#endif
+#ifdef BENCHMARK
+                        uint64_t d = hpetMillis();
+                        logInfo("zero took %d, writing buffer took %d, updating took %d", b - a, c - b, d - c);
 #endif
                         break;
                     case VT_DISPLAY_KERNEL:
