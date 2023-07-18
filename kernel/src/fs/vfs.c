@@ -1,6 +1,7 @@
 #include <fs/vfs.h>
 #include <fs/fat.h>
 #include <mm/blk.h>
+#include <mm/pmm.h>
 #include <misc/logger.h>
 
 #define ISVALID(node) (node && node->filesystem)
@@ -83,12 +84,11 @@ void vfsAddDrive(vfs_drive_t drive)
 #ifdef K_FAT
 
         // try to create a fat partition
-        fat_bpb_t bpb;
-        zero(&bpb, sizeof(bpb));
-        drive.read(&bpb, drive.partitions[i].startLBA, 1);
+        fat_bpb_t *bpb = pmmPage();
+        drive.read(bpb, drive.partitions[i].startLBA, 1);
 
-        fatCreate(&bpb, &drives[lastDrive - 1], i);
-
+        if (!fatCreate(bpb, &drives[lastDrive - 1], i))
+            pmmDeallocate(bpb);
 #endif
     }
 }
