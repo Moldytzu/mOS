@@ -123,6 +123,18 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
         ioapicRedirectIRQ(arg1, arg2, smpID());
         break;
 
+    case 8: // allocate vector
+        if (!IS_MAPPED(arg1))
+            return;
+
+        uint64_t *retVal = (uint64_t *)arg1;
+        *retVal = idtAllocateVector();
+        break;
+
+    case 9: // deallocate vector
+        idtFreeVector(arg1);
+        break;
+
     default:
         break;
     }

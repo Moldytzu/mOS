@@ -87,3 +87,15 @@ void serialWritec(char c)
 {
     outb(0x3F8, c); // output the character on the serial console
 }
+
+uint8_t sys_driver_allocate_vector()
+{
+    uint64_t vector = 0;
+    sys_driver(SYS_DRIVER_ALLOCATE_VECTOR, (uint64_t)&vector, 0, 0);
+    return vector;
+}
+
+void sys_driver_deallocate_vector(uint8_t vector)
+{
+    sys_driver(SYS_DRIVER_DEALLOCATE_VECTOR, vector, 0, 0);
+}

@@ -24,6 +24,8 @@ struct stack_frame;
 #define SYS_DRIVER_GET_PCI_DEVICE 5
 #define SYS_DRIVER_IDENTITY_MAP 6
 #define SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR 7
+#define SYS_DRIVER_ALLOCATE_VECTOR 8
+#define SYS_DRIVER_DEALLOCATE_VECTOR 9
 
 #define SYS_DRIVER_TYPE_FRAMEBUFFER 1
 #define SYS_DRIVER_TYPE_INPUT 2
@@ -104,6 +106,8 @@ void sys_drv_flush(uint64_t type);
 void sys_idt_set(void *handler, uint64_t vector);
 void sys_idt_reset(uint64_t vector);
 void sys_identity_map(void *address);
+uint8_t sys_driver_allocate_vector();
+void sys_driver_deallocate_vector(uint8_t vector);
 void outb(uint16_t port, uint8_t val);
 uint8_t inb(uint16_t port);
 void outw(uint16_t port, uint16_t val);

@@ -67,7 +67,7 @@ void ioapicRedirectIRQ(uint8_t irq, uint16_t vector, uint16_t core)
     ioapicWrite(IRQ_TO_OFFSET(irq), redirector & 0xFFFFFFFF);             // write low bits
     ioapicWrite(IRQ_TO_OFFSET(irq) + 1, (redirector >> 32) & 0xFFFFFFFF); // write high bits
 
-    logInfo("ioapic: redirected %d to vector %d of core %d", irq, vector, core);
+    logInfo("ioapic: redirected irq 0x%x to vector 0x%x of core %d", irq, vector, core);
 }
 
 void ioapicInit()

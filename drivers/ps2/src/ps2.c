@@ -356,14 +356,16 @@ void setupHandlers()
     // set the intrerrupt handlers
     if (port1Present)
     {
-        sys_idt_set(ps2Port1Handler, 0x21); // todo: allocate idt vectors
-        sys_driver(SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR, 1, 0x21, 0);
+        uint8_t vector = sys_driver_allocate_vector();
+        sys_idt_set(ps2Port1Handler, vector);
+        sys_driver(SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR, 1, vector, 0);
     }
 
     if (port2Present)
     {
-        sys_idt_set(ps2Port2Handler, 0x22); // todo: allocate idt vectors
-        sys_driver(SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR, 12, 0x22, 0);
+        uint8_t vector = sys_driver_allocate_vector();
+        sys_idt_set(ps2Port2Handler, vector);
+        sys_driver(SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR, 12, vector, 0);
     }
 }
 

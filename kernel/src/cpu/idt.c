@@ -16,6 +16,8 @@ idt_gate_descriptor_t *gates;
 extern void *int_table[];
 void *redirectTable[256];
 int redirectTableMeta[256];
+bool allocatedVector[0xFF];
+uint8_t lastVector = 0x21;
 
 // change gate information
 void idtSetGate(void *handler, uint8_t entry)
@@ -62,6 +64,11 @@ void idtInit(uint16_t procID)
 
     // clear the redirection table
     zero(redirectTable, sizeof(redirectTable));
+
+    // initialise allocated vectors
+    zero(allocatedVector, sizeof(allocatedVector));
+    for (int i = 0; i <= 0x21; i++)
+        allocatedVector[i] = true;
 
     logInfo("idt: loaded size %d", idtr.size);
 }
@@ -158,4 +165,28 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
 
     logError("CORE #%d: RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p ERR=0x%p", smpID(), stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss, stack->error);
     panick(message);
+}
+
+uint8_t idtAllocateVector()
+{
+    for (int i = 0x22; i < 0xFF; i++)
+    {
+        if (allocatedVector[i])
+            continue;
+
+        allocatedVector[i] = true;
+
+        logDbg(LOG_SERIAL_ONLY, "idt: allocating vector 0x%x", i);
+        return i;
+    }
+
+    panick("IDT vector allocation overflow");
+}
+
+void idtFreeVector(uint8_t vector)
+{
+    if (vector < 0x22 || vector > 0xFF)
+        return;
+
+    allocatedVector[vector] = false;
 }

@@ -48,6 +48,8 @@ pstruct
 }
 idt_intrerrupt_stack_t;
 
+uint8_t idtAllocateVector();
+void idtFreeVector(uint8_t vector);
 void idtSetGate(void *handler, uint8_t entry);
 void idtInit(uint16_t procID);
 void idtInstall(uint8_t procID);
