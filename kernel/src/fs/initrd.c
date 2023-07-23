@@ -16,13 +16,15 @@ vfs_fs_t dsfsFS;
 // initialize the initrd
 void initrdInit()
 {
-    dsfs = (dsfs_header_t *)bootloaderGetModule("initrd.dsfs")->address; // get the begining of the file
-
-    if (!dsfs)
+    struct limine_file *file = bootloaderGetModule("initrd.dsfs");
+    if (!file)
     {
-        logError("dsfs: failed to load the initrd from \"initrd.dsfs\".\nmake sure the file is in the root of the boot device\n");
-        hang();
+        dsfs = NULL;
+        logWarn("dsfs: failed to read filesystem from \"initrd.dsfs\"");
+        return;
     }
+
+    dsfs = (dsfs_header_t *)file->address; // get the begining of the file
 
     if (dsfs->signature[0] != 'D' && dsfs->signature[1] != 'D')
     {
@@ -55,6 +57,9 @@ void dsfsFSRead(struct vfs_node_t *node, void *buffer, uint64_t size, uint64_t o
 // mount the filesystem
 void initrdMount()
 {
+    if (!dsfs)
+        return;
+
     // set metadata for filesystem
     dsfsFS.name = "dsfs";
     dsfsFS.mountName = "/init/";
