@@ -23,7 +23,7 @@ uint16_t lastCore = 0;                // core on which last task was added
 uint32_t lastTaskID = 0;              // last id of the last task addedd
 uint16_t maxCore = 0;
 
-locker_t schedLock;
+locker_t schedLock[K_MAX_CORES];
 
 bool _enabled = false;
 
@@ -178,7 +178,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     logDbg(LOG_SERIAL_ONLY, "sched: adding task %s", t->name);
 #endif
 
-    lock(schedLock, {
+    lock(schedLock[id], {
         sched_task_t *last = schedLast(id); // get last task
 
         t->prev = last; // set previous
@@ -200,19 +200,19 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
     iasm("fxsave %0 " ::"m"(simdContext[id])); // save simd context
 
-    lock(schedLock, {
+    lock(schedLock[id], {
         if (!taskKilled[id])
         {
             if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the core don't reschedule
             {
-                release(schedLock);
+                release(schedLock[id]);
                 return;
             }
 
             if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
             {
                 lastTask[id]->quantumLeft--;
-                release(schedLock);
+                release(schedLock[id]);
                 return;
             }
 
@@ -349,12 +349,13 @@ void schedKill(uint32_t id)
     if (id == 1)
         panick("Attempt to kill the init system.");
 
-    sched_task_t *task;
+    sched_task_t *task = schedGet(id); // get task structure from id
+
+    if (!task) // doesn't exist
+        return;
 
     // remove task from list
-    lock(schedLock, {
-        task = schedGet(id); // get task structure from id
-
+    lock(schedLock[task->core], {
         // release resources
         for (int i = 0; i < task->allocatedIndex; i++)
             if (task->allocated[i] != NULL)
@@ -375,7 +376,7 @@ void schedKill(uint32_t id)
 // enable the scheduler for the current core
 void schedEnable()
 {
-    if (smpID())
+    if (!smpID())
         logInfo("Jumping in userspace");
 
     _enabled = true;
