@@ -3,10 +3,9 @@
 #include <main/panic.h>
 #include <misc/logger.h>
 
-#define HEADER_PAD 0x50
-#define HEADER_OF(ptr) ((blk_header_t *)(ptr - HEADER_PAD))
+#define HEADER_OF(ptr) ((blk_header_t *)(ptr - sizeof(blk_header_t)))
 #define HEADER_AT(ptr) ((blk_header_t *)(ptr))
-#define CONTENT_OF(hdr) ((void *)((uint64_t)hdr + HEADER_PAD))
+#define CONTENT_OF(hdr) ((void *)((uint64_t)hdr + sizeof(blk_header_t)))
 
 locker_t blkLock;
 blk_header_t *start = NULL;
@@ -17,7 +16,7 @@ void expand(uint16_t pages)
     // allocate a new block
     blk_header_t *newBlock = (blk_header_t *)pmmPages(pages);
     newBlock->free = true;
-    newBlock->size = (PMM_PAGE * pages) - HEADER_PAD;
+    newBlock->size = (PMM_PAGE * pages);
     newBlock->prev = last;
     newBlock->signature = BLK_HEADER_SIGNATURE;
 
@@ -39,7 +38,7 @@ void dbgDump()
     printks("==\n");
     do
     {
-        printks("%x is %s and holds %d bytes (total %d bytes)\n", current, current->free ? "free" : "busy", current->size, current->size + HEADER_PAD);
+        printks("%x is %s and holds %d bytes\n", current, current->free ? "free" : "busy", current->size);
         current = current->next;
     } while (current);
     printks("==\n\n");
@@ -51,7 +50,7 @@ void blkInit()
     start = last = (blk_header_t *)pmmPages(BLK_EXPAND_INCREMENT);
     start->signature = BLK_HEADER_SIGNATURE;
     start->free = true;
-    start->size = (BLK_EXPAND_INCREMENT * PMM_PAGE) - HEADER_PAD;
+    start->size = BLK_EXPAND_INCREMENT * PMM_PAGE;
 }
 
 void *blkBlock(size_t size)
@@ -62,7 +61,7 @@ void *blkBlock(size_t size)
 
         size += BLK_ALIGNMENT; // padding
 
-        size_t internalSize = size + HEADER_PAD;
+        size_t internalSize = size;
 
         for (blk_header_t *current = start; current; current = current->next)
         {
@@ -121,17 +120,19 @@ void blkDeallocate(void *blk)
         header->free = true;
         header->signature = BLK_HEADER_SIGNATURE;
 
+        // fixme: here we potentially waste a little bit of memory (23 bytes per merge) because we don't take in account the header size
+
         if (header->next && HEADER_AT(header->next)->free) // we can merge forward
         {
             blk_header_t *next = HEADER_AT(header->next);
-            header->size += next->size + HEADER_PAD;
+            header->size += next->size;
             header->next = next->next;
         }
 
         if (header->prev && HEADER_AT(header->prev)->free) // we can merge backwards
         {
             blk_header_t *prev = HEADER_AT(header->prev);
-            prev->size += header->size + HEADER_PAD;
+            prev->size += header->size;
             prev->free = true;
             prev->next = header->next;
             prev->signature = BLK_HEADER_SIGNATURE;
