@@ -40,6 +40,14 @@
 #define K_LAPIC_FREQ 300 // target lapic timer frequency
 
 // ###########################################
+// Memory
+// ###########################################
+
+// Page frame allocator
+// #define K_IGNORE_LOW_MEMORY // ignores memory pools that are in the legacy real mode addressing space (<1 MB addresses, might be necessary on some machines)
+// #define K_IGNORE_SMALL_POOLS // ignores small memory pools (<128 kb)
+
+// ###########################################
 // Scheduling
 // ###########################################
 

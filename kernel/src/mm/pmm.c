@@ -211,11 +211,15 @@ void pmmInit()
         if (entry->type != LIMINE_MEMMAP_USABLE)
             continue;
 
-        if (entry->length < 128 * 1024) // don't bother with very small chunks
-            continue;
-
+#ifdef K_IGNORE_LOW_MEMORY
         if (entry->base < 1 * 1024 * 1024) // don't allocate in legacy real mode addressing space
             continue;
+#endif
+
+#ifdef K_IGNORE_SMALL_POOLS
+        if (entry->length < 128 * 1024) // don't bother with very small chunks
+            continue;
+#endif
 
         // populate the pool metadata
         pmm_pool_t *pool = &pools[poolCount++];

@@ -203,8 +203,15 @@ vmm_page_table_t *vmmCreateTable(bool full)
             if (start % 4096)
                 start -= start % 4096;
 
-            if (entry->type == LIMINE_MEMMAP_USABLE && (entry->length < 128 * 1024 || start < 1 * 1024 * 1024)) // don't map entries we don't even allocate in
+#ifdef K_IGNORE_LOW_MEMORY
+            if (entry->type == LIMINE_MEMMAP_USABLE && start < 1 * 1024 * 1024)
                 continue;
+#endif
+
+#ifdef K_IGNORE_SMALL_POOLS
+            if (entry->type == LIMINE_MEMMAP_USABLE && entry->length < 128 * 1024)
+                continue;
+#endif
 
             if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
             {
