@@ -158,6 +158,7 @@ void sprintf(char *str, const char *fmt, ...)
         }
         i++;
     }
+    *str = 0; // terminate string
     va_end(list);
 }
 

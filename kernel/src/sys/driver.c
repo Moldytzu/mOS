@@ -27,7 +27,6 @@ void driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
             return;
 
         char path[512];
-        zero(path, sizeof(path));
         vfsGetPath(fd, path);
 
         elfLoad(path, 0, 0, true); // start the driver

@@ -53,7 +53,6 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             if (!currentNode->filesystem)
                 goto next;
 
-            zero(fullPath, sizeof(fullPath));
             vfsGetPath((uint64_t)currentNode, fullPath);
 
             if (strcmp(target, fullPath) == 0) // compare full paths
@@ -94,7 +93,6 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             if (!currentNode->filesystem)
                 goto next1;
 
-            zero(fullPath, sizeof(fullPath));
             vfsGetPath((uint64_t)currentNode, fullPath);
 
             bool listFile = target[strlen(target) - 1] != '/';           // check if we list a file

@@ -193,13 +193,13 @@ void mapSubdirectory(struct vfs_node_t *root, fat_dir_t *entries, size_t i)
     node.filesystem = root->filesystem; // set the filesystem
 
     size_t nameSize = 0;
-    for(; entry.name[nameSize] != ' '; nameSize++); // determine the size of the name
+    for (; entry.name[nameSize] != ' '; nameSize++)
+        ; // determine the size of the name
 
     memcpy(node.path, entry.name, nameSize); // copy the name
     node.path[nameSize] = '/';
 
     char path[64];
-    zero(&path, 64);
     vfsGetPath((uint64_t)vfsAdd(node), path); // create the node
     logDbg(LOG_SERIAL_ONLY, "fat: found directory %s, mounted at %s", entry.name, path);
 }

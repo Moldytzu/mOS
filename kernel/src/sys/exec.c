@@ -23,7 +23,7 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
     sys_exec_packet_t *input = PHYSICAL(packet);
     uint64_t fd = openRelativePath(PHYSICAL(path), task); // expand the path
 
-    if(!fd)
+    if (!fd)
         return;
 
     // convert virtual addresses to physical addresses
@@ -37,7 +37,6 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
     }
 
     char execPath[512];
-    zero(execPath, sizeof(execPath));
     vfsGetPath(fd, (void *)execPath);
 
     sched_task_t *newTask = elfLoad(execPath, input->argc, input->argv, false); // do the loading

@@ -47,7 +47,6 @@ struct vfs_node_t *vfsAdd(struct vfs_node_t node)
 
 #ifdef K_VFS_DEBUG
     char buffer[512];
-    zero(buffer, sizeof(buffer));
     vfsGetPath((uint64_t)&node, buffer);
     logDbg(LOG_SERIAL_ONLY, "vfs: adding node %s", buffer);
 #endif
@@ -130,7 +129,6 @@ uint64_t vfsOpen(const char *name)
         if (!currentNode->filesystem)
             goto next;
 
-        zero((void *)fullPath, sizeof(fullPath));
         vfsGetPath((uint64_t)currentNode, fullPath);
 
         if (strcmp(fullPath, name) != 0) // compare the paths
