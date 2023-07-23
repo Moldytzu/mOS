@@ -36,6 +36,9 @@ static volatile struct limine_stack_size_request stack_request = {
 
 struct limine_file *bootloaderGetModule(const char *name)
 {
+    if (!module_request.response)
+        return NULL;
+
     for (int i = 0; i < module_request.response->module_count; i++)
     {
         struct limine_file *m = module_request.response->modules[i];
