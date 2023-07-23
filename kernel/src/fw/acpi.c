@@ -11,14 +11,14 @@
 
 uint8_t revision;
 acpi_rsdp_t *rsdp;
-acpi_sdt_t *sdt;
+acpi_xsdt_t *sdt;
 acpi_mcfg_t *mcfg;
 
 // get a descriptor table with a signature
 acpi_sdt_t *acpiGet(const char *sig, int index)
 {
-    bool xsdt = sdt->signature[0] == 'X';              // XSDT's signature is XSDT, RSDT's signature is RSDT
-    size_t entries = sdt->length - sizeof(acpi_sdt_t); // initial value is the length in bytes of the entire tables
+    bool xsdt = sdt->header.signature[0] == 'X';              // XSDT's signature is XSDT, RSDT's signature is RSDT
+    size_t entries = sdt->header.length - sizeof(acpi_sdt_t); // initial value is the length in bytes of the entire tables
 
     // determine entries count
     if (xsdt)
@@ -28,25 +28,19 @@ acpi_sdt_t *acpiGet(const char *sig, int index)
 
     for (size_t i = 0; i < entries; i++)
     {
-        acpi_sdt_t *t;
+        acpi_sdt_t *entry;
 
         // xsdt uses 64 bit pointers while rsdt uses 32 bit pointers
         if (xsdt)
-            t = (acpi_sdt_t *)(((uint64_t *)(((acpi_xsdt_t *)sdt)->entries))[i]);
+            entry = (acpi_sdt_t *)((uint64_t *)(sdt->entries))[i];
         else
-            t = (acpi_sdt_t *)(((uint32_t *)(((acpi_xsdt_t *)sdt)->entries))[i]);
+            entry = (acpi_sdt_t *)((uint32_t *)(sdt->entries))[i];
 
-        if (memcmp8((void *)sig, t->signature, 4) == 0 && index-- == 0) // compare the signatures
-            return t;
+        if (memcmp8((void *)sig, entry->signature, 4) == 0 && index-- == 0) // compare the signatures
+            return entry;
     }
 
     return NULL; // return nothing
-}
-
-// checks if pcie ecam is supported by machine
-bool pciECAM()
-{
-    return mcfg;
 }
 
 // reboot without acpi
