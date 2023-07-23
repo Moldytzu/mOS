@@ -10,8 +10,6 @@
 
 // useful macros
 #define bitsof(x) (sizeof(x) * 8)
-#define align(val, alg) (max((uint64_t)(val), alg) + (alg - (max((uint64_t)(val), alg) % alg))) // deprecated!
-#define alignD(val, alg) (align(val, alg) - alg)                                                // deprecated!
 #define iasm asm volatile
 #define ifunc static inline __attribute__((always_inline))
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
