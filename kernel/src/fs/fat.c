@@ -67,24 +67,21 @@ size_t fatParseLFN(char *name, fat_lfn_t *entry)
 size_t fatRootEntries_impl(struct vfs_node_t *root, size_t offset)
 {
     fat_context_t *context = CONTEXT(root->filesystem->context);
-    size_t partitionIdx = context->partition;
-    vfs_partition_t partition = context->drive->partitions[partitionIdx];
-    fat_bpb_t *fs = context->bpb;
+    fat_bpb_t *bpb = context->bpb;
 
     fat_dir_t *entries = pmmPage(); // can hold 128 entries
 
     char lname[256];
-    context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs) + (PMM_PAGE / VFS_SECTOR) * offset, PMM_PAGE / VFS_SECTOR);
+    vfsReadPartition(context->drive, context->partition, entries, FAT_ROOT_START(bpb) + (PMM_PAGE / VFS_SECTOR) * offset, PMM_PAGE / VFS_SECTOR);
 
     if (fatDirLast(entries[127])) // we don't have more entries
     {
         size_t s = 0;
-        for (; s < 128 && !fatDirLast(entries[s]); s++)
-            ; // determine entries in this block
-        s += offset * 128;
+        while (s < 128 && !fatDirLast(entries[s])) // determine entries in this block
+            s++;
 
         pmmDeallocate(entries);
-        return s;
+        return s + offset * 128;
     }
 
     pmmDeallocate(entries);
@@ -99,16 +96,14 @@ size_t fatRootEntries(struct vfs_node_t *root)
 fat_dir_t fatGetEntry(struct vfs_node_t *node)
 {
     fat_context_t *context = CONTEXT(node->filesystem->context);
-    size_t partitionIdx = context->partition;
-    vfs_partition_t partition = context->drive->partitions[partitionIdx];
-    fat_bpb_t *fs = context->bpb;
+    fat_bpb_t *bpb = context->bpb;
 
     size_t maxEntries = fatRootEntries(node); // todo: maybe we could cache this in the context
     size_t pages = maxEntries / 128 + 1;
     fat_dir_t *entries = pmmPages(pages);
 
     char lname[256];
-    context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), pages * 4096 / VFS_SECTOR);
+    vfsReadPartition(context->drive, context->partition, entries, FAT_ROOT_START(bpb), pages * PMM_PAGE / VFS_SECTOR);
     for (int i = 0; i < maxEntries; i++)
     {
         fat_dir_t entry = entries[i];
@@ -166,18 +161,16 @@ void fatFSRead(struct vfs_node_t *node, void *buffer, uint64_t size, uint64_t of
         return;
 
     fat_context_t *context = CONTEXT(node->filesystem->context);
-    size_t partitionIdx = context->partition;
-    vfs_partition_t partition = context->drive->partitions[partitionIdx];
-    fat_bpb_t *fs = context->bpb;
+    fat_bpb_t *bpb = context->bpb;
 
     size_t pages = size / PMM_PAGE + 1;
     size_t sectors = size / VFS_SECTOR + 1;
-    size_t sector = partition.startLBA + (CLUSTER(entry) - 2) * fs->sectorsPerCluster + FAT_DATA_START(fs);
+    size_t sector = (CLUSTER(entry) - 2) * bpb->sectorsPerCluster + FAT_DATA_START(bpb);
 
-    void *tmp = pmmPages(pages);                // allocate a temporary buffer
-    context->drive->read(tmp, sector, sectors); // call the drive
-    memcpy(buffer, tmp + offset, size);         // copy the sector
-    pmmDeallocatePages(tmp, pages);             // deallocate
+    void *tmp = pmmPages(pages);                                                // allocate a temporary buffer
+    vfsReadPartition(context->drive, context->partition, tmp, sector, sectors); // do the actual read
+    memcpy(buffer, tmp + offset, size);                                         // copy the sector
+    pmmDeallocatePages(tmp, pages);                                             // deallocate
 }
 
 // open handler
@@ -210,11 +203,9 @@ void mapSubdirectory(struct vfs_node_t *root, fat_dir_t *entries, size_t i)
 void fatMap(struct vfs_node_t *root)
 {
     fat_context_t *context = CONTEXT(root->filesystem->context);
-    size_t partitionIdx = context->partition;
-    vfs_partition_t partition = context->drive->partitions[partitionIdx];
-    fat_bpb_t *fs = context->bpb;
+    fat_bpb_t *bpb = context->bpb;
 
-    if (fs->rootDirectoryEntries != 0 || FAT_CLUSTERS(fs) <= 65526) // not FAT32
+    if (bpb->rootDirectoryEntries != 0 || FAT_CLUSTERS(bpb) <= 65526) // not FAT32
         return;
 
     size_t maxEntries = fatRootEntries(root);
@@ -222,7 +213,7 @@ void fatMap(struct vfs_node_t *root)
     fat_dir_t *entries = pmmPages(pages);
 
     char lname[256];
-    context->drive->read(entries, partition.startLBA + FAT_ROOT_START(fs), pages * 4096 / VFS_SECTOR);
+    vfsReadPartition(context->drive, context->partition, entries, FAT_ROOT_START(bpb), pages * PMM_PAGE / VFS_SECTOR);
     for (int i = 0; i < maxEntries; i++)
     {
         fat_dir_t entry = entries[i];

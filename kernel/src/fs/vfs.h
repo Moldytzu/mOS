@@ -56,7 +56,7 @@ pstruct
     const char *mountName; // mount point
     uint8_t (*open)(struct vfs_node_t *);
     void (*close)(struct vfs_node_t *);
-    void (*read)(struct vfs_node_t *, void *, uint64_t, uint64_t); // node, buffer, size, offset
+    void (*read)(struct vfs_node_t *, void *, uint64_t, uint64_t);  // node, buffer, size, offset
     void (*write)(struct vfs_node_t *, void *, uint64_t, uint64_t); // node, buffer, size, offset
 }
 vfs_fs_t;
@@ -75,6 +75,10 @@ void vfsInit();
 uint64_t vfsOpen(const char *name);
 uint64_t vfsSize(uint64_t fd);
 void vfsClose(uint64_t fd);
+ifunc void vfsReadPartition(vfs_drive_t *drive, size_t partition, void *buffer, uint64_t sector, uint64_t count) // helper function
+{
+    drive->read(buffer, sector + drive->partitions[partition].startLBA, count);
+}
 void vfsRead(uint64_t fd, void *buffer, uint64_t size, uint64_t offset);
 void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset);
 struct vfs_node_t *vfsAdd(struct vfs_node_t node);
