@@ -18,7 +18,7 @@
         pmmDeallocate(tmp);                                                         \
     }
 
-ahci_hba_mem_t *abar;                      // ahci's pci bar 5
+uint64_t abar;                             // ahci's pci bar 5
 drv_pci_header0_t *ahciBase;               // base pointer to pci header
 pcie_function_descriptor_t ahciDescriptor; // descriptor that houses the header and the address
 bool portImplemented[32];                  // stores which ports are present
@@ -43,19 +43,19 @@ int ahciPortSlot(ahci_port_t *port)
 // read from abar at offset
 uint32_t ahciRead(uint32_t offset)
 {
-    return *(uint32_t *)((uint64_t)abar + offset);
+    return *(uint32_t *)(abar + offset);
 }
 
 // write to abar at offset
 void ahciWrite(uint32_t offset, uint32_t data)
 {
-    *(uint32_t *)((uint64_t)abar + offset) = data;
+    *(uint32_t *)(abar + offset) = data;
 }
 
 // get pointer base address as shown by bits set in PI
 ahci_port_t *ahciPort(uint8_t bit)
 {
-    return (ahci_port_t *)((uint64_t)abar + 0x100 + 0x80 * bit);
+    return (ahci_port_t *)(abar + 0x100 + 0x80 * bit);
 }
 
 // start command engine
@@ -274,7 +274,7 @@ void ahciInit()
 
     // enable access to internal registers
     ahciBase->Command |= 0b10000010111;                                               // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
-    abar = (void *)(uint64_t)(ahciBase->BAR5 & 0xFFFFE000);                           // get base address
+    abar = (uint64_t)(ahciBase->BAR5 & 0xFFFFE000);                                   // get base address
     vmmMapKernel((void *)abar, (void *)abar, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
     abase = pmmPages(80);                                                             // 320k of space for all the ports
 

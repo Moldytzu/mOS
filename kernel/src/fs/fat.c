@@ -3,6 +3,8 @@
 #include <misc/logger.h>
 #include <mm/pmm.h>
 
+// todo: before adding any other feature to this, clean this mess
+
 #ifdef K_FAT
 
 #define CONTEXT(x) ((fat_context_t *)(x))
