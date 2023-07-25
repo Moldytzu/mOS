@@ -10,6 +10,7 @@
 extern uint8_t _binary____kfont_psf_start; // the font file embeded in the kernel as a symbol
 
 psf2_header_t *font;
+uint8_t *fontStart;
 uint16_t fontPitch;
 struct limine_framebuffer framebuffer;
 
@@ -71,7 +72,8 @@ void framebufferInit()
         hang();
     }
 
-    fontPitch = font->charsize / font->height; // precalculate pitch
+    fontPitch = font->charsize / font->height;      // precalculate pitch
+    fontStart = (uint8_t *)font + font->headersize; // start of the first character
 
     framebufferZero(); // clear framebuffer
 
@@ -161,11 +163,11 @@ ifunc void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 // function to inline
 ifunc void framebufferPlotc_impl(char c, uint32_t x, uint32_t y)
 {
-    uint8_t *character = (uint8_t *)font + font->headersize + c * font->charsize; // get the offset by skipping the header and indexing the character
+    uint8_t *character = fontStart + c * font->charsize; // index the character
 
-    for (size_t dy = 0; dy < font->height; dy++) // loop for each pixel of character
+    for (size_t dy = 0; dy < font->height; dy++) // loop over each pixel of the character
         for (size_t dx = 0; dx < font->width; dx++)
-            if ((character[dy * fontPitch + dx / 8] >> (7 - dx % 8)) & 1) // create a bit mask then and in the current byte of the character
+            if ((character[dy * fontPitch + dx / 8] >> (7 - dx % 8)) & 1) // create a bit mask then logic AND the current byte of the character
                 framebufferPlotp(dx + x, dy + y, cursor.colour);
 }
 
@@ -214,8 +216,9 @@ void framebufferWritec(char c)
 
     // NOTE: here we should use the lock but, for performance concerns, we omit it...
 
-    framebufferPlotc_impl(c, cursor.X, cursor.Y); // use inline version of framebufferPlotc
-    cursor.X += font->width + 1;                  // add character's width and a 1 px padding
+    if (c != ' ')                                     // we waste time iterating over all empty pixels of the spacing
+        framebufferPlotc_impl(c, cursor.X, cursor.Y); // use inline version of framebufferPlotc
+    cursor.X += font->width + 1;                      // add character's width and a 1 px padding
 }
 
 // write a string
