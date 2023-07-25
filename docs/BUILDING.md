@@ -19,10 +19,10 @@ You simply have to do `make`. That's all. No need to pass the `-j` flag to it be
 ##### There are multiple targets that can used to test the operating system right away:
     - run  -> runs QEmu with TCG
     - run-no-smp -> runs QEmu with TCG and with SMP disabled
-    - run-old -> runs QEmu with TCG, SMP disabled and old chipset
+    - run-old -> runs QEmu with TCG, SMP disabled, old chipset and 128 MB of RAM
     - run-efi  -> runs QEmu with TCG and UEFI support
     - run-kvm  -> runs QEmu with KVM acceleration (only on x86_64 hosts)
     - run-efi-kvm  -> runs QEmu with KVM acceleration and UEFI support (only on x86_64 hosts)
-    - run-bochs  -> runs Bochs (very slow and unstable, fresh build of bochs is recommended with x86_64 support, smp and long physical address)
+    - run-bochs  -> runs Bochs (fresh build of bochs is recommended with x86_64 support, smp and long physical address)
     - run-debug  -> runs QEMU with TCG and gdb attached
     - run-efi-debug  -> runs QEMU with UEFI support and gdb attached

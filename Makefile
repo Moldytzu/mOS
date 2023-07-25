@@ -30,7 +30,7 @@ run-no-smp: image
 	qemu-system-x86_64 -M q35,smm=off -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d int -vga vmware -m $(MEMORY)
 
 run-old: image
-	qemu-system-x86_64 -cpu core2duo -hda $(DISK) -m $(MEMORY) -boot c -serial mon:stdio -D out/qemu.out -d int
+	qemu-system-x86_64 -M pc -cpu qemu64 -hda $(DISK) -m 128M -serial mon:stdio
 
 run-bochs: image
 	bochs -q
