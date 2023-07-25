@@ -5,22 +5,17 @@
 #include <misc/logger.h>
 
 drv_context_input_t *inputCtx;
-uint16_t inputIdx;
+uint16_t inputIdx = 0;
 
 drv_context_fb_t *fbCtx;
 drv_context_fb_t fbRef;
-uint16_t fbIdx;
+uint16_t fbIdx = 0;
 
 void drvInit()
 {
     // allocate the contexts
     fbCtx = blkBlock(sizeof(drv_context_fb_t) * DRV_MAX_CONTEXTS);
     inputCtx = blkBlock(sizeof(drv_context_input_t) * DRV_MAX_CONTEXTS);
-    zero(fbCtx, sizeof(drv_context_fb_t) * DRV_MAX_CONTEXTS);
-    zero(inputCtx, sizeof(drv_context_input_t) * DRV_MAX_CONTEXTS);
-
-    fbIdx = 0;
-    inputIdx = 0;
 }
 
 void drvExit(uint32_t drv)
