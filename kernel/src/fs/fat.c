@@ -33,6 +33,11 @@ bool fatDirValid(fat_dir_t dir)
     return !fatDirLast(dir) || (dir.name[0] != 0x05 && dir.name[0] != 0xE5);
 }
 
+bool fatIsLFN(fat_dir_t dir)
+{
+    return *(uint8_t *)&dir.attributes == 0xF;
+}
+
 void fatParseSFN(char *name, fat_dir_t *entry)
 {
     int last = 0; // get last character that isn't a space
@@ -44,6 +49,10 @@ void fatParseSFN(char *name, fat_dir_t *entry)
     memcpy(name, entry->name, last);             // copy the text before the extension
     name[last] = '.';                            // put the extension dot
     memcpy(name + last + 1, &entry->name[8], 3); // copy the extension
+
+    last += 4; // skip extenstion and dot
+
+    name[last] = 0; // terminate string
 
 #ifdef K_FAT_LOWER_SFN
     for (int i = 0; i < 12; i++) // lower all the characters
@@ -114,7 +123,7 @@ fat_dir_t fatGetEntry(struct vfs_node_t *node)
         if (entry.attributes.directory) // we don't support subdirectory traversal yet (todo: do that)
             continue;
 
-        if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry
+        if (fatIsLFN(entry)) // long file name entry
         {
             fat_lfn_t lfn = *(fat_lfn_t *)&entry;
 
@@ -135,7 +144,6 @@ fat_dir_t fatGetEntry(struct vfs_node_t *node)
 
         // parse 8.3 file name
         char name[12];
-        zero(name, sizeof(name));
         fatParseSFN(name, &entry);
 
         logDbg(LOG_SERIAL_ONLY, "fat: found entry %s with size %d b", lname, entry.size);
@@ -227,7 +235,7 @@ void fatMap(struct vfs_node_t *root)
             continue;
         }
 
-        if (*(uint8_t *)&entry.attributes == 0xF) // long file name entry
+        if (fatIsLFN(entry)) // long file name entry
         {
             fat_lfn_t lfn = *(fat_lfn_t *)&entry;
 
@@ -248,10 +256,9 @@ void fatMap(struct vfs_node_t *root)
 
         // parse 8.3 file name
         char name[13];
-        zero(name, sizeof(name));
         fatParseSFN(name, &entry);
 
-        logDbg(LOG_SERIAL_ONLY, "fat: found entry %s with size %d b", lname, entry.size);
+        logDbg(LOG_SERIAL_ONLY, "fat: found entry %s (%s) with size %d b", lname, name, entry.size);
 
         struct vfs_node_t node;             // create a node
         zero(&node, sizeof(node));          // zero it
