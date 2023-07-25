@@ -14,6 +14,13 @@ uint8_t *fontStart;
 uint16_t fontPitch;
 struct limine_framebuffer framebuffer;
 
+// cached values for scrolling
+size_t fbSize;       // size in bytes of the frame buffer
+size_t fbOffset;     // offset in bytes to the second line
+size_t fbBytes;      // bytes to be copied
+size_t fbQwords;     // qwords to be copied
+size_t fbLineQwords; // qwords of the last line
+
 #ifdef K_FB_DOUBLE_BUFFER
 struct limine_framebuffer back;
 locker_t fbLock;
@@ -75,6 +82,12 @@ void framebufferInit()
     fontPitch = font->charsize / font->height;      // precalculate pitch
     fontStart = (uint8_t *)font + font->headersize; // start of the first character
 
+    fbSize = back.pitch * back.height;                    // size in bytes of the frame buffer
+    fbOffset = (font->height + 1) * back.pitch;           // get offset of the second line
+    fbBytes = fbSize - fbOffset;                          // calculate the bytes to be copied
+    fbQwords = fbBytes / sizeof(uint64_t);                // qwords to be copied
+    fbLineQwords = (fbSize - fbBytes) / sizeof(uint64_t); // qwords of the last line
+
     framebufferZero(); // clear framebuffer
 
     cursor.colour = 0xFFFFFF; // white cursor
@@ -103,6 +116,12 @@ void framebufferFlush()
         framebuffer.pitch = ctx->currentXres * 4;
 
         memcpy(&back, &framebuffer, sizeof(struct limine_framebuffer)); // sync metadata
+
+        fbSize = back.pitch * back.height;                    // size in bytes of the frame buffer
+        fbOffset = (font->height + 1) * back.pitch;           // get offset of the second line
+        fbBytes = fbSize - fbOffset;                          // calculate the bytes to be copied
+        fbQwords = fbBytes / sizeof(uint64_t);                // qwords to be copied
+        fbLineQwords = (fbSize - fbBytes) / sizeof(uint64_t); // qwords of the last line
 
         // map the framebuffer
         for (int i = 0; i < framebuffer.pitch * framebuffer.height; i += 4096)
@@ -188,13 +207,8 @@ ifunc void newline()
 #ifdef K_FB_SCROLL
         cursor.Y -= font->height + 1; // move back to the last line
 
-        size_t fbSize = back.pitch * back.height;        // size in bytes of the frame buffer
-        size_t offset = (font->height + 1) * back.pitch; // get offset of the second line
-        size_t bytes = fbSize - offset;                  // calculate the bytes to be copied
-
-        memcpy64(back.address, back.address + offset, bytes / 8); // do the actual copy (todo: use memmove here)
-
-        memset64(back.address + bytes, 0, (fbSize - bytes) / 8); // zero last line
+        memcpy64(back.address, back.address + fbOffset, fbQwords); // do the actual copy (todo: use memmove here)
+        memset64(back.address + fbBytes, 0, fbLineQwords);         // zero last line
 #else
         cursor.Y = 0;
         framebufferZero();
