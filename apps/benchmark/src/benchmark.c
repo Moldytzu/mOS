@@ -19,6 +19,14 @@ uint64_t benchmarkEnd()
     return miliseconds;
 }
 
+#define BENCHMARK(resultVariable, workload) \
+    {                                       \
+        benchmarkStart();                   \
+        workload;                           \
+        resultVariable = benchmarkEnd();    \
+    }
+
+// actual benchmarking tests
 #define MAX_PRIME 100000
 #define PAGES 32768 // 128 megabytes
 
@@ -40,28 +48,28 @@ bool isPrime(uint32_t n)
 void primes()
 {
     volatile size_t count = 0;
+    uint64_t miliseconds;
 
-    benchmarkStart();
-    // check for primes
-    for (volatile int i = 2; i < MAX_PRIME; i++)
-    {
-        if (isPrime(i))
-            count++;
-    }
-    uint64_t miliseconds = benchmarkEnd();
+    BENCHMARK(miliseconds, {
+        // check for primes
+        for (volatile int i = 2; i < MAX_PRIME; i++)
+        {
+            if (isPrime(i))
+                count++;
+        }
+    });
 
     printf("found %d primes up to %d in %llu miliseconds\n", count, MAX_PRIME, miliseconds);
 }
 
 void allocation()
 {
-    benchmarkStart();
+    uint64_t miliseconds, unused;
 
-    uint64_t unused;
-    for (volatile int i = 0; i < PAGES; i++)
-        sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&unused, 0);
-
-    uint64_t miliseconds = benchmarkEnd();
+    BENCHMARK(miliseconds, {
+        for (volatile int i = 0; i < PAGES; i++)
+            sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&unused, 0);
+    });
 
     printf("allocated %d pages in %llu miliseconds\n", PAGES, miliseconds);
 }
