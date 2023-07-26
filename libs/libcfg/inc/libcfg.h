@@ -4,8 +4,10 @@
 
 typedef struct
 {
+    char *originalBuffer;
     char *buffer;
     unsigned long length;
+    unsigned long originalLength;
 } config_t;
 
 char *cfgGet(config_t *cfg, const char *name);
