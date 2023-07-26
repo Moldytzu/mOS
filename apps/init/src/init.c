@@ -15,7 +15,7 @@ void *sockBuffer = NULL;
 bool verbose = true;
 bool safe = false;
 char *shell = "/init/msh.mx";
-config_t *cfg;
+config_t cfg;
 
 void parseCFG()
 {
@@ -24,8 +24,8 @@ void parseCFG()
 
     // buffer for config file
     uint64_t fd, size;
-    cfg = malloc(4096);
-    assert(cfg != NULL);
+    void *buffer = malloc(4096);
+    assert(buffer != NULL);
 
     fd = sys_open("/init/init.cfg"); // open the file
     assert(fd != 0);
@@ -33,16 +33,17 @@ void parseCFG()
     sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
     assert(size != 0);
 
-    memset(cfg, 0, 4096);               // clear the buffer
-    sys_read(cfg, min(size, 4096), fd); // read the file
+    sys_read(buffer, min(size, 4096), fd); // read the file
+
+    cfg = cfgCreate(buffer); // generate a new config context
 
     // parse the config
-    safe = cfgBool(cfg, "SAFE");
-    verbose = cfgBool(cfg, "VERBOSE") | safe; // verbose mode is forced on by safe
-    shell = cfgStr(cfg, "SHELL");
+    safe = cfgBool(&cfg, "SAFE");
+    verbose = cfgBool(&cfg, "VERBOSE") | safe; // verbose mode is forced on by safe
+    shell = cfgStr(&cfg, "SHELL");
 
-    uint32_t screenX = cfgUint(cfg, "SCREEN_WIDTH");
-    uint32_t screenY = cfgUint(cfg, "SCREEN_HEIGHT");
+    uint32_t screenX = cfgUint(&cfg, "SCREEN_WIDTH");
+    uint32_t screenY = cfgUint(&cfg, "SCREEN_HEIGHT");
 
     if (!screenX | !screenY) // invalid resolution
     {
@@ -55,7 +56,7 @@ void parseCFG()
         return;
 
     // start drivers set in config
-    char *drivers = cfgStr(cfg, "DRIVERS");
+    char *drivers = cfgStr(&cfg, "DRIVERS");
     uint16_t driversLen = strlen(drivers);
 
     // the drivers string is in the form "driver;driver2;driver3 etc etc"

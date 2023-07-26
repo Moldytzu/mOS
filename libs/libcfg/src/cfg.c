@@ -2,10 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+// get start of contents of a marker
 char *cfgGet(config_t *cfg, const char *name)
 {
-    char *start = cfg;
-    char *end = cfg + 4096;
+    char *start = cfg->buffer;
+    char *end = cfg->buffer + cfg->length;
 
     while (start < end)
     {
@@ -21,6 +22,7 @@ char *cfgGet(config_t *cfg, const char *name)
     return NULL;
 }
 
+// parse contents of a marker as a bool
 bool cfgBool(config_t *cfg, const char *name)
 {
     char *value = cfgGet(cfg, name);
@@ -31,10 +33,11 @@ bool cfgBool(config_t *cfg, const char *name)
     return *value == '1';
 }
 
+// parse contents of a marker as a string
 char *cfgStr(config_t *cfg, const char *name)
 {
     char *start = cfgGet(cfg, name);
-    char *end = cfg + 4096;
+    char *end = cfg->buffer + cfg->length;
 
     if (!start || *start != '\"') // not found or broken format
         return "?";
@@ -57,10 +60,11 @@ char *cfgStr(config_t *cfg, const char *name)
     return "?";
 }
 
+// parse contents of a marker as an unsigned integer
 uint32_t cfgUint(config_t *cfg, const char *name)
 {
     char *start = cfgGet(cfg, name);
-    char *end = cfg + 4096;
+    char *end = cfg->buffer + cfg->length;
 
     if (!start)
         return 0;
@@ -81,4 +85,13 @@ uint32_t cfgUint(config_t *cfg, const char *name)
     }
 
     return 0;
+}
+
+// create a new context for a coresponding buffer
+config_t cfgCreate(const char *buffer)
+{
+    config_t cfg;
+    cfg.buffer = (char *)buffer;
+    cfg.length = strlen(buffer);
+    return cfg;
 }
