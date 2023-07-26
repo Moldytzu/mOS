@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-// actual benchmarking tests
-#define MAX_PRIME 100000
-#define PAGES 32768 // 128 megabytes
+// benchmark settings
+#define PRIMES 100000 // number of primes to find
+#define PAGES 32768   // 128 megabytes
 
 // fast prime checker
 bool isPrime(uint64_t n)
@@ -33,14 +33,17 @@ void primes()
 
     BENCHMARK(&b, {
         // check for primes
-        for (volatile int i = 2; i < MAX_PRIME; i++)
+        for (volatile uint64_t i = 2; i < UINT64_MAX; i++)
         {
             if (isPrime(i))
                 count++;
+
+            if (count == PRIMES)
+                break;
         }
     });
 
-    printf("found %d primes up to %d in %llu miliseconds\n", count, MAX_PRIME, b.elapsedMiliseconds);
+    printf("found %d primes in %llu miliseconds\n", count, b.elapsedMiliseconds);
 }
 
 void allocation()
