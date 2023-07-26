@@ -26,9 +26,9 @@ bool isPrime(uint32_t n)
 void primes()
 {
     volatile size_t count = 0;
-    uint64_t miliseconds;
+    benchmark_t b;
 
-    BENCHMARK(miliseconds, {
+    BENCHMARK(&b, {
         // check for primes
         for (volatile int i = 2; i < MAX_PRIME; i++)
         {
@@ -37,19 +37,20 @@ void primes()
         }
     });
 
-    printf("found %d primes up to %d in %llu miliseconds\n", count, MAX_PRIME, miliseconds);
+    printf("found %d primes up to %d in %llu miliseconds\n", count, MAX_PRIME, b.elapsedMiliseconds);
 }
 
 void allocation()
 {
-    uint64_t miliseconds, unused;
+    uint64_t unused;
+    benchmark_t b;
 
-    BENCHMARK(miliseconds, {
+    BENCHMARK(&b, {
         for (volatile int i = 0; i < PAGES; i++)
             sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&unused, 0);
     });
 
-    printf("allocated %d pages in %llu miliseconds\n", PAGES, miliseconds);
+    printf("allocated %d pages in %llu miliseconds\n", PAGES, b.elapsedMiliseconds);
 }
 
 int main(int argc, char **argv)

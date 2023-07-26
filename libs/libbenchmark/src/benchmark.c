@@ -1,17 +1,15 @@
 #include <libbenchmark.h>
 #include <mos/sys.h>
 
-// todo: a context system would be great
-uint64_t benchmarkStartNanos;
-
-void benchmarkStart()
+void benchmarkStart(benchmark_t *ctx)
 {
-    benchmarkStartNanos = sys_time_uptime_nanos();
+    ctx->startNanos = sys_time_uptime_nanos();
 }
 
-uint64_t benchmarkEnd()
+uint64_t benchmarkEnd(benchmark_t *ctx)
 {
-    uint64_t difference = sys_time_uptime_nanos() - benchmarkStartNanos;
-    uint64_t miliseconds = difference / 1000000; // difference is in nanoseconds
-    return miliseconds;
+    ctx->endNanos = sys_time_uptime_nanos();
+    ctx->elapsedNanos = ctx->endNanos - ctx->startNanos;
+    ctx->elapsedMiliseconds = ctx->elapsedNanos / 1000000;
+    return ctx->elapsedMiliseconds;
 }
