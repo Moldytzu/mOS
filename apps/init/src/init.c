@@ -1,5 +1,6 @@
 #include <mos/sys.h>
 #include <mos/drv.h>
+#include <libcfg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -14,89 +15,7 @@ void *sockBuffer = NULL;
 bool verbose = true;
 bool safe = false;
 char *shell = "/init/msh.mx";
-char *cfg;
-
-// todo: move this in a dedicated library
-char *cfgGet(const char *name)
-{
-    char *start = cfg;
-    char *end = cfg + 4096;
-
-    while (start < end)
-    {
-        if (memcmp(start, name, strlen(name)) != 0 || memcmp(start + strlen(name), " = ", strlen(" = ")) != 0) // check for the name then for the " = " suffix
-        {
-            start++;
-            continue;
-        }
-
-        return start + strlen(name) + strlen(" = "); // return address of operand
-    }
-
-    return NULL;
-}
-
-bool cfgBool(const char *name)
-{
-    char *value = cfgGet(name);
-
-    if (!value)
-        return false;
-
-    return *value == '1';
-}
-
-char *cfgStr(const char *name)
-{
-    char *start = cfgGet(name);
-    char *end = cfg + 4096;
-
-    if (!start || *start != '\"') // not found or broken format
-        return "?";
-
-    start++; // skip quotes
-
-    char *strStart = start;
-
-    // find end of string
-    while (start < end)
-    {
-        if (*start == '\"') // terminate string
-        {
-            *start = '\0';
-            return strStart;
-        }
-        start++;
-    }
-
-    return "?";
-}
-
-uint32_t cfgUint(const char *name)
-{
-    char *start = cfgGet(name);
-    char *end = cfg + 4096;
-
-    if (!start)
-        return 0;
-
-    char *strStart = start;
-
-    // find end of string
-    while (start < end)
-    {
-        if (*start >= '0' && *start <= '9') // we want to find first invalid character (not a number)
-        {
-            start++;
-            continue;
-        }
-
-        *start = '\0';
-        return abs(atoi(strStart));
-    }
-
-    return 0;
-}
+config_t *cfg;
 
 void parseCFG()
 {
@@ -118,12 +37,12 @@ void parseCFG()
     sys_read(cfg, min(size, 4096), fd); // read the file
 
     // parse the config
-    safe = cfgBool("SAFE");
-    verbose = cfgBool("VERBOSE") | safe; // verbose mode is forced on by safe
-    shell = cfgStr("SHELL");
+    safe = cfgBool(cfg, "SAFE");
+    verbose = cfgBool(cfg, "VERBOSE") | safe; // verbose mode is forced on by safe
+    shell = cfgStr(cfg, "SHELL");
 
-    uint32_t screenX = cfgUint("SCREEN_WIDTH");
-    uint32_t screenY = cfgUint("SCREEN_HEIGHT");
+    uint32_t screenX = cfgUint(cfg, "SCREEN_WIDTH");
+    uint32_t screenY = cfgUint(cfg, "SCREEN_HEIGHT");
 
     if (!screenX | !screenY) // invalid resolution
     {
@@ -136,7 +55,7 @@ void parseCFG()
         return;
 
     // start drivers set in config
-    char *drivers = cfgStr("DRIVERS");
+    char *drivers = cfgStr(cfg, "DRIVERS");
     uint16_t driversLen = strlen(drivers);
 
     // the drivers string is in the form "driver;driver2;driver3 etc etc"
