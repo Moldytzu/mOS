@@ -1,7 +1,6 @@
-include ../app.mk
+include ../../compile.mk
 
-# append the output filename
-OUTFILE = $(OUTFOLDER)blank.mx
+# here goes all the boilerplate/helpers
 
 SRCC = $(call rwildcard,$(SRCDIR),*.c) # c source files
 ASMSRC = $(call rwildcard,$(SRCDIR),*.asm) # assembly source files
@@ -9,9 +8,30 @@ OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCC)) # generate object names
 OBJS += $(patsubst $(SRCDIR)/%.asm, $(OBJDIR)/%_asm.o, $(ASMSRC)) # do the same for assembly
 DIRS = $(wildcard $(SRCDIR)/*) # inner source folders
 
-LIBS = libc # libraries we want to use
-$(call parse_libs, $(LIBS)) # parse them and add correct compiler/linker options
+APPNAME = $(notdir $(shell pwd))
 
+# default output path of the app
+OUTFOLDER := ../../roots/initrd/
+OUTFILE := $(OUTFOLDER)$(APPNAME).drv # generate output name
+
+# Internal C flags that should not be changed by the user.
+INTERNALCFLAGS :=   		 \
+	-mcmodel=large
+
+# Internal linker flags that should not be changed by the user.
+INTERNALLDFLAGS :=         \
+	-T../driver.ld            \
+	-nostdlib              \
+	-static                
+
+define parse_libs
+$(foreach lib, $(1), \
+	$(eval LDFLAGS+= ../../libs/$(lib)/bin/$(lib).a) \
+	$(eval CFLAGS+=-I../../libs/$(lib)/inc ) \
+)
+endef
+
+# default targets
 .PHONY: app
 
 # link the app

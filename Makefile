@@ -9,8 +9,9 @@ QEMUFLAGS ?= -M q35,smm=off -m $(MEMORY) -smp $(CORES) -cpu core2duo -hda $(DISK
 QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)
+LIBS = $(wildcard ./libs/*/.)
 
-.PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps initrd libc
+.PHONY: all run run-debug run-efi run-efi-debug limine ovmf kernel efi clean deps initrd
 
 all: image
 
@@ -65,16 +66,15 @@ initrd:
 
 FORCE:
 
-# run make in every folder from apps and drivers
+# run make in every folder from apps, drivers and libraries
 $(APPS): FORCE
 	$(MAKE) -C $@ 
 
 $(DRIVERS): FORCE
 	$(MAKE) -C $@ 
 
-# make the libc
-libc:
-	$(MAKE) -C libc
+$(LIBS): FORCE
+	$(MAKE) -C $@
 
 kernel:
 	mkdir -p out
@@ -90,7 +90,7 @@ $(DISK):
 	sudo mkfs.fat -F 32 /dev/mapper/loop*p1
 	sudo kpartx -d ./$(DISK)
 
-image: $(DISK) umount limine kernel libc $(APPS) $(DRIVERS) initrd 
+image: $(DISK) umount limine kernel $(LIBS) $(APPS) $(DRIVERS) initrd 
 	sudo kpartx -a ./$(DISK)
 	sudo mkdir -p /mnt
 	sudo mkdir -p /mnt/mOS

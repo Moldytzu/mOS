@@ -1,6 +1,6 @@
-include ../compile.mk
+include ../../compile.mk
 
-LIB = ../libc.a
+LIB = bin/libc.a
 
 SRCC = $(call rwildcard,$(SRCDIR),*.c)  
 ASMSRC = $(call rwildcard,$(SRCDIR),*.asm)  
@@ -15,6 +15,7 @@ all: $(LIB)
 
 # Link rules for the final libc
 $(LIB): $(OBJS)
+	mkdir -p bin
 	$(AR) -crs $@ $(OBJS)
 
 # Compilation rules for *.c files.
