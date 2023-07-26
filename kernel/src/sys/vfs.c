@@ -127,7 +127,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
     }
     case 3: // size of descriptor
     {
-        *retAddr = vfsSize(arg1);
+        *retAddr = vfsSize(FD_TO_NODE(arg1 - 2)); // in open we offset by 2 to skip ids 0 and 1 which have other purposese
         break;
     }
     default:

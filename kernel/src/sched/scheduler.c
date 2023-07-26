@@ -11,6 +11,7 @@
 #include <main/panic.h>
 #include <stdnoreturn.h>
 #include <fw/acpi.h>
+#include <fs/vfs.h>
 
 // #define BENCHMARK
 
@@ -360,6 +361,9 @@ void schedKill(uint32_t id)
         for (int i = 0; i < task->allocatedIndex; i++)
             if (task->allocated[i] != NULL)
                 pmmDeallocate(task->allocated[i]);
+
+        for (int i = 0; i < TASK_MAX_FILE_DESCRIPTORS; i++)
+            vfsClose(task->fileDescriptorPointers[i]);
 
         pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
         pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);

@@ -102,10 +102,10 @@ void handleInput(const char *buffer)
     memset(cmdBuffer, 0, 4096);                            // clear the buffer
     memcpy(cmdBuffer, arguments[0], strlen(arguments[0])); // copy the input
 
-    uint64_t status = sys_open(arguments[0]);
+    uint64_t fd = sys_open(arguments[0]);
 
     // try to append the path
-    if (!status)
+    if (!fd)
     {
         memset(cmdBuffer, 0, 4096);
         sprintf(cmdBuffer, "%s%s", path, arguments[0]); // combine the path and the input
@@ -130,11 +130,14 @@ execute:
     sys_exec_packet_t p = {0, enviroment, cwdBuffer, argumentsCount, argv}; // prepare a packet
     sys_exec(cmdBuffer, &newPid, &p);                                       // send the kernel the packet
 
+    uint64_t status;
     do
     {
         sys_pid(newPid, SYS_PID_STATUS, &status); // get the status of the pid
         sys_yield();                              // don't waste cpu time
     } while (status == 0);                        // wait for the pid to be stopped
+
+    sys_close(fd);
 }
 
 int main(int argc, char **argv)

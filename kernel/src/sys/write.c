@@ -23,7 +23,9 @@ void write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, sched_task
         return;
     }
 
-    vfsWrite(fd, (void *)charBuffer, count, 0); // write to the descriptor
+    fd -= 2; // in open we offset by 2 to skip ids 0 and 1 which have other purposese
+
+    vfsWrite(FD_TO_NODE(fd), (void *)charBuffer, count, 0); // write to the descriptor
 
     // todo: also support writing to another terminal
 }

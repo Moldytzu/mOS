@@ -5,6 +5,7 @@
 
 #define TASK_BASE_ADDRESS 0xA000000000
 #define TASK_BASE_ALLOC 0xB000000000
+#define TASK_MAX_FILE_DESCRIPTORS 128
 
 typedef struct
 {
@@ -26,6 +27,7 @@ typedef struct
     char *enviroment;
 
     // internal
+    uint64_t fileDescriptorPointers[TASK_MAX_FILE_DESCRIPTORS];
     void *stackBase;
     void *elfBase;
     size_t elfSize;
