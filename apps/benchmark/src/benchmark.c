@@ -1,30 +1,8 @@
 #include <mos/sys.h>
+#include <libbenchmark.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-
-// todo: move this in a dedicated library
-// todo: before doing that, create a context system
-uint64_t benchmarkStartNanos;
-
-void benchmarkStart()
-{
-    benchmarkStartNanos = sys_time_uptime_nanos();
-}
-
-uint64_t benchmarkEnd()
-{
-    uint64_t difference = sys_time_uptime_nanos() - benchmarkStartNanos;
-    uint64_t miliseconds = difference / 1000000; // difference is in nanoseconds
-    return miliseconds;
-}
-
-#define BENCHMARK(resultVariable, workload) \
-    {                                       \
-        benchmarkStart();                   \
-        workload;                           \
-        resultVariable = benchmarkEnd();    \
-    }
 
 // actual benchmarking tests
 #define MAX_PRIME 100000

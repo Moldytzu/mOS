@@ -12,6 +12,12 @@ OBJS += $(patsubst $(SRCDIR)/%.asm, $(OBJDIR)/%_asm.o, $(ASMSRC))
 DIRS = $(wildcard $(SRCDIR)/*)
 CFLAGS += -mcmodel=large
 
+define parse_dependencies
+$(foreach lib, $(1), \
+	$(eval CFLAGS+=-I../$(lib)/inc ) \
+)
+endef
+
 # Default target.
 .PHONY: all
 all: $(LIB)

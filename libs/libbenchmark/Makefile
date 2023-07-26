@@ -1,4 +1,4 @@
 include ../lib.mk
 
-DEPENDENCIES=
+DEPENDENCIES=libc
 $(call parse_dependencies, $(DEPENDENCIES))
