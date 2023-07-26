@@ -8,16 +8,19 @@
 #define MAX_PRIME 100000
 #define PAGES 32768 // 128 megabytes
 
-// slow prime checker
-bool isPrime(uint32_t n)
+// fast prime checker
+bool isPrime(uint64_t n)
 {
     if (n != 2 && n % 2 == 0) // even numbers larger than 2 are not prime!
         return false;
 
-    for (int i = 3; i < n; i += 2)
+    uint64_t i = 2;
+
+    while (i * i <= n)
     {
-        if (n % i == 0)
+        if (n % i == 0) // n has a factor between 2 and sqrt(n)
             return false;
+        i++;
     }
 
     return true;
