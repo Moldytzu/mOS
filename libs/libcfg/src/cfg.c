@@ -9,13 +9,13 @@ char *cfgGet(config_t *cfg, const char *name)
 
     while (start < end)
     {
-        if (memcmp(start, name, strlen(name)) != 0 || memcmp(start + strlen(name), " = ", strlen(" = ")) != 0) // check for the name then for the " = " suffix
-        {
-            start++;
-            continue;
-        }
+        if (start + strlen(name) + strlen(" = ") >= end) // out of bounds
+            return NULL;
 
-        return start + strlen(name) + strlen(" = "); // return address of operand
+        if (memcmp(start, name, strlen(name)) == 0 && memcmp(start + strlen(name), " = ", strlen(" = ")) == 0) // check for string "<name> = "
+            return start + strlen(name) + strlen(" = ");                                                       // return everything after the equal
+
+        start++;
     }
 
     return NULL;
