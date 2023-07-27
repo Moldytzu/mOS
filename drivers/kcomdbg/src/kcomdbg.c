@@ -44,7 +44,7 @@ void comWrites(const char *str)
 void sendKeystroke(char c)
 {
     input->keys[0] = c;
-    sys_drv_flush(SYS_DRIVER_TYPE_INPUT);
+    sys_driver_flush(SYS_DRIVER_TYPE_INPUT);
     sys_yield();
 }
 
@@ -172,7 +172,7 @@ void handleCommands()
 
 void _mdrvmain()
 {
-    input = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT);
+    input = (drv_type_input_t *)sys_driver_announce(SYS_DRIVER_TYPE_INPUT);
 
     if (!input)
     {

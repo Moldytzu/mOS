@@ -99,10 +99,10 @@ pstruct
 }
 drv_pci_header0_t;
 
-uint64_t *sys_drv_announce(uint64_t type);
-uint64_t sys_drv_start(char *path);
+uint64_t *sys_driver_announce(uint64_t type);
+uint64_t sys_driver_start(char *path);
 drv_pci_header_t *sys_pci_get(uint32_t vendor, uint32_t device);
-void sys_drv_flush(uint64_t type);
+void sys_driver_flush(uint64_t type);
 void sys_idt_set(void *handler, uint64_t vector);
 void sys_idt_reset(uint64_t vector);
 void sys_identity_map(void *address);

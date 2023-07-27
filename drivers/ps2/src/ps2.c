@@ -379,7 +379,7 @@ void _mdrvmain()
         abort();
     }
 
-    contextStruct = (drv_type_input_t *)sys_drv_announce(SYS_DRIVER_TYPE_INPUT); // announce that we are an input-related driver
+    contextStruct = (drv_type_input_t *)sys_driver_announce(SYS_DRIVER_TYPE_INPUT); // announce that we are an input-related driver
 
     if (!contextStruct)
     {
@@ -394,7 +394,7 @@ void _mdrvmain()
     // flush the context endlessly
     while (1)
     {
-        sys_drv_flush(SYS_DRIVER_TYPE_INPUT); // flush the context
-        sys_yield();                          // yield
+        sys_driver_flush(SYS_DRIVER_TYPE_INPUT); // flush the context
+        sys_yield();                             // yield
     }
 }

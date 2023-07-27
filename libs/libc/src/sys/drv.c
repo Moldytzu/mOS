@@ -42,14 +42,14 @@ uint32_t inl(uint16_t port)
     return val;
 }
 
-uint64_t *sys_drv_announce(uint64_t type)
+uint64_t *sys_driver_announce(uint64_t type)
 {
     uint64_t address = 0;
     sys_driver(SYS_DRIVER_ANNOUNCE, type, (uint64_t)&address, 0); // announce that we want the struct for the requested type
     return (uint64_t *)address;                                   // return the pointer to the struct
 }
 
-void sys_drv_flush(uint64_t type)
+void sys_driver_flush(uint64_t type)
 {
     sys_driver(SYS_DRIVER_FLUSH, type, 0, 0); // flush the context for that type
 }
@@ -64,7 +64,7 @@ void sys_idt_reset(uint64_t vector)
     sys_driver(SYS_DRIVER_IDT_RESET, vector, 0, 0);
 }
 
-uint64_t sys_drv_start(char *path)
+uint64_t sys_driver_start(char *path)
 {
     uint64_t pid = 0;
     sys_driver(SYS_DRIVER_START, (uint64_t)path, (uint64_t)&pid, 0);

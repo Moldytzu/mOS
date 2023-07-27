@@ -192,7 +192,7 @@ void _mdrvmain()
         abort();
     }
 
-    fb = (drv_type_framebuffer_t *)sys_drv_announce(SYS_DRIVER_TYPE_FRAMEBUFFER); // announce that we are a framebuffer
+    fb = (drv_type_framebuffer_t *)sys_driver_announce(SYS_DRIVER_TYPE_FRAMEBUFFER); // announce that we are a framebuffer
 
     if (!fb)
     {
@@ -202,7 +202,7 @@ void _mdrvmain()
 
     setResolution(640, 480); // set a default resolution
 
-    sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
+    sys_driver_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
     puts("vmsvga: initialised\n");
 
@@ -224,7 +224,7 @@ void _mdrvmain()
             fb->requestedYres = fb->currentYres;
         }
 
-        sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
+        sys_driver_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
         printf("vmsvga: new resolution %dx%d\n", fb->currentXres, fb->currentYres);
     }

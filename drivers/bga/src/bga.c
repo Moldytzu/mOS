@@ -125,16 +125,16 @@ bga_resolution_t getResolution()
 }
 
 void _mdrvmain()
-{   
+{
     if (!detectBGA())
     {
         puts("bga: failed to initialise!\n");
         abort();
     }
 
-    fb = (drv_type_framebuffer_t *)sys_drv_announce(SYS_DRIVER_TYPE_FRAMEBUFFER); // announce that we are a framebuffer
+    fb = (drv_type_framebuffer_t *)sys_driver_announce(SYS_DRIVER_TYPE_FRAMEBUFFER); // announce that we are a framebuffer
 
-    if(!fb)
+    if (!fb)
     {
         puts("bga: failed to announce!\n");
         abort();
@@ -142,13 +142,13 @@ void _mdrvmain()
 
     setResolution(640, 480); // set a default resolution
 
-    sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
+    sys_driver_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
     puts("bga: initialised\n");
 
     while (1)
     {
-        for(int i = 0; i < 10; i++) // don't waste time here by yielding
+        for (int i = 0; i < 10; i++) // don't waste time here by yielding
             sys_yield();
 
         // wait for the kernel to request another resolution
@@ -164,7 +164,7 @@ void _mdrvmain()
 
         sys_yield();
 
-        sys_drv_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
+        sys_driver_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
         printf("bga: new resolution %dx%d\n", fb->currentXres, fb->currentYres);
     }
