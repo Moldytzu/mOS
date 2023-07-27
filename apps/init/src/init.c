@@ -149,7 +149,8 @@ int main(int argc, char **argv)
 
     uint64_t userspaceStartupTime = sys_time_uptime_nanos() / 1000000;
 
-    printf("Startup finished in %dms (kernel) + %dms (userspace) = %dms\n", kernelStartupTime, userspaceStartupTime - kernelStartupTime, userspaceStartupTime);
+    if (verbose)
+        printf("Startup finished in %dms (kernel) + %dms (userspace) = %dms\n", kernelStartupTime, userspaceStartupTime - kernelStartupTime, userspaceStartupTime);
 
     while (1)
     {
