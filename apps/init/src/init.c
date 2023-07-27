@@ -71,8 +71,8 @@ void parseCFG()
 
         if (drivers[i] == ';') // start each driver after the separator
         {
-            drivers[i] = '\0';                                             // terminate string
-            sys_driver(SYS_DRIVER_START, (uint64_t)(currentDriver), 0, 0); // start the driver
+            drivers[i] = '\0';               // terminate string
+            sys_driver_start(currentDriver); // start the driver
 
             if (verbose)
                 printf("Started driver %s\n", currentDriver);
