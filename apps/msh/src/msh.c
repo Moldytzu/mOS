@@ -99,24 +99,27 @@ void handleInput(const char *buffer)
     if (strlen(arguments[0]) < strlen(".mx") || memcmp(arguments[0] + strlen(arguments[0]) - 3, ".mx", 3) != 0) // check for size and for last 3 bytes to match
         memcpy(arguments[0] + strlen(arguments[0]), ".mx", 4);                                                  // copy the extension (including the NULL)
 
-    memset(cmdBuffer, 0, 4096);                            // clear the buffer
-    memcpy(cmdBuffer, arguments[0], strlen(arguments[0])); // copy the input
+    sprintf(cmdBuffer, "%s", arguments[0]); // copy the input in command buffer
 
     uint64_t fd = sys_open(arguments[0]);
 
     // try to append the path
     if (!fd)
     {
-        memset(cmdBuffer, 0, 4096);
         sprintf(cmdBuffer, "%s%s", path, arguments[0]); // combine the path and the input
 
-        uint64_t status = sys_open(cmdBuffer);
-        if (status && strlen(cmdBuffer))
+        uint64_t fd = sys_open(cmdBuffer); // check again for existence
+        if (fd && strlen(cmdBuffer))
+        {
+            sys_close(fd); // close it if it exists
             goto execute;
+        }
 
         printf("Couldn't find executable %s\n", arguments[0]);
         return;
     }
+    else
+        sys_close(fd); // close it if it exists
 
 execute:
     uint64_t newPid;
@@ -127,8 +130,8 @@ execute:
     for (int i = 0; i < argumentsCount; i++) // prepare the argument vector
         argv[i] = arguments[i + 1];
 
-    sys_exec_packet_t p = {0, enviroment, cwdBuffer, argumentsCount, argv}; // prepare a packet
-    sys_exec(cmdBuffer, &newPid, &p);                                       // send the kernel the packet
+    sys_exec_packet_t p = {false, enviroment, cwdBuffer, argumentsCount, argv}; // prepare a packet
+    sys_exec(cmdBuffer, &newPid, &p);                                           // send the kernel the packet
 
     uint64_t status;
     do
@@ -136,8 +139,6 @@ execute:
         sys_pid(newPid, SYS_PID_STATUS, &status); // get the status of the pid
         sys_yield();                              // don't waste cpu time
     } while (status == 0);                        // wait for the pid to be stopped
-
-    sys_close(fd);
 }
 
 int main(int argc, char **argv)
@@ -146,7 +147,7 @@ int main(int argc, char **argv)
 
     // keyboard buffer
     char *kBuffer = malloc(4096);
-    uint16_t kIdx;
+    uint16_t kIdx = 0;
     assert(kBuffer != NULL); // assert that the buffer is valid
 
     // enviroment buffer
