@@ -11,9 +11,8 @@ const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec
 // open file at relative path
 uint64_t openRelativePath(const char *path, sched_task_t *task)
 {
-    uint64_t fd = 0;
-    if (fd = vfsOpen(path)) // check if path exists as is
-        return fd;
+    if (vfsExists(path))      // if a file exists at that given path
+        return vfsOpen(path); // open it then return its file descriptor
 
     // todo: implement more advanced path traversal like .. and .
     if (strlen(path) > 2 && memcmp(path, "./", 2) == 0) // remove ./
@@ -22,10 +21,10 @@ uint64_t openRelativePath(const char *path, sched_task_t *task)
     char *buffer = (char *)pmmPage();         // allocate an internal buffer
     sprintf(buffer, "%s%s", task->cwd, path); // combine cwd and path
 
-    if (fd = vfsOpen(buffer)) // check if it exists
+    if (vfsExists(buffer)) // check if it exists
     {
-        pmmDeallocate(buffer);
-        return fd;
+        pmmDeallocate(buffer);  // do clean up
+        return vfsOpen(buffer); // and return the file descriptor
     }
 
     // fail
