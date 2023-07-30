@@ -7,8 +7,6 @@ void read(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, sched_task_
     if (!IS_MAPPED(buffer)) // prevent a crash
         return;
 
-    fd -= 2; // in open we offset by 2 to skip ids 0 and 1 which have other purposese
-
     void *charBuffer = PHYSICAL(buffer); // get physical address of the buffer
 
     vfsRead(FD_TO_NODE(fd), charBuffer, count, 0); // read from the vfs

@@ -14,8 +14,8 @@
 #define PHYSICAL(virtual) ((void *)(vmmGetPhysical((void *)task->pageTable, (void *)(virtual))))
 #define IS_MAPPED(address) ((uint64_t)PHYSICAL(address) > 0)
 #define DEFINE_SYSCALL(x) void x(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *);
-#define FD_TO_NODE(x) (x < TASK_MAX_FILE_DESCRIPTORS ? task->fileDescriptorPointers[x] : 0)
-#define IS_PRIVILEGED ((task->isDriver) || (task->id == 1)) // privileged apps are drivers and init system
+#define FD_TO_NODE(x) (((x)-2) < TASK_MAX_FILE_DESCRIPTORS ? task->fileDescriptorPointers[(x)-2] : 0) // in open we offset by 2 to skip ids 0 and 1 which have other purposese
+#define IS_PRIVILEGED ((task->isDriver) || (task->id == 1))                                           // privileged apps are drivers and init system
 
 uint64_t openRelativePath(const char *path, sched_task_t *task);
 void yield();
