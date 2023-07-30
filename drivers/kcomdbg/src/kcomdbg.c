@@ -72,6 +72,8 @@ void handleCommands()
         comWrites("mOS kernel debugger help\n");
         comWrites("e - send enter keystroke\n");
         comWrites("w<text> - send text as keystrokes\n");
+        comWrites("r - reboots the computer\n");
+        comWrites("s - shutdowns the computer\n");
         return;
     }
 
@@ -80,7 +82,7 @@ void handleCommands()
     {
     case 'w':
     {
-        const char *str = &kbuffer[1]; // text to write
+        const char *str = &kbuffer[1]; // text to write (skips the w)
 
         for (int i = 0; i < strlen(str); i++)
         {
@@ -93,6 +95,18 @@ void handleCommands()
     case 'e':
     {
         sendKeystroke('\n');
+        return;
+    }
+
+    case 'r':
+    {
+        sys_power(SYS_POWER_REBOOT, 0, 0);
+        return;
+    }
+
+    case 's':
+    {
+        sys_power(SYS_POWER_SHUTDOWN, 0, 0);
         return;
     }
 
