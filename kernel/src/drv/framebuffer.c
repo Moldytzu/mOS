@@ -176,7 +176,7 @@ void framebufferZero()
 // plot pixel on the framebuffer
 ifunc void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
 {
-    *(uint32_t *)((uint64_t)back.address + x * back.bpp / 8 + y * back.pitch) = colour; // set the pixel to colour
+    *(volatile uint32_t *)((uint64_t)back.address + x * back.bpp / 8 + y * back.pitch) = colour; // set the pixel to colour
 }
 
 // function to inline
