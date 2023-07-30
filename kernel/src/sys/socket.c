@@ -13,21 +13,21 @@ void socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_ta
     switch (call)
     {
     case 0: // socket create
-        if (!arg1Ptr || !IS_MAPPED(arg1))
+        if (!arg1Ptr)
             return;
 
         *arg1Ptr = sockCreate()->id; // create a new socket then return it's id
         break;
     case 1: // socket write
         s = sockGet(arg1);
-        if (!s || !IS_MAPPED(arg2))
+        if (!s || !arg2)
             return;
 
         sockAppend(s, (const char *)arg2Ptr, arg3);
         break;
     case 2: // socket read
         s = sockGet(arg1);
-        if (!s || !IS_MAPPED(arg2))
+        if (!s || !arg2)
             return;
 
         sockRead(s, (const char *)arg2Ptr, arg3);
