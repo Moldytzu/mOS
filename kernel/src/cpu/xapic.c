@@ -94,9 +94,9 @@ void xapicInit(bool bsp)
     xapicWrite(XAPIC_REG_LVT_TIMER, XAPIC_TIMER_VECTOR); // one shot mode
 
     xapicWrite(XAPIC_REG_TIMER_INITCNT, 0xFFFFFFFF); // initialise with -1
-    hpetSleepMillis((1000 / K_LAPIC_FREQ));
+    hpetSleepNanos((1000000000 /*one sec in nanos*/ / K_LAPIC_FREQ));
 
-    uint32_t ticks = 0xFFFFFFFF - *((uint32_t *)((uint8_t *)XAPIC_BASE + XAPIC_REG_TIMER_CURRENTCNT));
+    uint32_t ticks = 0xFFFFFFFF - xapicRead(XAPIC_REG_TIMER_CURRENTCNT);
 
     xapicWrite(XAPIC_REG_LVT_TIMER, 0b100000000000000000 | XAPIC_TIMER_VECTOR); // periodic mode
     xapicWrite(XAPIC_REG_TIMER_DIV, 0b1011);                                    // divide by 1
