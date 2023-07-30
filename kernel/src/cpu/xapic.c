@@ -13,16 +13,35 @@
 
 extern void lapicEntry();
 
+// #define TPS
+
+#ifdef TPS
 uint64_t lapicTPS[K_MAX_CORES];
 uint64_t __tps[K_MAX_CORES];
 uint64_t lastSeconds[K_MAX_CORES];
+#endif
 bool isEnabled = false;
 
 void xapicHandleTimer(idt_intrerrupt_stack_t *stack)
 {
     vmmSwap(vmmGetBaseTable()); // swap to base table
-    xapicEOI();                 // send end of interrupt
-    schedSchedule(stack);       // reschedule
+
+#ifdef TPS
+    if (hpetMillis() / 1000 != lastSeconds[smpID()])
+    {
+        lapicTPS[smpID()] = __tps[smpID()];
+
+        logInfo("%d", lapicTPS[smpID()]);
+
+        __tps[smpID()] = 0;
+    }
+
+    __tps[smpID()]++;
+    lastSeconds[smpID()] = hpetMillis() / 1000;
+#endif
+
+    xapicEOI();           // send end of interrupt
+    schedSchedule(stack); // reschedule
 }
 
 void xapicWrite(uint64_t offset, uint32_t value)
