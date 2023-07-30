@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define COM1 0x3F8
 #define COM1_LINE_STATUS (COM1 + 5)
@@ -51,15 +52,16 @@ void sendKeystroke(char c)
 void handleInput()
 {
     // handle input
-    uint8_t lastChar = 0;
-    do
+    while (true)
     {
-        lastChar = comRead();
-        comWrite(lastChar);
+        uint8_t receivedCharacter = comRead(); // read character (fixme: this may be scancode on real hardware??)
+        comWrite(receivedCharacter);           // loop back received character (fixme: on real hardware this is garbage??)
 
-        if (lastChar != '\n')
-            kbuffer[kindex++] = lastChar;
-    } while (lastChar != '\n' && kindex != 255);
+        if (receivedCharacter == '\n' || kindex == 256) // break if we receive a line feed (the enter key) or if we overrun the buffer
+            break;
+
+        kbuffer[kindex++] = receivedCharacter; // put the character on our buffer
+    }
 }
 
 void strrev(char *str)
@@ -187,11 +189,14 @@ void _mdrvmain()
 
     while (1)
     {
+        // reset keyboard buffer
         memset(kbuffer, 0, sizeof(kbuffer));
         kindex = 0;
 
+        // write prompt
         comWrites("mOS> ");
 
+        // handle user-input
         handleInput();
         handleCommands();
     }
