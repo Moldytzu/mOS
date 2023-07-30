@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     sys_display(SYS_DISPLAY_SET, targetX, targetY);                 // set new resolution
 
     int i = 0;
-    for (; i < 20; i++) // wait for the resolution to change
+    for (; i < 50; i++) // wait for the resolution to change
     {
         uint64_t currentX, currentY;
         sys_display(SYS_DISPLAY_GET, (uint64_t)&currentX, (uint64_t)&currentY); // get current resolution
