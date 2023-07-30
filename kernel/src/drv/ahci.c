@@ -43,13 +43,13 @@ int ahciPortSlot(ahci_port_t *port)
 // read from abar at offset
 uint32_t ahciRead(uint32_t offset)
 {
-    return *(uint32_t *)(abar + offset);
+    return *(volatile uint32_t *)(abar + offset);
 }
 
 // write to abar at offset
 void ahciWrite(uint32_t offset, uint32_t data)
 {
-    *(uint32_t *)(abar + offset) = data;
+    *(volatile uint32_t *)(abar + offset) = data;
 }
 
 // get pointer base address as shown by bits set in PI
