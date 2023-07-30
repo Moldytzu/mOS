@@ -72,6 +72,7 @@ struct vfs_node_t
 };
 
 void vfsInit();
+struct vfs_node_t *vfsGet(const char *name);
 uint64_t vfsOpen(const char *name);
 uint64_t vfsSize(uint64_t fd);
 void vfsClose(uint64_t fd);

@@ -115,35 +115,15 @@ struct vfs_node_t *vfsNodes()
 // open a node with the name
 uint64_t vfsOpen(const char *name)
 {
-    if (!name || *name != '/' || !strlen(name)) // non-existent path
+    struct vfs_node_t *node = vfsGet(name);
+    if (!ISVALID(node))
         return 0;
 
-#ifdef K_VFS_DEBUG
-    logDbg(LOG_SERIAL_ONLY, "vfs: opening %s", name);
-#endif
-
-    struct vfs_node_t *currentNode = &rootNode;
-    char fullPath[128 /* mount name */ + 128 /* path */];
-    do
-    {
-        if (!currentNode->filesystem)
-            goto next;
-
-        vfsGetPath((uint64_t)currentNode, fullPath);
-
-        if (strcmp(fullPath, name) != 0) // compare the paths
-            goto next;
-
-        if (!currentNode->filesystem->open) // check if the handler exists
-            goto next;
-
-        if (currentNode->filesystem->open(currentNode)) // if the filesystem says that it is ok to open the file descriptor we return the address of the node
-            return (uint64_t)currentNode;
-
-    next:
-        currentNode = currentNode->next; // next node
-    } while (currentNode);
-    return 0; // return nothing
+    // return the node if openning succeeds
+    if (node->filesystem->open(node)) // the handler is guranteed to exist
+        return (uint64_t)node;
+    else
+        return 0;
 }
 
 // close a node
@@ -179,6 +159,38 @@ void vfsWrite(uint64_t fd, void *buffer, uint64_t size, uint64_t offset)
         node->filesystem->write(node, buffer, size, offset); // inform the filesystem that we want to write
 }
 
+// get address of node with name
+struct vfs_node_t *vfsGet(const char *name)
+{
+    if (!name || *name != '/' || !strlen(name)) // non-existent path
+        return 0;
+
+#ifdef K_VFS_DEBUG
+    logDbg(LOG_SERIAL_ONLY, "vfs: getting %s", name);
+#endif
+
+    struct vfs_node_t *currentNode = &rootNode;
+    char fullPath[128 /* mount name */ + 128 /* path */];
+    do
+    {
+        if (!currentNode->filesystem)
+            goto next;
+
+        vfsGetPath((uint64_t)currentNode, fullPath);
+
+        if (strcmp(fullPath, name) != 0) // compare the paths
+            goto next;
+
+        if (!currentNode->filesystem->open) // check if open handler exists (it means it can be opened)
+            goto next;
+
+        return currentNode; // return the node
+    next:
+        currentNode = currentNode->next; // next node
+    } while (currentNode);
+    return 0; // return nothing
+}
+
 // return the size of a node
 uint64_t vfsSize(uint64_t fd)
 {
@@ -192,12 +204,7 @@ uint64_t vfsSize(uint64_t fd)
 // checks if file exists
 bool vfsExists(const char *name)
 {
-    uint64_t fd = vfsOpen(name);
-
-    if (fd)
-        vfsClose(fd);
-
-    return fd > 0;
+    return vfsGet(name);
 }
 
 // gets full path of a node
