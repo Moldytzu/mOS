@@ -13,17 +13,14 @@ struct vt_terminal *vtCreate()
 {
     struct vt_terminal *currentTerminal = &rootTerminal; // first terminal
 
-    if (currentTerminal->buffer) // check if the root terminal is valid
+    if (currentTerminal->buffer) // it is valid when the first terminal was allocated
     {
         while (currentTerminal->next) // get last terminal
             currentTerminal = currentTerminal->next;
 
-        if (currentTerminal->buffer)
-        {
-            currentTerminal->next = blkBlock(sizeof(struct vt_terminal)); // allocate next terminal if the current terminal is valid
-            currentTerminal->next->previous = currentTerminal;            // set the previous terminal
-            currentTerminal = currentTerminal->next;                      // set current terminal to the newly allocated terminal
-        }
+        currentTerminal->next = blkBlock(sizeof(struct vt_terminal)); // allocate next terminal if the current terminal is valid
+        currentTerminal->next->previous = currentTerminal;            // set the previous terminal
+        currentTerminal = currentTerminal->next;                      // set current terminal to the newly allocated terminal
     }
 
     currentTerminal->buffer = pmmPage();   // allocate the character buffer
