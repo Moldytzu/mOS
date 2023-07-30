@@ -225,8 +225,8 @@ void pmmInit()
         pmm_pool_t *pool = &pools[poolCount++];
         pool->bitmapBytes = entry->length / PMM_PAGE / 8 + 2; // we divide the memory regions in pages (4 KiB chunks) then we will calculate the bytes in which we can write (add 2 bytes to be sure we don't go in allocable memory)
 
-        pool->alloc = (void *)entry->base + pool->bitmapBytes;      // we will start after the bitmap so after the base
-        pool->alloc += PMM_PAGE - (uint64_t)pool->alloc % PMM_PAGE; // we make sure that the base pointer is page aligned
+        pool->alloc = (void *)entry->base + pool->bitmapBytes; // we will start after the bitmap so after the base
+        pool->alloc = align(pool->alloc, PMM_PAGE);            // we make sure that the base allocation pointer is page aligned
 
         pool->base = (void *)entry->base;
         pool->available = entry->length - pool->bitmapBytes;

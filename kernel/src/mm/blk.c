@@ -56,10 +56,8 @@ void blkInit()
 void *blkBlock(size_t size)
 {
     lock(blkLock, {
-        if (size % BLK_ALIGNMENT != 0)
-            size += BLK_ALIGNMENT - (size % BLK_ALIGNMENT);
-
-        size += BLK_ALIGNMENT; // padding
+        size = align(size, BLK_ALIGNMENT); // do the alignment
+        size += BLK_ALIGNMENT;             // padding
 
         size_t internalSize = size;
 

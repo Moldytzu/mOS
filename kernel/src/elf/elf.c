@@ -29,8 +29,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     logDbg(LOG_SERIAL_ONLY, "elf: found %s at 0x%p with the entry offset at 0x%p", path, elf, elf->e_entry - TASK_BASE_ADDRESS);
 #endif
 
-    if (fdSize % 4096 != 0) // make sure the executable size is divisible by a page
-        fdSize += fdSize - (fdSize % 4096);
+    fdSize = align(fdSize, 4096); // align to next page
 
     void *buffer = pmmPages(fdSize / VMM_PAGE); // allocate the buffer for the sections
 

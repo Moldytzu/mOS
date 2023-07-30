@@ -15,6 +15,7 @@
 #define between(a, b, c) (((uint64_t)(a) >= (uint64_t)(b)) && ((uint64_t)(a) <= (uint64_t)(c)))
 #define pstruct typedef struct __attribute__((__packed__))
 #define align_addr(al) __attribute__((aligned(al)))
+#define align(x, alignment) (((uint64_t)x % alignment == 0) ? (typeof(x))(x) : (typeof(x))((uint64_t)x + (alignment - ((uint64_t)x % alignment)))) // what the fuck?
 
 #ifdef K_SMP
 #define lock(l, cmds)      \
