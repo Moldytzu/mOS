@@ -67,8 +67,6 @@ void idtInit(uint16_t procID)
 
     // initialise allocated vectors
     zero(allocatedVector, sizeof(allocatedVector));
-    for (int i = 0; i <= 0x21; i++)
-        allocatedVector[i] = true;
 
     logInfo("idt: loaded size %d", idtr.size);
 }
@@ -138,9 +136,7 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
         {
             char *str = pmmPage();
 
-            // construct a string based on the format "crash %s", name
-            memcpy(str, "crash ", 6);
-            memcpy(str + 6, name, strlen(name));
+            sprintf(str, "crash %s", name); // todo: also pass the address and other information
 
             sockAppend(initSocket, str, strlen(str)); // announce that the application has crashed
 
@@ -149,11 +145,14 @@ void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
 
         schedKill(schedGetCurrent(smpID())->id); // terminate the task
 
+        // HACK: enable interrupts and wait for a context switch
         sti();        // enable interrupts
         return hlt(); // force a reschedule
     }
 
-    framebufferClear(0);
+    xapicNMI(); // send nmi to all application processors
+
+    framebufferZero(); // clear the framebuffer
 
     const char *message = to_hstring(int_num);
 
@@ -187,6 +186,9 @@ void idtFreeVector(uint8_t vector)
 {
     if (vector < 0x22 || vector > 0xFF)
         return;
+
+    // fixme: we don't check if the driver owns that vector
+    // we would probably want to do that but it's not a big security issue
 
     allocatedVector[vector] = false;
 }
