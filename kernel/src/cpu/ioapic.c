@@ -43,14 +43,14 @@ uint16_t interruptOverridesIdx = 0;
 
 void ioapicWrite(uint8_t offset, uint32_t value)
 {
-    *(uint32_t *)ioapicBase = offset;                   // register selector
-    *(uint32_t *)((uint64_t)ioapicBase + 0x10) = value; // write actual data
+    *(volatile uint32_t *)ioapicBase = offset;                   // register selector
+    *(volatile uint32_t *)((uint64_t)ioapicBase + 0x10) = value; // write actual data
 }
 
 uint32_t ioapicRead(uint8_t offset)
 {
-    *(uint32_t *)ioapicBase = offset;                  // register selector
-    return *(uint32_t *)((uint64_t)ioapicBase + 0x10); // read data
+    *(volatile uint32_t *)ioapicBase = offset;                  // register selector
+    return *(volatile uint32_t *)((uint64_t)ioapicBase + 0x10); // read data
 }
 
 void ioapicRedirectIRQ(uint8_t irq, uint16_t vector, uint16_t core)

@@ -46,12 +46,12 @@ void xapicHandleTimer(idt_intrerrupt_stack_t *stack)
 
 void xapicWrite(uint64_t offset, uint32_t value)
 {
-    *((uint32_t *)((uint8_t *)XAPIC_BASE + offset)) = value;
+    *((volatile uint32_t *)((uint8_t *)XAPIC_BASE + offset)) = value;
 }
 
 uint32_t xapicRead(uint64_t offset)
 {
-    return *((uint32_t *)((uint8_t *)XAPIC_BASE + offset));
+    return *((volatile uint32_t *)((uint8_t *)XAPIC_BASE + offset));
 }
 
 void xapicEOI()
