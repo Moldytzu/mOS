@@ -9,6 +9,7 @@ struct vt_terminal
 {
     uint32_t id;          // ID
     const char *buffer;   // pointer to the terminal buffer
+    uint16_t bufferPages; // currently allocated pages
     uint16_t bufferIdx;   // current index in the buffer
     char *kbBuffer;       // pointer to the keyboard buffer
     uint16_t kbBufferIdx; // current index in the keyboard buffer

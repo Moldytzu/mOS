@@ -26,6 +26,7 @@ struct vt_terminal *vtCreate()
     currentTerminal->buffer = pmmPage();   // allocate the character buffer
     currentTerminal->kbBuffer = pmmPage(); // allocate the keyboard buffer
     currentTerminal->id = lastID++;        // set the ID
+    currentTerminal->bufferPages = 1;
 
 #ifdef K_VT_DEBUG
     logDbg(LOG_SERIAL_ONLY, "vt: creating new terminal with ID %d", currentTerminal->id);
@@ -41,12 +42,15 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
         return;
 
     lock(vt->lock, {
-        char *buffer = (char *)vt->buffer;     // vt buffer
-        const char *input = str;               // input buffer
-        if (vt->bufferIdx + count >= VMM_PAGE) // check if we could overflow (todo: reallocate)
+        char *buffer = (char *)vt->buffer; // vt buffer
+        const char *input = str;           // input buffer
+
+        if (vt->bufferIdx + count >= VMM_PAGE * vt->bufferPages) // reallocate if we overflow
         {
-            memsetPage((void *)vt->buffer, 0, 1); // clear the buffer
-            vt->bufferIdx = 0;                    // reset the index
+            vt->buffer = pmmReallocate((void *)vt->buffer, vt->bufferPages, ++vt->bufferPages); // do the actual reallocation
+            buffer = (char *)vt->buffer;                                                        // repoint the buffer
+
+            logDbg(LOG_SERIAL_ONLY, "vt: reallocating buffer of id %d to %d pages", vt->id, vt->bufferPages);
         }
 
         for (size_t i = 0; i < count; i++) // copy the buffer
@@ -146,7 +150,7 @@ void vtDestroy(struct vt_terminal *vt)
     if (vt->previous)
         vt->previous->next = vt->next; // bypass this node (if we can)
 
-    pmmDeallocate((void *)vt->buffer);   // deallocate the buffer
-    pmmDeallocate((void *)vt->kbBuffer); // deallocate the buffer
-    blkDeallocate(vt);                   // free the terminal
+    pmmDeallocatePages((void *)vt->buffer, vt->bufferPages); // deallocate the buffer
+    pmmDeallocate((void *)vt->kbBuffer);                     // deallocate the keyboard buffer
+    blkDeallocate(vt);                                       // free the terminal
 }
