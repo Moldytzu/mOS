@@ -13,10 +13,10 @@ size_t count(const char *str, char c)
 }
 
 // vfs (rsi = call, rdx = arg1, r8 = retVal)
-void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_t *task)
+uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_t *task)
 {
     if (!IS_MAPPED(retVal)) // prevent crashing
-        return;
+        return SYSCALL_STATUS_ERROR;
 
     struct vfs_node_t *currentNode;
     uint64_t *retAddr = PHYSICAL(retVal);
@@ -28,20 +28,21 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
         if (!IS_MAPPED(arg1))
         {
             *retAddr = 0;
-            return;
+            return SYSCALL_STATUS_ERROR;
         }
 
         uint64_t fd = vfsOpen(PHYSICAL(arg1)); // open
         *retAddr = fd > 0;                     // if the fd is valid then the file exists
         vfsClose(fd);                          // close
-        break;
+        return SYSCALL_STATUS_OK;
     }
+
     case 1: // directory path exists
     {
         if (!IS_MAPPED(arg1))
         {
             *retAddr = 0;
-            return;
+            return SYSCALL_STATUS_ERROR;
         }
 
         const char *target = PHYSICAL(arg1); // target directory
@@ -58,7 +59,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             if (strcmp(target, fullPath) == 0) // compare full paths
             {
                 *retAddr = true; // found it
-                return;
+                return SYSCALL_STATUS_OK;
             }
 
         next:
@@ -67,14 +68,15 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
 
         *retAddr = false; // doesn't exist
 
-        break;
+        return SYSCALL_STATUS_ERROR;
     }
+
     case 2: // list directory
     {
         if (!IS_MAPPED(arg1))
         {
             *retAddr = 0;
-            return;
+            return SYSCALL_STATUS_ERROR;
         }
 
         const char *target = PHYSICAL(arg1); // target directory to list
@@ -85,7 +87,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
         logDbg(LOG_SERIAL_ONLY, "vfs: listing directory for %s", target);
 
         if (strlen(target) < 1) // invalid path
-            break;
+            return SYSCALL_STATUS_ERROR;
 
         currentNode = vfsNodes();
         do
@@ -108,7 +110,7 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             if (listFile && strcmp(target, fullPath) == 0) // check for identical comparison when listing a file
             {
                 memcpy(retChar, currentNode->path, strlen(currentNode->path)); // copy the path
-                return;
+                return SYSCALL_STATUS_OK;
             }
 
             if (sameStart && sameDepth)
@@ -123,14 +125,16 @@ void vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_
             currentNode = currentNode->next; // next node
         } while (currentNode);
 
-        break;
+        return SYSCALL_STATUS_OK;
     }
+
     case 3: // size of descriptor
     {
         *retAddr = vfsSize(FD_TO_NODE(arg1));
-        break;
+        return SYSCALL_STATUS_OK;
     }
+
     default:
-        break;
+        return SYSCALL_STATUS_UNKNOWN_OPERATION;
     }
 }

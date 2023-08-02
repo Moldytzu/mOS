@@ -14,17 +14,17 @@ pstruct
 sys_exec_packet_t;
 
 // exec (rsi = path, rdx = pid, r8 = packet)
-void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_t *task)
+uint64_t exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_t *task)
 {
     if (!IS_MAPPED(path) || !IS_MAPPED(pid) || !IS_MAPPED(packet)) // prevent a crash
-        return;
+        return SYSCALL_STATUS_ERROR;
 
     uint64_t *ret = PHYSICAL(pid);
     sys_exec_packet_t *input = PHYSICAL(packet);
     uint64_t fd = openRelativePath(PHYSICAL(path), task); // expand the path
 
     if (!fd)
-        return;
+        return SYSCALL_STATUS_ACCESS_DENIED;
 
     // convert virtual addresses to physical addresses
     if (input->argc && IS_MAPPED(input->argv))
@@ -52,4 +52,6 @@ void exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_
 
     if (input->cwd)
         memcpy(newTask->cwd, PHYSICAL(input->cwd), strlen(PHYSICAL(input->cwd)) + 1); // copy the initial working directory
+
+    return SYSCALL_STATUS_OK;
 }

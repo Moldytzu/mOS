@@ -6,20 +6,20 @@
 #define RESERVED_PAGES 8
 
 // mem (rsi = call, rdx = arg1, r8 = arg2)
-void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t *task)
+uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t *task)
 {
     switch (call)
     {
-    case 0:                      // mem allocate
+    case 0:                   // mem allocate
         if (!IS_MAPPED(arg1)) // prevent crashing
-            return;
+            return SYSCALL_STATUS_ERROR;
 
         size_t pages = arg2; // pages to allocate
         if (!pages)
             pages = 1;
 
-        if(pmmTotal().available < (pages + RESERVED_PAGES) * 4096) // let some memory free so we don't crash
-            return;
+        if (pmmTotal().available < (pages + RESERVED_PAGES) * 4096) // let some memory free so we don't crash
+            return SYSCALL_STATUS_ACCESS_DENIED;
 
         void *page = pmmPages(pages); // allocate the pages
 
@@ -42,9 +42,10 @@ void mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t 
 
         // store addresses so we can clean up later
         for (int i = 0; i < pages; i++)
-            task->allocated[task->allocatedIndex++] = (void *)((uint64_t)page + i * 4096); 
-        break;
+            task->allocated[task->allocatedIndex++] = (void *)((uint64_t)page + i * 4096);
+
+        return SYSCALL_STATUS_OK;
     default:
-        break;
+        return SYSCALL_STATUS_UNKNOWN_OPERATION;
     }
 }
