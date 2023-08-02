@@ -152,6 +152,8 @@ int main(int argc, char **argv)
     if (verbose)
         printf("Startup finished in %dms (kernel) + %dms (userspace) = %dms\n", kernelStartupTime, userspaceStartupTime - kernelStartupTime, userspaceStartupTime);
 
+    printf("status: %d", _syscall(0x100, 0, 0, 0, 0, 0));
+
     while (1)
     {
         // launch the shell

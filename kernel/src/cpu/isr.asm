@@ -20,6 +20,44 @@ bits 64
     push rax
 %endmacro
 
+%macro PUSH_REG_SYSCALL 0
+    push r15
+    push r14
+    push r13
+    push r12
+    push r11
+    push r10
+    push r9
+    push r8
+    push rbp
+    push rdi
+    push rsi
+    push rdx
+    push rcx
+    push rbx
+    mov r11, cr3 ; use a scratch register to push cr3 (page table address)
+    push r11
+%endmacro
+
+%macro POP_REG_SYSCALL 0
+    pop r11 ; use the same scratch register to pop cr3
+    mov cr3, r11
+    pop rbx
+    pop rcx
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rbp
+    pop r8
+    pop r9
+    pop r10
+    pop r11
+    pop r12
+    pop r13
+    pop r14
+    pop r15
+%endmacro
+
 %macro POP_REG 0
     pop rax
     mov cr3, rax
@@ -63,14 +101,11 @@ GEN_HANDLER i
 %assign i i+1
 %endrep
 
-syscallHandlerEntry:
-    cld                 ; clear direction flag as the sysv abi mandates
-    push rax            ; push an arbitrary error code
-    PUSH_REG            ; save old registers
+syscallHandlerEntry:    ; we start with flags cleared because of FMASK set in cpu/userspace.asm
+    PUSH_REG_SYSCALL    ; save old registers
     mov rdi, rsp        ; point to the stack frame
     call syscallHandler ; call the syscall handler
-    POP_REG             ; restore registers
-    pop rax             ; pop the error code from earlier
+    POP_REG_SYSCALL     ; restore registers
     o64 sysret          ; return to userspace
 
 lapicEntry:
