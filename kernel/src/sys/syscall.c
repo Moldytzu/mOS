@@ -26,8 +26,10 @@ uint64_t openRelativePath(const char *path, sched_task_t *task)
 
     if (vfsExists(buffer)) // check if it exists
     {
-        pmmDeallocate(buffer);  // do clean up
-        return vfsOpen(buffer); // and return the file descriptor
+        uint64_t node = vfsOpen(buffer);
+
+        pmmDeallocate(buffer); // do clean up
+        return node;           // return the node
     }
 
     // fail
