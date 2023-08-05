@@ -21,41 +21,23 @@ bits 64
 %endmacro
 
 %macro PUSH_REG_SYSCALL 0
-    push r15
-    push r14
-    push r13
-    push r12
+    ; save registers used by syscall instruction
     push r11
-    push r10
-    push r9
-    push r8
-    push rbp
-    push rdi
-    push rsi
-    push rdx
     push rcx
-    push rbx
+
+    ; save page table
     mov r11, cr3 ; use a scratch register to push cr3 (page table address)
     push r11
 %endmacro
 
 %macro POP_REG_SYSCALL 0
+    ; reload page table
     pop r11 ; use the same scratch register to pop cr3
     mov cr3, r11
-    pop rbx
+    
+    ; load registers used by syscall instruction
     pop rcx
-    pop rdx
-    pop rsi
-    pop rdi
-    pop rbp
-    pop r8
-    pop r9
-    pop r10
     pop r11
-    pop r12
-    pop r13
-    pop r14
-    pop r15
 %endmacro
 
 %macro POP_REG 0
@@ -103,7 +85,6 @@ GEN_HANDLER i
 
 syscallHandlerEntry:    ; we start with flags cleared because of FMASK set in cpu/userspace.asm
     PUSH_REG_SYSCALL    ; save old registers
-    mov rdi, rsp        ; point to the stack frame
     call syscallHandler ; call the syscall handler
     POP_REG_SYSCALL     ; restore registers
     o64 sysret          ; return to userspace

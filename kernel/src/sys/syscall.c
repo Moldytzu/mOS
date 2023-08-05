@@ -43,22 +43,20 @@ void yield()
 }
 
 // handler called on syscall
-uint64_t syscallHandler(syscall_stack_t *registers)
+uint64_t syscallHandler(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t reserved /*rcx register used by syscall instruction*/, uint64_t r8, uint64_t r9)
 {
     vmmSwap(vmmGetBaseTable()); // swap the page table with the base so we can access every piece of memory
 
     sched_task_t *task = schedGetCurrent(smpID()); // get task context from scheduler
 
 #ifdef K_SYSCALL_DEBUG
-    logDbg(LOG_SERIAL_ONLY, "syscall: %s requested %s (0x%x), argument 1 is 0x%x, argument 2 is 0x%x, return address is 0x%p, argument 3 is 0x%x, argument 4 is 0x%x", t->name, syscallNames[registers->rdi], registers->rdi, registers->rsi, registers->rdx, registers->rcx, registers->r8, registers->r9);
+    logDbg(LOG_SERIAL_ONLY, "syscall: %s requested %s (0x%x), argument 1 is 0x%x, argument 2 is 0x%x, argument 3 is 0x%x, argument 4 is 0x%x", task->name, syscallNames[rdi], rdi, rsi, rdx, r8, r9);
 #endif
 
-    if (registers->rdi < (sizeof(syscallHandlers) / sizeof(void *)))                                                // check if the syscall is in range
-        return syscallHandlers[registers->rdi](registers->rsi, registers->rdx, registers->r8, registers->r9, task); // call the handler
+    if (rdi < (sizeof(syscallHandlers) / sizeof(void *)))    // check if the syscall is in range
+        return syscallHandlers[rdi](rsi, rdx, r8, r9, task); // call the handler
     else
         return SYSCALL_STATUS_UNKNOWN_OPERATION;
-
-    return 0;
 }
 
 extern void sysretInit();
