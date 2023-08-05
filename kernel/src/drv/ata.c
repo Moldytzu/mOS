@@ -169,12 +169,6 @@ void ataInit()
     if (!(presentDrives[0] + presentDrives[1]))
         return;
 
-    if (presentDrives[0] && !(driveID[0][83] & 0x400 /*bit 10*/)) // drive doesn't support LBA48 mode
-        presentDrives[0] = false;                                 // mark as non-present because it doesn't support what we want
-
-    if (presentDrives[1] && !(driveID[1][83] & 0x400 /*bit 10*/)) // drive doesn't support LBA48 mode
-        presentDrives[1] = false;                                 // mark as non-present because it doesn't support what we want
-
     if (presentDrives[0])
     {
         size_t sectors = ataSectors(ATA_DRIVE_MASTER);
