@@ -34,9 +34,9 @@ void inputFlush()
     uint32_t idx;
     drvQueryContexts(DRV_TYPE_INPUT, (void *)&inputs, &idx);
 
-    for (size_t i = 0; i < idx; i++)
+    for (uint32_t i = 0; i < idx; i++)
     {
-        for (int j = 0; j < min(strlen(inputs[i].keys), 16); j++)
+        for (uint32_t j = 0; j < min(strlen(inputs[i].keys), 16); j++)
         {
             char c = inputs[i].keys[j];
 
