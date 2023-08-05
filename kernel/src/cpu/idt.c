@@ -104,7 +104,7 @@ extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
 const char *exceptions[] = {
     "Divide By Zero", "Debug", "NMI", "Breakpoint", "Overflow", "Bound Range Exceeded", "Invalid Opcode", "Device Not Available", "Double Fault", "_", "Invalid TSS", "Segment Not Present", "Stack Fault", "General Protection Fault", "Page Fault"};
 
-void exceptionHandler(idt_intrerrupt_stack_t *stack, uint64_t int_num)
+void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
 {
     vmmSwap(vmmGetBaseTable()); // swap to the base table
 

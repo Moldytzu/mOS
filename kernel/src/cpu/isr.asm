@@ -1,25 +1,5 @@
 bits 64
 
-%macro PUSH_REG 0
-    push r15
-    push r14
-    push r13
-    push r12
-    push r11
-    push r10
-    push r9
-    push r8
-    push rbp
-    push rdi
-    push rsi
-    push rdx
-    push rcx
-    push rbx
-    push rax
-    mov rax, cr3
-    push rax
-%endmacro
-
 %macro PUSH_REG_SYSCALL 0
     ; save registers used by syscall instruction
     push r11
@@ -38,6 +18,26 @@ bits 64
     ; load registers used by syscall instruction
     pop rcx
     pop r11
+%endmacro
+
+%macro PUSH_REG 0
+    push r15
+    push r14
+    push r13
+    push r12
+    push r11
+    push r10
+    push r9
+    push r8
+    push rbp
+    push rdi
+    push rsi
+    push rdx
+    push rcx
+    push rbx
+    push rax
+    mov rax, cr3
+    push rax
 %endmacro
 
 %macro POP_REG 0
@@ -90,14 +90,11 @@ syscallHandlerEntry:    ; we start with flags cleared because of FMASK set in cp
     o64 sysret          ; return to userspace
 
 lapicEntry:
-    cld                   ; clear direction flag as the sysv abi mandates
     cli                   ; disable intrerrupts
-    push rax              ; push an arbitrary error code
     PUSH_REG              ; save all general purpose registers + cr3
     mov rdi, rsp          ; pass the stack frame
     call xapicHandleTimer ; handle the timer
     POP_REG               ; restore registers
-    pop rax               ; pop the error code from earlier
     iretq                 ; return to context
 
 section .data
