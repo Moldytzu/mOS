@@ -11,9 +11,11 @@ void pcieEnumerateECAM(acpi_mcfg_t *mcfg)
     if (!mcfg)
         return;
 
-    pcieFunctions = pmmPage();
+        // todo: unmap pages for invalid functions/devices/buses (while deallocating the unnecessary tables in the kernel page table)
 
 #ifdef K_PCIE
+    pcieFunctions = pmmPage();
+
     size_t entries = (mcfg->header.length - sizeof(acpi_mcfg_t)) / sizeof(acpi_pci_config_t);
     for (int i = 0; i < entries; i++)
     {
