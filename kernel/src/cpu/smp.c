@@ -13,8 +13,7 @@
 #include <sched/scheduler.h>
 #include <misc/logger.h>
 
-bool smpJump;
-bool smpReady[K_MAX_CORES];
+bool smpJump = false;
 
 uint8_t smpCores()
 {
@@ -38,9 +37,6 @@ void cpuStart(struct limine_smp_info *cpu)
     gdtInstall(smpID());
     idtInstall(smpID());
     vmmSwap(vmmGetBaseTable());
-
-    // we're ready
-    smpReady[smpID()] = true;
 
     // spinlock until we're ready to jump in userspace
     while (!smpJump)
@@ -88,13 +84,6 @@ void smpBootstrap()
             continue;
 
         atomicWrite((void *)&cpu->goto_address, (uint64_t)cpuStart);
-    }
-
-    // wait for the cpus to be ready
-    for (int i = 1; i < smp->cpu_count; i++)
-    {
-        while (!smpReady[i])
-            pause();
     }
 
     logInfo("smp: started %d cores", smp->cpu_count - 1);
