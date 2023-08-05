@@ -42,16 +42,10 @@ void cpuStart(struct limine_smp_info *cpu)
     while (!smpJump)
         pause();
 
-    tlbFlushAll();
+    xapicInit(false); // initialise the xapic in application core mode
+    syscallInit();    // enable system calls
 
-    xapicInit(false);
-    syscallInit(); // enable system calls
-
-    tlbFlushAll();
-
-    schedEnable();
-
-    hang();
+    schedEnable(); // jump in userspace
 }
 
 void smpBootstrap()
@@ -73,9 +67,8 @@ void smpBootstrap()
         return;
     }
 
-    smpJump = false;
-
     logInfo("smp: ready to start the other cores");
+
     for (size_t i = 0; i < smp->cpu_count; i++)
     {
         struct limine_smp_info *cpu = smp->cpus[i];
