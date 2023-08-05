@@ -49,19 +49,19 @@ uint64_t *sys_driver_announce(uint64_t type)
     return (uint64_t *)address;                                   // return the pointer to the struct
 }
 
-void sys_driver_flush(uint64_t type)
+uint64_t sys_driver_flush(uint64_t type)
 {
-    sys_driver(SYS_DRIVER_FLUSH, type, 0, 0); // flush the context for that type
+    return sys_driver(SYS_DRIVER_FLUSH, type, 0, 0); // flush the context for that type
 }
 
-void sys_idt_set(void *handler, uint64_t vector)
+uint64_t sys_idt_set(void *handler, uint64_t vector)
 {
-    sys_driver(SYS_DRIVER_IDT_SET, (uint64_t)handler, vector, 0);
+    return sys_driver(SYS_DRIVER_IDT_SET, (uint64_t)handler, vector, 0);
 }
 
-void sys_idt_reset(uint64_t vector)
+uint64_t sys_idt_reset(uint64_t vector)
 {
-    sys_driver(SYS_DRIVER_IDT_RESET, vector, 0, 0);
+    return sys_driver(SYS_DRIVER_IDT_RESET, vector, 0, 0);
 }
 
 uint64_t sys_driver_start(char *path)
@@ -78,9 +78,9 @@ drv_pci_header_t *sys_pci_get(uint32_t vendor, uint32_t device)
     return (drv_pci_header_t *)header;
 }
 
-void sys_identity_map(void *address)
+uint64_t sys_identity_map(void *address)
 {
-    sys_driver(SYS_DRIVER_IDENTITY_MAP, (uint64_t)address, 0, 0);
+    return sys_driver(SYS_DRIVER_IDENTITY_MAP, (uint64_t)address, 0, 0);
 }
 
 void serialWritec(char c)
@@ -95,7 +95,7 @@ uint8_t sys_driver_allocate_vector()
     return vector;
 }
 
-void sys_driver_deallocate_vector(uint8_t vector)
+uint64_t sys_driver_deallocate_vector(uint8_t vector)
 {
-    sys_driver(SYS_DRIVER_DEALLOCATE_VECTOR, vector, 0, 0);
+    return sys_driver(SYS_DRIVER_DEALLOCATE_VECTOR, vector, 0, 0);
 }
