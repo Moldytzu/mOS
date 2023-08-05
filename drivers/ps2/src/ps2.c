@@ -33,6 +33,9 @@
 // constants
 #define PS2_TIMEOUT_YIELDS 3
 
+// macro functions
+#define RELEASED(x) (x + 0x80)
+
 // translation table for the scan code set 1
 char scanCodeSet1[] = "\e1234567890-=\b\tqwertyuiop[]\n\0asdfghjkl;'`\0\\zxcvbnm,./\0*\0 ";
 char scanCodeSet1Shifted[] = "\e!@#$%^&*()_+\b\tQWERTYUIOP{}\n\0ASDFGHJKL:\"~\0|ZXCVBNM<>?\0*\0 ";
@@ -142,7 +145,7 @@ void kbHandle(uint8_t scancode)
     if (i == 15) // filled buffer
         return;  // drop key
 
-    if (scancode == 0x3A + 0x80) // caps lock released
+    if (scancode == RELEASED(0x3A)) // caps lock released
     {
         isShifted = !isShifted;
         return;
@@ -154,7 +157,7 @@ void kbHandle(uint8_t scancode)
         return;
     }
 
-    if (scancode == 0x2A + 0x80 || scancode == 0x36 + 0x80) // left+right shift released
+    if (scancode == RELEASED(0x2A) || scancode == RELEASED(0x36)) // left+right shift released
     {
         isShifted = false;
         return;
