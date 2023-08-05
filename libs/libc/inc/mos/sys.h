@@ -70,11 +70,11 @@ extern uint64_t _syscall(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t rcx,
 void sys_exit(uint64_t status);
 uint64_t sys_write(void *buffer, uint64_t count, uint64_t fd);
 uint64_t sys_read(void *buffer, uint64_t count, uint64_t fd);
-uint64_t sys_input(uint8_t deviceType, char *returnPtr);
+uint64_t sys_input(uint8_t deviceType);
 uint64_t sys_display(uint8_t call, uint64_t arg1, uint64_t arg2);
 uint64_t sys_exec(const char *path, uint64_t *pid, sys_exec_packet_t *packet);
 
-uint64_t sys_pid(uint32_t pid, uint16_t info, uint64_t *retVal);
+uint64_t sys_pid(uint64_t pid, uint64_t call, uint64_t arg1, uint64_t arg2);
 uint64_t sys_pid_get();
 
 uint64_t sys_time(uint8_t call, uint64_t arg1, uint64_t arg2);

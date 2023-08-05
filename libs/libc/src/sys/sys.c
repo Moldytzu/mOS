@@ -15,9 +15,9 @@ uint64_t sys_read(void *buffer, uint64_t count, uint64_t fd)
     return _syscall(SYS_READ, (uint64_t)buffer, count, fd, 0, 0);
 }
 
-uint64_t sys_input(uint8_t deviceType, char *returnPtr)
+uint64_t sys_input(uint8_t deviceType)
 {
-    return _syscall(SYS_INPUT, deviceType, (uint64_t)returnPtr, 0, 0, 0);
+    return _syscall(SYS_INPUT, deviceType, 0, 0, 0, 0);
 }
 
 uint64_t sys_display(uint8_t call, uint64_t arg1, uint64_t arg2)
@@ -30,9 +30,9 @@ uint64_t sys_exec(const char *path, uint64_t *pid, sys_exec_packet_t *packet)
     return _syscall(SYS_EXEC, (uint64_t)path, (uint64_t)pid, (uint64_t)packet, 0, 0);
 }
 
-uint64_t sys_pid(uint32_t pid, uint16_t info, uint64_t *retVal)
+uint64_t sys_pid(uint64_t pid, uint64_t call, uint64_t arg1, uint64_t arg2)
 {
-    return _syscall(SYS_PID, pid, info, (uint64_t)retVal, 0, 0);
+    return _syscall(SYS_PID, pid, call, arg1, arg2, 0);
 }
 
 uint64_t sys_mem(uint8_t call, uint64_t arg1, uint64_t arg2)
@@ -47,9 +47,7 @@ uint64_t sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2)
 
 uint64_t sys_open(const char *path)
 {
-    uint64_t fd;
-    _syscall(SYS_OPEN, (uint64_t)&fd, (uint64_t)path, 0, 0, 0);
-    return fd;
+    return _syscall(SYS_OPEN, (uint64_t)path, 0, 0, 0, 0);
 }
 
 uint64_t sys_close(uint64_t fd)
@@ -74,9 +72,7 @@ uint64_t sys_time(uint8_t call, uint64_t arg1, uint64_t arg2)
 
 uint64_t sys_time_uptime_nanos()
 {
-    uint64_t nanos;
-    sys_time(SYS_TIME_GET_UPTIME_NANOS, (uint64_t)&nanos, 0);
-    return nanos;
+    return sys_time(SYS_TIME_GET_UPTIME_NANOS, 0, 0);
 }
 
 uint64_t sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3)
@@ -91,9 +87,7 @@ void sys_yield()
 
 uint64_t sys_pid_get()
 {
-    uint64_t pid;
-    sys_pid(0, SYS_PID_GET, &pid);
-    return pid;
+    return sys_pid(0, SYS_PID_GET, 0, 0);
 }
 
 uint64_t sys_perf(uint8_t call, uint64_t arg1, uint64_t arg2)

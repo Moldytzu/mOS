@@ -12,12 +12,8 @@ uint64_t socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sche
 
     switch (call)
     {
-    case 0: // socket create
-        if (!arg1Ptr)
-            return SYSCALL_STATUS_ERROR;
-
-        *arg1Ptr = sockCreate()->id; // create a new socket then return it's id
-        return SYSCALL_STATUS_OK;
+    case 0:                      // socket create
+        return sockCreate()->id; // create a new socket then return it's id
 
     case 1: // socket write
         s = sockGet(arg1);

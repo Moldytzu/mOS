@@ -80,8 +80,7 @@ void handleInput(const char *buffer)
         if (cwdBuffer[strlen(cwdBuffer) - 1] != '/') // append the delimiter if it doesn't exist
             cwdBuffer[strlen(cwdBuffer)] = '/';
 
-        uint64_t status;
-        sys_vfs(SYS_VFS_DIRECTORY_EXISTS, (uint64_t)cwdBuffer, (uint64_t)&status); // check if the directory exists
+        uint64_t status = sys_vfs(SYS_VFS_DIRECTORY_EXISTS, (uint64_t)cwdBuffer, 0); // check if the directory exists
 
         if (!status)
         {
@@ -91,7 +90,7 @@ void handleInput(const char *buffer)
             return;
         }
 
-        sys_pid(pid, SYS_PID_SET_CWD, (uint64_t *)cwdBuffer); // set the current working directory buffer
+        sys_pid(pid, SYS_PID_SET_CWD, (uint64_t)cwdBuffer, 0); // set the current working directory buffer
         return;
     }
 
@@ -136,9 +135,9 @@ execute:
     uint64_t status;
     do
     {
-        sys_pid(newPid, SYS_PID_STATUS, &status); // get the status of the pid
-        sys_yield();                              // don't waste cpu time
-    } while (status == 0);                        // wait for the pid to be stopped
+        status = sys_pid(newPid, SYS_PID_STATUS, 0, 0); // get the status of the pid
+        sys_yield();                                    // don't waste cpu time
+    } while (status == 0);                              // wait for the pid to be stopped
 }
 
 int main(int argc, char **argv)
@@ -163,10 +162,10 @@ int main(int argc, char **argv)
     assert(cwdBuffer != NULL); // assert that the buffer is valid
 
     pid = sys_pid_get();
-    sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t *)enviroment); // get the enviroment
+    sys_pid(pid, SYS_PID_GET_ENVIROMENT, (uint64_t)enviroment, 0); // get the enviroment
 
     if (argc >= 2)
-        sys_pid(pid, SYS_PID_SET_CWD, (uint64_t *)argv[1]); // set the current working directory to the argument
+        sys_pid(pid, SYS_PID_SET_CWD, (uint64_t)argv[1], 0); // set the current working directory to the argument
 
     // allocate the arguments buffers
     for (int i = 0; i < MAX_ARGUMENTS; i++)
@@ -197,8 +196,8 @@ int main(int argc, char **argv)
     // main loop
     while (1)
     {
-        sys_pid(pid, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
-        memset(kBuffer, 0, 4096);                             // clear the buffer
+        sys_pid(pid, SYS_PID_GET_CWD, (uint64_t)cwdBuffer, 0); // get the current working directory buffer
+        memset(kBuffer, 0, 4096);                              // clear the buffer
 
         char chr;
 
@@ -207,7 +206,7 @@ int main(int argc, char **argv)
         // read in the buffer
         do
         {
-            sys_input(SYS_INPUT_KEYBOARD, &chr); // read a character off the keyboard buffer
+            chr = sys_input(SYS_INPUT_KEYBOARD); // read a character off the keyboard buffer
 
             if (chr == '\b') // handle backspace
             {

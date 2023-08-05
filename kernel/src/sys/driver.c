@@ -40,16 +40,10 @@ uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sche
             return SYSCALL_STATUS_ERROR;
 
     case 1: // driver announce
-        if (!IS_MAPPED(arg2))
-            return SYSCALL_STATUS_ERROR;
 
-        uint64_t *ret = PHYSICAL(arg2);
-
-        *ret = (uint64_t)drvRegister(task->id, arg1);
-
-        vmmMap(task->pageTable, (void *)*ret, (void *)*ret, VMM_ENTRY_RW | VMM_ENTRY_USER); // map address
-
-        return SYSCALL_STATUS_OK;
+        void *ctx = drvRegister(task->id, arg1);                          // register context
+        vmmMap(task->pageTable, ctx, ctx, VMM_ENTRY_RW | VMM_ENTRY_USER); // map its address
+        return (uint64_t)ctx;                                             // give it to the driver
 
     case 2:           // flush struct updates
         switch (arg1) // type
@@ -87,16 +81,9 @@ uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sche
         return SYSCALL_STATUS_OK;
     }
     case 5: // get pci header
-        if (!IS_MAPPED(arg1))
-            return SYSCALL_STATUS_ERROR;
-
-        pcie_ecam_header_t **header = (pcie_ecam_header_t **)PHYSICAL(arg1);
 
         if (!pcieIsPresent()) // check for pcie availability
-        {
-            *header = NULL;
             return SYSCALL_STATUS_ERROR;
-        }
 
         pcie_function_descriptor_t *functions = pcieDescriptors();
         size_t num = pcieCountDescriptors();
@@ -107,14 +94,13 @@ uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sche
             if (!functions[i].header)
                 continue;
 
-            if (functions[i].header->vendor == arg2 && functions[i].header->device == arg3) // check it
+            if (functions[i].header->vendor == arg1 && functions[i].header->device == arg2) // check it
             {
                 // map it
                 vmmMapKernel(functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
                 vmmMap((void *)task->pageTable, functions[i].header, functions[i].header, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
 
-                *header = functions[i].header; // pass the header
-                return SYSCALL_STATUS_OK;
+                return (uint64_t)functions[i].header; // return the address
             }
         }
 
@@ -132,12 +118,7 @@ uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sche
         return SYSCALL_STATUS_OK;
 
     case 8: // allocate vector
-        if (!IS_MAPPED(arg1))
-            return SYSCALL_STATUS_ERROR;
-
-        uint64_t *retVal = (uint64_t *)arg1;
-        *retVal = idtAllocateVector();
-        return SYSCALL_STATUS_OK;
+        return idtAllocateVector();
 
     case 9: // deallocate vector
         idtFreeVector(arg1);

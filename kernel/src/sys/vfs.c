@@ -15,9 +15,6 @@ size_t count(const char *str, char c)
 // vfs (rsi = call, rdx = arg1, r8 = retVal)
 uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_t *task)
 {
-    if (!IS_MAPPED(retVal)) // prevent crashing
-        return SYSCALL_STATUS_ERROR;
-
     struct vfs_node_t *currentNode;
     uint64_t *retAddr = PHYSICAL(retVal);
 
@@ -25,7 +22,7 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_t
     {
     case 0: // file path exists
     {
-        if (!IS_MAPPED(arg1))
+        if (!IS_MAPPED(arg1) || !retAddr)
         {
             *retAddr = 0;
             return SYSCALL_STATUS_ERROR;
@@ -40,10 +37,7 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_t
     case 1: // directory path exists
     {
         if (!IS_MAPPED(arg1))
-        {
-            *retAddr = 0;
-            return SYSCALL_STATUS_ERROR;
-        }
+            return false;
 
         const char *target = PHYSICAL(arg1); // target directory
         char fullPath[512];                  // full path of node
@@ -57,23 +51,18 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_t
             vfsGetPath((uint64_t)currentNode, fullPath);
 
             if (strcmp(target, fullPath) == 0) // compare full paths
-            {
-                *retAddr = true; // found it
-                return SYSCALL_STATUS_OK;
-            }
+                return true;
 
         next:
             currentNode = currentNode->next; // next node
         } while (currentNode);
 
-        *retAddr = false; // doesn't exist
-
-        return SYSCALL_STATUS_ERROR;
+        return false;
     }
 
     case 2: // list directory
     {
-        if (!IS_MAPPED(arg1))
+        if (!IS_MAPPED(arg1) || !retAddr)
         {
             *retAddr = 0;
             return SYSCALL_STATUS_ERROR;
@@ -130,8 +119,7 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_t
 
     case 3: // size of descriptor
     {
-        *retAddr = vfsSize(FD_TO_NODE(arg1));
-        return SYSCALL_STATUS_OK;
+        return vfsSize(FD_TO_NODE(arg1));
     }
 
     default:

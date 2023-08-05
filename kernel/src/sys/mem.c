@@ -10,16 +10,16 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_tas
 {
     switch (call)
     {
-    case 0:                   // mem allocate
-        if (!IS_MAPPED(arg1)) // prevent crashing
-            return SYSCALL_STATUS_ERROR;
+    case 0: // mem allocate
 
-        size_t pages = arg2; // pages to allocate
+        // todo: clean this up (maybe make it not allocate contiguous pages for performance purposes?)
+
+        size_t pages = arg1; // pages to allocate
         if (!pages)
             pages = 1;
 
         if (pmmTotal().available < (pages + RESERVED_PAGES) * 4096) // let some memory free so we don't crash
-            return SYSCALL_STATUS_ACCESS_DENIED;
+            return 0;
 
         void *page = pmmPages(pages); // allocate the pages
 
@@ -27,8 +27,8 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_tas
         for (int i = 0; i < pages; i++)
             vmmMap((void *)task->pageTable, (void *)(task->lastVirtualAddress + i * 4096), (void *)((uint64_t)page + i * 4096), VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-        *(uint64_t *)PHYSICAL(arg1) = task->lastVirtualAddress; // give the application the virtual address
-        task->lastVirtualAddress += 4096 * pages;               // increment the last virtual address
+        size_t virtualAddress = task->lastVirtualAddress; // give the application the virtual address
+        task->lastVirtualAddress += 4096 * pages;         // increment the last virtual address
 
         size_t addresses = ADDRESSES_IN_PAGES(task->allocatedBufferPages); // addresses we can store
 
@@ -44,7 +44,7 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_tas
         for (int i = 0; i < pages; i++)
             task->allocated[task->allocatedIndex++] = (void *)((uint64_t)page + i * 4096);
 
-        return SYSCALL_STATUS_OK;
+        return virtualAddress;
     default:
         return SYSCALL_STATUS_UNKNOWN_OPERATION;
     }

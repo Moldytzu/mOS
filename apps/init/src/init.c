@@ -30,7 +30,7 @@ void parseCFG()
     fd = sys_open("/init/init.cfg"); // open the file
     assert(fd != 0);
 
-    sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
+    size = sys_vfs(SYS_VFS_FILE_SIZE, fd, 0); // get the size
     assert(size != 0);
 
     sys_read(buffer, min(size, 4096), fd); // read the file
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     parseCFG();
 
     // create a socket for ipc
-    sys_socket(SYS_SOCKET_CREATE, (uint64_t)&sockID, 0, 0);
+    sockID = sys_socket(SYS_SOCKET_CREATE, 0, 0, 0);
 
     assert(sockID != 0); // assert that the socket is valid
 
@@ -151,8 +151,6 @@ int main(int argc, char **argv)
 
     if (verbose)
         printf("Startup finished in %dms (kernel) + %dms (userspace) = %dms\n", kernelStartupTime, userspaceStartupTime - kernelStartupTime, userspaceStartupTime);
-
-    printf("status: %d", _syscall(0x100, 0, 0, 0, 0, 0));
 
     while (1)
     {
@@ -168,8 +166,8 @@ int main(int argc, char **argv)
         {
             handleSocket(); // handle the socket
 
-            sys_pid(pid, SYS_PID_STATUS, &status); // get the status of the pid
-        } while (status == 0);                     // wait for the pid to be stopped
+            status = sys_pid(pid, SYS_PID_STATUS, 0, 0); // get the status of the pid
+        } while (status == 0);                           // wait for the pid to be stopped
 
         if (verbose)
             puts("The shell has stopped. Relaunching it.\n");

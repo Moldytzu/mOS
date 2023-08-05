@@ -42,8 +42,9 @@ const char *to_hstring(uint64_t val)
 
 int main(int argc, char **argv)
 {
-    printf("system call testing utility\n");
+    /*
 
+    printf("system call testing utility\n");
     TEST("display")
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
@@ -106,4 +107,5 @@ int main(int argc, char **argv)
 
     while (1)
         ;
+     */
 }

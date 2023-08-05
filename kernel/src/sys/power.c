@@ -16,8 +16,7 @@ uint64_t power(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_t
         acpiShutdown();
         break;
     default:
+        return SYSCALL_STATUS_UNKNOWN_OPERATION;
         break;
     }
-
-    return SYSCALL_STATUS_OK;
 }

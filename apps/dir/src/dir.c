@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 
     assert(cwdBuffer != NULL && dirBuffer != NULL); // assert that the buffers are valid
 
-    sys_pid(0, SYS_PID_GET_CWD, (uint64_t *)cwdBuffer); // get the current working directory buffer
+    sys_pid(0, SYS_PID_GET_CWD, (uint64_t)cwdBuffer, 0); // get the current working directory buffer
 
     if (argc > 1) // list from argument
         sys_vfs(SYS_VFS_LIST_DIRECTORY, (uint64_t)argv[1], (uint64_t)dirBuffer);

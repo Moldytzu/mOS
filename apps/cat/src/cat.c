@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     fd = sys_open(argv[1]); // open the file
     assert(fd != 0);
 
-    sys_vfs(SYS_VFS_FILE_SIZE, fd, (uint64_t)&size); // get the size
+    size = sys_vfs(SYS_VFS_FILE_SIZE, fd, 0); // get the size
     assert(size != 0);
 
     // allocate the buffer

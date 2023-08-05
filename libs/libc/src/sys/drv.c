@@ -44,9 +44,7 @@ uint32_t inl(uint16_t port)
 
 uint64_t *sys_driver_announce(uint64_t type)
 {
-    uint64_t address = 0;
-    sys_driver(SYS_DRIVER_ANNOUNCE, type, (uint64_t)&address, 0); // announce that we want the struct for the requested type
-    return (uint64_t *)address;                                   // return the pointer to the struct
+    return (uint64_t *)sys_driver(SYS_DRIVER_ANNOUNCE, type, 0, 0);
 }
 
 uint64_t sys_driver_flush(uint64_t type)
@@ -73,9 +71,7 @@ uint64_t sys_driver_start(char *path)
 
 drv_pci_header_t *sys_pci_get(uint32_t vendor, uint32_t device)
 {
-    uint64_t header = 0;
-    sys_driver(SYS_DRIVER_GET_PCI_DEVICE, (uint64_t)&header, vendor, device);
-    return (drv_pci_header_t *)header;
+    return (drv_pci_header_t *)sys_driver(SYS_DRIVER_GET_PCI_DEVICE, vendor, device, 0);
 }
 
 uint64_t sys_identity_map(void *address)
@@ -90,9 +86,7 @@ void serialWritec(char c)
 
 uint8_t sys_driver_allocate_vector()
 {
-    uint64_t vector = 0;
-    sys_driver(SYS_DRIVER_ALLOCATE_VECTOR, (uint64_t)&vector, 0, 0);
-    return vector;
+    return sys_driver(SYS_DRIVER_ALLOCATE_VECTOR, 0, 0, 0);
 }
 
 uint64_t sys_driver_deallocate_vector(uint8_t vector)
