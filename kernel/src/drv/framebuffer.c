@@ -232,7 +232,7 @@ void framebufferWritec(char c)
 
     if (c != ' ')                                     // we waste time iterating over all empty pixels of the spacing
         framebufferPlotc_impl(c, cursor.X, cursor.Y); // use inline version of framebufferPlotc
-    cursor.X += font->width + 1;                      // add character's width and a 1 px padding
+    cursor.X += font->width;                          // add character's width
 }
 
 // write a string
