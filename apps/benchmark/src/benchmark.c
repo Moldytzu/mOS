@@ -7,6 +7,7 @@
 // benchmark settings
 #define PRIMES 100000 // number of primes to find
 #define PAGES 32768   // 128 megabytes
+#define IDs 100000    // times to run cpuid instruction
 
 // fast prime checker
 bool isPrime(uint64_t n)
@@ -59,8 +60,30 @@ void allocation()
     printf("allocated %d pages in %llu miliseconds\n", PAGES, b.elapsedMiliseconds);
 }
 
+static inline void cpuid(uint32_t reg, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
+{
+    __asm__ volatile("cpuid"
+                     : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
+                     : "0"(reg));
+}
+
+void cpuVendor()
+{
+    benchmark_t b;
+    uint32_t largestStandardFunc;
+    char vendor[13];
+
+    BENCHMARK(&b, {
+        for (volatile int i = 0; i < IDs; i++)
+            cpuid(0, &largestStandardFunc, (uint32_t *)(vendor + 0), (uint32_t *)(vendor + 8), (uint32_t *)(vendor + 4)); // read vendor
+    });
+
+    printf("ran cpuid %d times in %llu miliseconds\n", IDs, b.elapsedMiliseconds);
+}
+
 int main(int argc, char **argv)
 {
     primes();
     allocation();
+    cpuVendor();
 }
