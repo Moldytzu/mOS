@@ -84,7 +84,7 @@ void hpetInit()
     hpetWrite(HPET_OFFSET_TIMER_COMPARATOR(0), 0);                                 // clear the comparator
     hpetWrite(HPET_OFFSET_GENERAL_CONFIGURATION, 0b1);                             // enable counter
 
-    logInfo("hpet: initialised");
+    logInfo("hpet: detected with frequency of %d MHz", 1000000000000000 / hpetFemto / 1000000);
 
     timeSource();
 }
