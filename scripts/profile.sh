@@ -4,7 +4,8 @@
 set -e
 
 ARCH="x86_64"
-INTERVAL="0.001"
+INTERVAL="0.0001"
+INITIALWAIT="5"
 CMDLINE="-M q35 -cpu core2duo -m 512M -boot c -hda image.disk"
 KERNEL="out/kernel.elf"
 
@@ -16,6 +17,8 @@ trap "rm -f '$SOCKET' '$OUTFILE' '$SUBSHELL'" EXIT INT TERM HUP
 
 (
 echo $BASHPID >"$SUBSHELL"
+sleep $INITIALWAIT
+echo "profiling started"
 while true; do
     echo "info registers" >>"$SOCKET"
     sleep $INTERVAL
