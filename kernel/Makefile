@@ -9,6 +9,7 @@ FONT := ../kfont.psf
 INTERNALCFLAGS :=              \
 	-I./src/                   \
 	-Wno-int-to-pointer-cast   \
+	-fstack-protector    	   \
 
 # linker flags particular for the kernel
 INTERNALLDFLAGS :=         \
