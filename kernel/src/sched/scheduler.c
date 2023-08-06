@@ -189,7 +189,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     return t;
 }
 
-uint8_t simdContext[512][K_MAX_CORES];
+uint8_t simdContext[512];
 
 // do the context switch
 void schedSchedule(idt_intrerrupt_stack_t *stack)
@@ -199,9 +199,9 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
     uint64_t id = smpID();
 
-    iasm("fxsave %0 " ::"m"(simdContext[id])); // save simd context
-
     lock(schedLock[id], {
+        iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
+
         if (!taskKilled[id])
         {
             if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the core don't reschedule
