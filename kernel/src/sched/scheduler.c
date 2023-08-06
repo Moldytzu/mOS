@@ -263,10 +263,10 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 #endif
 
             // save old state
-            memcpy(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t));
+            memcpy64(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
 
             // save old simd context
-            memcpy(&lastTask[id]->simdContext, simdContext, 512);
+            memcpy64(&lastTask[id]->simdContext, simdContext, 512 / sizeof(uint64_t));
         }
         else
             taskKilled[id] = false; // reset the flag if needed
@@ -286,10 +286,10 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 #endif
 
         // copy new state
-        memcpy(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t));
+        memcpy64(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
 
         // copy new simd context
-        memcpy(simdContext, &lastTask[id]->simdContext, 512);
+        memcpy64(simdContext, &lastTask[id]->simdContext, 512 / sizeof(uint64_t));
 
         iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context
     });
