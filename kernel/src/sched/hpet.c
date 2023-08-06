@@ -16,14 +16,14 @@
 acpi_hpet_t *hpet;
 uint64_t hpetNano;
 
-void hpetWrite(uint64_t offset, uint64_t data)
+ifunc void hpetWrite(uint64_t offset, uint64_t data)
 {
-    *((uint64_t *)(hpet->base.address + offset)) = data;
+    *((volatile uint64_t *)(hpet->base.address + offset)) = data;
 }
 
-uint64_t hpetRead(uint64_t offset)
+ifunc uint64_t hpetRead(uint64_t offset)
 {
-    return *((uint64_t *)(hpet->base.address + offset));
+    return *((volatile uint64_t *)(hpet->base.address + offset));
 }
 
 void hpetSleepNanos(uint64_t nanos)
