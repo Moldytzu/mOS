@@ -258,7 +258,7 @@ void vmmDestroy(vmm_page_table_t *table)
 
         uint64_t pdpValue = table->entries[pdp];
 
-        if (!pdpValue)
+        if (!(pdpValue & VMM_ENTRY_PRESENT))
             continue;
 
         vmm_page_table_t *pdpPtr = PAGE_ADDR(pdpValue);
@@ -267,7 +267,7 @@ void vmmDestroy(vmm_page_table_t *table)
         {
             uint64_t pdValue = pdpPtr->entries[pd];
 
-            if (!pdValue)
+            if (!(pdValue & VMM_ENTRY_PRESENT))
                 continue;
 
             vmm_page_table_t *pdPtr = PAGE_ADDR(pdValue);
@@ -276,7 +276,7 @@ void vmmDestroy(vmm_page_table_t *table)
             {
                 uint64_t ptValue = pdPtr->entries[pt];
 
-                if (!ptValue)
+                if (!(ptValue & VMM_ENTRY_PRESENT))
                     continue;
 
                 vmm_page_table_t *ptPtr = PAGE_ADDR(ptValue);
