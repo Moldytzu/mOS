@@ -29,6 +29,7 @@
 #define PS2_CTRL_DISABLE_P1 0xAD
 #define PS2_CTRL_READ_OUTPUT 0xD0
 #define PS2_CTRL_WRITE_P2 0xD4
+#define PS2_CTRL_SELF_TEST 0xAA
 
 // constants
 #define PS2_TIMEOUT_YIELDS 3
@@ -208,7 +209,6 @@ bool ps2Trace(const char *msg)
 bool initController()
 {
     // todo: interract with the mouse
-    // todo: fix timings
 
     // disable the devices
     command(PS2_CTRL_DISABLE_P1);
@@ -218,22 +218,18 @@ bool initController()
     flush();
 
     // disable irqs in config byte
-    {
-        command(PS2_CTRL_READ_CFG);
-        waitOutput();
-        uint8_t cfg = output();
-        cfg &= ~(0b11);   // disable IRQ
-        cfg |= 0b1000000; // enable translation
-        command(PS2_CTRL_WRITE_CFG);
-        write(cfg);
-        output();
-    }
+    command(PS2_CTRL_READ_CFG);
+    waitOutput();
+    uint8_t cfg = output();
+    cfg &= ~(0b11);   // disable IRQ
+    cfg |= 0b1000000; // enable translation
+    command(PS2_CTRL_WRITE_CFG);
+    write(cfg);
+    flush();
 
     // perform self-test
-    command(0xAA);
-
-    waitOutput(); // wait for the test to be done
-
+    command(PS2_CTRL_SELF_TEST);
+    waitOutput();         // wait for the test to be done
     if (output() != 0x55) // if the controller didn't reply with OK it means that it isn't present
         return ps2Trace("controller failed self-test");
 
@@ -242,16 +238,10 @@ bool initController()
     waitOutput();
     port1Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
 
-    if (!port1Present)
-        puts("port 1 is faulty\n");
-
     // test the second port
     command(PS2_CTRL_TEST_P2);
     waitOutput();
     port2Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
-
-    if (!port2Present)
-        puts("port 2 is faulty\n");
 
     if (!port1Present && !port2Present) // give up if there aren't any port present
         return ps2Trace("failed to detect ports");
@@ -259,24 +249,22 @@ bool initController()
     // enable the devices
     if (port1Present)
     {
-        command(PS2_CTRL_ENABLE_P1); // enable the first port if it's present
-        port1Write(0xFF);            // reset device
-        waitOutput();
+        command(PS2_CTRL_ENABLE_P1);     // enable the first port if it's present
+        flush();                         // flush output
+        port1Write(0xFF);                // reset device
+        waitOutput();                    // wait for the status
         port1Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
-
-        if (!port1Present)
-            puts("port 1 is not present\n");
+        flush();                         // the device sends an 0xAA after this
     }
 
     if (port2Present)
     {
-        command(PS2_CTRL_ENABLE_P2); // enable the second port if it's present
-        port2Write(0xFF);            // reset device
-        waitOutput();
+        command(PS2_CTRL_ENABLE_P2);     // enable the second port if it's present
+        flush();                         // flush output
+        port2Write(0xFF);                // reset device
+        waitOutput();                    // wait for the status
         port2Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
-
-        if (!port2Present)
-            puts("port 2 is not present\n");
+        flush();                         // the device sends an 0xAA after this
     }
 
     // detect the device types
