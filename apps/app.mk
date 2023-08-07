@@ -16,7 +16,8 @@ OUTFILE := $(OUTFOLDER)$(APPNAME).mx # generate output name
 
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS :=   		 \
-	-mcmodel=large
+	-mcmodel=large           \
+	-I./src/
 
 # Internal linker flags that should not be changed by the user.
 INTERNALLDFLAGS :=         \
@@ -49,4 +50,4 @@ $(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
 	$(ASM) $(ASMFLAGS) $(INTERNALASMFLAGS) $^ -o $@
 	
 clean:
-	rm -rf $(OUTFILE)
+	rm -rf $(OBJS) $(OUTFILE)
