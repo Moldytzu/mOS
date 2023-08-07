@@ -193,7 +193,7 @@ int ps2DecodeBytes(uint8_t *reply)
         return PS2_TYPE_MOUSE_SCROLL;
     else if (reply[0] == 0x04)
         return PS2_TYPE_MOUSE_5BTN;
-    else if (reply[0] == 0xAB || reply[0] == 0xAA)
+    else if (reply[0] == 0xAB)
         return PS2_TYPE_KEYBOARD;
     else
         return PS2_TYPE_INVALID;
