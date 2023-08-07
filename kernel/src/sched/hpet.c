@@ -76,7 +76,7 @@ void hpetInit()
     vmmMapKernel((void *)hpet->base.address, (void *)hpet->base.address, VMM_ENTRY_RW); // map it
 
     // calculate the scale
-    uint64_t hpetFemto = (hpetRead(HPET_OFFSET_GENERAL_CAPABILITIES) >> 32) & 0xFFFFFFFF;
+    uint32_t hpetFemto = hpetRead(HPET_OFFSET_GENERAL_CAPABILITIES) >> 32;
     hpetNano = hpetFemto / 1000000; // convert units of measure (femto to nano)
 
     hpetWrite(HPET_OFFSET_MAIN_COUNTER, 0);                                        // clear the counter
