@@ -13,6 +13,8 @@ void ps2Port1Handler()
     uint8_t data = inb(PS2_DATA);
     if (port1Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
         kbHandle(data);
+    else if (port1Type == PS2_TYPE_MOUSE)
+        mouseHandle(data);
 }
 
 void ps2Port2Handler()
@@ -20,6 +22,8 @@ void ps2Port2Handler()
     uint8_t data = inb(PS2_DATA);
     if (port2Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
         kbHandle(data);
+    else if (port2Type == PS2_TYPE_MOUSE)
+        mouseHandle(data);
 }
 
 const char *lookup[] = {"mouse", "mouse w/ scroll", "5 button mouse", "keyboard", "unknown"};
@@ -231,6 +235,7 @@ void _mdrvmain()
     // flush the context endlessly
     while (1)
     {
+        // printf("%d %d\n", mouseX, mouseY);
         sys_driver_flush(SYS_DRIVER_TYPE_INPUT); // flush the context
         sys_yield();                             // yield
     }

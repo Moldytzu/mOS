@@ -88,3 +88,6 @@ void kbHandle(uint8_t scancode);
 // mouse
 void mouseInit();
 void mouseHandle(uint8_t scancode);
+
+extern uint16_t mouseX;
+extern uint16_t mouseY;
