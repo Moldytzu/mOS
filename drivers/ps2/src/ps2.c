@@ -74,15 +74,12 @@ drv_type_input_t *contextStruct;
     }
 #define port1Write(data) \
     {                    \
-        waitInput();     \
         write(data);     \
     }
-#define port2Write(data)            \
-    {                               \
-        waitInput();                \
-        command(PS2_CTRL_WRITE_P2); \
-        waitInput();                \
-        write(data);                \
+#define port2Write(data)                      \
+    {                                         \
+        outb(PS2_COMMAND, PS2_CTRL_WRITE_P2); \
+        write(data);                          \
     }
 #define flush()       \
     {                 \
@@ -245,10 +242,16 @@ bool initController()
     waitOutput();
     port1Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
 
+    if (!port1Present)
+        puts("port 1 is faulty\n");
+
     // test the second port
     command(PS2_CTRL_TEST_P2);
     waitOutput();
     port2Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
+
+    if (!port2Present)
+        puts("port 2 is faulty\n");
 
     if (!port1Present && !port2Present) // give up if there aren't any port present
         return ps2Trace("failed to detect ports");
@@ -260,6 +263,9 @@ bool initController()
         port1Write(0xFF);            // reset device
         waitOutput();
         port1Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
+
+        if (!port1Present)
+            puts("port 1 is not present\n");
     }
 
     if (port2Present)
@@ -268,6 +274,9 @@ bool initController()
         port2Write(0xFF);            // reset device
         waitOutput();
         port2Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
+
+        if (!port2Present)
+            puts("port 2 is not present\n");
     }
 
     // detect the device types
