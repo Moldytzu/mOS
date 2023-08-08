@@ -1,5 +1,7 @@
 #include <ps2.h>
 
+#define MAX_DELTA_PER_PACKET 50 // fixme: we shouldn't have this
+
 pstruct
 {
     unsigned buttonLeft : 1;
@@ -79,8 +81,10 @@ void mouseHandle(uint8_t scancode)
     {
         ps2_mouse_packet_t *packet = (ps2_mouse_packet_t *)mousePacket;
 
-        int x = min(packet->xMovement, 50);
-        int y = min(packet->yMovement, 50);
+        // HACK: cap the x and y axis movement so the cursor doesn't fly around
+        // we need it for qemu because the emulator wouldn't set the sampling rates and the resolution correctly
+        int x = min(packet->xMovement, MAX_DELTA_PER_PACKET);
+        int y = min(packet->yMovement, MAX_DELTA_PER_PACKET);
 
         if (packet->xOverflow || packet->yOverflow)
             return;
