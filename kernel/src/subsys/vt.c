@@ -129,6 +129,7 @@ void vtSetMode(uint16_t displayMode)
 // get the mode
 uint16_t vtGetMode()
 {
+#ifdef K_FB_TTY_REFRESH_ON_DEMAND
     if (mode != VT_DISPLAY_TTY0)
         return mode;
 
@@ -139,6 +140,9 @@ uint16_t vtGetMode()
     }
 
     return 0; // return the null mode (kernel mode)
+#else
+    return mode;
+#endif
 }
 
 // free the terminal
