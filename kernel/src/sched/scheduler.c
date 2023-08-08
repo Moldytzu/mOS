@@ -15,6 +15,7 @@
 
 // #define BENCHMARK
 
+// extern uint16_t mouseX, mouseY;
 #define TASK(x) ((sched_task_t *)x)
 
 bool taskKilled[K_MAX_CORES];         // indicates that last task was killed
@@ -240,6 +241,13 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
                         uint64_t c = hpetMillis();
 #endif
                         framebufferWritec(K_FB_CURSOR);
+
+                        /*
+                                                framebufferPlotPixel(mouseX, mouseY, 0xFFFF00);
+
+                                                logInfo("%d %d", mouseX, mouseY);
+                        */
+
 #ifdef K_FB_DOUBLE_BUFFER
                         framebufferUpdate();
 #endif

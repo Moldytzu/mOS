@@ -8,9 +8,9 @@
 
 pstruct
 {
-    uint32_t pid;            // driver pid
-    uint8_t keys[16];        // key buffers
-    uint16_t mouseX, mouseY; // mouse coordonates
+    uint32_t pid;       // driver pid
+    uint8_t keys[16];   // key buffers
+    int mouseX, mouseY; // mouse relative coordonates
 }
 drv_context_input_t;
 

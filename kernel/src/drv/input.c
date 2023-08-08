@@ -1,12 +1,15 @@
+#include <misc/logger.h>
 #include <drv/drv.h>
 #include <drv/input.h>
+#include <fw/bootloader.h>
 #include <subsys/vt.h>
 #include <sched/scheduler.h>
 #include <cpu/smp.h>
 
 struct vt_terminal *startTerminal, *currentTerminal;
+uint16_t mouseX, mouseY;
 
-// todo: implement mouse support
+extern struct limine_framebuffer framebuffer; // structure implemented in drv/framebuffer.c, holds global information about the GPU framebuffer
 
 // pop last key
 char kbGetLastKey()
@@ -23,6 +26,7 @@ char *kbGetBuffer()
 // initialize the subsystem
 void inputInit()
 {
+    mouseX = mouseY = 0;
     startTerminal = vtGet(0);
 }
 
@@ -55,5 +59,25 @@ void inputFlush()
         }
 
         zero(inputs[i].keys, 16);
+
+        // add the offsets
+        mouseX += inputs[i].mouseX;
+        mouseY += inputs[i].mouseY;
+
+        if (mouseX < 0)
+            mouseX = 0;
+
+        if (mouseY < 0)
+            mouseY = 0;
+
+        // clamp the values
+        if (mouseX >= framebuffer.width - 1)
+            mouseX = framebuffer.width - 1;
+
+        if (mouseY >= framebuffer.height - 1)
+            mouseY = framebuffer.height - 1;
+
+        // reset the context
+        inputs[i].mouseX = inputs[i].mouseY = 0;
     }
 }
