@@ -33,5 +33,6 @@ void framebufferClear(uint32_t colour);
 void framebufferZero();
 void framebufferWrite(const char *str);
 void framebufferWritec(char c);
+void framebufferPlotPixel(uint32_t x, uint32_t y, uint32_t colour);
 framebuffer_cursor_info_t framebufferGetCursor();
 void framebufferSetCursor(framebuffer_cursor_info_t info);

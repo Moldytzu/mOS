@@ -179,6 +179,11 @@ ifunc void framebufferPlotp(uint32_t x, uint32_t y, uint32_t colour)
     *(volatile uint32_t *)((uint64_t)back.address + x * back.bpp / 8 + y * back.pitch) = colour; // set the pixel to colour
 }
 
+void framebufferPlotPixel(uint32_t x, uint32_t y, uint32_t colour)
+{
+    framebufferPlotp(x, y, colour);
+}
+
 // function to inline
 ifunc void framebufferPlotc_impl(char c, uint32_t x, uint32_t y)
 {
