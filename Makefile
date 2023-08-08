@@ -5,8 +5,8 @@ MEMORY = 1G      # memory allocated
 
 DISK = image.disk
 GDBFLAGS ?= -tui -q -x gdb.script
-QEMUFLAGS ?= -M q35,smm=off -m $(MEMORY) -smp $(CORES) -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -D out/qemu.out -d int -vga vmware
-QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S
+QEMUFLAGS ?= -M q35,smm=off -m $(MEMORY) -smp $(CORES) -cpu core2duo -hda $(DISK) -boot c -serial mon:stdio -vga vmware
+QEMUDEBUG = -smp 1 -no-reboot -no-shutdown -s -S -D out/qemu.out -d int
 APPS = $(wildcard ./apps/*/.)
 DRIVERS = $(wildcard ./drivers/*/.)
 LIBS = $(wildcard ./libs/*/.)
@@ -20,6 +20,9 @@ update-ovmf:
 
 run: image
 	qemu-system-x86_64 $(QEMUFLAGS) 
+
+run-log: image
+	qemu-system-x86_64 $(QEMUFLAGS) -D out/qemu.out -d int
 
 run-smp-debug: image
 	qemu-system-x86_64 $(QEMUFLAGS) $(QEMUDEBUG) -smp $(CORES) &
