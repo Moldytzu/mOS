@@ -258,3 +258,9 @@ void framebufferSetCursor(framebuffer_cursor_info_t info)
 {
     cursor = info;
 }
+
+// return framebuffer
+struct limine_framebuffer framebufferGet()
+{
+    return framebuffer;
+}

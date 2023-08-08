@@ -1,15 +1,13 @@
 #include <misc/logger.h>
 #include <drv/drv.h>
 #include <drv/input.h>
-#include <fw/bootloader.h>
+#include <drv/framebuffer.h>
 #include <subsys/vt.h>
 #include <sched/scheduler.h>
 #include <cpu/smp.h>
 
 struct vt_terminal *startTerminal, *currentTerminal;
 uint16_t mouseX, mouseY;
-
-extern struct limine_framebuffer framebuffer; // structure implemented in drv/framebuffer.c, holds global information about the GPU framebuffer
 
 // pop last key
 char kbGetLastKey()
@@ -71,11 +69,11 @@ void inputFlush()
             mouseY = 0;
 
         // clamp the values
-        if (mouseX >= framebuffer.width - 1)
-            mouseX = framebuffer.width - 1;
+        if (mouseX >= framebufferGet().width - 1)
+            mouseX = framebufferGet().width - 1;
 
-        if (mouseY >= framebuffer.height - 1)
-            mouseY = framebuffer.height - 1;
+        if (mouseY >= framebufferGet().height - 1)
+            mouseY = framebufferGet().height - 1;
 
         // reset the context
         inputs[i].mouseX = inputs[i].mouseY = 0;

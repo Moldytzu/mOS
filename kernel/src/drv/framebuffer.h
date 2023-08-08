@@ -1,5 +1,6 @@
 #pragma once
 #include <misc/utils.h>
+#include <fw/bootloader.h>
 
 #define PSF2_MAGIC0 0x72
 #define PSF2_MAGIC1 0xb5
@@ -36,3 +37,4 @@ void framebufferWritec(char c);
 void framebufferPlotPixel(uint32_t x, uint32_t y, uint32_t colour);
 framebuffer_cursor_info_t framebufferGetCursor();
 void framebufferSetCursor(framebuffer_cursor_info_t info);
+struct limine_framebuffer framebufferGet();
