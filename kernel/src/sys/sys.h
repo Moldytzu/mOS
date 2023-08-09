@@ -9,7 +9,7 @@
 
 // macros for internal system call implementations only
 
-#define SYS_STDIN 1
+#define SYS_STDOUT 1
 #define SYSCALL_STATUS_OK 0
 #define SYSCALL_STATUS_ERROR 1
 #define SYSCALL_STATUS_UNKNOWN_OPERATION 2

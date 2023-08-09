@@ -15,7 +15,7 @@ uint64_t write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, sched_
         for (size_t i = 0; i < count; i++)
             serialWritec(charBuffer[i]);
 
-    if (fd == SYS_STDIN)
+    if (fd == SYS_STDOUT)
     {
         struct vt_terminal *t = vtGet(task->terminal); // terminal of the task
         vtAppend(t, charBuffer, count);                // append to the terminal
