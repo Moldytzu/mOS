@@ -83,7 +83,7 @@ uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sche
     case 5: // get pci header
 
         if (!pcieIsPresent()) // check for pcie availability
-            return SYSCALL_STATUS_ERROR;
+            return 0;
 
         pcie_function_descriptor_t *functions = pcieDescriptors();
         size_t num = pcieCountDescriptors();
@@ -104,7 +104,7 @@ uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sche
             }
         }
 
-        return SYSCALL_STATUS_ERROR;
+        return 0;
 
     case 6: // identity map
         vmmMap((void *)task->pageTable, (void *)arg1, (void *)arg1, VMM_ENTRY_RW | VMM_ENTRY_USER);
