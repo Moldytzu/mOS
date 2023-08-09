@@ -39,6 +39,7 @@ uint64_t display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched
             return 0;
 
         // fixme: we don't remap when the framebuffer changes size
+        // fixme: wouldn't it be a better idea to have a buffer just for userspace?
 
         uint64_t *pitch = PHYSICAL(arg1);
 
