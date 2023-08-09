@@ -10,41 +10,29 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_tas
 {
     switch (call)
     {
-    case 0: // mem allocate
-
-        // todo: clean this up (maybe make it not allocate contiguous pages for performance purposes?)
-
-        size_t pages = arg1; // pages to allocate
-        if (!pages)
+    case 0:                  // mem allocate
+        size_t pages = arg1; // required pages to allocate
+        if (!pages)          // make sure we don't allocate null
             pages = 1;
 
-        if (pmmTotal().available < (pages + RESERVED_PAGES) * 4096) // let some memory free so we don't crash
+        if (pmmTotal().available < (pages + RESERVED_PAGES) * 4096) // make sure we don't run in an out of memory panic
             return 0;
 
-        void *page = pmmPages(pages); // allocate the pages
+        size_t virtualStart = task->lastVirtualAddress; // virtual address of the starting byte of the newly allocated block
 
-        // map pages
-        for (int i = 0; i < pages; i++)
-            vmmMap((void *)task->pageTable, (void *)(task->lastVirtualAddress + i * 4096), (void *)((uint64_t)page + i * 4096), VMM_ENTRY_RW | VMM_ENTRY_USER);
-
-        size_t virtualAddress = task->lastVirtualAddress; // give the application the virtual address
-        task->lastVirtualAddress += 4096 * pages;         // increment the last virtual address
-
-        size_t addresses = ADDRESSES_IN_PAGES(task->allocatedBufferPages); // addresses we can store
-
-        // check for possible overflow
-        if (task->allocatedIndex + pages >= addresses)
+        for (size_t p = 0; p < pages; p++) // allocate and map every requested page
         {
-            size_t newPages = PAGES_IN_ADDRESSES(pages) + 1;
-            task->allocated = pmmReallocate(task->allocated, task->allocatedBufferPages, task->allocatedBufferPages + newPages);
-            task->allocatedBufferPages += newPages;
+            void *page = pmmPage();                                                                         // newly allocated page
+            vmmMap(task->pageTable, (void *)task->lastVirtualAddress, page, VMM_ENTRY_RW | VMM_ENTRY_USER); // map the page in the virtual address space of the task
+
+            if (task->allocatedIndex + 1 >= ADDRESSES_IN_PAGES(task->allocatedBufferPages))                                 // check if we can not store the newly allocated page's address
+                task->allocated = pmmReallocate(task->allocated, task->allocatedBufferPages, ++task->allocatedBufferPages); // do the reallocation
+
+            task->allocated[task->allocatedIndex++] = page; // store the address to free up later
+            task->lastVirtualAddress += VMM_PAGE;           // point to next page
         }
 
-        // store addresses so we can clean up later
-        for (int i = 0; i < pages; i++)
-            task->allocated[task->allocatedIndex++] = (void *)((uint64_t)page + i * 4096);
-
-        return virtualAddress;
+        return virtualStart;
     default:
         return SYSCALL_STATUS_UNKNOWN_OPERATION;
     }
