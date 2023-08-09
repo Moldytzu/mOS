@@ -226,7 +226,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
                     switch (vtGetMode())
                     {
                     case VT_DISPLAY_FB:
-                        // todo: copy the user display framebuffer to the global framebuffer
+                        framebufferUpdate(); // we provide userspace the back buffer thus we update the screen
                         break;
                     case VT_DISPLAY_TTY0:
 #ifdef BENCHMARK

@@ -34,6 +34,23 @@ uint64_t display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched
 
         return SYSCALL_STATUS_OK;
 
+    case 3: // display map framebuffer
+        if (!IS_MAPPED(arg1))
+            return 0;
+
+        // fixme: we don't remap when the framebuffer changes size
+
+        uint64_t *pitch = PHYSICAL(arg1);
+
+        struct limine_framebuffer fb = framebufferGetBack();
+
+        void *start = fb.address;
+        for (size_t p = 0; p < fb.pitch * fb.height; p += VMM_PAGE)
+            vmmMap(task->pageTable, (void *)TASK_BASE_FRAMEBUFFER + p, start + p, VMM_ENTRY_RW | VMM_ENTRY_USER | VMM_ENTRY_WRITE_THROUGH);
+
+        *pitch = fb.pitch;
+
+        return TASK_BASE_FRAMEBUFFER;
     default:
         return SYSCALL_STATUS_UNKNOWN_OPERATION;
     }

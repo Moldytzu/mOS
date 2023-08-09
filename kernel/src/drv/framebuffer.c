@@ -264,3 +264,9 @@ struct limine_framebuffer framebufferGet()
 {
     return framebuffer;
 }
+
+// return back buffer
+struct limine_framebuffer framebufferGetBack()
+{
+    return back;
+}
