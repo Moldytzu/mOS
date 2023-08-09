@@ -15,9 +15,14 @@ uint64_t sys_read(void *buffer, uint64_t count, uint64_t fd)
     return _syscall(SYS_READ, (uint64_t)buffer, count, fd, 0, 0);
 }
 
-uint64_t sys_input(uint8_t deviceType)
+char sys_input_keyboard()
 {
-    return _syscall(SYS_INPUT, deviceType, 0, 0, 0, 0);
+    return _syscall(SYS_INPUT, SYS_INPUT_KEYBOARD, 0, 0, 0, 0);
+}
+
+void sys_input_mouse(uint16_t *x, uint16_t *y)
+{
+    _syscall(SYS_INPUT, SYS_INPUT_MOUSE, (uint64_t)x, (uint64_t)y, 0, 0);
 }
 
 uint64_t sys_display(uint8_t call, uint64_t arg1, uint64_t arg2)

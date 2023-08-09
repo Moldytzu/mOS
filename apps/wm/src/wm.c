@@ -12,9 +12,9 @@ int main(int argc, char **argv)
     while (true)
     {
         uint16_t mouseX, mouseY;
-        _syscall(SYS_INPUT, SYS_INPUT_MOUSE, (uint64_t)&mouseX, (uint64_t)&mouseY, 0, 0);
+        sys_input_mouse(&mouseX, &mouseY); // read mouse coordinates
 
-        if (mouseX == oldX && mouseY == oldY)
+        if (mouseX == oldX && mouseY == oldY) // update only on change
             continue;
 
         printf("x: %d, y: %d ", mouseX, mouseY);

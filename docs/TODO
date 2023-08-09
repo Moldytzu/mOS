@@ -5,7 +5,7 @@ Non-blocking I/O: []
     - implement an I/O scheduler []
 
 Window management: []
-    - implement PS/2 mouse support []
+    - implement PS/2 mouse support [x]
     - implement userspace framebuffer support []
         - notes: maybe we could let apps map the back framebuffer we do double buffering for the full screen tty
     - improve socket IPC to support multiple clients []

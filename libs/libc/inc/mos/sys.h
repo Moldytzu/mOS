@@ -71,7 +71,8 @@ extern uint64_t _syscall(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t rcx,
 void sys_exit(uint64_t status);
 uint64_t sys_write(void *buffer, uint64_t count, uint64_t fd);
 uint64_t sys_read(void *buffer, uint64_t count, uint64_t fd);
-uint64_t sys_input(uint8_t deviceType);
+char sys_input_keyboard();
+void sys_input_mouse(uint16_t *x, uint16_t *y);
 uint64_t sys_display(uint8_t call, uint64_t arg1, uint64_t arg2);
 uint64_t sys_exec(const char *path, uint64_t *pid, sys_exec_packet_t *packet);
 

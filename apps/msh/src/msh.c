@@ -206,7 +206,7 @@ int main(int argc, char **argv)
         // read in the buffer
         do
         {
-            chr = sys_input(SYS_INPUT_KEYBOARD); // read a character off the keyboard buffer
+            chr = sys_input_keyboard(); // read a character off the keyboard buffer
 
             if (chr == '\b') // handle backspace
             {
