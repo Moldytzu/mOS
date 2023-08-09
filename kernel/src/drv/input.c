@@ -79,3 +79,10 @@ void inputFlush()
         inputs[i].mouseX = inputs[i].mouseY = 0;
     }
 }
+
+// get mouse coordinates
+void mouseGet(uint16_t *x, uint16_t *y)
+{
+    *x = mouseX;
+    *y = mouseY;
+}

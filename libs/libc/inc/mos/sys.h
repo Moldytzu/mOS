@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 #define SYS_INPUT_KEYBOARD 0
+#define SYS_INPUT_MOUSE 1
 
 #define SYS_DISPLAY_MODE 0
 #define SYS_DISPLAY_SET 1
