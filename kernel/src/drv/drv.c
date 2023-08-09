@@ -66,14 +66,13 @@ void *drvRegister(uint32_t drv, uint32_t type)
         if (fbIdx == DRV_MAX_CONTEXTS) // hell nah man (todo: reallocate every time)
             return NULL;
 
-        // generate the context from the active one (if there is)
+        // generate the context using the reference
         fbCtx[fbIdx].pid = drv;
-        if (drvQueryActive(DRV_TYPE_FB))
-        {
-            drv_context_fb_t *active = drvQueryActive(DRV_TYPE_FB);
-            fbCtx[fbIdx].requestedXres = active->requestedXres;
-            fbCtx[fbIdx].requestedYres = active->requestedYres;
-        }
+        fbCtx[fbIdx].currentXres = framebufferGet().width;
+        fbCtx[fbIdx].currentYres = framebufferGet().height;
+        fbCtx[fbIdx].requestedXres = fbRef.requestedXres;
+        fbCtx[fbIdx].requestedYres = fbRef.requestedYres;
+        fbCtx[fbIdx].base = NULL;
 
         return &fbCtx[fbIdx++];
         break;
