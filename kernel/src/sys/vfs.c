@@ -22,16 +22,10 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_t
     {
     case 0: // file path exists
     {
-        if (!IS_MAPPED(arg1) || !retAddr)
-        {
-            *retAddr = 0;
-            return SYSCALL_STATUS_ERROR;
-        }
+        if (!IS_MAPPED(arg1))
+            return 0;
 
-        uint64_t fd = vfsOpen(PHYSICAL(arg1)); // open
-        *retAddr = fd > 0;                     // if the fd is valid then the file exists
-        vfsClose(fd);                          // close
-        return SYSCALL_STATUS_OK;
+        return vfsExists(PHYSICAL(arg1));
     }
 
     case 1: // directory path exists
