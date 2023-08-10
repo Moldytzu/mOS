@@ -48,9 +48,10 @@ int main(int argc, char **argv)
 {
     puts("Starting window manager.\n");
 
-    fontLoad("hack.psf"); // load the hack font from initrd
-
+    fontLoad("hack.psf");                             // load the hack font from initrd
     sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_FB, 0); // switch to framebuffer mode
+
+    void *fpsBuffer = (void *)sys_mem(SYS_MEM_ALLOCATE, 1, 0);
 
     // initialise variables
     fbLen = 0;
@@ -60,21 +61,32 @@ int main(int argc, char **argv)
     backPages = fbLen / 4096 + 1;                                    // calculate pages required
     backStart = (uint32_t *)sys_mem(SYS_MEM_ALLOCATE, backPages, 0); // allocate the pages
 
+    size_t fps = 0;
+
     // event loop
     while (true)
     {
+        size_t a = sys_time_uptime_nanos();
+
         screenMetadataUpdate(); // look for changes of framebuffer
 
         cursorUpdate(); // update cursor position
 
         desktopRedraw(); // redraw the desktop
 
-        fontWriteStr("mOS desktop", 10, 10, RGB(0, 0, 0));
+        // draw watermark
+        sprintf(fpsBuffer, "mOS Desktop (FPS: %d)", fps);
+        fontWriteStr(fpsBuffer, 10, 10, RGB(0, 0, 0));
 
         cursorRedraw(); // redraw the cursor
 
         screenUpdate(); // update the screen
 
         sys_yield(); // allow for screen refresh
+
+        // calculate delta time based on the time points
+        size_t b = sys_time_uptime_nanos();
+        size_t dt = b - a;
+        fps = 1000000000 / dt;
     }
 }
