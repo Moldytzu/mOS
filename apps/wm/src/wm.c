@@ -2,6 +2,7 @@
 #include <wm.h>
 #include <cursor.h>
 #include <desktop.h>
+#include <font.h>
 
 // libc
 #include <mos/sys.h>
@@ -47,8 +48,11 @@ int main(int argc, char **argv)
 {
     puts("Starting window manager.\n");
 
-    sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_FB, 0);
+    fontLoad("hack.psf"); // load the hack font from initrd
 
+    sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_FB, 0); // switch to framebuffer mode
+
+    // initialise variables
     fbLen = 0;
     backStart = NULL;
 
@@ -64,7 +68,10 @@ int main(int argc, char **argv)
         cursorUpdate(); // update cursor position
 
         desktopRedraw(); // redraw the desktop
-        cursorRedraw();  // redraw the cursor
+
+        fontWriteStr("mOS desktop", 10, 10, RGB(0, 0, 0));
+
+        cursorRedraw(); // redraw the cursor
 
         screenUpdate(); // update the screen
 
