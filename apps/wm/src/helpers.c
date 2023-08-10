@@ -23,3 +23,15 @@ void panic(const char *msg)
     puts(msg);                                         // print the message
     abort();                                           // and abort the mission
 }
+
+void fbFillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t colour)
+{
+    for (int i = 0; i < w; i++)
+    {
+        for (int j = 0; j < h; j++)
+        {
+            if (PIXEL_IN_BOUNDS(x + i, y + j))
+                fbPlotPixel(x + i, y + j, colour);
+        }
+    }
+}
