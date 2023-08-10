@@ -1,6 +1,6 @@
 #include <ps2.h>
 
-#define MAX_DELTA_PER_PACKET 50 // fixme: we shouldn't have this
+#define MAX_DELTA_PER_PACKET 10 // fixme: we shouldn't have this
 
 pstruct
 {
