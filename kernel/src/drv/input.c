@@ -58,22 +58,26 @@ void inputFlush()
 
         zero(inputs[i].keys, 16);
 
-        // add the offsets
-        mouseX += inputs[i].mouseX;
-        mouseY += inputs[i].mouseY;
+        // generate preliminary values
+        int tempX = mouseX + inputs[i].mouseX;
+        int tempY = mouseY + inputs[i].mouseY;
 
-        if (mouseX < 0)
-            mouseX = 0;
+        // process them to become proper screen coordinates
+        if (tempX < 0)
+            tempX = 0;
 
-        if (mouseY < 0)
-            mouseY = 0;
+        if (tempY < 0)
+            tempY = 0;
 
-        // clamp the values
-        if (mouseX >= framebufferGet().width - 1)
-            mouseX = framebufferGet().width - 1;
+        if (tempX >= framebufferGet().width - 1)
+            tempX = framebufferGet().width - 1;
 
-        if (mouseY >= framebufferGet().height - 1)
-            mouseY = framebufferGet().height - 1;
+        if (tempY >= framebufferGet().height - 1)
+            tempY = framebufferGet().height - 1;
+
+        // save the processed values
+        mouseX = tempX;
+        mouseY = tempY;
 
         // reset the context
         inputs[i].mouseX = inputs[i].mouseY = 0;
