@@ -87,6 +87,6 @@ int main(int argc, char **argv)
         // calculate delta time based on the time points
         size_t b = sys_time_uptime_nanos();
         size_t dt = b - a;
-        fps = 1000000000 / dt;
+        fps = 100000000 / dt;
     }
 }
