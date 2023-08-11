@@ -37,9 +37,6 @@ void fontLoad(const char *path)
     sys_read(font, size, fd); // read the file
 
     uint16_t pitch = font->charsize / font->height;
-
-    printf("%p %d", font, pitch);
-    sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
 }
 
 void fontPlot(char c, uint16_t x, uint16_t y, uint32_t colour)

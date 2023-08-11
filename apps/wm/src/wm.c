@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 // implementation of global variables
 uint64_t pitch, screenW, screenH;
@@ -68,15 +69,19 @@ int main(int argc, char **argv)
     {
         size_t a = sys_time_uptime_nanos();
 
+        if (tolower(sys_input_keyboard()) == 'q')
+            panic("Enjoy shell!\n");
+
         screenMetadataUpdate(); // look for changes of framebuffer
 
         cursorUpdate(); // update cursor position
 
         desktopRedraw(); // redraw the desktop
 
-        // draw watermark
+        // draw watermarks
         sprintf(fpsBuffer, "mOS Desktop (FPS: %d)", fps);
-        fontWriteStr(fpsBuffer, 10, 10, RGB(0, 0, 0));
+        fontWriteStr("Press 'Q' to exit to shell.", 10, 10, RGB(0, 0xFF, 0xFF));
+        fontWriteStr(fpsBuffer, 10, screenH - 20, RGB(0xFF, 0xFF, 0));
 
         cursorRedraw(); // redraw the cursor
 
