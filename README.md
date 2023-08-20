@@ -29,6 +29,9 @@
     - Serial debug console
     - Userspace libraries
 
+## Goals
+mOS is designed to be an useful and lightweight OS that doesn't comply with any already written specification while supporting older and newer hardware.
+
 ## Lines of code
 mOS (kernel+userspace+libraries) consist of 10825 lines of code (as of 20 Aug. 2023).
 
@@ -37,6 +40,9 @@ See [BUILDING.md](./docs/BUILDING.md)
 
 ## Screenshots
 See [screenshots folder here](./docs/gallery/)
+
+## Issues
+mOS is in a very pre-alpha stage of development and it is not guranteed to be bug-free. We track them [here](https://github.com/Moldytzu/mOS/issues). If you encounter a never to be seen bug, feel free to open a new issue. We're happy to see people try to help!
 
 ## Font
 The default terminal font is a modified version of [Hack](https://github.com/source-foundry/Hack), licensed under the MIT License.
