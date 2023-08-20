@@ -1,5 +1,9 @@
 #include <ps2.h>
 
+// commands
+#define PS2_KB_SET_SCANCODE_SET 0xF0
+#define PS2_KB_SET_TYPEMATIC_RATE 0xF3
+
 // todo: support scancode set 2
 
 // translation table for the scan code set 1
@@ -19,15 +23,15 @@ void kbInit()
     // write to the right port
     if (port1Type == PS2_TYPE_KEYBOARD)
     {
-        port1Write(0xF6); // set default parameters
+        port1Write(PS2_DEV_SET_DEFAULTS); // set default parameters
 
         flush(); // flush the buffer
 
-        port1Write(0xF0);           // set scan code set 1
-        for (int i = 0; i < 2; i++) // wait for the keyboard to send 0xFA 0xFA
+        port1Write(PS2_KB_SET_SCANCODE_SET); // set scan code set 1
+        for (int i = 0; i < 2; i++)          // wait for the keyboard to send 0xFA 0xFA
             flush();
 
-        port1Write(0xF3); // set typematic rate
+        port1Write(PS2_KB_SET_TYPEMATIC_RATE); // set typematic rate
         flush();
 
         port1Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
@@ -35,15 +39,15 @@ void kbInit()
     }
     else if (port2Type == PS2_TYPE_KEYBOARD)
     {
-        port2Write(0xF6); // set default parameters
+        port2Write(PS2_DEV_SET_DEFAULTS); // set default parameters
 
         flush(); // flush the buffer
 
-        port2Write(0xF0);           // set scan code set 1
-        for (int i = 0; i < 2; i++) // wait for the keyboard to send 0xFA 0xFA
+        port2Write(PS2_KB_SET_SCANCODE_SET); // set scan code set 1
+        for (int i = 0; i < 2; i++)          // wait for the keyboard to send 0xFA 0xFA
             flush();
 
-        port2Write(0xF3); // set typematic rate
+        port2Write(PS2_KB_SET_TYPEMATIC_RATE); // set typematic rate
         flush();
 
         port2Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat

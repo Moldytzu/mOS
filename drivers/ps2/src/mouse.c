@@ -1,5 +1,11 @@
 #include <ps2.h>
 
+// commands
+#define PS2_MS_SET_SCALING 0xE6
+#define PS2_MS_SET_RESOLUTION 0xE8
+#define PS2_MS_SET_SAMPLE_RATE 0xF3
+#define PS2_MS_ENABLE_DATA_REPORTING 0xF4
+
 #define MAX_DELTA_PER_PACKET 10 // fixme: we shouldn't have this
 
 pstruct
@@ -28,45 +34,45 @@ void mouseInit()
 
     if (port1Type == PS2_TYPE_MOUSE)
     {
-        port1Write(0xF6); // set defaults
+        port1Write(PS2_DEV_SET_DEFAULTS); // set defaults
         flush();
 
-        port1Write(0xE6); // set scaling to 1:1
+        port1Write(PS2_MS_SET_SCALING); // set scaling to 1:1
         flush();
 
-        port1Write(0xE8); // set resolution
+        port1Write(PS2_MS_SET_RESOLUTION); // set resolution
         flush();
         port1Write(0x00); // 1 count/mm
         flush();
 
-        port1Write(0xF3); // set sample rate
+        port1Write(PS2_MS_SET_SAMPLE_RATE); // set sample rate
         flush();
         port1Write(200);
         flush();
 
-        port1Write(0xF4); // enable data reporting
+        port1Write(PS2_MS_ENABLE_DATA_REPORTING); // enable data reporting
         flush();
     }
 
     else if (port2Type == PS2_TYPE_MOUSE)
     {
-        port2Write(0xF6); // set defaults
+        port2Write(PS2_DEV_SET_DEFAULTS); // set defaults
         flush();
 
-        port2Write(0xE6); // set scaling to 1:1
+        port2Write(PS2_MS_SET_SCALING); // set scaling to 1:1
         flush();
 
-        port2Write(0xE8); // set resolution
+        port2Write(PS2_MS_SET_RESOLUTION); // set resolution
         flush();
         port2Write(0x00); // 1 count/mm
         flush();
 
-        port2Write(0xF3); // set sample rate
+        port2Write(PS2_MS_SET_SAMPLE_RATE); // set sample rate
         flush();
         port2Write(200);
         flush();
 
-        port2Write(0xF4); // enable data reporting
+        port2Write(PS2_MS_ENABLE_DATA_REPORTING); // enable data reporting
         flush();
     }
 }

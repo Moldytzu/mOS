@@ -93,7 +93,7 @@ bool initController()
     {
         command(PS2_CTRL_ENABLE_P1);     // enable the first port if it's present
         flush();                         // flush output
-        port1Write(0xFF);                // reset device
+        port1Write(PS2_DEV_RESET);       // reset device
         waitOutput();                    // wait for the status
         port1Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
         flush();                         // the device sends an 0xAA after this
@@ -103,7 +103,7 @@ bool initController()
     {
         command(PS2_CTRL_ENABLE_P2);     // enable the second port if it's present
         flush();                         // flush output
-        port2Write(0xFF);                // reset device
+        port2Write(PS2_DEV_RESET);       // reset device
         waitOutput();                    // wait for the status
         port2Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
         flush();                         // the device sends an 0xAA after this
@@ -112,10 +112,10 @@ bool initController()
     // detect the device types
     if (port1Present)
     {
-        port1Write(0xF5); // send disable scanning
+        port1Write(PS2_DEV_DISABLE_SCANNING); // send disable scanning
         flush();
 
-        port1Write(0xF2); // send identify
+        port1Write(PS2_DEV_IDENTIFY); // send identify
         flush();
 
         uint8_t reply[2] = {0, 0};
@@ -124,7 +124,7 @@ bool initController()
         waitOutput();
         reply[1] = output();
 
-        port1Write(0xF4); // send enable scanning
+        port1Write(PS2_DEV_ENABLE_SCANNING); // send enable scanning
         flush();
 
         // decode the reply bytes
@@ -141,10 +141,10 @@ bool initController()
 
     if (port2Present)
     {
-        port2Write(0xF5); // send disable scanning
+        port2Write(PS2_DEV_DISABLE_SCANNING); // send disable scanning
         flush();
 
-        port2Write(0xF2); // send identify
+        port2Write(PS2_DEV_IDENTIFY); // send identify
         flush();
 
         uint8_t reply[2] = {0, 0};
@@ -153,7 +153,7 @@ bool initController()
         waitOutput();
         reply[1] = output();
 
-        port2Write(0xF4); // send enable scanning
+        port2Write(PS2_DEV_ENABLE_SCANNING); // send enable scanning
         flush();
 
         // decode the reply bytes
