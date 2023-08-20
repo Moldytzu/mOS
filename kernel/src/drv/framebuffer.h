@@ -38,4 +38,5 @@ void framebufferPlotPixel(uint32_t x, uint32_t y, uint32_t colour);
 framebuffer_cursor_info_t framebufferGetCursor();
 void framebufferSetCursor(framebuffer_cursor_info_t info);
 struct limine_framebuffer framebufferGet();
+psf2_header_t *framebufferGetFont();
 struct limine_framebuffer framebufferGetBack();

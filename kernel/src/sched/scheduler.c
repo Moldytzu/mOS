@@ -15,7 +15,6 @@
 
 // #define BENCHMARK
 
-// extern uint16_t mouseX, mouseY;
 #define TASK(x) ((sched_task_t *)x)
 
 sched_task_t queueStart[K_MAX_CORES]; // start of the linked lists
@@ -40,41 +39,67 @@ void commonTask()
 // handles framebuffer updates
 void framebufferTask()
 {
+    // note: we run this with interrupts disabled to not have context switches in between random pieces of code
     while (1)
     {
         switch (vtGetMode())
         {
         case VT_DISPLAY_FB:
-            framebufferUpdate(); // we provide userspace the back buffer thus we update the screen
+            framebufferUpdate(); // we provide userspace the back buffer thus we just have to update the screen
             break;
         case VT_DISPLAY_TTY0:
+        {
 #ifdef BENCHMARK
             uint64_t a = hpetMillis();
 #endif
+
             framebufferZero();
+
+            struct limine_framebuffer fb = framebufferGet();
+            psf2_header_t *font = framebufferGetFont();
+
+            char *buffer = (char *)vtGet(0)->buffer;
+            size_t bufferSize = strlen(buffer);
+
+            // emulate framebuffer's cursor behaviour to determine maximum characters we can fit on the screen
+            size_t x = 0;
+            size_t y = 0;
+            size_t printableCharacters = 0;
+
+            for (size_t i = bufferSize - 1; i; i--) // since we want to print only the last few visible characters we begin to search from the end
+            {
+                // this is virtualy the same algorithm as in framebufferWritec except the drawing part
+                char c = buffer[i];
+                if (c == '\n' || x + font->width > fb.width)
+                {
+                    y += font->height + 1;
+                    x = 0;
+
+                    if (y + font->height + 1 >= fb.height) // maximum reached
+                        break;
+                }
+
+                if (c != '\n')
+                    x += font->width;
+
+                printableCharacters++;
+            }
+            if (printableCharacters)
+                printableCharacters--;
+
+            // draw the printable characters
+            for (size_t i = bufferSize - printableCharacters; i < bufferSize; i++)
+                framebufferWritec(buffer[i]);
+
+            framebufferWritec(K_FB_CURSOR); // draw the cursor
+
+            framebufferUpdate();
 #ifdef BENCHMARK
             uint64_t b = hpetMillis();
+            logDbg(LOG_SERIAL_ONLY, "updating framebuffer took %d miliseconds (%d characters written)", b - a, printableCharacters);
 #endif
-            framebufferWrite(vtGet(0)->buffer);
-#ifdef BENCHMARK
-            uint64_t c = hpetMillis();
-#endif
-            framebufferWritec(K_FB_CURSOR);
-
-            /*
-                                    framebufferPlotPixel(mouseX, mouseY, 0xFFFF00);
-
-                                    logInfo("%d %d", mouseX, mouseY);
-            */
-
-#ifdef K_FB_DOUBLE_BUFFER
-            framebufferUpdate();
-#endif
-#ifdef BENCHMARK
-            uint64_t d = hpetMillis();
-            logInfo("zero took %d, writing buffer took %d, updating took %d", b - a, c - b, d - c);
-#endif
-            break;
+        }
+        break;
         case VT_DISPLAY_KERNEL:
         default: // doesn't update the framebuffer and lets the kernel write things to it
             break;

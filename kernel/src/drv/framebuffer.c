@@ -270,3 +270,9 @@ struct limine_framebuffer framebufferGetBack()
 {
     return back;
 }
+
+// return font
+psf2_header_t *framebufferGetFont()
+{
+    return font;
+}
