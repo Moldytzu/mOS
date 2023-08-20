@@ -87,7 +87,10 @@ void mouseHandle(uint8_t scancode)
         int y = min(packet->yMovement, MAX_DELTA_PER_PACKET);
 
         if (packet->xOverflow || packet->yOverflow)
+        {
+            packetState = 0;
             return;
+        }
 
         if (packet->xSign)
             x = -x;
