@@ -89,22 +89,24 @@ bool initController()
     // enable the devices
     if (port1Present)
     {
-        command(PS2_CTRL_ENABLE_P1);     // enable the first port if it's present
-        flush();                         // flush output
-        port1Write(PS2_DEV_RESET);       // reset device
-        waitOutput();                    // wait for the status
-        port1Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
-        flush();                         // the device sends an 0xAA after this
+        command(PS2_CTRL_ENABLE_P1);                     // enable the first port if it's present
+        flush();                                         // flush output
+        port1Write(PS2_DEV_RESET);                       // reset device
+        waitOutput();                                    // wait for the status
+        port1Present = output() == 0xFA;                 // if the controller replied with OK it means that a device is in that port
+        waitOutput();                                    // wait for self test status
+        port1Present = port1Present && output() == 0xAA; // device sends 0xAA on success
     }
 
     if (port2Present)
     {
-        command(PS2_CTRL_ENABLE_P2);     // enable the second port if it's present
-        flush();                         // flush output
-        port2Write(PS2_DEV_RESET);       // reset device
-        waitOutput();                    // wait for the status
-        port2Present = output() == 0xFA; // if the controller replied with OK it means that a device is in that port
-        flush();                         // the device sends an 0xAA after this
+        command(PS2_CTRL_ENABLE_P2);                     // enable the second port if it's present
+        flush();                                         // flush output
+        port2Write(PS2_DEV_RESET);                       // reset device
+        waitOutput();                                    // wait for the status
+        port2Present = output() == 0xFA;                 // if the controller replied with OK it means that a device is in that port
+        waitOutput();                                    // wait for self test status
+        port2Present = port2Present && output() == 0xAA; // device sends 0xAA on success
     }
 
     // detect the device types
