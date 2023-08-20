@@ -31,12 +31,57 @@ bool _enabled = false;
 
 void callWithStack(void *func, void *stack);
 
+// filler task
 void commonTask()
 {
     while (1)
-    {
-        sti();
         iasm("int $0x20");
+}
+
+// handles framebuffer updates
+void framebufferTask()
+{
+    while (1)
+    {
+        switch (vtGetMode())
+        {
+        case VT_DISPLAY_FB:
+            framebufferUpdate(); // we provide userspace the back buffer thus we update the screen
+            break;
+        case VT_DISPLAY_TTY0:
+#ifdef BENCHMARK
+            uint64_t a = hpetMillis();
+#endif
+            framebufferZero();
+#ifdef BENCHMARK
+            uint64_t b = hpetMillis();
+#endif
+            framebufferWrite(vtGet(0)->buffer);
+#ifdef BENCHMARK
+            uint64_t c = hpetMillis();
+#endif
+            framebufferWritec(K_FB_CURSOR);
+
+            /*
+                                    framebufferPlotPixel(mouseX, mouseY, 0xFFFF00);
+
+                                    logInfo("%d %d", mouseX, mouseY);
+            */
+
+#ifdef K_FB_DOUBLE_BUFFER
+            framebufferUpdate();
+#endif
+#ifdef BENCHMARK
+            uint64_t d = hpetMillis();
+            logInfo("zero took %d, writing buffer took %d, updating took %d", b - a, c - b, d - c);
+#endif
+            break;
+        case VT_DISPLAY_KERNEL:
+        default: // doesn't update the framebuffer and lets the kernel write things to it
+            break;
+        }
+
+        iasm("int $0x20"); // reschedule
     }
 }
 
@@ -205,7 +250,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
         if (!taskKilled[id])
         {
-            if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the core don't reschedule
+            if (queueStart[id].next == lastTask[id] && !lastTask[id]->next) // if we only have one thread running on the core don't reschedule
             {
                 release(schedLock[id]);
                 return;
@@ -216,51 +261,6 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
                 lastTask[id]->quantumLeft--;
                 release(schedLock[id]);
                 return;
-            }
-
-            // we've hit the commonTask
-            if (lastTask[id] == &queueStart[id])
-            {
-                if (id == 0) // update screen
-                {
-                    switch (vtGetMode())
-                    {
-                    case VT_DISPLAY_FB:
-                        framebufferUpdate(); // we provide userspace the back buffer thus we update the screen
-                        break;
-                    case VT_DISPLAY_TTY0:
-#ifdef BENCHMARK
-                        uint64_t a = hpetMillis();
-#endif
-                        framebufferZero();
-#ifdef BENCHMARK
-                        uint64_t b = hpetMillis();
-#endif
-                        framebufferWrite(vtGet(0)->buffer);
-#ifdef BENCHMARK
-                        uint64_t c = hpetMillis();
-#endif
-                        framebufferWritec(K_FB_CURSOR);
-
-                        /*
-                                                framebufferPlotPixel(mouseX, mouseY, 0xFFFF00);
-
-                                                logInfo("%d %d", mouseX, mouseY);
-                        */
-
-#ifdef K_FB_DOUBLE_BUFFER
-                        framebufferUpdate();
-#endif
-#ifdef BENCHMARK
-                        uint64_t d = hpetMillis();
-                        logInfo("zero took %d, writing buffer took %d, updating took %d", b - a, c - b, d - c);
-#endif
-                        break;
-                    case VT_DISPLAY_KERNEL:
-                    default: // doesn't update the framebuffer and lets the kernel write things to it
-                        break;
-                    }
-                }
             }
 
             // set new quantum
@@ -314,10 +314,23 @@ void schedInit()
 
     lastTaskID = 1;
 
-    for (int i = 0; i < maxCore; i++) // set start of the queues to the common task
+    // initial task to update framebuffer
+    sched_task_t *t = &queueStart[0];
+    sprintf(t->name, "framebuffer update");
+    t->registers.rflags = 0b0000000010; // interrupts disabled
+    t->registers.cs = 8;
+    t->registers.ss = 16;
+    t->registers.rsp = t->registers.rbp = (uint64_t)pmmPage() + PMM_PAGE;
+    t->registers.rip = (uint64_t)framebufferTask;
+    t->registers.cr3 = (uint64_t)vmmGetBaseTable();
+
+    lastTask[0] = t;
+
+    // set start of the application cores' queues to the common task
+    for (int i = 1; i < maxCore; i++)
     {
         sched_task_t *t = &queueStart[i];
-        memcpy(t->name, "common task", strlen("common task"));
+        sprintf(t->name, "common task %d", i);
         t->registers.rflags = 0b1000000010; // interrupts
         t->registers.cs = 8;
         t->registers.ss = 16;
@@ -392,7 +405,7 @@ void schedEnable()
         logInfo("Jumping in userspace");
 
     _enabled = true;
-    callWithStack(commonTask, (void *)lastTask[smpID()]->registers.rsp);
+    callWithStack((void *)queueStart[smpID()].registers.rip, (void *)queueStart[smpID()].registers.rsp); // call core's initial task
     while (1)
         ;
 }
