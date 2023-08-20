@@ -29,7 +29,6 @@ uint8_t packetState;
 
 void mouseInit()
 {
-    memset(mousePacket, 0, 3);
     packetState = 0;
 
     if (port1Type == PS2_TYPE_MOUSE)

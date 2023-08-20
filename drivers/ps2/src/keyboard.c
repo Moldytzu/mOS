@@ -24,16 +24,15 @@ void kbInit()
     if (port1Type == PS2_TYPE_KEYBOARD)
     {
         port1Write(PS2_DEV_SET_DEFAULTS); // set default parameters
+        flush();
 
-        flush(); // flush the buffer
-
-        port1Write(PS2_KB_SET_SCANCODE_SET); // set scan code set 1
-        for (int i = 0; i < 2; i++)          // wait for the keyboard to send 0xFA 0xFA
-            flush();
+        port1Write(PS2_KB_SET_SCANCODE_SET); // set scan code command
+        flush();
+        port1Write(2); // scan code set 1 (on osdev it's wrong?)
+        flush();
 
         port1Write(PS2_KB_SET_TYPEMATIC_RATE); // set typematic rate
         flush();
-
         port1Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
         flush();
     }
@@ -43,13 +42,13 @@ void kbInit()
 
         flush(); // flush the buffer
 
-        port2Write(PS2_KB_SET_SCANCODE_SET); // set scan code set 1
-        for (int i = 0; i < 2; i++)          // wait for the keyboard to send 0xFA 0xFA
-            flush();
+        port2Write(PS2_KB_SET_SCANCODE_SET); // set scan code command
+        flush();
+        port2Write(2); // scan code set 1 (on osdev it's wrong?)
+        flush();
 
         port2Write(PS2_KB_SET_TYPEMATIC_RATE); // set typematic rate
         flush();
-
         port2Write(0b00100000); // 30hz repeat rate and 500 ms delay for repeat
         flush();
     }

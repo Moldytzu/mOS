@@ -50,8 +50,6 @@ bool ps2Trace(const char *msg)
 // initialize the controller
 bool initController()
 {
-    // todo: interract with the mouse
-
     // disable the devices
     command(PS2_CTRL_DISABLE_P1);
     flush();
