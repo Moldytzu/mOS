@@ -12,7 +12,7 @@
     - Very basic ACPI support
     - Block allocator
     - Page allocator
-    - Preemptive scheduler
+    - Preemptive round-robin scheduler
     - Socket IPC
     - Unlimited virtual terminals
     - 15+ system calls accessible in userspace
@@ -21,9 +21,19 @@
     - FAT32 support
     - AHCI support
     - ATA/IDE support
+    - PS/2 keyboard and mouse support
+    - Primitive window management
+    - CLI applications
+    - VMware SVGA II support
+    - Bochs/QEmu video support
+    - Serial debug console
+    - Userspace libraries
 
 ## Building and running
 See [BUILDING.md](./docs/BUILDING.md)
+
+## Screenshots
+See [screenshots folder here](./docs/gallery/)
 
 ## Font
 The default terminal font is a modified version of [Hack](https://github.com/source-foundry/Hack), licensed under the MIT License.
