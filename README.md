@@ -1,5 +1,5 @@
 # mOS
-![Lines of code](https://img.shields.io/tokei/lines/github/Moldytzu/mOS?style=for-the-badge) 
+
 ### Hobby operating system written in C that targets early x86_64 computers and low RAM requirements
 ### Features
     - Monolithic kernel design
@@ -28,6 +28,9 @@
     - Bochs/QEmu video support
     - Serial debug console
     - Userspace libraries
+
+## Lines of code
+mOS (kernel+userspace+libraries) consist of 10825 lines of code (as of 20 Aug. 2023).
 
 ## Building and running
 See [BUILDING.md](./docs/BUILDING.md)
