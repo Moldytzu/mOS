@@ -124,14 +124,14 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
         return;                                                                                                         // don't execute rest of the handler
     }
 
-    if (stack->cs == 0x23) // userspace
+    if (stack->cs == 0x23) // userspace exceptions
     {
-        struct sock_socket *initSocket = sockGet(1);
-
         const char *name = schedGetCurrent(smpID())->name;
 
         logWarn("%s has crashed with %s at %x! Terminating it.", name, exceptions[int_num], stack->rip);
 
+        // tell the init system we crashed
+        struct sock_socket *initSocket = sockGet(1);
         if (initSocket)
         {
             char *str = pmmPage();
@@ -143,11 +143,9 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
             pmmDeallocate(str);
         }
 
-        schedKill(schedGetCurrent(smpID())->id); // terminate the task
-
-        // HACK: enable interrupts and wait for a context switch
-        sti();        // enable interrupts
-        return hlt(); // force a reschedule
+        schedKill(schedGetCurrent(smpID())->id);        // terminate the task
+        schedLoadNext((idt_intrerrupt_stack_t *)stack); // ask scheduler to load next task in our stack
+        return;                                         // return from exception
     }
 
     xapicNMI(); // send nmi to all application processors

@@ -18,7 +18,6 @@
 // extern uint16_t mouseX, mouseY;
 #define TASK(x) ((sched_task_t *)x)
 
-bool taskKilled[K_MAX_CORES];         // indicates that last task was killed
 sched_task_t queueStart[K_MAX_CORES]; // start of the linked lists
 sched_task_t *lastTask[K_MAX_CORES];  // current task in the linked list
 uint16_t lastCore = 0;                // core on which last task was added
@@ -248,38 +247,43 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     lock(schedLock[id], {
         iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
 
-        if (!taskKilled[id])
+        if (queueStart[id].next == lastTask[id] && !lastTask[id]->next) // if we only have one thread running on the core don't reschedule
         {
-            if (queueStart[id].next == lastTask[id] && !lastTask[id]->next) // if we only have one thread running on the core don't reschedule
-            {
-                release(schedLock[id]);
-                return;
-            }
+            release(schedLock[id]);
+            return;
+        }
 
-            if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
-            {
-                lastTask[id]->quantumLeft--;
-                release(schedLock[id]);
-                return;
-            }
+        if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
+        {
+            lastTask[id]->quantumLeft--;
+            release(schedLock[id]);
+            return;
+        }
 
-            // set new quantum
-            lastTask[id]->quantumLeft = K_SCHED_MIN_QUANTUM;
+        // set new quantum
+        lastTask[id]->quantumLeft = K_SCHED_MIN_QUANTUM;
 
 #ifdef K_SCHED_DEBUG
-            logDbg(LOG_SERIAL_ONLY, "sched: saving task %s", lastTask[id]->name);
+        logDbg(LOG_SERIAL_ONLY, "sched: saving task %s", lastTask[id]->name);
 #endif
 
-            // save old state
-            memcpy64(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
+        // save old state
+        memcpy64(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
 
-            // save old simd context
-            memcpy64(&lastTask[id]->simdContext, simdContext, 512 / sizeof(uint64_t));
-        }
-        else
-            taskKilled[id] = false; // reset the flag if needed
+        // save old simd context
+        memcpy64(&lastTask[id]->simdContext, simdContext, 512 / sizeof(uint64_t));
+    });
 
-        // get next id
+    schedLoadNext(stack);
+}
+
+// load next task in stack
+void schedLoadNext(idt_intrerrupt_stack_t *stack)
+{
+    uint64_t id = smpID();
+
+    lock(schedLock[id], {
+        // get next task
         lastTask[id] = lastTask[id]->next;
         if (!lastTask[id])
         {
@@ -310,7 +314,6 @@ void schedInit()
 
     maxCore = smpCores();
     zero(queueStart, sizeof(queueStart));
-    zero(taskKilled, sizeof(taskKilled));
 
     lastTaskID = 1;
 
@@ -394,7 +397,6 @@ void schedKill(uint32_t id)
         blkDeallocate(task);
 
         TASK(task->prev)->next = task->next; // remove task from its list
-        taskKilled[smpID()] = true;          // signal that we have killed a task (todo: make it so we know which task was killed so we can kill other tasks beside the current running one)
     });
 }
 
