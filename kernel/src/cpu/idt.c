@@ -146,7 +146,7 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
         schedKill(schedGetCurrent(smpID())->id); // terminate the task
         schedSwitchNext();                       // ask scheduler to switch to next task
 
-        __builtin_unreachable(); // schedSwitchNext doesn't return here!
+        unreachable(); // schedSwitchNext never returns here!
     }
 
     xapicNMI(); // send nmi to all application processors
