@@ -13,12 +13,12 @@ static const char scanCodeSet1Shifted[] = "\e!@#$%^&*()_+\b\tQWERTYUIOP{}\n\0ASD
 // macro functions
 #define KEY_RELEASED(x) (x + 0x80)
 
-bool isShifted;
+bool isShifted, capsLocked;
 
 // initialize the keyboard
 void kbInit()
 {
-    isShifted = false;
+    isShifted = capsLocked = false;
 
     // write to the right port
     if (port1Type == PS2_TYPE_KEYBOARD)
@@ -66,32 +66,39 @@ void kbHandle(uint8_t scancode)
         if (!contextStruct->keys[i])
             break;
 
-    if (i == 15) // filled buffer
-        return;  // drop key
-
-    if (scancode == KEY_RELEASED(0x3A)) // caps lock released
+    // handle special keys
+    switch (scancode)
     {
-        isShifted = !isShifted;
+    case KEY_RELEASED(0x3A): // caps lock released
+        capsLocked = !capsLocked;
         return;
-    }
 
-    if (scancode == 0x2A || scancode == 0x36) // left+right shift
+    case 0x2A: // left shift
+    case 0x36: // right shift
     {
         isShifted = true;
         return;
     }
 
-    if (scancode == KEY_RELEASED(0x2A) || scancode == KEY_RELEASED(0x36)) // left+right shift released
+    case KEY_RELEASED(0x2A): // left shift released
+    case KEY_RELEASED(0x36): // right shift released
     {
         isShifted = false;
         return;
     }
 
-    if (scancode > sizeof(scanCodeSet1)) // not in scan code set
-        return;
+    default:
+        if (scancode > sizeof(scanCodeSet1)) // not in scan code set
+            return;
+    }
 
-    if (isShifted)
-        contextStruct->keys[i] = scanCodeSet1Shifted[scancode - 1]; // set the key at that index
-    else
-        contextStruct->keys[i] = scanCodeSet1[scancode - 1]; // set the key at that index
+    // choose the right set for all cases of shift and caps
+    if (capsLocked && !isShifted) // caps without shift -> capsed
+        contextStruct->keys[i] = scanCodeSet1Shifted[scancode - 1];
+    else if (capsLocked && isShifted) // caps with shift -> normal
+        contextStruct->keys[i] = scanCodeSet1[scancode - 1];
+    else if (isShifted) // shift -> shifted
+        contextStruct->keys[i] = scanCodeSet1Shifted[scancode - 1];
+    else // normal
+        contextStruct->keys[i] = scanCodeSet1[scancode - 1];
 }
