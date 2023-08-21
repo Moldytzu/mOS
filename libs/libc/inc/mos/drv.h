@@ -33,7 +33,7 @@ struct stack_frame;
 pstruct
 {
     uint32_t pid;
-    uint8_t keys[16];   // key buffers
+    uint8_t keys[64];   // key buffers
     int mouseX, mouseY; // mouse relative coordonates
 }
 drv_type_input_t;

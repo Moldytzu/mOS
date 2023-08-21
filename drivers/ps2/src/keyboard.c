@@ -62,7 +62,7 @@ void kbHandle(uint8_t scancode)
 
     // find the first empty in the buffer
     int i = 0;
-    for (; i < 16; i++)
+    for (; i < 64; i++)
         if (!contextStruct->keys[i])
             break;
 

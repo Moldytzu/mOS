@@ -38,7 +38,7 @@ void inputFlush()
 
     for (uint32_t i = 0; i < idx; i++)
     {
-        for (uint32_t j = 0; j < min(strlen(inputs[i].keys), 16); j++)
+        for (uint32_t j = 0; j < min(strlen(inputs[i].keys), 64); j++)
         {
             char c = inputs[i].keys[j];
 
@@ -56,7 +56,7 @@ void inputFlush()
             }
         }
 
-        zero(inputs[i].keys, 16);
+        zero(inputs[i].keys, 64);
 
         // generate preliminary values
         int tempX = mouseX + inputs[i].mouseX;
