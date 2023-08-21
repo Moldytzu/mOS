@@ -50,8 +50,23 @@ bool ps2Trace(const char *msg) // todo: make this a propper logging function
     return false;
 }
 
+uint8_t ps2ReadConfigByte()
+{
+    command(PS2_CTRL_READ_CFG);
+    waitOutput();
+    return output();
+}
+
+void ps2WriteConfigByte(uint8_t byte)
+{
+    command(PS2_CTRL_WRITE_CFG);
+    flush();
+    write(byte);
+    flush();
+}
+
 // initialize the controller
-bool initController()
+bool ps2InitController()
 {
     // disable the devices
     command(PS2_CTRL_DISABLE_P1);
@@ -61,16 +76,10 @@ bool initController()
     flush();
 
     // alter config byte
-    command(PS2_CTRL_READ_CFG); // read it
-    waitOutput();
-
-    uint8_t cfg = output();
-    cfg &= ~(0b11);   // disable IRQs
-    cfg |= 0b1000000; // enable scan code translation
-
-    command(PS2_CTRL_WRITE_CFG); // write changes
-    write(cfg);
-    flush();
+    uint8_t configByte = ps2ReadConfigByte();
+    configByte &= ~(0b11);   // disable IRQs
+    configByte |= 0b1000000; // enable scan code translation
+    ps2WriteConfigByte(configByte);
 
     // perform self-test
     command(PS2_CTRL_SELF_TEST); // send test command
@@ -175,17 +184,6 @@ bool initController()
         }
     }
 
-    // enable irqs in config byte for the detected devices
-    if (port1Present)
-        cfg |= 0b1;
-
-    if (port2Present)
-        cfg |= 0b10;
-
-    command(PS2_CTRL_WRITE_CFG); // write new config
-    waitOutput();
-    write(cfg);
-
     // initialize the devices
     kbInit();
     mouseInit();
@@ -194,7 +192,7 @@ bool initController()
     return true;
 }
 
-void setupIDTHandlers()
+void ps2SetupIDTHandlers()
 {
     // set the intrerrupt handlers
     if (port1Present)
@@ -210,11 +208,22 @@ void setupIDTHandlers()
         sys_idt_set(ps2Port2Handler, vector);
         sys_driver(SYS_DRIVER_REDIRECT_IRQ_TO_VECTOR, 12, vector, 0);
     }
+
+    // enable irqs in config byte for the detected devices
+    uint8_t configByte = ps2ReadConfigByte();
+
+    if (port1Present)
+        configByte |= 0b1;
+
+    if (port2Present)
+        configByte |= 0b10;
+
+    ps2WriteConfigByte(configByte);
 }
 
 void _mdrvmain()
 {
-    if (!initController()) // initialise the controller
+    if (!ps2InitController()) // initialise the controller
     {
         puts("ps2: failed to initialise!\n");
         abort();
@@ -228,7 +237,7 @@ void _mdrvmain()
         abort();
     }
 
-    setupIDTHandlers(); // set up interrupt handlers
+    ps2SetupIDTHandlers(); // set up interrupt handlers
 
     puts("ps2: started ps2 driver!\n");
 
