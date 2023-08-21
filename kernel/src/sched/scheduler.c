@@ -21,7 +21,7 @@ sched_task_t queueStart[K_MAX_CORES]; // start of the linked lists
 sched_task_t *lastTask[K_MAX_CORES];  // current task in the linked list
 uint16_t lastCore = 0;                // core on which last task was added
 uint32_t lastTaskID = 0;              // last id of the last task addedd
-uint16_t maxCore = 0;
+uint16_t maxCore = 0;                 // max available cores
 
 locker_t schedLock[K_MAX_CORES];
 
@@ -201,6 +201,8 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
         vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
+    vmmMap(pt, &t->registers, &t->registers, 0);
+
     t->elfBase = execBase;
     t->elfSize = execSize;
 
@@ -270,7 +272,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     uint64_t id = smpID();
 
     lock(schedLock[id], {
-        iasm("fxsave %0 " ::"m"(simdContext)); // save simd context
+        iasm("fxsave %0 " ::"m"(simdContext)); // save simd context (todo: find a way to save directly to the task's member)
 
         if (queueStart[id].next == lastTask[id] && !lastTask[id]->next) // if we only have one thread running on the core don't reschedule
         {
@@ -299,11 +301,13 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
         memcpy64(&lastTask[id]->simdContext, simdContext, 512 / sizeof(uint64_t));
     });
 
-    schedLoadNext(stack);
+    schedSwitchNext(); // load next context
 }
 
-// load next task in stack
-void schedLoadNext(idt_intrerrupt_stack_t *stack)
+extern void switchTo(void *stack);
+
+// performs context switch to next context
+void schedSwitchNext()
 {
     uint64_t id = smpID();
 
@@ -322,14 +326,13 @@ void schedLoadNext(idt_intrerrupt_stack_t *stack)
         logDbg(LOG_SERIAL_ONLY, "sched: loading task %s", lastTask[id]->name);
 #endif
 
-        // copy new state
-        memcpy64(stack, &lastTask[id]->registers, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
-
         // copy new simd context
         memcpy64(simdContext, &lastTask[id]->simdContext, 512 / sizeof(uint64_t));
 
-        iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context
+        iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context (todo: find a way to not use a memcpy here!)
     });
+
+    switchTo(&lastTask[id]->registers); // switch to the context
 }
 
 // initialise the scheduler

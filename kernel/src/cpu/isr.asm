@@ -74,7 +74,7 @@ __baseHandler%1:
     iretq                 ; return to previous context
 %endmacro
 
-global lapicEntry, syscallHandlerEntry, int_table
+global lapicEntry, syscallHandlerEntry, int_table, switchTo
 extern syscallHandler, exceptionHandler, xapicHandleTimer
 
 %assign i 0
@@ -96,6 +96,11 @@ lapicEntry:
     call xapicHandleTimer ; handle the timer
     POP_REG               ; restore registers
     iretq                 ; return to context
+
+switchTo:        ; switches to a new context
+    mov rsp, rdi ; in rdi (first C argument) we store the interrupt stack's address
+    POP_REG      ; restore registers
+    iretq        ; restore flags, segments, stack and instruction pointer
 
 section .data
 int_table:
