@@ -146,7 +146,7 @@ bool initVMSVGA()
 
     device->Command |= 0x7; // enable memory space, io space and bus mastering
 
-    ioBase = device->BAR0 - 1;                         // set the io port base; (for some reason you have to substract 1 otherwise it points to another register)
+    ioBase = device->BAR0 - 1;                         // set the io port base; (for some reason you have to substract 1 otherwise it points to another I/O port)
     fbAddr = readRegister(SVGA_REG_FB_START);          // get the framebuffer address
     fifoAddr = readRegister(SVGA_REG_FIFO_START);      // get the fifo address
     fbOffset = readRegister(SVGA_REG_FB_OFFSET);       // read the offset to the guest buffer
@@ -208,10 +208,9 @@ void _mdrvmain()
 
     while (1)
     {
-        for (int i = 0; i < 10; i++) // don't waste time here by yielding
-            sys_yield();
+        updateScreen(); // flush screen update
 
-        updateScreen(); // send command to the device that we want the screen to be updated
+        sys_yield(); // wait for update
 
         // wait for the kernel to request another resolution
         if (fb->requestedXres && fb->requestedXres && fb->currentXres == fb->requestedXres && fb->currentYres == fb->requestedYres)
