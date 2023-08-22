@@ -1,21 +1,34 @@
 #include <drv/drv.h>
 #include <cpu/idt.h>
 #include <mm/blk.h>
+#include <mm/pmm.h>
 #include <sched/scheduler.h>
 #include <misc/logger.h>
 
-drv_context_input_t *inputCtx;
-uint16_t inputIdx = 0;
+#define PAGES_PER_CONTEXT_ARRAY (1)
+#define MAX_CONTEXTS_PER_ARRAY ((PAGES_PER_CONTEXT_ARRAY * PMM_PAGE) / sizeof(uint64_t))
 
-drv_context_fb_t *fbCtx;
-drv_context_fb_t fbRef;
-uint16_t fbIdx = 0;
+drv_context_input_t **inputContexts;
+uint16_t inputIndex = 0;
+
+drv_context_fb_t **fbContexts;
+drv_context_fb_t fbReference;
+uint16_t fbIndex = 0;
 
 void drvInit()
 {
     // allocate the contexts
-    fbCtx = blkBlock(sizeof(drv_context_fb_t) * DRV_MAX_CONTEXTS);
-    inputCtx = blkBlock(sizeof(drv_context_input_t) * DRV_MAX_CONTEXTS);
+    inputContexts = pmmPages(PAGES_PER_CONTEXT_ARRAY);
+    fbContexts = pmmPages(PAGES_PER_CONTEXT_ARRAY);
+
+    for (int i = 0; i < MAX_CONTEXTS_PER_ARRAY; i++) // todo: we should allocate these on demand
+    {
+        fbContexts[i] = pmmPage();
+        inputContexts[i] = pmmPage();
+    }
+
+    fbIndex = 0;
+    inputIndex = 0;
 }
 
 void drvExit(uint32_t drv)
@@ -23,11 +36,11 @@ void drvExit(uint32_t drv)
     // clear contexts used by the drv
     for (int i = 0; i < DRV_MAX_CONTEXTS; i++)
     {
-        if (fbCtx[i].pid == drv)
-            zero(&fbCtx[i], sizeof(drv_context_fb_t));
+        if (fbContexts[i]->pid == drv)
+            zero(fbContexts[i], sizeof(drv_context_fb_t));
 
-        if (inputCtx[i].pid == drv)
-            zero(&inputCtx[i], sizeof(drv_context_input_t));
+        if (inputContexts[i]->pid == drv)
+            zero(inputContexts[i], sizeof(drv_context_input_t));
     }
 
     idtClearRedirect(drv);
@@ -39,11 +52,11 @@ void drvUpdateReference(uint32_t type, void *context)
     switch (type)
     {
     case DRV_TYPE_FB:
-        memcpy(&fbRef, context, sizeof(drv_context_fb_t));
-        for (int i = 0; i < fbIdx; i++)
+        memcpy(&fbReference, context, sizeof(drv_context_fb_t));
+        for (int i = 0; i < fbIndex; i++)
         {
-            fbCtx[i].requestedXres = fbRef.requestedXres;
-            fbCtx[i].requestedYres = fbRef.requestedYres;
+            fbContexts[i]->requestedXres = fbReference.requestedXres;
+            fbContexts[i]->requestedYres = fbReference.requestedYres;
         }
 
         break;
@@ -56,35 +69,37 @@ void drvUpdateReference(uint32_t type, void *context)
 void *drvRegister(uint32_t drv, uint32_t type)
 {
     // return a new context
-    logInfo("drv: %s registred as type %d driver", schedGet(drv)->name, type);
+    logInfo("drv: %s registers as type %d driver", schedGet(drv)->name, type);
 
     switch (type)
     {
 
     case DRV_TYPE_FB:
     {
-        if (fbIdx == DRV_MAX_CONTEXTS) // hell nah man (todo: reallocate every time)
+        if (fbIndex == DRV_MAX_CONTEXTS) // hell nah man (todo: reallocate every time)
             return NULL;
 
         // generate the context using the reference
-        fbCtx[fbIdx].pid = drv;
-        fbCtx[fbIdx].currentXres = framebufferGet().width;
-        fbCtx[fbIdx].currentYres = framebufferGet().height;
-        fbCtx[fbIdx].requestedXres = fbRef.requestedXres;
-        fbCtx[fbIdx].requestedYres = fbRef.requestedYres;
-        fbCtx[fbIdx].base = NULL;
+        logDbg(LOG_SERIAL_ONLY, "%p %d", fbContexts[fbIndex], fbIndex);
 
-        return &fbCtx[fbIdx++];
+        fbContexts[fbIndex]->pid = drv;
+        fbContexts[fbIndex]->currentXres = framebufferGet().width;
+        fbContexts[fbIndex]->currentYres = framebufferGet().height;
+        fbContexts[fbIndex]->requestedXres = fbReference.requestedXres;
+        fbContexts[fbIndex]->requestedYres = fbReference.requestedYres;
+        fbContexts[fbIndex]->base = NULL;
+
+        return fbContexts[fbIndex++];
         break;
     }
 
     case DRV_TYPE_INPUT:
     {
-        if (inputIdx == DRV_MAX_CONTEXTS) // hell nah man (todo: reallocate every time)
+        if (inputIndex == DRV_MAX_CONTEXTS) // hell nah man (todo: reallocate every time)
             return NULL;
 
-        inputCtx[inputIdx].pid = drv;
-        return &inputCtx[inputIdx++];
+        inputContexts[inputIndex]->pid = drv;
+        return inputContexts[inputIndex++];
         break;
     }
 
@@ -102,17 +117,17 @@ void *drvQueryActive(uint32_t type)
     {
     case DRV_TYPE_FB:
         // search the one that's valid (has a pid set) and that which has the up to date resolution set
-        for (int i = 0; i < fbIdx; i++)
+        for (int i = 0; i < fbIndex; i++)
         {
-            if (fbCtx[i].pid && fbCtx[i].currentXres == fbRef.requestedXres && fbCtx[i].currentYres == fbRef.requestedYres)
-                return &fbCtx[i];
+            if (fbContexts[i]->pid && fbContexts[i]->currentXres == fbReference.requestedXres && fbContexts[i]->currentYres == fbReference.requestedYres)
+                return fbContexts[i];
         }
 
         // return first valid if we didn't find one
-        for (int i = 0; i < fbIdx; i++)
+        for (int i = 0; i < fbIndex; i++)
         {
-            if (fbCtx[i].pid)
-                return &fbCtx[i];
+            if (fbContexts[i]->pid)
+                return fbContexts[i];
         }
 
         return NULL; // we don't have any active context
@@ -141,15 +156,15 @@ void drvQueryContexts(uint32_t type, void **contexts, uint32_t *size)
 
     case DRV_TYPE_FB:
     {
-        *contexts = fbCtx;
-        *size = fbIdx;
+        *contexts = fbContexts;
+        *size = fbIndex;
         break;
     }
 
     case DRV_TYPE_INPUT:
     {
-        *contexts = inputCtx;
-        *size = inputIdx;
+        *contexts = inputContexts;
+        *size = inputIndex;
         break;
     }
 

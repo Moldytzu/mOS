@@ -32,15 +32,15 @@ void inputInit()
 void inputFlush()
 {
     // append the scan codes from all input devices to the terminal buffers
-    drv_context_input_t *inputs;
+    drv_context_input_t **inputs;
     uint32_t idx;
     drvQueryContexts(DRV_TYPE_INPUT, (void *)&inputs, &idx);
 
     for (uint32_t i = 0; i < idx; i++)
     {
-        for (uint32_t j = 0; j < min(strlen(inputs[i].keys), 64); j++)
+        for (uint32_t j = 0; j < min(strlen(inputs[i]->keys), 64); j++)
         {
-            char c = inputs[i].keys[j];
+            char c = inputs[i]->keys[j];
 
             // append the key to every terminal in a loop
             currentTerminal = startTerminal;
@@ -56,11 +56,11 @@ void inputFlush()
             }
         }
 
-        zero(inputs[i].keys, 64);
+        zero(inputs[i]->keys, 64);
 
         // generate preliminary values
-        int tempX = mouseX + inputs[i].mouseX;
-        int tempY = mouseY + inputs[i].mouseY;
+        int tempX = mouseX + inputs[i]->mouseX;
+        int tempY = mouseY + inputs[i]->mouseY;
 
         // process them to become proper screen coordinates
         if (tempX < 0)
@@ -80,7 +80,7 @@ void inputFlush()
         mouseY = tempY;
 
         // reset the context
-        inputs[i].mouseX = inputs[i].mouseY = 0;
+        inputs[i]->mouseX = inputs[i]->mouseY = 0;
     }
 }
 
