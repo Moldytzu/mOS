@@ -80,8 +80,6 @@ void *drvRegister(uint32_t drv, uint32_t type)
             return NULL;
 
         // generate the context using the reference
-        logDbg(LOG_SERIAL_ONLY, "%p %d", fbContexts[fbIndex], fbIndex);
-
         fbContexts[fbIndex]->pid = drv;
         fbContexts[fbIndex]->currentXres = framebufferGet().width;
         fbContexts[fbIndex]->currentYres = framebufferGet().height;
