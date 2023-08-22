@@ -6,11 +6,17 @@
 #include <misc/logger.h>
 #include <drv/serial.h>
 
-typedef uint8_t aml_package_t;
-
 // NOTE:
 // This is not designed to work for anything further than evaluating _PTS and _S5 for shuting down
 //
+
+typedef struct
+{
+    char name[5]; // 5th byte is always null
+    uint8_t size; // in bytes
+    uint8_t elements;
+    uint8_t *contents;
+} aml_package_t;
 
 // chapter 20.2 of acpi spec 6.5 (Aug 29 2022)
 
@@ -59,55 +65,56 @@ void amlDumpSerial()
     serialWritec('\n');
 }
 
-// we should probably parse this in an internal structure
-aml_package_t *amlGetPackage(const char *namespaceName)
+// returns a structure with metadata about the package with the supplied name
+aml_package_t amlGetPackage(const char *name)
 {
-    size_t searchSize = strlen(namespaceName);
+    char *ptr = NULL;
+
+    size_t searchSize = strlen(name);
     for (size_t i = 0; i < amlLength - searchSize; i++)
     {
-        if (memcmp(&aml[i], namespaceName, searchSize) == 0) // horray found it!
-            return &aml[i];
+        if (memcmp(&aml[i], name, searchSize) == 0) // horray found it!
+            ptr = &aml[i];
     }
 
-    return NULL; // nah
-}
+    aml_package_t package;
+    zero(&package, sizeof(aml_package_t));
 
-void amlGetPackageName(aml_package_t *package, char *buffer)
-{
-    memcpy(buffer, package, 4); // package name has 4 bytes
-    buffer[4] = 0;              // null terminate string
-}
+    if (!ptr)
+        return package; // didn't found it
 
-uint8_t amlGetPackageElements(aml_package_t *package)
-{
-    return *(package + 5);
-}
+    // the format of a package is
+    // 4 bytes name
+    // PackageOp
+    // PkgLength
+    // NumElements
+    // PackageElementList
 
-uint8_t amlGetPackageSize(aml_package_t *package)
-{
-    char name[5];
-    amlGetPackageName(package, name);
+    // parse name
+    if (*(ptr + 4) != AML_OP_PACKAGE)
+        return package; // not a package
 
-    package += 4;                                                    // skip name segment (always 4 bytes long)
-    if (*package != AML_OP_PACKAGE && *package != AML_OP_VARPACKAGE) // invalid package
-    {
-        logError("Failed to get package size of invalid package with name %s", name);
-        return 0;
-    }
-    package++; // skip def opcode
+    memcpy(package.name, ptr, 4); // package name always has 4 bytes
+    ptr += 4;                     // skip name
+    ptr++;                        // skip opcode
 
-    uint8_t pkgLength = *package; // 20.2.4 acpi spec 6.5 (Aug 29 2022)
+    // parse PkgLength
+    uint8_t pkgLength = *ptr;
     uint8_t byteDataCount = (pkgLength & 0b11000000) >> 6;
-
     if (byteDataCount)
-    {
-        // we don't know how to handle those yet
-        panick("Failed to get package size of package with multiple byte data");
-    }
+        panick("Can't parse pkgLength! It has multiple byte data");
     else
-    {
-        return pkgLength & 0b11111;
-    }
+        package.size = pkgLength & 0b11111;
+    ptr++; // skip PkgLength
+
+    // parse NumElements
+    package.elements = *ptr;
+    ptr++;
+
+    // point to contents
+    package.contents = ptr;
+
+    return package; // return parsed package
 }
 
 void amlInit()
@@ -122,8 +129,8 @@ void amlInit()
 
     amlDumpSerial();
 
-    aml_package_t *s5 = amlGetPackage("_S5");
-    logInfo("_S5_ is %d bytes long and has %d elements", amlGetPackageSize(s5), amlGetPackageElements(s5));
+    aml_package_t s5 = amlGetPackage("_S5");
+    logInfo("_S5_ is %d bytes long and has %d elements", s5.size, s5.elements);
 
     // while (1)
     ;
