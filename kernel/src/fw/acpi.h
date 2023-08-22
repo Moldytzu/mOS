@@ -155,7 +155,27 @@ pstruct
 }
 acpi_madt_t;
 
+pstruct
+{
+    acpi_sdt_t header;
+    uint8_t aml[];
+}
+acpi_dsdt_t;
+
+// implemented in fw/acpi/tables.c
+extern acpi_rsdp_t *rsdp;
+extern acpi_xsdt_t *sdt;
+extern acpi_mcfg_t *mcfg;
+extern acpi_fadt_t *fadt;
+extern acpi_dsdt_t *dsdt;
+
+// tables
 acpi_sdt_t *acpiGet(const char *sig, int index);
+
+// power
 void acpiInit();
 void acpiReboot();
 void acpiShutdown();
+
+// aml
+void amlInit();
