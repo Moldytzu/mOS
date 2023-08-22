@@ -6,6 +6,8 @@
 #include <misc/logger.h>
 #include <drv/serial.h>
 
+typedef uint8_t aml_package_t;
+
 // NOTE:
 // This is not designed to work for anything further than evaluating _PTS and _S5 for shuting down
 //
@@ -42,7 +44,8 @@
 #define AML_OP_RETURN 0xA4
 #define AML_OP_WHILE 0xA2
 #define AML_OP_PACKAGE 0x12
-// todo: add more operations from 20.2.5.4 and so on
+#define AML_OP_VARPACKAGE 0x13
+// todo: add more operations from 20.2.5.4 acpi spec 6.5 (Aug 29 2022) and so on
 
 uint32_t amlLength;
 uint8_t *aml;
@@ -56,7 +59,8 @@ void amlDumpSerial()
     serialWritec('\n');
 }
 
-uint8_t *amlGetPackage(const char *namespaceName)
+// we should probably parse this in an internal structure
+aml_package_t *amlGetPackage(const char *namespaceName)
 {
     size_t searchSize = strlen(namespaceName);
     for (size_t i = 0; i < amlLength - searchSize; i++)
@@ -66,6 +70,44 @@ uint8_t *amlGetPackage(const char *namespaceName)
     }
 
     return NULL; // nah
+}
+
+void amlGetPackageName(aml_package_t *package, char *buffer)
+{
+    memcpy(buffer, package, 4); // package name has 4 bytes
+    buffer[4] = 0;              // null terminate string
+}
+
+uint8_t amlGetPackageElements(aml_package_t *package)
+{
+    return *(package + 5);
+}
+
+uint8_t amlGetPackageSize(aml_package_t *package)
+{
+    char name[5];
+    amlGetPackageName(package, name);
+
+    package += 4;                                                    // skip name segment (always 4 bytes long)
+    if (*package != AML_OP_PACKAGE && *package != AML_OP_VARPACKAGE) // invalid package
+    {
+        logError("Failed to get package size of invalid package with name %s", name);
+        return 0;
+    }
+    package++; // skip def opcode
+
+    uint8_t pkgLength = *package; // 20.2.4 acpi spec 6.5 (Aug 29 2022)
+    uint8_t byteDataCount = (pkgLength & 0b11000000) >> 6;
+
+    if (byteDataCount)
+    {
+        // we don't know how to handle those yet
+        panick("Failed to get package size of package with multiple byte data");
+    }
+    else
+    {
+        return pkgLength & 0b11111;
+    }
 }
 
 void amlInit()
@@ -80,9 +122,9 @@ void amlInit()
 
     amlDumpSerial();
 
-    serialWrite("_S5: ");
+    aml_package_t *s5 = amlGetPackage("_S5");
+    logInfo("_S5_ is %d bytes long and has %d elements", amlGetPackageSize(s5), amlGetPackageElements(s5));
 
-    uint8_t *s5 = amlGetPackage("_S5");
-    for (size_t i = 0; i < 10; i++)
-        serialWritec(s5[i]);
+    // while (1)
+    ;
 }
