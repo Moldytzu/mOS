@@ -193,21 +193,28 @@ void amlEnableACPI()
 // enter _Sx sleep state
 bool amlEnterSleepState(uint8_t state)
 {
-    if (state != 5 || !aml)
+    if (!state || !aml || state > 5)
     {
+    fail:
         logError("aml: can't enter unsuported state %d", state);
         return false;
     }
 
     // fixme: we don't evaluate _TTS and _PTS (may f-up some hardware)
 
-    aml_package_t s5 = amlGetPackage("_S5_");
-    logDbg(LOG_ALWAYS, "aml: _S5_ is %d bytes long and has %d elements", s5.size, s5.elements);
+    char object[5];
+    sprintf(object, "_S%d_", state);
+
+    aml_package_t sx = amlGetPackage(object);
+    if (!sx.size || !sx.elements)
+        goto fail;
+
+    logDbg(LOG_ALWAYS, "aml: %s is %d bytes long and has %d elements", object, sx.size, sx.elements);
 
     uint64_t PM1a_SLP_TYP = 0;
     uint64_t PM1b_SLP_TYP = 0;
     size_t size = 0;
-    uint8_t *ptr = s5.contents;
+    uint8_t *ptr = sx.contents;
 
     size = amlInterpretDataObject(ptr, &PM1a_SLP_TYP);
     ptr += size;
