@@ -146,6 +146,20 @@ aml_package_t amlGetPackage(const char *name)
     return package; // return parsed package
 }
 
+// enables acpi mode if necessary
+void amlEnableACPI()
+{
+    if (inw(fadt->PM1aControl) & 1) // already enabled
+        return;
+
+    logInfo("aml: enabling acpi mode");
+
+    outb(fadt->smiCommand, fadt->acpiEnable);
+
+    while (!inw(fadt->PM1aControl) & (1 << 0)) // wait for enabling
+        ;
+}
+
 void amlInit()
 {
     fadt = (acpi_fadt_t *)acpiGet("FACP", 0);                         // grab the fadt
@@ -156,7 +170,7 @@ void amlInit()
 
     logInfo("acpi: found dsdt at %p with %d bytes of aml", dsdt, amlLength);
 
-    amlDumpSerial();
+    amlEnableACPI(); // enable acpi mode
 
     aml_package_t s5 = amlGetPackage("_S5_");
     logInfo("_S5_ is %d bytes long and has %d elements", s5.size, s5.elements);
