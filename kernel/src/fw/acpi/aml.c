@@ -20,11 +20,11 @@ typedef struct
 
 // chapter 20.2 of acpi spec 6.5 (Aug 29 2022)
 
-#define AML_DATA_PREFIX_BYTE 0xA
-#define AML_DATA_PREFIX_WORD 0xB
-#define AML_DATA_PREFIX_DWORD 0xC
-#define AML_DATA_PREFIX_QWORD 0xE
-#define AML_DATA_PREFIX_STRING 0xD
+#define AML_OP_BYTE 0xA
+#define AML_OP_WORD 0xB
+#define AML_OP_DWORD 0xC
+#define AML_OP_QWORD 0xE
+#define AML_OP_STRING 0xD
 
 #define AML_OP_ZERO 0
 #define AML_OP_ONE 1
@@ -63,6 +63,35 @@ void amlDumpSerial()
     for (size_t i = 0; i < amlLength; i++)
         serialWritec(aml[i]);
     serialWritec('\n');
+}
+
+// interprets data object at pointed aml (returns its size and puts the value in supplied pointer)
+size_t amlInterpretDataObject(uint8_t *aml, uint64_t *value)
+{
+    uint8_t opcode = *aml;
+    uint8_t *amlValue = aml++;
+    switch (opcode)
+    {
+    case AML_OP_ZERO:
+        *value = 0;
+        return 1;
+
+    case AML_OP_ONE:
+        *value = 1;
+        return 1;
+
+    case AML_OP_ONES:
+        *value = ~0;
+        return 1;
+
+    case AML_OP_BYTE:
+        *value = *amlValue;
+        return 1;
+
+    default:
+        logError("Failed to interpret data object at 0x%p. Unexpected opcode 0x%x", aml, opcode);
+        return 0;
+    };
 }
 
 // returns a structure with metadata about the package with the supplied name
@@ -129,8 +158,22 @@ void amlInit()
 
     amlDumpSerial();
 
-    aml_package_t s5 = amlGetPackage("_S5");
+    aml_package_t s5 = amlGetPackage("_S5_");
     logInfo("_S5_ is %d bytes long and has %d elements", s5.size, s5.elements);
+
+    uint64_t PM1a_SLP_TYP = 0;
+    uint64_t PM1b_SLP_TYP = 0;
+    size_t size = 0;
+    uint8_t *ptr = s5.contents;
+
+    size = amlInterpretDataObject(ptr, &PM1a_SLP_TYP);
+    ptr += size;
+    size = amlInterpretDataObject(ptr, &PM1b_SLP_TYP);
+
+    PM1a_SLP_TYP <<= 10;
+    PM1b_SLP_TYP <<= 10;
+
+    logInfo("PM1a: %x PM2b: %x", PM1a_SLP_TYP, PM1b_SLP_TYP);
 
     // while (1)
     ;
