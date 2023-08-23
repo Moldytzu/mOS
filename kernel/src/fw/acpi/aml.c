@@ -11,6 +11,8 @@
 // This is not designed to work for anything further than evaluating _PTS and _S5 for shuting down
 //
 
+#ifdef K_ACPI_AML
+
 typedef struct
 {
     char name[5]; // 5th byte is always null
@@ -245,3 +247,5 @@ void amlInit()
 
     amlEnableACPI(); // enable acpi mode
 }
+
+#endif

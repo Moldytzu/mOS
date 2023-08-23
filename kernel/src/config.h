@@ -108,6 +108,7 @@
 // ###########################################
 
 // ACPI
+#define K_ACPI_AML // enables experimental AML (ACPI Machine Language) support
 
 // ###########################################
 // Miscellaneous

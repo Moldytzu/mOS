@@ -64,7 +64,10 @@ void acpiInit()
     logDbg(LOG_SERIAL_ONLY, "acpi: version %d", version);
 #endif
 
-    amlInit();  // initialise the aml parser
+#ifdef K_ACPI_AML
+    amlInit(); // initialise the aml parser
+#endif
+
     hpetInit(); // initialise the hpet
 
 #ifdef K_PCIE
