@@ -54,8 +54,8 @@ typedef struct
 #define AML_OP_VARPACKAGE 0x13
 // todo: add more operations from 20.2.5.4 acpi spec 6.5 (Aug 29 2022) and so on
 
-uint32_t amlLength;
-uint8_t *aml;
+uint32_t amlLength = 0;
+uint8_t *aml = NULL;
 
 // dump aml contents to serial
 void amlDumpSerial()
@@ -69,6 +69,9 @@ void amlDumpSerial()
 // interprets data object at pointed aml (returns its size and puts the value in supplied pointer)
 size_t amlInterpretDataObject(uint8_t *aml, uint64_t *value)
 {
+    if (!aml)
+        return 0;
+
     uint8_t opcode = *aml;
     uint8_t *amlValue = aml++;
     switch (opcode)
@@ -110,7 +113,7 @@ aml_package_t amlGetPackage(const char *name)
     aml_package_t package;
     zero(&package, sizeof(aml_package_t));
 
-    if (!ptr)
+    if (!ptr || !aml)
     {
         logError("aml: failed to find package %s", name);
         return package; // didn't found it
@@ -162,7 +165,7 @@ bool amlIsACPIEnabled()
 // enables acpi mode if necessary
 void amlEnableACPI()
 {
-    if (amlIsACPIEnabled()) // already enabled
+    if (amlIsACPIEnabled() || !aml) // already enabled or not available
         return;
 
     logInfo("aml: enabling acpi mode");
@@ -183,7 +186,7 @@ void amlEnableACPI()
 // enter _Sx sleep state
 bool amlEnterSleepState(uint8_t state)
 {
-    if (state != 5)
+    if (state != 5 || !aml)
     {
         logError("aml: can't enter unsuported state %d", state);
         return false;
@@ -219,8 +222,21 @@ bool amlEnterSleepState(uint8_t state)
 
 void amlInit()
 {
-    fadt = (acpi_fadt_t *)acpiGet("FACP", 0);                         // grab the fadt
+    fadt = (acpi_fadt_t *)acpiGet("FACP", 0); // grab the fadt
+
+    if (!fadt)
+    {
+        logError("aml: failed to grab FADT (firmware bug?)");
+        return;
+    }
+
     dsdt = (acpi_dsdt_t *)(fadt->DSDT64 ? fadt->DSDT64 : fadt->DSDT); // use the correct dsdt address
+
+    if (!dsdt)
+    {
+        logError("aml: failed to grab DSDT (firmware bug?)");
+        return;
+    }
 
     aml = dsdt->aml;
     amlLength = dsdt->header.length - sizeof(acpi_sdt_t);
