@@ -153,18 +153,31 @@ aml_package_t amlGetPackage(const char *name)
     return package; // return parsed package
 }
 
+// returns state of acpi enable state
+bool amlIsACPIEnabled()
+{
+    return inw(fadt->PM1aControl) & 1;
+}
+
 // enables acpi mode if necessary
 void amlEnableACPI()
 {
-    if (inw(fadt->PM1aControl) & 1) // already enabled
+    if (amlIsACPIEnabled()) // already enabled
         return;
 
-    logWarn("aml: enabling acpi mode");
+    logInfo("aml: enabling acpi mode");
 
     outb(fadt->smiCommand, fadt->acpiEnable);
 
-    while (!inw(fadt->PM1aControl) & (1 << 0)) // wait for enabling
-        ;
+    for (int i = 0; i < 1000; i++)
+    {
+        if (amlIsACPIEnabled())
+            return;
+
+        hpetMillis(1);
+    }
+
+    logWarn("aml: enabling timed out");
 }
 
 // enter _Sx sleep state
