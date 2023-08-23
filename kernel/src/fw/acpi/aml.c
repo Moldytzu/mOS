@@ -111,7 +111,10 @@ aml_package_t amlGetPackage(const char *name)
     zero(&package, sizeof(aml_package_t));
 
     if (!ptr)
+    {
+        logError("aml: failed to find package %s", name);
         return package; // didn't found it
+    }
 
     // the format of a package is
     // 4 bytes name
@@ -122,7 +125,10 @@ aml_package_t amlGetPackage(const char *name)
 
     // parse name
     if (*(ptr + 4) != AML_OP_PACKAGE)
+    {
+        logError("aml: found %s but it is not an package. (detected opcode 0x%x)", name, *(ptr + 4));
         return package; // not a package
+    }
 
     memcpy(package.name, ptr, 4); // package name always has 4 bytes
     ptr += 4;                     // skip name
