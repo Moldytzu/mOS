@@ -100,22 +100,27 @@ size_t amlInterpretDataObject(uint8_t *aml, uint64_t *value)
     };
 }
 
-// returns a structure with metadata about the package with the supplied name
-aml_package_t amlGetPackage(const char *name)
+uint8_t *amlGetObject(const char *name)
 {
-    char *ptr = NULL;
-
     size_t searchSize = strlen(name);
     for (size_t i = 0; i < amlLength - searchSize; i++)
     {
         if (memcmp(&aml[i], name, searchSize) == 0) // horray found it!
-            ptr = &aml[i];
+            return &aml[i];
     }
+
+    return NULL;
+}
+
+// returns a structure with metadata about the package with the supplied name
+aml_package_t amlGetPackage(const char *name)
+{
+    char *obj = amlGetObject(name); // get object
 
     aml_package_t package;
     zero(&package, sizeof(aml_package_t));
 
-    if (!ptr || !aml)
+    if (!obj || !aml)
     {
         logError("aml: failed to find package %s", name);
         return package; // didn't found it
@@ -129,31 +134,31 @@ aml_package_t amlGetPackage(const char *name)
     // PackageElementList
 
     // parse name
-    if (*(ptr + 4) != AML_OP_PACKAGE)
+    if (*(obj + 4) != AML_OP_PACKAGE)
     {
-        logError("aml: found %s but it is not an package. (detected opcode 0x%x)", name, *(ptr + 4));
+        logError("aml: found %s but it is not an package. (detected opcode 0x%x)", name, *(obj + 4));
         return package; // not a package
     }
 
-    memcpy(package.name, ptr, 4); // package name always has 4 bytes
-    ptr += 4;                     // skip name
-    ptr++;                        // skip opcode
+    memcpy(package.name, obj, 4); // package name always has 4 bytes
+    obj += 4;                     // skip name
+    obj++;                        // skip opcode
 
     // parse PkgLength
-    uint8_t pkgLength = *ptr;
+    uint8_t pkgLength = *obj;
     uint8_t byteDataCount = (pkgLength & 0b11000000) >> 6;
     if (byteDataCount) // todo: handle this
         panick("Can't parse pkgLength! It has multiple byte data");
     else
         package.size = pkgLength & 0b11111;
-    ptr++; // skip PkgLength
+    obj++; // skip PkgLength
 
     // parse NumElements
-    package.elements = *ptr;
-    ptr++;
+    package.elements = *obj;
+    obj++;
 
     // point to contents
-    package.contents = ptr;
+    package.contents = obj;
 
     return package; // return parsed package
 }
