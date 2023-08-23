@@ -5,6 +5,7 @@
 #include <main/panic.h>
 #include <misc/logger.h>
 #include <drv/serial.h>
+#include <sched/hpet.h>
 
 // NOTE:
 // This is not designed to work for anything further than evaluating _PTS and _S5 for shuting down
@@ -89,7 +90,7 @@ size_t amlInterpretDataObject(uint8_t *aml, uint64_t *value)
         return 1;
 
     default:
-        logError("Failed to interpret data object at 0x%p. Unexpected opcode 0x%x", aml, opcode);
+        logError("aml: failed to interpret data object at 0x%p. unexpected opcode 0x%x", aml, opcode);
         return 0;
     };
 }
@@ -130,7 +131,7 @@ aml_package_t amlGetPackage(const char *name)
     // parse PkgLength
     uint8_t pkgLength = *ptr;
     uint8_t byteDataCount = (pkgLength & 0b11000000) >> 6;
-    if (byteDataCount)
+    if (byteDataCount) // todo: handle this
         panick("Can't parse pkgLength! It has multiple byte data");
     else
         package.size = pkgLength & 0b11111;
@@ -152,7 +153,7 @@ void amlEnableACPI()
     if (inw(fadt->PM1aControl) & 1) // already enabled
         return;
 
-    logInfo("aml: enabling acpi mode");
+    logWarn("aml: enabling acpi mode");
 
     outb(fadt->smiCommand, fadt->acpiEnable);
 
@@ -160,20 +161,19 @@ void amlEnableACPI()
         ;
 }
 
-void amlInit()
+// enter _Sx sleep state
+bool amlEnterSleepState(uint8_t state)
 {
-    fadt = (acpi_fadt_t *)acpiGet("FACP", 0);                         // grab the fadt
-    dsdt = (acpi_dsdt_t *)(fadt->DSDT64 ? fadt->DSDT64 : fadt->DSDT); // use the correct dsdt address
+    if (state != 5)
+    {
+        logError("aml: can't enter unsuported state %d", state);
+        return false;
+    }
 
-    aml = dsdt->aml;
-    amlLength = dsdt->header.length - sizeof(acpi_sdt_t);
-
-    logInfo("acpi: found dsdt at %p with %d bytes of aml", dsdt, amlLength);
-
-    amlEnableACPI(); // enable acpi mode
+    // fixme: we don't evaluate _TTS and _PTS (may f-up some hardware)
 
     aml_package_t s5 = amlGetPackage("_S5_");
-    logInfo("_S5_ is %d bytes long and has %d elements", s5.size, s5.elements);
+    logDbg(LOG_ALWAYS, "aml: _S5_ is %d bytes long and has %d elements", s5.size, s5.elements);
 
     uint64_t PM1a_SLP_TYP = 0;
     uint64_t PM1b_SLP_TYP = 0;
@@ -187,8 +187,26 @@ void amlInit()
     PM1a_SLP_TYP <<= 10;
     PM1b_SLP_TYP <<= 10;
 
-    logInfo("PM1a: %x PM2b: %x", PM1a_SLP_TYP, PM1b_SLP_TYP);
+    logDbg(LOG_ALWAYS, "aml: PM1a: %x PM2b: %x", PM1a_SLP_TYP, PM1b_SLP_TYP);
 
-    // while (1)
-    ;
+    outw(fadt->PM1aControl, PM1a_SLP_TYP | (1 << 13));
+    if (fadt->PM1BControl)
+        outw(fadt->PM1BControl, PM1b_SLP_TYP | (1 << 13));
+
+    hpetSleepMillis(100);
+
+    return false;
+}
+
+void amlInit()
+{
+    fadt = (acpi_fadt_t *)acpiGet("FACP", 0);                         // grab the fadt
+    dsdt = (acpi_dsdt_t *)(fadt->DSDT64 ? fadt->DSDT64 : fadt->DSDT); // use the correct dsdt address
+
+    aml = dsdt->aml;
+    amlLength = dsdt->header.length - sizeof(acpi_sdt_t);
+
+    logInfo("aml: found dsdt at %p with %d bytes of aml", dsdt, amlLength);
+
+    amlEnableACPI(); // enable acpi mode
 }

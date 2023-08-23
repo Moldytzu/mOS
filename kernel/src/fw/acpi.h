@@ -179,3 +179,4 @@ void acpiShutdown();
 
 // aml
 void amlInit();
+bool amlEnterSleepState(uint8_t state);

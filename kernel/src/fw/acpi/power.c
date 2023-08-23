@@ -51,11 +51,16 @@ void shutdownFallback()
 // shutdown using acpi
 void acpiShutdown()
 {
-    logError("acpi: shutdown unsupported. trying emulator-only fallback.");
+    bool state = amlEnterSleepState(5);
 
-    shutdownFallback();
+    if (!state) // failure
+    {
+        logError("acpi: shutdown unsupported. trying emulator-only fallback.");
 
-    logError("acpi: fallback failed.");
-    panick("It is safe to shutdown computer!");
-    hang();
+        shutdownFallback();
+
+        logError("acpi: fallback failed.");
+        panick("It is safe to shutdown computer!");
+        hang();
+    }
 }
