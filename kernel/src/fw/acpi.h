@@ -4,6 +4,12 @@
 #define ACPI_GAS_ACCESS_MEMORY 0
 #define ACPI_GAS_ACCESS_IO 1
 
+#define ACPI_ENABLED 1
+#define ACPI_PM1_CONTROL_SLP_EN (1 << 13)
+#define ACPI_PM1_CONTROL_SLP_TYPx (1 << 10)
+#define ACPI_BUTTON_POWER (1 << 8)
+#define ACPI_BUTTON_SLEEP (1 << 9)
+
 pstruct
 {
     uint8_t signature[8];
@@ -180,3 +186,6 @@ void acpiShutdown();
 // aml
 void amlInit();
 bool amlEnterSleepState(uint8_t state);
+
+// sci
+uint32_t acpiGetSCIEvent();

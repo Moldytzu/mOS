@@ -42,6 +42,8 @@ void framebufferTask()
     // note: we run this with interrupts disabled to not have context switches in between random pieces of code
     while (1)
     {
+        // todo: handle ACPI SCIs here
+
         switch (vtGetMode())
         {
         case VT_DISPLAY_FB:

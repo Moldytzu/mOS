@@ -11,6 +11,8 @@
 // This is not designed to work for anything further than evaluating _PTS and _S5 for shuting down
 //
 
+// todo: add ACPI PM timer support
+
 #ifdef K_ACPI_AML
 
 typedef struct
@@ -55,10 +57,6 @@ typedef struct
 #define AML_OP_PACKAGE 0x12
 #define AML_OP_VARPACKAGE 0x13
 // todo: add more operations from 20.2.5.4 acpi spec 6.5 (Aug 29 2022) and so on
-
-#define ACPI_ENABLED 1
-#define PM1_CONTROL_SLP_EN (1 << 13)
-#define PM1_CONTROL_SLP_TYPx (1 << 10)
 
 uint32_t amlLength = 0;
 uint8_t *aml = NULL;
@@ -167,34 +165,6 @@ aml_package_t amlGetPackage(const char *name)
     return package; // return parsed package
 }
 
-// returns state of acpi enable state
-bool amlIsACPIEnabled()
-{
-    return inw(fadt->PM1aControl) & ACPI_ENABLED;
-}
-
-// enables acpi mode if necessary
-void amlEnableACPI()
-{
-    if (amlIsACPIEnabled() || !aml) // already enabled or not available
-        return;
-
-    logInfo("aml: enabling acpi mode");
-
-    outb(fadt->smiCommand, fadt->acpiEnable);
-
-    // wait for mode to be enabled
-    for (int i = 0; i < 1000; i++)
-    {
-        if (amlIsACPIEnabled())
-            return;
-
-        hpetMillis(1);
-    }
-
-    logWarn("aml: enabling timed out");
-}
-
 // enter _Sx sleep state
 bool amlEnterSleepState(uint8_t state)
 {
@@ -233,16 +203,55 @@ bool amlEnterSleepState(uint8_t state)
     PM1b_SLP_TYP <<= 10; // PM1_CONTROL_SLP_TYPx starts at bit 10
 
     // tell the hardware we want to sleep now
-    outw(fadt->PM1aControl, PM1a_SLP_TYP | PM1_CONTROL_SLP_EN); // write grabbed type and enable bit
+    outw(fadt->PM1aControl, PM1a_SLP_TYP | ACPI_PM1_CONTROL_SLP_EN); // write grabbed type and enable bit
 
     if (fadt->PM1BControl)
-        outw(fadt->PM1BControl, PM1b_SLP_TYP | PM1_CONTROL_SLP_EN); // write grabbed type and enable bit
+        outw(fadt->PM1BControl, PM1b_SLP_TYP | ACPI_PM1_CONTROL_SLP_EN); // write grabbed type and enable bit
 
     // wait for things to change
     hpetSleepMillis(1000);
 
     // if it fails then it didn't work....
     return false;
+}
+
+// returns state of acpi enable state
+bool amlIsACPIEnabled()
+{
+    return inw(fadt->PM1aControl) & ACPI_ENABLED;
+}
+
+// enables acpi mode if necessary
+void amlEnableACPI()
+{
+    if (!aml)
+        return;
+
+    // enable SCIs
+    if (!amlIsACPIEnabled()) // already enabled
+    {
+        logInfo("aml: enabling acpi mode");
+
+        outb(fadt->smiCommand, fadt->acpiEnable);
+
+        // wait for mode to be enabled
+        for (int i = 0; i < 1000; i++)
+        {
+            if (amlIsACPIEnabled())
+                return;
+
+            hpetMillis(1);
+        }
+
+        logWarn("aml: enabling timed out");
+    }
+
+    // set scis for buttons
+    uint32_t pm1aEnable = fadt->PM1aEvent + fadt->PM1EventLen / 2;
+    uint32_t pm1bEnable = fadt->PM1bEvent + fadt->PM1EventLen / 2;
+
+    outw(pm1aEnable, ACPI_BUTTON_POWER | ACPI_BUTTON_SLEEP);
+    outw(pm1bEnable, ACPI_BUTTON_POWER | ACPI_BUTTON_SLEEP);
 }
 
 void amlInit()
