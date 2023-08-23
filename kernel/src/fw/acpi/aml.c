@@ -56,6 +56,10 @@ typedef struct
 #define AML_OP_VARPACKAGE 0x13
 // todo: add more operations from 20.2.5.4 acpi spec 6.5 (Aug 29 2022) and so on
 
+#define ACPI_ENABLED 1
+#define PM1_CONTROL_SLP_EN (1 << 13)
+#define PM1_CONTROL_SLP_TYPx (1 << 10)
+
 uint32_t amlLength = 0;
 uint8_t *aml = NULL;
 
@@ -166,7 +170,7 @@ aml_package_t amlGetPackage(const char *name)
 // returns state of acpi enable state
 bool amlIsACPIEnabled()
 {
-    return inw(fadt->PM1aControl) & 1;
+    return inw(fadt->PM1aControl) & ACPI_ENABLED;
 }
 
 // enables acpi mode if necessary
@@ -179,6 +183,7 @@ void amlEnableACPI()
 
     outb(fadt->smiCommand, fadt->acpiEnable);
 
+    // wait for mode to be enabled
     for (int i = 0; i < 1000; i++)
     {
         if (amlIsACPIEnabled())
@@ -205,7 +210,7 @@ bool amlEnterSleepState(uint8_t state)
     char object[5];
     sprintf(object, "_S%d_", state);
 
-    aml_package_t sx = amlGetPackage(object);
+    aml_package_t sx = amlGetPackage(object); // the _Sx_ package holds the required value to put in type
     if (!sx.size || !sx.elements)
         goto fail;
 
@@ -216,21 +221,27 @@ bool amlEnterSleepState(uint8_t state)
     size_t size = 0;
     uint8_t *ptr = sx.contents;
 
+    // we parse those
     size = amlInterpretDataObject(ptr, &PM1a_SLP_TYP);
     ptr += size;
     size = amlInterpretDataObject(ptr, &PM1b_SLP_TYP);
 
-    PM1a_SLP_TYP <<= 10;
-    PM1b_SLP_TYP <<= 10;
-
     logDbg(LOG_ALWAYS, "aml: PM1a: %x PM2b: %x", PM1a_SLP_TYP, PM1b_SLP_TYP);
 
-    outw(fadt->PM1aControl, PM1a_SLP_TYP | (1 << 13));
+    // make them fit well in the control register
+    PM1a_SLP_TYP <<= 10; // PM1_CONTROL_SLP_TYPx starts at bit 10
+    PM1b_SLP_TYP <<= 10; // PM1_CONTROL_SLP_TYPx starts at bit 10
+
+    // tell the hardware we want to sleep now
+    outw(fadt->PM1aControl, PM1a_SLP_TYP | PM1_CONTROL_SLP_EN); // write grabbed type and enable bit
+
     if (fadt->PM1BControl)
-        outw(fadt->PM1BControl, PM1b_SLP_TYP | (1 << 13));
+        outw(fadt->PM1BControl, PM1b_SLP_TYP | PM1_CONTROL_SLP_EN); // write grabbed type and enable bit
 
-    hpetSleepMillis(100);
+    // wait for things to change
+    hpetSleepMillis(1000);
 
+    // if it fails then it didn't work....
     return false;
 }
 
