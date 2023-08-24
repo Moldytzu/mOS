@@ -42,7 +42,6 @@ void framebufferTask()
     // note: we run this with interrupts disabled to not have context switches in between random pieces of code
     while (1)
     {
-        // todo: handle ACPI SCIs here
 
         switch (vtGetMode())
         {
@@ -276,7 +275,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     lock(schedLock[id], {
         iasm("fxsave %0 " ::"m"(simdContext)); // save simd context (todo: find a way to save directly to the task's member)
 
-        if (queueStart[id].next == lastTask[id] && !lastTask[id]->next) // if we only have one thread running on the core don't reschedule
+        if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the application core don't reschedule
         {
             release(schedLock[id]);
             return;
