@@ -11,6 +11,8 @@
 #define SOCKET_SIZE 4096
 #define DRIVERS
 
+uint64_t maxPowerTimeout;
+uint64_t powerConfirmations;
 uint64_t sockID = 0;
 void *sockBuffer = NULL;
 bool verbose = true;
@@ -47,6 +49,11 @@ void parseCFG()
     safe = cfgBool(&cfg, "SAFE");
     verbose = cfgBool(&cfg, "VERBOSE") | safe; // verbose mode is forced on by safe
     shell = cfgStr(&cfg, "SHELL");
+    maxPowerTimeout = cfgUint(&cfg, "POWER_TIMEOUT");
+    powerConfirmations = cfgUint(&cfg, "POWER_CONFIRMATIONS");
+
+    if (!maxPowerTimeout)
+        maxPowerTimeout = 1000;
 
     uint32_t screenX = cfgUint(&cfg, "SCREEN_WIDTH");
     uint32_t screenY = cfgUint(&cfg, "SCREEN_HEIGHT");
@@ -119,25 +126,21 @@ void handleSocket()
     }
     else if (strcmp(sockBuffer, "acpi_power") == 0) // power button
     {
-#define MAX_DIFF 2000
-#define CONFIRMATIONS 1
-
         uint64_t difference = uptimeMilis() - powerTimestamp;
 
-        if (powerCount == CONFIRMATIONS && difference < MAX_DIFF) // in sync
+        if ((powerCount == powerConfirmations && difference < maxPowerTimeout) || powerConfirmations == 0)
         {
-            // todo: add config entry
             sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
             puts("\n\n\n Shutdowning...");
             sys_power(SYS_POWER_SHUTDOWN, 0, 0);
         }
-        else if (difference >= MAX_DIFF) // timeout
+        else if (difference >= maxPowerTimeout) // timeout
         {
             powerCount = 0;
         }
 
         if (powerCount == 0) // if it's reset or first time print the message
-            puts("\nPress again to confirm shutdown\n");
+            printf("\nPress %d times in maximum %d miliseconds between presses to confirm shutdown\n", powerConfirmations, maxPowerTimeout);
 
         powerCount++;
         powerTimestamp = uptimeMilis();
