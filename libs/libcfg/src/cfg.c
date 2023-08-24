@@ -97,27 +97,53 @@ uint32_t cfgUint(config_t *cfg, const char *name)
 config_t cfgCreate(const char *buffer)
 {
     config_t cfg;
-    cfg.originalBuffer = (char *)buffer;
-    cfg.length = cfg.originalLength = strlen(buffer);
+    cfg.scratchBuffer = (char *)buffer;
+    cfg.length = cfg.scratchLength = strlen(buffer);
 
-    cfg.buffer = malloc(cfg.originalLength); // allocate a new buffer
+    cfg.buffer = malloc(cfg.scratchLength); // allocate a new buffer
     assert(cfg.buffer != NULL);
 
-    bool inMarker = false;          // is set when we process a marker's contents
+    // parse all bytes of the original bufer
+
+    // PASS 1: remove comments
+    bool inComment = false;
     char *currentByte = cfg.buffer; // current byte in the new buffer
 
-    // parse all bytes of the original bufer
+    for (int i = 0; i < cfg.scratchLength; i++)
+    {
+        char toCopy = cfg.scratchBuffer[i]; // the character we process
+
+        // comments are one line only and start with #
+        if (toCopy == '#')
+            inComment = true;
+
+        if (toCopy == '\n')
+            inComment = false;
+
+        if (!inComment)
+            *currentByte++ = toCopy;
+    }
+
+    memset(cfg.scratchBuffer, 0, cfg.scratchLength);           // zero the scratch buffer
+    memcpy(cfg.scratchBuffer, cfg.buffer, strlen(cfg.buffer)); // copy the buffer in the scratch buffer
+    cfg.scratchLength = strlen(cfg.scratchBuffer);             // set new scratch length
+
+    // PASS 2: remove spaces
     // we want to remove all spaces so we can have syntax like <marker name>    =                  <contents>
     // that is parsed perfectly the same way like <marker name>=contents
-    for (int i = 0; i < cfg.originalLength; i++)
+    memset(cfg.buffer, 0, cfg.length); // clean the buffer
+    bool inMarker = false;             // is set when we process a marker's contents
+    currentByte = cfg.buffer;          // current byte in the new buffer
+
+    for (int i = 0; i < cfg.scratchLength; i++)
     {
-        char toCopy = cfg.originalBuffer[i]; // the character we process
+        char toCopy = cfg.scratchBuffer[i]; // the character we process
 
         if (toCopy == '=') // we use = to mark a marker's contents
         {
             inMarker = true;
 
-            while (cfg.originalBuffer[i + 1] == ' ' && i + 1 < cfg.originalLength) // skip all spaces while not going out of bounds
+            while (cfg.scratchBuffer[i + 1] == ' ' && i + 1 < cfg.scratchLength) // skip all spaces after = until another character is reached while not going out of bounds
                 i++;
         }
 
@@ -132,6 +158,8 @@ config_t cfgCreate(const char *buffer)
 
         *currentByte++ = toCopy;
     }
+
+    cfg.length = strlen(cfg.buffer); // calculate new length
 
     return cfg;
 }

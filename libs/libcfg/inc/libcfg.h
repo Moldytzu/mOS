@@ -4,10 +4,10 @@
 
 typedef struct
 {
-    char *originalBuffer;
+    char *scratchBuffer;
     char *buffer;
     unsigned long length;
-    unsigned long originalLength;
+    unsigned long scratchLength;
 } config_t;
 
 char *cfgGet(config_t *cfg, const char *name);
