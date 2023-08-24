@@ -52,6 +52,8 @@ void _start()
 
     ioapicInit(); // initialise the external interrupt controller
 
+    acpiInstallSCIInterrupt(); // install SCI interrupt handler
+
     vfsInit(); // initialise the virtual filesystem
 
     initrdMount(); // mount the initrd

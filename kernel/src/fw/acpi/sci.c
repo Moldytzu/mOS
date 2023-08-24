@@ -1,5 +1,10 @@
 #include <fw/acpi.h>
 #include <cpu/io.h>
+#include <cpu/xapic.h>
+#include <cpu/ioapic.h>
+#include <cpu/idt.h>
+#include <misc/logger.h>
+#include <mm/vmm.h>
 
 // gets last SCI event
 uint32_t acpiGetSCIEvent()
@@ -14,4 +19,28 @@ uint32_t acpiGetSCIEvent()
 
     // return values
     return pm1aStatus | pm1bStatus;
+}
+
+// handles SCI interrupts
+void sciHandler(idt_intrerrupt_error_stack_t *stack)
+{
+    vmmSwap(vmmGetBaseTable()); // swap to kernel table
+
+    xapicEOI(); // send end of interrupt
+
+    uint32_t event = acpiGetSCIEvent(); // get event
+
+    logDbg(LOG_SERIAL_ONLY, "SCI event 0x%x", event);
+}
+
+extern void sciEntry();
+
+// install SCI interrupt handler
+void acpiInstallSCIInterrupt()
+{
+    logInfo("aml: routing %d to SCI interrupt handler", fadt->sciIntrerrupt);
+
+    uint16_t vector = idtAllocateVector();
+    idtSetGate(sciEntry, vector);
+    ioapicRedirectIRQ(fadt->sciIntrerrupt, vector, 0);
 }

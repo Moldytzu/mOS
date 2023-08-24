@@ -74,8 +74,8 @@ __baseHandler%1:
     iretq                 ; return to previous context
 %endmacro
 
-global lapicEntry, syscallHandlerEntry, int_table, switchTo
-extern syscallHandler, exceptionHandler, xapicHandleTimer
+global lapicEntry, syscallHandlerEntry, int_table, switchTo, sciEntry
+extern syscallHandler, exceptionHandler, xapicHandleTimer, sciHandler
 
 %assign i 0
 %rep 256
@@ -96,6 +96,15 @@ lapicEntry:
     call xapicHandleTimer ; handle the timer
     POP_REG               ; restore registers
     iretq                 ; return to context
+
+sciEntry:
+    cld
+    cli             ; disable intrerrupts
+    PUSH_REG        ; save all general purpose registers + cr3
+    mov rdi, rsp    ; pass the stack frame
+    call sciHandler ; handle the timer
+    POP_REG         ; restore registers
+    iretq           ; return to context
 
 switchTo:        ; switches to a new context
     mov rsp, rdi ; in rdi (first C argument) we store the interrupt stack's address

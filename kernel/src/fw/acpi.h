@@ -194,3 +194,4 @@ bool amlEnterSleepState(uint8_t state);
 
 // sci
 uint32_t acpiGetSCIEvent();
+void acpiInstallSCIInterrupt();
