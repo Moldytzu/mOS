@@ -7,6 +7,19 @@
 #include <sched/scheduler.h>
 #include <misc/logger.h>
 
+#define ELF_MAGIC "\x7F" \
+                  "ELF"
+
+bool elfIsCompatible(Elf64_Ehdr *elf)
+{
+    return memcmp(elf, ELF_MAGIC, 4) == 0 &&       // check magic
+           elf->e_ident[EI_CLASS] == ELFCLASS64 && // check for object size
+           elf->e_ident[EI_DATA] == ELFDATA2LSB && // check encoding
+           elf->e_type == ET_EXEC &&               // check type
+           elf->e_machine == EM_X86_64 &&          // check architecture
+           elf->e_version == EV_CURRENT;           // check version
+}
+
 // load an elf
 sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 {
@@ -17,12 +30,12 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     vfsRead(fd, elf, sizeof(Elf64_Ehdr), 0); // read the header
 
     // check compatibility
-    if (elf->e_ident[EI_CLASS] != ELFCLASS64 || elf->e_ident[EI_DATA] != ELFDATA2LSB || elf->e_type != ET_EXEC || elf->e_machine != EM_X86_64 || elf->e_version != EV_CURRENT)
+    if (!elfIsCompatible(elf))
     {
         // clean up
         blkDeallocate(elf);
         vfsClose(fd);
-        return false;
+        return NULL;
     }
 
 #ifdef K_ELF_DEBUG
