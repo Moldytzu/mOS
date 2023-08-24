@@ -101,21 +101,20 @@ void idtClearRedirect(uint32_t tid)
 
 extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
 
+bool intHasErrorCode(uint8_t int_num)
+{
+    return int_num == 0x8 || int_num == 0xA || int_num == 0xB || int_num == 0xC || int_num == 0xD || int_num == 0xE || int_num == 0x11 || int_num == 0x15 || int_num == 0x1D || int_num == 0x1E;
+}
+
 const char *exceptions[] = {
-    "Divide By Zero", "Debug", "NMI", "Breakpoint", "Overflow", "Bound Range Exceeded", "Invalid Opcode", "Device Not Available", "Double Fault", "_", "Invalid TSS", "Segment Not Present", "Stack Fault", "General Protection Fault", "Page Fault"};
+    "Divide By Zero", "Debug", "NMI", "Breakpoint", "Overflow", "Bound Range Exceeded", "Invalid Opcode", "Device Not Available", "Double Fault", "Segment Overrun", "Invalid TSS", "Segment Not Present", "Stack Fault", "General Protection Fault", "Page Fault"};
 
 void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
 {
     vmmSwap(vmmGetBaseTable()); // swap to the base table
 
-    switch (int_num)
-    {
-    case XAPIC_NMI_VECTOR: // this halts the cpus in case of a kernel panic
-        return hang();
-
-    default:
-        break;
-    }
+    if (int_num == XAPIC_NMI_VECTOR) // hang on non-maskable interrupts
+        hang();
 
     if (redirectTable[int_num] && schedGet(redirectTableMeta[int_num])) // there is a request to redirect intrerrupt to a driver (todo: replace this with a struct)
     {
@@ -124,11 +123,12 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
         return;                                                                                                         // don't execute rest of the handler
     }
 
-    if (stack->cs == 0x23) // userspace exceptions
+    // userspace exceptions
+    if (stack->cs == 0x23 && int_num < 32) // fixme: this branch isn't taken if the interrupt doesn't push error
     {
         const char *name = schedGetCurrent(smpID())->name;
 
-        logWarn("%s has crashed with %s at %x! Terminating it.", name, exceptions[int_num], stack->rip);
+        logWarn("%s has crashed with %s at %x! Terminating it.", name, exceptions[int_num], stack->rip); // display message
 
         // tell the init system we crashed
         struct sock_socket *initSocket = sockGet(1);
@@ -149,19 +149,28 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
         unreachable(); // schedSwitchNext never returns here!
     }
 
-    xapicNMI(); // send nmi to all application processors
-
+    // if we couldn't handle the interrupt, panic!
+    xapicNMI();        // send nmi to every other core
     framebufferZero(); // clear the framebuffer
 
-    const char *message = to_hstring(int_num);
+    // generate a message
+    char message[96];
 
-    if (int_num < sizeof(exceptions) / 8)
-        message = exceptions[int_num];
+    if (int_num < sizeof(exceptions) / sizeof(uint64_t)) // generate a different message for exceptions
+        sprintf(message, "Exception %s (0x%x)", exceptions[int_num], int_num);
+    else
+        sprintf(message, "Interrupt 0x%x", int_num);
 
     if (int_num == 0xE) // when a page fault occurs the faulting address is set in cr2
         logError("CR2=0x%p ", controlReadCR2());
 
-    logError("CORE #%d: RIP=0x%p CS=0x%p RFLAGS=0x%p RSP=0x%p SS=0x%p ERR=0x%p", smpID(), stack->rip, stack->cs, stack->rflags, stack->rsp, stack->ss, stack->error);
+    if (intHasErrorCode(int_num))                                                                                                                                           // check if interrupt pushes error
+        logError("CORE #%d: RIP=0x%p RSP=0x%p CS=0x%x SS=0x%x RFLAGS=0x%x ERROR=0x%p", smpID(), stack->rip, stack->rsp, stack->cs, stack->ss, stack->rflags, stack->error); // if it does print the error too
+    else
+    {
+        idt_intrerrupt_stack_t *noErrorStack = (idt_intrerrupt_stack_t *)stack;
+        logError("CORE #%d: RIP=0x%p RSP=0x%p CS=0x%x SS=0x%x RFLAGS=0x%x", smpID(), noErrorStack->rip, noErrorStack->rsp, noErrorStack->cs, noErrorStack->ss, noErrorStack->rflags);
+    }
     panick(message);
 }
 
