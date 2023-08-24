@@ -264,6 +264,8 @@ void amlInit()
         return;
     }
 
+    vmmMapKernel(fadt, fadt, VMM_ENTRY_RW); // map fadt
+
     if (fadt->flags & ACPI_FADT_HW_REDUCED_ACPI && rsdp->version >= 5) // check for hardware reduced system (I don't bother with those)
     {
         logError("aml: hardware-reduced system detected. giving up");
@@ -277,6 +279,8 @@ void amlInit()
         logError("aml: failed to grab DSDT (firmware bug?)");
         return;
     }
+
+    vmmMapKernel(dsdt, dsdt, VMM_ENTRY_RW); // map dsdt
 
     aml = dsdt->aml;
     amlLength = dsdt->header.length - sizeof(acpi_sdt_t);
