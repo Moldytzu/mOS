@@ -13,7 +13,7 @@
 
 idt_descriptor_t idtr;
 idt_gate_descriptor_t *gates;
-extern void *int_table[];
+extern void *intHandlers[];
 void *redirectTable[256];
 int redirectTableMeta[256];
 bool allocatedVector[0xFF];
@@ -56,7 +56,7 @@ void idtInit(uint16_t procID)
     idtr.offset = (uint64_t)gates; // set the offset to the data
     idtr.size = 0;                 // reset the size
     for (int i = 0; i < 0xFF; i++) // set all exception irqs to the base handler
-        idtSetGate((void *)int_table[i], i);
+        idtSetGate((void *)intHandlers[i], i);
 
     idtr.size--; // decrement to comply with the spec
 

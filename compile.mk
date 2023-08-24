@@ -29,9 +29,10 @@ CFLAGS :=   		              \
 	-g
 
 # flags for assembler
-ASMFLAGS := \
-	-felf64 \
-	-gdwarf
+ASMFLAGS :=    \
+	-felf64    \
+	-gdwarf    \
+	-isrc/cpu/
 
 # flags for linker
 LDFLAGS := 				   \

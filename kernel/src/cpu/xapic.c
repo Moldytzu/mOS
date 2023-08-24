@@ -11,7 +11,7 @@
 #include <mm/pmm.h>
 #include <main/panic.h>
 
-extern void lapicEntry();
+extern void xapicEntry();
 
 // #define TPS
 
@@ -104,7 +104,7 @@ void xapicInit(bool bsp)
 
     // setup idt entry (only needed to do once)
     if (bsp)
-        idtSetGate(lapicEntry, XAPIC_TIMER_VECTOR); // set the isr to one that doesn't screw up the stack on an interrupt that doesn't have an error code like the timer's one while calling the same general interrupt entry point (check cpu/isr.asm)
+        idtSetGate(xapicEntry, XAPIC_TIMER_VECTOR); // set the isr to one that doesn't screw up the stack on an interrupt that doesn't have an error code like the timer's one while calling the same general interrupt entry point (check cpu/isr.asm)
 
     logInfo("lapic: initialised ID: %x", xapicRead(XAPIC_REG_ID));
 }
