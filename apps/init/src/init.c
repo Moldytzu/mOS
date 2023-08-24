@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define NANOS_TO_MILIS 1000000
 #define SOCKET_SIZE 4096
 #define DRIVERS
 
@@ -16,6 +17,11 @@ bool verbose = true;
 bool safe = false;
 char *shell = "/init/msh.mx";
 config_t cfg;
+
+uint64_t uptimeMilis()
+{
+    return sys_time_uptime_nanos() / NANOS_TO_MILIS;
+}
 
 void parseCFG()
 {
@@ -87,6 +93,8 @@ void parseCFG()
     sys_display(SYS_DISPLAY_SET, screenX, screenY);
 }
 
+uint64_t powerTimestamp;
+uint8_t powerCount;
 void handleSocket()
 {
     sys_socket(SYS_SOCKET_READ, sockID, (uint64_t)sockBuffer, SOCKET_SIZE); // read the whole socket
@@ -111,7 +119,29 @@ void handleSocket()
     }
     else if (strcmp(sockBuffer, "acpi_power") == 0) // power button
     {
+#define MAX_DIFF 2000
+#define CONFIRMATIONS 1
+
+        uint64_t difference = uptimeMilis() - powerTimestamp;
+
+        if (powerCount == CONFIRMATIONS && difference < MAX_DIFF) // in sync
+        {
+            // todo: add config entry
+            sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
+            puts("\n\n\n Shutdowning...");
+            sys_power(SYS_POWER_SHUTDOWN, 0, 0);
         }
+        else if (difference >= MAX_DIFF) // timeout
+        {
+            powerCount = 0;
+        }
+
+        if (powerCount == 0) // if it's reset or first time print the message
+            puts("\nPress again to confirm shutdown\n");
+
+        powerCount++;
+        powerTimestamp = uptimeMilis();
+    }
     else
     {
         printf("Unknown socket packet: %s\n", sockBuffer);
@@ -124,14 +154,17 @@ void handleSocket()
 
 int main(int argc, char **argv)
 {
+    uint64_t kernelStartupTime = uptimeMilis();
+
+    powerTimestamp = 0;
+    powerCount = 0;
+
     // ensure that the pid is 1
     if (sys_pid_get() != 1)
     {
         puts("The init system has to be launched as PID 1!\n");
         sys_exit(1);
     }
-
-    uint64_t kernelStartupTime = sys_time_uptime_nanos() / 1000000;
 
     // set tty display mode
     sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
@@ -150,7 +183,7 @@ int main(int argc, char **argv)
     // start a shell
     const char *enviroment = "PATH=/init/|"; // the basic enviroment
 
-    uint64_t userspaceStartupTime = sys_time_uptime_nanos() / 1000000;
+    uint64_t userspaceStartupTime = uptimeMilis();
 
     if (verbose)
         printf("Startup finished in %dms (kernel) + %dms (userspace) = %dms\n", kernelStartupTime, userspaceStartupTime - kernelStartupTime, userspaceStartupTime);
