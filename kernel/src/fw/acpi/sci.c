@@ -3,6 +3,7 @@
 #include <cpu/xapic.h>
 #include <cpu/ioapic.h>
 #include <cpu/idt.h>
+#include <subsys/socket.h>
 #include <misc/logger.h>
 #include <mm/vmm.h>
 
@@ -31,6 +32,17 @@ void sciHandler(idt_intrerrupt_error_stack_t *stack)
     uint32_t event = acpiGetSCIEvent(); // get event
 
     logDbg(LOG_SERIAL_ONLY, "SCI event 0x%x", event);
+
+    // give the init system the information
+    struct sock_socket *initSocket = sockGet(1);
+    if (!initSocket)
+        return;
+
+    if (event & ACPI_BUTTON_POWER)
+        sockAppend(initSocket, "acpi_power", 10);
+
+    if (event & ACPI_BUTTON_SLEEP)
+        sockAppend(initSocket, "acpi_sleep", 10);
 }
 
 extern void sciEntry();

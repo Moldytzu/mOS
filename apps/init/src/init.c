@@ -109,6 +109,9 @@ void handleSocket()
         puts("\n\n\n Rebooting...");
         sys_power(SYS_POWER_REBOOT, 0, 0);
     }
+    else if (strcmp(sockBuffer, "acpi_power") == 0) // power button
+    {
+        }
     else
     {
         printf("Unknown socket packet: %s\n", sockBuffer);
