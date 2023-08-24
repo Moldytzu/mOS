@@ -5,10 +5,14 @@
 #define ACPI_GAS_ACCESS_IO 1
 
 #define ACPI_ENABLED 1
+
 #define ACPI_PM1_CONTROL_SLP_EN (1 << 13)
 #define ACPI_PM1_CONTROL_SLP_TYPx (1 << 10)
+
 #define ACPI_BUTTON_POWER (1 << 8)
 #define ACPI_BUTTON_SLEEP (1 << 9)
+
+#define ACPI_FADT_RESET_REG_SUP (1 << 10)
 
 pstruct
 {

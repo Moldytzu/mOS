@@ -18,7 +18,7 @@ void rebootFallback()
 void acpiReboot()
 {
     // page 81 of ACPI spec 6.5 (August 29 2022)
-    if (fadt)
+    if (fadt && fadt->flags & ACPI_FADT_RESET_REG_SUP) // check for support
     {
         switch (fadt->reset.addressSpace)
         {
