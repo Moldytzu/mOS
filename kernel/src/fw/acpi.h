@@ -13,6 +13,7 @@
 #define ACPI_BUTTON_SLEEP (1 << 9)
 
 #define ACPI_FADT_RESET_REG_SUP (1 << 10)
+#define ACPI_FADT_HW_REDUCED_ACPI (1 << 20)
 
 pstruct
 {

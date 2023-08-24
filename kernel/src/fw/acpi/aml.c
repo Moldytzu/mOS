@@ -264,6 +264,12 @@ void amlInit()
         return;
     }
 
+    if (fadt->flags & ACPI_FADT_HW_REDUCED_ACPI && rsdp->version >= 5) // check for hardware reduced system (I don't bother with those)
+    {
+        logError("aml: hardware-reduced system detected. giving up");
+        return;
+    }
+
     dsdt = (acpi_dsdt_t *)(fadt->DSDT64 ? fadt->DSDT64 : fadt->DSDT); // use the correct dsdt address
 
     if (!dsdt)
