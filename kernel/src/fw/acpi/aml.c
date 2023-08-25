@@ -191,10 +191,15 @@ bool amlEnterSleepState(uint8_t state)
     size_t size = 0;
     uint8_t *ptr = sx.contents;
 
-    // we parse those
+    // we parse the SLP_TYP values
     size = amlInterpretDataObject(ptr, &PM1a_SLP_TYP);
+    if (!size)
+        goto fail;
+
     ptr += size;
     size = amlInterpretDataObject(ptr, &PM1b_SLP_TYP);
+    if (!size)
+        goto fail;
 
     logDbg(LOG_ALWAYS, "aml: PM1a: %x PM2b: %x", PM1a_SLP_TYP, PM1b_SLP_TYP);
 
