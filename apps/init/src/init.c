@@ -108,23 +108,28 @@ void handleSocket()
     if (!*(char *)sockBuffer)                                               // if empty give up
         return;
 
+    // todo: maybe we could abstract the search a bit
     if (memcmp(sockBuffer, "crash ", 6) == 0)
     {
         printf("%s has crashed!\n", sockBuffer + 6 /*skip "crash "*/);
+        return;
     }
-    else if (strcmp(sockBuffer, "shutdown") == 0) // shutdown command
+
+    if (memcmp(sockBuffer, "shutdown", 8) == 0) // shutdown command
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Shutdowning...");
         sys_power(SYS_POWER_SHUTDOWN, 0, 0);
     }
-    else if (strcmp(sockBuffer, "reboot") == 0) // shutdown command
+
+    if (memcmp(sockBuffer, "reboot", 6) == 0) // shutdown command
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Rebooting...");
         sys_power(SYS_POWER_REBOOT, 0, 0);
     }
-    else if (strcmp(sockBuffer, "acpi_power") == 0) // power button
+
+    if (memcmp(sockBuffer, "acpi_power", 10) == 0) // power button
     {
         uint64_t difference = uptimeMilis() - powerTimestamp;
 
@@ -144,10 +149,6 @@ void handleSocket()
 
         powerCount++;
         powerTimestamp = uptimeMilis();
-    }
-    else
-    {
-        printf("Unknown socket packet: %s\n", sockBuffer);
     }
 
     memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
