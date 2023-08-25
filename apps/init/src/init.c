@@ -100,6 +100,24 @@ void parseCFG()
     sys_display(SYS_DISPLAY_SET, screenX, screenY);
 }
 
+// linear search the toSearch string in the por
+char *search(char *str, char *toSearch)
+{
+    if (strlen(toSearch) > strlen(str)) // don't bother if searched string is bigger than the actual string
+        return NULL;
+
+    size_t maxLen = strlen(str) - strlen(toSearch); // this can be zero when strlen(toSearch) == strlen(str)
+    for (int i = 0; i <= maxLen; i++)               // thus we have to count up to maxLen (including it!)
+    {
+        if (memcmp(str, toSearch, strlen(toSearch)) == 0) // do memory comparison at the offset
+            return str;                                   // return the address
+
+        str++;
+    }
+
+    return NULL; // fail
+}
+
 uint64_t powerTimestamp;
 uint8_t powerCount;
 void handleSocket()
@@ -108,28 +126,26 @@ void handleSocket()
     if (!*(char *)sockBuffer)                                               // if empty give up
         return;
 
-    // todo: maybe we could abstract the search a bit
-    if (memcmp(sockBuffer, "crash ", 6) == 0)
+    if (search(sockBuffer, "crash "))
     {
         printf("%s has crashed!\n", sockBuffer + 6 /*skip "crash "*/);
-        return;
     }
 
-    if (memcmp(sockBuffer, "shutdown", 8) == 0) // shutdown command
+    if (search(sockBuffer, "shutdown")) // shutdown command
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Shutdowning...");
         sys_power(SYS_POWER_SHUTDOWN, 0, 0);
     }
 
-    if (memcmp(sockBuffer, "reboot", 6) == 0) // shutdown command
+    if (search(sockBuffer, "reboot")) // shutdown command
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Rebooting...");
         sys_power(SYS_POWER_REBOOT, 0, 0);
     }
 
-    if (memcmp(sockBuffer, "acpi_power", 10) == 0) // power button
+    if (search(sockBuffer, "acpi_power")) // power button
     {
         uint64_t difference = uptimeMilis() - powerTimestamp;
 
