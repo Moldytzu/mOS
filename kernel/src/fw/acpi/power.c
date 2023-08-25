@@ -55,11 +55,13 @@ void acpiShutdown()
     amlEnterSleepState(5); // doesn't return if it fails!
 #endif
 
-    logError("acpi: shutdown unsupported. trying emulator-only fallback.");
+    // uncomment if found a way to detect virtual machines (maybe fw cfg on qemu?)
+    // logError("acpi: shutdown unsupported. trying emulator-only fallback.");
 
-    shutdownFallback();
+    // shutdownFallback();
 
-    logError("acpi: fallback failed.");
+    // logError("acpi: fallback failed.");
+
     panick("It is safe to shutdown computer!");
     hang();
 }
