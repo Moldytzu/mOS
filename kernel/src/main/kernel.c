@@ -40,7 +40,7 @@ void kmain()
     do
     {
         if (currentNode->filesystem)
-           logDbg(LOG_SERIAL_ONLY, "vfs: found %s%s on %s", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
+            logDbg(LOG_SERIAL_ONLY, "vfs: found %s%s on %s", currentNode->filesystem->mountName, currentNode->path, currentNode->filesystem->name);
         currentNode = currentNode->next; // next node
     } while (currentNode);
 #endif
@@ -62,6 +62,15 @@ void panick_impl(const char *file, size_t line, const char *msg)
 #endif
 
     logError("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
+
+    logError("Stack trace:");
+    logError("0x%p <- caller", __builtin_extract_return_addr(__builtin_return_address(0)));
+    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(1)));
+    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(2)));
+    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(3)));
+    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(4)));
+    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(5)));
+    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(6)));
 
 #ifdef K_PANIC_REBOOT
     for (volatile size_t i = 0; i < 0xFFFFFFF; i++)
