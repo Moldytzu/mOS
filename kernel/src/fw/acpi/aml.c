@@ -269,6 +269,12 @@ void amlInit()
         return;
     }
 
+    if (fadt->header.revision < 2)
+    {
+        logError("aml: old firmware or chipset detected. giving up");
+        return;
+    }
+
     vmmMapKernel(fadt, fadt, VMM_ENTRY_RW); // map fadt
 
     if (fadt->flags & ACPI_FADT_HW_REDUCED_ACPI && rsdp->version >= 5) // check for hardware reduced system (I don't bother with those)
