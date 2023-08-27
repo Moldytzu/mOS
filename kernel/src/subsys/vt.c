@@ -42,13 +42,18 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
         return;
 
     lock(vt->lock, {
-        char *buffer = (char *)vt->buffer; // vt buffer
+        char *buffer = (char *)vt->buffer; // modifiable vt buffer
         const char *input = str;           // input buffer
 
         if (vt->bufferIdx + count >= VMM_PAGE * vt->bufferPages) // reallocate if we overflow
         {
-            vt->buffer = pmmReallocate((void *)vt->buffer, vt->bufferPages, ++vt->bufferPages); // do the actual reallocation
-            buffer = (char *)vt->buffer;                                                        // repoint the buffer
+            // calculate required indices
+            // NOTE: without the volatile keyword the compiler will f-up the values
+            volatile size_t oldPages = vt->bufferPages;
+            volatile size_t newPages = ++vt->bufferPages;
+
+            vt->buffer = pmmReallocate((void *)vt->buffer, oldPages, newPages); // perform the reallocation
+            buffer = (char *)vt->buffer;                                        // point to the buffer
 
             logDbg(LOG_SERIAL_ONLY, "vt: reallocating buffer of id %d to %d pages", vt->id, vt->bufferPages);
         }
