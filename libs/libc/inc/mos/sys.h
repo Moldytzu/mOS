@@ -58,6 +58,7 @@
 #define SYS_DRIVER 13
 #define SYS_TIME 14
 #define SYS_PERF 15
+#define SYS_MAILBOX 16
 
 typedef struct __attribute__((packed))
 {
@@ -67,6 +68,17 @@ typedef struct __attribute__((packed))
     int argc;
     char **argv;
 } sys_exec_packet_t;
+
+typedef struct
+{
+    uint8_t reserved[9];
+
+    uint32_t sender; // sender's pid
+    size_t subject;  // numeric subject
+
+    size_t messageLength; // length of message
+    char message[];       // message
+} mailbox_t;
 
 extern uint64_t _syscall(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t rcx, uint64_t r8, uint64_t r9);
 void sys_exit(uint64_t status);
@@ -91,4 +103,7 @@ uint64_t sys_socket(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 uint64_t sys_power(uint8_t call, uint64_t arg1, uint64_t arg2);
 uint64_t sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 uint64_t sys_perf(uint8_t call, uint64_t arg1, uint64_t arg2);
+
+mailbox_t *sys_mailbox_read();
+
 void sys_yield();

@@ -17,3 +17,4 @@ typedef struct
 mailbox_t *mailCompose(mailbox_t *mailbox, uint32_t sender, size_t subject, char *message, size_t messageLength);
 mailbox_t *mailReadNext(mailbox_t *mailbox);
 void mailFree(mailbox_t *mail);
+size_t mailPages(mailbox_t *mail);

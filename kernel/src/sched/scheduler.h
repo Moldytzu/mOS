@@ -2,6 +2,7 @@
 #include <misc/utils.h>
 #include <cpu/idt.h>
 #include <mm/vmm.h>
+#include <ipc/mailbox.h>
 
 #define TASK_BASE_ADDRESS 0xA000000000
 #define TASK_BASE_ALLOC 0xB000000000
@@ -19,6 +20,8 @@ typedef struct
     char cwd[512];
     bool isDriver;
     bool isElf;
+
+    mailbox_t mailbox;
 
     // context
     uint8_t simdContext[512];

@@ -252,6 +252,8 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     logDbg(LOG_SERIAL_ONLY, "sched: adding task %s", t->name);
 #endif
 
+    mailCompose(&t->mailbox, 5, 1, "hello mailbox", 13);
+
     lock(schedLock[id], {
         sched_task_t *last = schedLast(id); // get last task
 
@@ -424,6 +426,8 @@ void schedKill(uint32_t id)
         pmmDeallocate(task->enviroment);
         vmmDestroy(task->pageTable);
         blkDeallocate(task);
+
+        // todo: free all mails
 
         TASK(task->prev)->next = task->next; // remove task from its list
     });

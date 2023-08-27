@@ -62,6 +62,14 @@ int main(int argc, char **argv)
     backPages = fbLen / 4096 + 1;                                    // calculate pages required
     backStart = (uint32_t *)sys_mem(SYS_MEM_ALLOCATE, backPages, 0); // allocate the pages
 
+    mailbox_t *mail = sys_mailbox_read();
+    if (mail)
+    {
+        sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);
+        printf("%d sent us %d %s", mail->sender, mail->subject, mail->message);
+        abort();
+    }
+
     size_t fps = 0;
 
     // event loop

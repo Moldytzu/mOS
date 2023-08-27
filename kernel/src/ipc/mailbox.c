@@ -56,6 +56,14 @@ void mailFree(mailbox_t *mail)
     if (!mail)
         return;
 
-    size_t usedPages = (mail->messageLength + sizeof(mailbox_t)) / 4096 + 1; // calculate used pages
-    pmmDeallocatePages(mail, usedPages);                                     // do the deallocation
+    pmmDeallocatePages(mail, mailPages(mail)); // do the deallocation
+}
+
+// returns pages of mail
+size_t mailPages(mailbox_t *mail)
+{
+    if (!mail)
+        return 0;
+
+    return (mail->messageLength + sizeof(mailbox_t)) / 4096 + 1;
 }

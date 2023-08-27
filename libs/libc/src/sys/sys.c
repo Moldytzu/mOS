@@ -99,3 +99,8 @@ uint64_t sys_perf(uint8_t call, uint64_t arg1, uint64_t arg2)
 {
     return _syscall(SYS_PERF, call, arg1, arg2, 0, 0);
 }
+
+mailbox_t *sys_mailbox_read()
+{
+    return (mailbox_t *)_syscall(SYS_MAILBOX, 0, 0, 0, 0, 0);
+}
