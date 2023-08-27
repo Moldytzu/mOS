@@ -420,14 +420,20 @@ void schedKill(uint32_t id)
         for (int i = 0; i < TASK_MAX_FILE_DESCRIPTORS; i++)
             vfsClose(task->fileDescriptorPointers[i]);
 
+        // deallocate mails
+        mailbox_t *mail = mailReadNext(&task->mailbox);
+        while (mail)
+        {
+            mailFree(mail);
+            mail = mailReadNext(&task->mailbox);
+        }
+
         pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
         pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
         pmmDeallocatePages(task->stackBase, K_STACK_SIZE / VMM_PAGE + 1);
         pmmDeallocate(task->enviroment);
         vmmDestroy(task->pageTable);
         blkDeallocate(task);
-
-        // todo: free all mails
 
         TASK(task->prev)->next = task->next; // remove task from its list
     });
