@@ -17,6 +17,7 @@
 #include <fw/acpi.h>
 #include <fs/vfs.h>
 #include <fs/initrd.h>
+#include <ipc/mailbox.h>
 #include <ipc/socket.h>
 #include <vt/vt.h>
 #include <main/panic.h>
@@ -44,6 +45,26 @@ void kmain()
         currentNode = currentNode->next; // next node
     } while (currentNode);
 #endif
+
+    // mailbox_t box;
+    // zero(&box, sizeof(mailbox_t));
+
+    // mailCompose(&box, 1, 2, "write xyz", 9);
+    // mailCompose(&box, 2, 1, "write abc", 9);
+    // mailCompose(&box, 3, 6, "write 123", 9);
+    // mailCompose(&box, 4, 3, "write foo", 9);
+    // mailCompose(&box, 5, 7, "write bar", 9);
+
+    // mailbox_t *mail = mailReadNext(&box);
+    // while (mail)
+    // {
+    //     logInfo("mail from %d with subject %d says '%s'", mail->sender, mail->subject, mail->message);
+    //     mailFree(mail); // deallocate mail
+    //     mail = mailReadNext(&box);
+    // }
+
+    // while (1)
+    //     ;
 
     if (!elfLoad("/init/init.mx", 0, 0, 0)) // load the init executable
         panick("Failed to load \"init.mx\" from the initrd.");
