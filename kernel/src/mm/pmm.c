@@ -69,7 +69,7 @@ void *pmmPages(uint64_t pages)
     for (int i = 0; i < poolCount; i++)
     {
         // find an available pool
-        if (pools[i].available < PMM_PAGE)
+        if (pools[i].available < PMM_PAGE * pages)
             continue;
 
         pmm_pool_t *pool = &pools[i];
