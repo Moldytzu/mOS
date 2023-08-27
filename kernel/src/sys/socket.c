@@ -1,6 +1,6 @@
 #include <sys/sys.h>
 #include <fs/vfs.h>
-#include <subsys/socket.h>
+#include <ipc/socket.h>
 
 // (rsi = call, rbx = arg1, r8 = arg2, r9 = arg3)
 uint64_t socket(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_task_t *task)

@@ -22,7 +22,7 @@
 #include <fs/initrd.h>
 #include <fw/acpi.h>
 #include <fs/vfs.h>
-#include <subsys/socket.h>
+#include <ipc/socket.h>
 #include <main/panic.h>
 
 void kmain();

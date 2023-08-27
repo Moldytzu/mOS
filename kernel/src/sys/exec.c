@@ -1,6 +1,6 @@
 #include <sys/sys.h>
 #include <elf/elf.h>
-#include <subsys/vt.h>
+#include <vt/vt.h>
 #include <mm/pmm.h>
 
 pstruct

@@ -1,6 +1,6 @@
 #include <sys/sys.h>
 #include <fs/vfs.h>
-#include <subsys/vt.h>
+#include <vt/vt.h>
 #include <drv/serial.h>
 
 // write (rsi = buffer, rdx = count, r8 = fd)

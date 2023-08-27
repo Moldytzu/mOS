@@ -7,7 +7,7 @@
 #include <mm/vmm.h>
 #include <drv/serial.h>
 #include <sched/scheduler.h>
-#include <subsys/socket.h>
+#include <ipc/socket.h>
 #include <main/panic.h>
 #include <misc/logger.h>
 

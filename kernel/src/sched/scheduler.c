@@ -7,7 +7,7 @@
 #include <mm/vmm.h>
 #include <mm/blk.h>
 #include <drv/serial.h>
-#include <subsys/vt.h>
+#include <vt/vt.h>
 #include <main/panic.h>
 #include <stdnoreturn.h>
 #include <fw/acpi.h>

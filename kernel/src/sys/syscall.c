@@ -3,7 +3,7 @@
 #include <cpu/idt.h>
 #include <mm/vmm.h>
 #include <sched/scheduler.h>
-#include <subsys/vt.h>
+#include <vt/vt.h>
 #include <misc/logger.h>
 
 uint64_t (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver, time, perf};

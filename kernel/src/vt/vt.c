@@ -1,4 +1,4 @@
-#include <subsys/vt.h>
+#include <vt/vt.h>
 #include <mm/pmm.h>
 #include <mm/blk.h>
 #include <mm/vmm.h>

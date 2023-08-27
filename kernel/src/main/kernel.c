@@ -17,8 +17,8 @@
 #include <fw/acpi.h>
 #include <fs/vfs.h>
 #include <fs/initrd.h>
-#include <subsys/socket.h>
-#include <subsys/vt.h>
+#include <ipc/socket.h>
+#include <vt/vt.h>
 #include <main/panic.h>
 #include <elf/elf.h>
 #include <misc/logger.h>

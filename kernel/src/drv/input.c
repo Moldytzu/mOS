@@ -2,7 +2,7 @@
 #include <drv/drv.h>
 #include <drv/input.h>
 #include <drv/framebuffer.h>
-#include <subsys/vt.h>
+#include <vt/vt.h>
 #include <sched/scheduler.h>
 #include <cpu/smp.h>
 

@@ -3,7 +3,7 @@
 #include <cpu/xapic.h>
 #include <cpu/ioapic.h>
 #include <cpu/idt.h>
-#include <subsys/socket.h>
+#include <ipc/socket.h>
 #include <misc/logger.h>
 #include <mm/vmm.h>
 
