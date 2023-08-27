@@ -113,7 +113,10 @@ void xapicInit(bool bsp)
 void xapicNMI()
 {
     if (!isEnabled)
+    {
+        logError("xapic: trying to NMI with disabled xapic");
         return;
+    }
 
     // 11.6 volume 3 intel sdm
 
