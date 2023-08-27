@@ -78,7 +78,7 @@ void *pmmPages(uint64_t pages)
 
     retry:
         lock(pool->lock, {
-            for (size_t i = pool->lastAllocatedIndex; i < pool->bitmapBytes * 8; i++)
+            for (size_t i = pool->lastAllocatedIndex; i < pool->size / PMM_PAGE; i++)
             {
                 if (((uint64_t *)pool->base)[i / bitsof(uint64_t)] == UINT64_MAX) // if the qword is all set then skip it (speeds up allocation by a lot)
                 {
