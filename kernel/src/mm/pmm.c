@@ -182,6 +182,13 @@ void *pmmReallocate(void *ptr, uint64_t oldSize, uint64_t newSize)
     if (!newSize)
         newSize++;
 
+    // catch potential buggy reallocations causing undefined behaviour
+    if (oldSize == newSize)
+    {
+        void *callerAddress = __builtin_extract_return_addr(__builtin_return_address(0));
+        logError("pmm: potential buggy reallocation detected at %p! oldSize == newSize == %d", callerAddress, oldSize);
+    }
+
     // allocate a new area
     void *newPages = pmmPages(newSize);
 
