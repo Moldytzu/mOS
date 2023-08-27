@@ -410,13 +410,17 @@ void schedKill(uint32_t id)
     if (!task) // doesn't exist
         return;
 
-    // remove task from list
     lock(schedLock[task->core], {
         // release resources
+
+        // deallocate allocated memory
         for (int i = 0; i < task->allocatedIndex; i++)
             if (task->allocated[i] != NULL)
                 pmmDeallocate(task->allocated[i]);
 
+        pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
+
+        // close all files
         for (int i = 0; i < TASK_MAX_FILE_DESCRIPTORS; i++)
             vfsClose(task->fileDescriptorPointers[i]);
 
@@ -428,11 +432,19 @@ void schedKill(uint32_t id)
             mail = mailReadNext(&task->mailbox);
         }
 
-        pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
+        // deallocate executable
         pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
+
+        // deallocate stack
         pmmDeallocatePages(task->stackBase, K_STACK_SIZE / VMM_PAGE + 1);
+
+        // deallocate enviroment
         pmmDeallocate(task->enviroment);
+
+        // destroy page table
         vmmDestroy(task->pageTable);
+
+        // deallocate task block
         blkDeallocate(task);
 
         TASK(task->prev)->next = task->next; // remove task from its list
