@@ -31,8 +31,15 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_tas
         {
             vmmMap(task->pageTable, (void *)task->lastVirtualAddress, newPages[p], VMM_ENTRY_RW | VMM_ENTRY_USER); // map the page in the virtual address space of the task
 
-            if (task->allocatedIndex + 1 >= ADDRESSES_IN_PAGES(task->allocatedBufferPages))                                 // check if we can not store the newly allocated page's address
-                task->allocated = pmmReallocate(task->allocated, task->allocatedBufferPages, ++task->allocatedBufferPages); // do the reallocation
+            if (task->allocatedIndex + 1 >= ADDRESSES_IN_PAGES(task->allocatedBufferPages)) // check if we can not store the newly allocated page's address
+            {
+                // calculate required indices
+                // NOTE: without the volatile keyword the compiler will f-up the values
+                volatile size_t oldPages = task->allocatedBufferPages;
+                volatile size_t newPages = ++task->allocatedBufferPages;
+
+                task->allocated = pmmReallocate(task->allocated, oldPages, newPages); // do the reallocation
+            }
 
             task->allocated[task->allocatedIndex++] = newPages[p]; // store the address to free up later
             task->lastVirtualAddress += VMM_PAGE;                  // point to next page
