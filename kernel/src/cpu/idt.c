@@ -128,7 +128,16 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
     {
         const char *name = schedGetCurrent(smpID())->name;
 
+#ifdef K_PANIC_ON_USERSPACE_CRASH
+        framebufferZero();
+        xapicNMI();
+#endif
+
         logWarn("%s has crashed with %s at %x! Terminating it.", name, exceptions[int_num], stack->rip); // display message
+
+#ifdef K_PANIC_ON_USERSPACE_CRASH
+        hang();
+#endif
 
         // tell the init system we crashed
         struct sock_socket *initSocket = sockGet(1);
