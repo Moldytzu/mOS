@@ -10,6 +10,9 @@
 // gets last SCI event
 uint32_t acpiGetSCIEvent()
 {
+    if (!fadt)
+        return 0;
+
     // read status
     uint32_t pm1aStatus = inw(fadt->PM1aEvent);
     uint32_t pm1bStatus = inw(fadt->PM1bEvent);
@@ -50,6 +53,9 @@ extern void sciEntry();
 // install SCI interrupt handler
 void acpiInstallSCIInterrupt()
 {
+    if (!fadt)
+        return;
+
     logInfo("aml: routing %d to SCI interrupt handler", fadt->sciIntrerrupt);
 
     uint16_t vector = idtAllocateVector();
