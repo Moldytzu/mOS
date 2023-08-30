@@ -112,6 +112,7 @@ void xapicInit(bool bsp)
 // sends a non-maskable interrupt to all of the cores thus halting them
 void xapicNMI()
 {
+#ifdef K_SMP
     if (!isEnabled)
     {
         logError("xapic: trying to NMI with disabled xapic");
@@ -127,4 +128,5 @@ void xapicNMI()
     // send the interrupt command register
     xapicWrite(XAPIC_REG_ICR_LOW, icr & 0xFFFFFFFF);
     xapicWrite(XAPIC_REG_ICR_HIGH, (icr >> 32) & 0xFFFFFFFF);
+#endif
 }

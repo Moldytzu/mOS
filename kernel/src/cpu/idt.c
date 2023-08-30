@@ -113,8 +113,10 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
 {
     vmmSwap(vmmGetBaseTable()); // swap to the base table
 
+#ifdef K_SMP
     if (int_num == XAPIC_NMI_VECTOR) // hang on non-maskable interrupts
         hang();
+#endif
 
     if (redirectTable[int_num] && schedGet(redirectTableMeta[int_num])) // there is a request to redirect intrerrupt to a driver (todo: replace this with a struct)
     {
