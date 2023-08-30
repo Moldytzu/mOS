@@ -65,6 +65,14 @@ void ps2WriteConfigByte(uint8_t byte)
     flush();
 }
 
+// perform controller self-test
+bool ps2SelfTest()
+{
+    command(PS2_CTRL_SELF_TEST); // send test command
+    waitOutput();                // wait for the test to be done
+    return output() == 0x55;     // 0x55 is success
+}
+
 // initialize the controller
 bool ps2InitController()
 {
@@ -82,10 +90,8 @@ bool ps2InitController()
     ps2WriteConfigByte(configByte);
 
     // perform self-test
-    command(PS2_CTRL_SELF_TEST); // send test command
-    waitOutput();                // wait for the test to be done
-    if (output() != 0x55)        // if the controller didn't reply with OK it means that it isn't present
-        return ps2Trace("controller failed self-test or isn't present");
+    if (ps2SelfTest())
+        ps2Trace("controller failed self-test or isn't present"); // HACK: on some computers the test fails for some reason (including mine)
 
     // test the first port
     command(PS2_CTRL_TEST_P1);
