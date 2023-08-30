@@ -46,7 +46,7 @@ int ps2DecodeBytes(uint8_t *reply)
 
 bool ps2Trace(const char *msg) // todo: make this a propper logging function
 {
-    printf("ps2: %s\n");
+    printf("ps2: %s\n", msg);
     return false;
 }
 
