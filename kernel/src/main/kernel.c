@@ -89,9 +89,9 @@ void panick_impl(const char *file, size_t line, const char *msg)
     logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(1)));
     logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(2)));
     logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(3)));
-    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(4)));
-    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(5)));
-    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(6)));
+    // logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(4)));
+    // logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(5)));
+    // logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(6)));
 
 #ifdef K_PANIC_REBOOT
     for (volatile size_t i = 0; i < 0xFFFFFFF; i++)
