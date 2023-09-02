@@ -230,6 +230,8 @@ void pmmInit()
 
         // populate the pool metadata
         pmm_pool_t *pool = &pools[poolCount++];
+        zero(pool, sizeof(pmm_pool_t));
+
         pool->bitmapBytes = entry->length / PMM_PAGE / 8 + 2; // we divide the memory regions in pages (4 KiB chunks) then we will calculate the bytes in which we can write (add 2 bytes to be sure we don't go in allocable memory)
 
         pool->alloc = (void *)entry->base + pool->bitmapBytes; // we will start after the bitmap so after the base
@@ -237,7 +239,19 @@ void pmmInit()
 
         pool->base = (void *)entry->base;
         pool->available = entry->length - pool->bitmapBytes;
-        pool->size = pool->available + pool->used;
+        pool->size = pool->available;
+
+        // too small to hold a page
+        if (pool->size < PMM_PAGE)
+        {
+            // skip this entry
+            poolCount--;
+            continue;
+        }
+
+        // align size to page
+        if (pool->size % 4096 != 0)
+            pool->size -= pool->size % 4096;
 
         // clear the reserved bytes (holds padding and bitmap information)
         zero(pool->base, (uint64_t)(pool->alloc - pool->base));
