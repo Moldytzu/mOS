@@ -44,6 +44,8 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 
     fdSize = align(fdSize, 4096); // align to next page
 
+    // fixme: the fdSize might not represent the actual size in memory of the executable
+    // we should calculate the full size of all program headers' memsize
     void *buffer = pmmPages(fdSize / VMM_PAGE); // allocate the buffer for the sections
 
     Elf64_Phdr *phdr = blkBlock(elf->e_ehsize);     // buffer to store information about the current program header
@@ -57,7 +59,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 #ifdef K_ELF_DEBUG
             logDbg(LOG_SERIAL_ONLY, "elf: phdr at virtual 0x%p (physical 0x%p) with size %d bytes", phdr->p_vaddr, phdr->p_paddr, phdr->p_memsz);
 #endif
-            vfsRead(fd, (void *)((uint64_t)buffer + phdr->p_vaddr - TASK_BASE_ADDRESS), phdr->p_memsz, phdr->p_offset); // copy the program header to the buffer using the vfs
+            vfsRead(fd, (void *)((uint64_t)buffer + phdr->p_vaddr - TASK_BASE_ADDRESS), phdr->p_filesz, phdr->p_offset); // copy the program header to the buffer using the vfs
         }
 
         vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff + i); // read next program header
