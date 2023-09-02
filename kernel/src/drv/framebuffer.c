@@ -23,7 +23,7 @@ size_t fbLineQwords; // qwords of the last line
 
 #ifdef K_FB_DOUBLE_BUFFER
 struct limine_framebuffer back;
-locker_t fbLock;
+spinlock_t fbLock;
 #else
 #define back framebuffer
 #undef lock

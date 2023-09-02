@@ -14,7 +14,7 @@ typedef struct
     uint64_t bitmapBytes;        // bytes used by the bitmap
     uint64_t lastAllocatedIndex; // index of the last allocated page
 
-    locker_t lock; // spinlock
+    spinlock_t lock; // spinlock
 } pmm_pool_t;
 
 void pmmBenchmark();

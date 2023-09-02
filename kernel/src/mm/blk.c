@@ -7,7 +7,7 @@
 #define HEADER_AT(ptr) ((blk_header_t *)(ptr))
 #define CONTENT_OF(hdr) ((void *)((uint64_t)hdr + sizeof(blk_header_t)))
 
-locker_t blkLock;
+spinlock_t blkLock;
 blk_header_t *start = NULL;
 blk_header_t *last = NULL;
 

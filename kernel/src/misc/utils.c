@@ -2,7 +2,7 @@
 #include <drv/framebuffer.h>
 #include <drv/serial.h>
 
-locker_t utilsLock;
+spinlock_t utilsLock;
 
 // stop everything
 void hang()

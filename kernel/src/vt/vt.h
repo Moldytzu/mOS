@@ -13,7 +13,7 @@ struct vt_terminal
     uint16_t bufferIdx;   // current index in the buffer
     char *kbBuffer;       // pointer to the keyboard buffer
     uint16_t kbBufferIdx; // current index in the keyboard buffer
-    locker_t lock;        // spinlock
+    spinlock_t lock;      // spinlock
 
     struct vt_terminal *previous; // previous terminal
     struct vt_terminal *next;     // next terminal

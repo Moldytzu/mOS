@@ -23,7 +23,7 @@ uint16_t lastCore = 0;                // core on which last task was added
 uint32_t lastTaskID = 0;              // last id of the last task addedd
 uint16_t maxCore = 0;                 // max available cores
 
-locker_t schedLock[K_MAX_CORES];
+spinlock_t schedLock[K_MAX_CORES];
 
 bool _enabled = false;
 

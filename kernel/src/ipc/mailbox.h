@@ -5,7 +5,7 @@ typedef struct
 {
     void *next;
 
-    locker_t lock; // spinlock
+    spinlock_t lock; // spinlock (used only for mailbox and not the mail)
 
     uint32_t sender; // sender's pid
     size_t subject;  // numeric subject

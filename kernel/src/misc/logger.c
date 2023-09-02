@@ -3,7 +3,7 @@
 #include <cpu/smp.h>
 #include <drv/framebuffer.h>
 
-locker_t loggerLock;
+spinlock_t loggerLock;
 uint32_t logOldColour;
 
 #define PREFIX_COLOUR 0xD0D0D0

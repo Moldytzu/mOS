@@ -8,7 +8,7 @@ struct sock_socket
     uint32_t id;        // ID
     uint16_t bufferIdx; // current index in the buffer
     uint16_t readIdx;   // current read index in the buffer
-    locker_t lock;      // spinlock
+    spinlock_t lock;    // spinlock
 
     struct sock_socket *previous; // previous terminal
     struct sock_socket *next;     // next terminal

@@ -1,11 +1,11 @@
 #pragma once
 #include <stdbool.h>
 
-typedef uint64_t locker_t;
+typedef uint64_t spinlock_t;
 
 void atomicWrite(void *address, uint64_t val);
-bool atomicRelease(locker_t *locker);
-void atomicAquire(locker_t *locker);
+bool atomicRelease(spinlock_t *locker);
+void atomicAquire(spinlock_t *locker);
 
 // hint spinlock
 static inline __attribute__((always_inline)) void pause()
