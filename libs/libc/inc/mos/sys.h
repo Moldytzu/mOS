@@ -42,6 +42,8 @@
 #define SYS_PERF_GET_MEMORY 0
 #define SYS_PERF_GET_CPU 1
 
+#define SYS_MAILBOX_READ_FIRST 0
+
 #define SYS_EXIT 0
 #define SYS_WRITE 1
 #define SYS_READ 2

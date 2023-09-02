@@ -61,3 +61,11 @@ Bootloader (mBoot): []
     - Higher-Half ELF loader []
     - Kernel boot information []
     - Be able to boot the main kernel []
+
+Security:
+    - return only virtual addresses in userspace []
+        - note: a virtual memory allocator
+    - unmap initialisation functions []
+    - support NX bit []
+    - SMAP []
+    - SMEP []
