@@ -1,8 +1,11 @@
 bits 64
 
-global atomicWrite, atomicClearLock, atomicLock, atomicRelease, atomicAquire, atomicAquireCli
+section .text
 
-; writes atomically to address; rdi=address, rsi=value
+global atomicWrite, atomicRelease, atomicAquire
+
+; writes atomically to address
+; rdi=address, rsi=value
 atomicWrite:
     mov QWORD [rdi], rsi
     ret
@@ -13,19 +16,23 @@ atomicWrite:
 	cmovnc	rax, rcx
 %endmacro
 
-atomicRelease:	; rdi = mutex location memory , 0x0 = location of the bit where we store the statu
-	lock btr		QWORD [rdi], 0x0
+; releases atomic spinlock
+; rdi=address
+atomicRelease:
+	lock btr QWORD [rdi], 0x0
 	CF_RESULT
 	ret
 
-atomicAquire:		; rdi = mutex location memory , 0x0 = location of the bit where we store the statu
+; aquires atomic spinlock
+; rdi=address
+atomicAquire:
 	.acquire:
-		lock bts	QWORD [rdi], 0x0
-		jnc			.exit				; CF = 0 to begin with
+		lock bts QWORD [rdi], 0x0
+		jnc	.exit
 	.spin:
 		pause
-		bt			QWORD [rdi], 0x0
-		jc			.spin				; CF = 1 still
-		jmp			.acquire
+		bt QWORD [rdi], 0x0
+		jc .spin
+		jmp	.acquire
 	.exit:
 		ret
