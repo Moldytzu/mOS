@@ -90,7 +90,7 @@ bool ps2InitController()
     ps2WriteConfigByte(configByte);
 
     // perform self-test
-    if (ps2SelfTest())
+    if (!ps2SelfTest())
         ps2Trace("controller failed self-test or isn't present"); // HACK: on some computers the test fails for some reason (including mine)
 
     // test the first port
