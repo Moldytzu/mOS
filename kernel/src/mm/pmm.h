@@ -4,7 +4,7 @@
 
 #define PMM_PAGE 4096
 
-pstruct
+typedef struct
 {
     void *base;                  // base address of the pool
     void *alloc;                 // base address of the allocable memory
@@ -15,8 +15,7 @@ pstruct
     uint64_t lastAllocatedIndex; // index of the last allocated page
 
     locker_t lock; // spinlock
-}
-pmm_pool_t;
+} pmm_pool_t;
 
 void pmmBenchmark();
 void pmmDbgDump();
