@@ -22,8 +22,6 @@ void test(const char *name, bool result)
 
 int main(int argc, char **argv)
 {
-    currentTest = 0;
-
     // assert
     assert(1 == 1);
     test("assert", 1 == 1);

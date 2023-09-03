@@ -7,11 +7,11 @@
 
 #define MAX_ARGUMENTS 31
 
-uint64_t pid;
-char *path;
-char *enviroment;
-char *cmdBuffer;
-char *cwdBuffer;
+uint64_t pid = 0;
+char *path = NULL;
+char *enviroment = NULL;
+char *cmdBuffer = NULL;
+char *cwdBuffer = NULL;
 char *arguments[MAX_ARGUMENTS];
 int argumentsCount = 0;
 

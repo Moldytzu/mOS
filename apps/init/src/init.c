@@ -11,8 +11,8 @@
 #define SOCKET_SIZE 4096
 #define DRIVERS
 
-uint64_t maxPowerTimeout;
-uint64_t powerConfirmations;
+uint64_t maxPowerTimeout = 0;
+uint64_t powerConfirmations = 0;
 uint64_t sockID = 0;
 void *sockBuffer = NULL;
 bool verbose = true;
@@ -175,9 +175,6 @@ void handleSocket()
 int main(int argc, char **argv)
 {
     uint64_t kernelStartupTime = uptimeMilis();
-
-    powerTimestamp = 0;
-    powerCount = 0;
 
     // ensure that the pid is 1
     if (sys_pid_get() != 1)
