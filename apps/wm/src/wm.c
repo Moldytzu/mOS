@@ -21,11 +21,15 @@ uint64_t fbLen;
 
 void screenMetadataUpdate()
 {
-    uint64_t oldFbLen = fbLen;
+    size_t oldScreenW = screenW, oldScreenH = screenH;
 
-    fbStart = (uint32_t *)sys_display(SYS_DISPLAY_MAP_FB, (uint64_t)&pitch, 0);
-    sys_display(SYS_DISPLAY_GET, (uint64_t)&screenW, (uint64_t)&screenH);
-    fbLen = pitch * screenH;
+    sys_display(SYS_DISPLAY_GET, (uint64_t)&screenW, (uint64_t)&screenH); // get current screen resolution
+
+    if (oldScreenH != screenH || oldScreenW != screenW) // screen resolution changed
+    {
+        fbStart = (uint32_t *)sys_display(SYS_DISPLAY_MAP_FB, (uint64_t)&pitch, 0); // remap framebuffer
+        fbLen = pitch * screenH;
+    }
 }
 
 // main function
