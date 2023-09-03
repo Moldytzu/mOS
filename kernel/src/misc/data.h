@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 #define BMP_ACCESS_TYPE uint32_t
 #define BMP_ACCESS_BYTES sizeof(BMP_ACCESS_TYPE)
@@ -7,18 +8,27 @@
 
 static inline __attribute__((always_inline)) void bmpSet(void *bmp, uint64_t idx)
 {
-    BMP_ACCESS_TYPE *b = bmp;
-    b[idx / BMP_ACCESS_BITS] |= 1 << ((BMP_ACCESS_BITS - 1) - (idx % BMP_ACCESS_BITS));
+    BMP_ACCESS_TYPE *word = bmp;
+    word += idx / BMP_ACCESS_BITS;
+    idx = idx % BMP_ACCESS_BITS;
+
+    *word |= (1 << idx);
 }
 
 static inline __attribute__((always_inline)) void bmpUnset(void *bmp, uint64_t idx)
 {
-    BMP_ACCESS_TYPE *b = bmp;
-    b[idx / BMP_ACCESS_BITS] &= ~(1 << ((BMP_ACCESS_BITS - 1) - (idx % BMP_ACCESS_BITS)));
+    BMP_ACCESS_TYPE *word = bmp;
+    word += idx / BMP_ACCESS_BITS;
+    idx = idx % BMP_ACCESS_BITS;
+
+    *word &= ~(1 << idx);
 }
 
-static inline __attribute__((always_inline)) uint8_t bmpGet(void *bmp, uint64_t idx)
+static inline __attribute__((always_inline)) uint64_t bmpGet(void *bmp, uint64_t idx)
 {
-    BMP_ACCESS_TYPE *b = bmp;
-    return ((b[idx / BMP_ACCESS_BITS]) >> ((BMP_ACCESS_BITS - 1) - (idx % BMP_ACCESS_BITS)) & 1);
+    BMP_ACCESS_TYPE *word = bmp;
+    word += idx / BMP_ACCESS_BITS;
+    idx = idx % BMP_ACCESS_BITS;
+
+    return *word & (1 << idx);
 }
