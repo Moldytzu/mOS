@@ -23,13 +23,9 @@
 // global variables (implemented in wm.c)
 extern uint64_t pitch, screenW, screenH;
 
-// front buffer
+// display framebuffer
 extern uint32_t *fbStart;
 extern uint64_t fbLen;
-
-// back buffer
-extern uint32_t *backStart;
-extern uint32_t backPages;
 
 //
 //  Functions
