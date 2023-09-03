@@ -42,4 +42,9 @@ inline static void fbPlotPixel(uint16_t x, uint16_t y, uint32_t colour)
     fbStart[y * screenW + x] = colour;
 }
 
+inline static uint32_t fbGetPixel(uint16_t x, uint16_t y)
+{
+    return fbStart[y * screenW + x];
+}
+
 void fbFillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t colour);

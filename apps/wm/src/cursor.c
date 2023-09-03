@@ -9,6 +9,8 @@
 // cursor coordinates
 uint16_t cursorX, cursorY;
 
+uint16_t lastCursorX, lastCursorY;
+
 // todo: replace this with an actual image stored on the disk
 uint8_t cursorImage[8][8] = {
     {1, 1, 1, 1, 1, 0, 0, 0},
@@ -21,19 +23,28 @@ uint8_t cursorImage[8][8] = {
     {0, 0, 0, 0, 0, 0, 0, 0},
 };
 
-static const uint8_t cursorScale = 4;
+static const uint8_t cursorScale = 1;
 
 #define bittest(bmp, bit) ((0b10000000 >> bit) & bmp)
 
 void cursorUpdate()
 {
     sys_input_mouse(&cursorX, &cursorY); // read mouse coordinates
-
-    // todo: maybe we could set a flag if the cursor has changed to trigger a redraw of it?
 }
 
 void cursorRedraw()
 {
+    // todo: find a way to not use the double buffer
+
+    uint32_t underCursor[8][8]; // fixme: this breaks if cursorScale isn't 1!
+
+    // save framebuffer colours in the point where the cursor will be placed
+    for (int y = 0; y < 8; y++)
+        for (int x = 0; x < 8; x++)
+            if (PIXEL_IN_BOUNDS(cursorX + x, cursorY + y))
+                underCursor[x][y] = fbGetPixel(cursorX + x, cursorY + y);
+
+    // draw the cursor
     for (int y = 0; y < 8; y++)
     {
         for (int x = 0; x < 8; x++)
@@ -53,4 +64,12 @@ void cursorRedraw()
             }
         }
     }
+
+    sys_display(SYS_DISPLAY_UPDATE_FB, 0, 0); // update framebuffer
+
+    // restore modified pixels
+    for (int y = 0; y < 8; y++)
+        for (int x = 0; x < 8; x++)
+            if (PIXEL_IN_BOUNDS(cursorX + x, cursorY + y))
+                fbPlotPixel(cursorX + x, cursorY + y, underCursor[x][y]);
 }

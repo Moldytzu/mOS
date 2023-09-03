@@ -19,6 +19,8 @@ uint64_t pitch, screenW, screenH;
 uint32_t *fbStart;
 uint64_t fbLen;
 
+size_t fps = 0;
+
 void screenMetadataUpdate()
 {
     size_t oldScreenW = screenW, oldScreenH = screenH;
@@ -32,6 +34,27 @@ void screenMetadataUpdate()
     }
 }
 
+void handleKeyboard()
+{
+    char lastKey = sys_input_keyboard();
+    if (tolower(lastKey) == 'q')
+        panic("Enjoy shell!\n");
+}
+
+extern psf2_header_t *font;
+
+void draw()
+{
+    // draw watermarks
+    fontWriteStr("Press 'Q' to exit to shell.", 10, 10, RGB(0, 0xFF, 0xFF));
+
+    // fixme: refresh on demand
+    char fpsBuffer[64];
+    sprintf(fpsBuffer, "mOS Desktop (FPS: %d)", fps);
+    fbFillRectangle(10, screenH - 20, strlen(fpsBuffer) * font->width, font->height, DESKTOP_BACKGROUND);
+    fontWriteStr(fpsBuffer, 10, screenH - 20, RGB(0xFF, 0xFF, 0));
+}
+
 // main function
 int main(int argc, char **argv)
 {
@@ -39,10 +62,9 @@ int main(int argc, char **argv)
 
     fontLoad("hack.psf");                                             // load the hack font from initrd
     sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_FB_DOUBLE_BUFFERED, 0); // switch to double buffered framebuffer mode
+    screenMetadataUpdate();                                           // generate initial screen information
 
-    void *fpsBuffer = (void *)sys_mem(SYS_MEM_ALLOCATE, 1, 0);
-    screenMetadataUpdate(); // generate initial screen information
-
+    // read last mail
     mailbox_t *mail = sys_mailbox_read();
     if (mail)
     {
@@ -51,30 +73,26 @@ int main(int argc, char **argv)
         abort();
     }
 
-    size_t fps = 0;
+    // todo: we need a syncronization call inside display syscall handler to wait for all threads to get to queue start
+    // in some situations here we might start as a thread on an application core
+    // which could mean the bsp could still write to the framebuffer
+    // and this creates a race condition in which the tty contents will still be written to the screen without us knowing
+    for (int i = 0; i < 100; i++)
+        sys_yield();
+
+    desktopRedraw(); // redraw the desktop
 
     // event loop
     while (true)
     {
-        size_t a = sys_time_uptime_nanos();
-
-        if (tolower(sys_input_keyboard()) == 'q')
-            panic("Enjoy shell!\n");
+        size_t a = sys_time_uptime_nanos(); // first time point
 
         screenMetadataUpdate(); // look for changes of framebuffer
+        handleKeyboard();       // handle key presses
 
         cursorUpdate(); // update cursor position
-
-        desktopRedraw(); // redraw the desktop
-
-        // draw watermarks
-        sprintf(fpsBuffer, "mOS Desktop (FPS: %d)", fps);
-        fontWriteStr("Press 'Q' to exit to shell.", 10, 10, RGB(0, 0xFF, 0xFF));
-        fontWriteStr(fpsBuffer, 10, screenH - 20, RGB(0xFF, 0xFF, 0));
-
-        cursorRedraw(); // redraw the cursor
-
-        sys_display(SYS_DISPLAY_UPDATE_FB, 0, 0); // update framebuffer
+        draw();         // do the drawing if necessary
+        cursorRedraw(); // redraw cursor and update screen
 
         sys_yield();
 
