@@ -167,7 +167,8 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
 {
     uint32_t id = nextCore(); // get next core id
 
-    sched_task_t *t = blkBlock(sizeof(sched_task_t));
+    sched_task_t *t = pmmPage(); // there aren't any benefits of using the block allocator because
+                                 // it's a fairly large structure and wouldn't fit nicely in half a page
 
     // metadata
     t->id = lastTaskID++;                          // set ID
@@ -264,7 +265,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     return t;
 }
 
-uint8_t simdContext[512];
+extern void saveSimdContextTo(void *simdContext);
 
 // do the context switch
 void schedSchedule(idt_intrerrupt_stack_t *stack)
@@ -275,8 +276,6 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     uint64_t id = smpID();
 
     lock(schedLock[id], {
-        iasm("fxsave %0 " ::"m"(simdContext)); // save simd context (todo: find a way to save directly to the task's member)
-
         if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the application core don't reschedule
         {
             release(schedLock[id]);
@@ -293,21 +292,20 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
         // set new quantum
         lastTask[id]->quantumLeft = K_SCHED_MIN_QUANTUM;
 
+        // save task context
+        saveSimdContextTo(&lastTask[id]->simdContext);                                                // save simd context
+        memcpy64(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t)); // save old registers
+
 #ifdef K_SCHED_DEBUG
         logDbg(LOG_SERIAL_ONLY, "sched: saving task %s", lastTask[id]->name);
 #endif
-
-        // save old state
-        memcpy64(&lastTask[id]->registers, stack, sizeof(idt_intrerrupt_stack_t) / sizeof(uint64_t));
-
-        // save old simd context
-        memcpy64(&lastTask[id]->simdContext, simdContext, 512 / sizeof(uint64_t));
     });
 
     schedSwitchNext(); // load next context
+    unreachable();     // hint we won't return
 }
 
-extern void switchTo(void *stack);
+extern void switchTo(void *stack, void *simdContext);
 
 // performs context switch to next context
 void schedSwitchNext()
@@ -328,14 +326,10 @@ void schedSwitchNext()
 #ifdef K_SCHED_DEBUG
         logDbg(LOG_SERIAL_ONLY, "sched: loading task %s", lastTask[id]->name);
 #endif
-
-        // copy new simd context
-        memcpy64(simdContext, &lastTask[id]->simdContext, 512 / sizeof(uint64_t));
-
-        iasm("fxrstor %0 " ::"m"(simdContext)); // restore simd context (todo: find a way to not use a memcpy here!)
     });
 
-    switchTo(&lastTask[id]->registers); // switch to the context
+    switchTo(&lastTask[id]->registers, &lastTask[id]->simdContext); // switch to the context
+    unreachable();                                                  // hint we won't return
 }
 
 // initialise the scheduler
@@ -444,8 +438,8 @@ void schedKill(uint32_t id)
         // destroy page table
         vmmDestroy(task->pageTable);
 
-        // deallocate task block
-        blkDeallocate(task);
+        // deallocate task structure
+        pmmDeallocate(task);
 
         TASK(task->prev)->next = task->next; // remove task from its list
     });

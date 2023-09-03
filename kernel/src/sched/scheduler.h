@@ -24,7 +24,7 @@ typedef struct
     mailbox_t mailbox;
 
     // context
-    uint8_t simdContext[512];
+    uint8_t align_addr(16) simdContext[512];
     idt_intrerrupt_stack_t registers;
     vmm_page_table_t *pageTable;
     uint64_t lastVirtualAddress;
