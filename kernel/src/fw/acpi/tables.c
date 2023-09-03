@@ -68,6 +68,8 @@ void acpiInit()
     amlInit(); // initialise the aml parser
 #endif
 
+    acpiTimerInit(); // initialise power management timer
+
     hpetInit(); // initialise the hpet
 
 #ifdef K_PCIE

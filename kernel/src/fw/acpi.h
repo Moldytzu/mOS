@@ -14,6 +14,7 @@
 
 #define ACPI_FADT_RESET_REG_SUP (1 << 10)
 #define ACPI_FADT_HW_REDUCED_ACPI (1 << 20)
+#define ACPI_FADT_TMR_VAL_EXT (1 << 8)
 
 pstruct
 {
@@ -195,3 +196,6 @@ bool amlEnterSleepState(uint8_t state);
 // sci
 uint32_t acpiGetSCIEvent();
 void acpiInstallSCIInterrupt();
+
+// timer
+void acpiTimerInit();
