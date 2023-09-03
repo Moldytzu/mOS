@@ -43,7 +43,7 @@ void panic(const char *msg);
 // framebuffer functions
 inline static void fbPlotPixel(uint16_t x, uint16_t y, uint32_t colour)
 {
-    backStart[y * screenW + x] = colour;
+    fbStart[y * screenW + x] = colour;
 }
 
 void fbFillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t colour);

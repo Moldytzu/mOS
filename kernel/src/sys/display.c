@@ -9,7 +9,7 @@ uint64_t display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched
     switch (call)
     {
     case 0: // display set mode
-        if (arg1 == VT_DISPLAY_FB || arg1 == VT_DISPLAY_TTY0)
+        if (arg1 == VT_DISPLAY_FB || arg1 == VT_DISPLAY_TTY0 || arg1 == VT_DISPLAY_FB_DOUBLE_BUFFERED)
         {
             vtSetMode(arg1); // set vt mode
             return SYSCALL_STATUS_OK;
@@ -52,6 +52,11 @@ uint64_t display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched
         *pitch = fb.pitch;
 
         return TASK_BASE_FRAMEBUFFER;
+
+    case 4: // update userspace framebuffer
+        if (vtGetMode() == VT_DISPLAY_FB_DOUBLE_BUFFERED)
+            framebufferUpdate();
+        return 0;
     default:
         return SYSCALL_STATUS_UNKNOWN_OPERATION;
     }

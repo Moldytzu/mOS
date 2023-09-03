@@ -4,6 +4,7 @@
 #define VT_DISPLAY_KERNEL 0
 #define VT_DISPLAY_TTY0 1
 #define VT_DISPLAY_FB 2
+#define VT_DISPLAY_FB_DOUBLE_BUFFERED 3
 
 struct vt_terminal
 {

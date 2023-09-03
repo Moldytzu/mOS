@@ -3,5 +3,5 @@
 
 void desktopRedraw()
 {
-    memset64(backStart, DESKTOP_BACKGROUND64, fbLen / sizeof(uint64_t)); // clear the background
+    memset64(fbStart, DESKTOP_BACKGROUND64, fbLen / sizeof(uint64_t)); // clear the background
 }

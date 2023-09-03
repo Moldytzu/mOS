@@ -42,7 +42,6 @@ void framebufferTask()
     // note: we run this with interrupts disabled to not have context switches in between random pieces of code
     while (1)
     {
-
         switch (vtGetMode())
         {
         case VT_DISPLAY_FB:
@@ -101,6 +100,7 @@ void framebufferTask()
 #endif
         }
         break;
+        case VT_DISPLAY_FB_DOUBLE_BUFFERED: // apps choose when to update the screen
         case VT_DISPLAY_KERNEL:
         default: // doesn't update the framebuffer and lets the kernel write things to it
             break;

@@ -39,18 +39,13 @@ void screenMetadataUpdate()
     }
 }
 
-void screenUpdate()
-{
-    memcpy64(fbStart, backStart, fbLen / sizeof(uint64_t)); // copy the back buffer to the front one
-}
-
 // main function
 int main(int argc, char **argv)
 {
     puts("Starting window manager.\n");
 
-    fontLoad("hack.psf");                             // load the hack font from initrd
-    sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_FB, 0); // switch to framebuffer mode
+    fontLoad("hack.psf");                                             // load the hack font from initrd
+    sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_FB_DOUBLE_BUFFERED, 0); // switch to double buffered framebuffer mode
 
     void *fpsBuffer = (void *)sys_mem(SYS_MEM_ALLOCATE, 1, 0);
 
@@ -93,9 +88,9 @@ int main(int argc, char **argv)
 
         cursorRedraw(); // redraw the cursor
 
-        screenUpdate(); // update the screen
+        sys_display(SYS_DISPLAY_UPDATE_FB, 0, 0); // update framebuffer
 
-        sys_yield(); // allow for screen refresh
+        sys_yield();
 
         // calculate delta time based on the time points
         size_t b = sys_time_uptime_nanos();
