@@ -179,6 +179,11 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     t->isElf = elf;
     t->isDriver = driver;
 
+    if (driver) // give speed advantage to regular apps
+        t->targetQuantum = 0;
+    else
+        t->targetQuantum = K_SCHED_MIN_QUANTUM;
+
     // registers
     void *stack = t->stackBase = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
     if (driver)
@@ -284,13 +289,16 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
 
         if (lastTask[id]->quantumLeft) // wait for the quantum to be reached
         {
+#ifdef K_SCHED_DEBUG
+            logDbg(LOG_SERIAL_ONLY, "sched: %s has %d quantum. switching back", lastTask[id]->name, lastTask[id]->quantumLeft);
+#endif
+
             lastTask[id]->quantumLeft--;
             release(schedLock[id]);
             return;
         }
 
-        // set new quantum
-        lastTask[id]->quantumLeft = K_SCHED_MIN_QUANTUM;
+        lastTask[id]->quantumLeft = lastTask[id]->targetQuantum; // reset quantum
 
         // save task context
         saveSimdContextTo(&lastTask[id]->simdContext);                                                // save simd context
@@ -351,6 +359,7 @@ void schedInit()
     t->registers.rsp = t->registers.rbp = (uint64_t)pmmPage() + PMM_PAGE;
     t->registers.rip = (uint64_t)framebufferTask;
     t->registers.cr3 = (uint64_t)vmmGetBaseTable();
+    t->targetQuantum = 0;
 
     lastTask[0] = t;
 
@@ -365,6 +374,7 @@ void schedInit()
         t->registers.rsp = t->registers.rbp = (uint64_t)pmmPage() + PMM_PAGE;
         t->registers.rip = (uint64_t)commonTask;
         t->registers.cr3 = (uint64_t)vmmGetBaseTable();
+        t->targetQuantum = 0;
 
         lastTask[i] = t;
     }

@@ -20,6 +20,7 @@ typedef struct
     char cwd[512];
     bool isDriver;
     bool isElf;
+    uint8_t targetQuantum;
 
     mailbox_t mailbox;
 
