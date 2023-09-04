@@ -37,7 +37,7 @@
 #define PS2_DEV_RESET 0xFF
 
 // constants
-#define PS2_TIMEOUT_YIELDS 3
+#define PS2_TIMEOUT_YIELDS 30
 
 // macro functions
 #define waitOutput()                                               \
