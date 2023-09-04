@@ -23,7 +23,7 @@ uint8_t cursorImage[8][8] = {
     {0, 0, 0, 0, 0, 0, 0, 0},
 };
 
-static const uint8_t cursorScale = 1;
+static const uint8_t cursorScale = 4;
 
 #define bittest(bmp, bit) ((0b10000000 >> bit) & bmp)
 
@@ -36,11 +36,11 @@ void cursorRedraw()
 {
     // todo: find a way to not use the double buffer
 
-    uint32_t underCursor[8][8]; // fixme: this breaks if cursorScale isn't 1!
+    uint32_t underCursor[8 * cursorScale][8 * cursorScale];
 
     // save framebuffer colours in the point where the cursor will be placed
-    for (int y = 0; y < 8; y++)
-        for (int x = 0; x < 8; x++)
+    for (int y = 0; y < 8 * cursorScale; y++)
+        for (int x = 0; x < 8 * cursorScale; x++)
             if (PIXEL_IN_BOUNDS(cursorX + x, cursorY + y))
                 underCursor[x][y] = fbGetPixel(cursorX + x, cursorY + y);
 
@@ -68,8 +68,8 @@ void cursorRedraw()
     sys_display(SYS_DISPLAY_UPDATE_FB, 0, 0); // update framebuffer
 
     // restore modified pixels
-    for (int y = 0; y < 8; y++)
-        for (int x = 0; x < 8; x++)
+    for (int y = 0; y < 8 * cursorScale; y++)
+        for (int x = 0; x < 8 * cursorScale; x++)
             if (PIXEL_IN_BOUNDS(cursorX + x, cursorY + y))
                 fbPlotPixel(cursorX + x, cursorY + y, underCursor[x][y]);
 }
