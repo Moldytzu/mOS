@@ -24,7 +24,6 @@ pcie_function_descriptor_t ahciDescriptor; // descriptor that houses the header 
 bool portImplemented[32];                  // stores which ports are present
 uint8_t portsImplemented = 0;              // stores how many ports are present
 uint32_t commandSlots = 0;                 // stores how many command slots the ahci hba supports
-void *abase;                               // adressing space for buffers
 
 // find a free command list slot
 int ahciPortSlot(ahci_port_t *port)
@@ -189,21 +188,24 @@ void ahciPortAllocate(ahci_port_t *port, int portno)
 {
     ahciPortStop(port); // stop command engine
 
-    port->clb = (uint32_t)(uint64_t)abase + (portno << 10);
-    port->clbu = 0;
-    zero((void *)port->clb, 1024);
+    // allocate command list buffer
+    void *page = pmmPage();
+    port->clb = (uint64_t)page;
+    port->clbu = (uint64_t)page << 32;
 
-    port->fb = (uint32_t)(uint64_t)abase + (32 << 10) + (portno << 8);
-    port->fbu = 0;
-    zero((void *)port->fb, 256);
+    // allocate fis
+    page = pmmPage();
+    port->fb = (uint64_t)page;
+    port->fbu = (uint64_t)page << 32;
 
+    // allocate each command header
     ahci_command_header_t *cmdheader = (ahci_command_header_t *)(port->clb);
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < commandSlots; i++)
     {
+        page = pmmPage();
         cmdheader[i].prdtl = 8;
-        cmdheader[i].ctba = (uint32_t)(uint64_t)abase + (40 << 10) + (portno << 13) + (i << 8);
-        cmdheader[i].ctbau = 0;
-        zero((void *)cmdheader[i].ctba, 256);
+        cmdheader[i].ctba = (uint64_t)page;
+        cmdheader[i].ctbau = (uint64_t)page << 32;
     }
 
     ahciPortStart(port); // start command engine
@@ -276,7 +278,6 @@ void ahciInit()
     ahciBase->Command |= 0b10000010111;                                               // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
     abar = (uint64_t)(ahciBase->BAR5 & 0xFFFFE000);                                   // get base address
     vmmMapKernel((void *)abar, (void *)abar, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
-    abase = pmmPages(80);                                                             // 320k of space for all the ports
 
     logDbg(LOG_ALWAYS, "ahci: abar is at %p", abar);
 
