@@ -18,11 +18,15 @@ uint64_t display(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched
             return SYSCALL_STATUS_UNKNOWN_OPERATION;
 
     case 1: // display set resolution
+
+        if (!drvQueryActive(DRV_TYPE_FB)) // there aren't any framebuffers
+            return SYSCALL_STATUS_ERROR;
+
         drv_context_fb_t newCtx;
         newCtx.requestedXres = arg1;
         newCtx.requestedYres = arg2;
         drvUpdateReference(DRV_TYPE_FB, &newCtx);
-        return SYSCALL_STATUS_OK; // todo: make this return error if no fb contexts exist
+        return SYSCALL_STATUS_OK;
 
     case 2: // display get resolution
         if (!IS_MAPPED(arg1) || !IS_MAPPED(arg2))
