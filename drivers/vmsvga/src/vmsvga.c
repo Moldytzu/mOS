@@ -213,7 +213,7 @@ void _mdrvmain()
         sys_yield(); // wait for update
 
         // wait for the kernel to request another resolution
-        if (fb->requestedXres && fb->requestedXres && fb->currentXres == fb->requestedXres && fb->currentYres == fb->requestedYres)
+        if (fb->requestedXres && fb->requestedXres && fb->currentXres == fb->requestedXres && fb->currentYres == fb->requestedYres || !fb->requestedXres || !fb->requestedYres)
             continue;
 
         if (!setResolution(fb->requestedXres, fb->requestedYres)) // try to change the resolution
