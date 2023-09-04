@@ -44,12 +44,12 @@ void xapicHandleTimer(idt_intrerrupt_stack_t *stack)
     schedSchedule(stack); // reschedule
 }
 
-void xapicWrite(uint64_t offset, uint32_t value)
+ifunc void xapicWrite(uint64_t offset, uint32_t value)
 {
     *((volatile uint32_t *)((uint8_t *)XAPIC_BASE + offset)) = value;
 }
 
-uint32_t xapicRead(uint64_t offset)
+ifunc uint32_t xapicRead(uint64_t offset)
 {
     return *((volatile uint32_t *)((uint8_t *)XAPIC_BASE + offset));
 }

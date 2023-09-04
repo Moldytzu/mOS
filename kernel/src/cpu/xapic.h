@@ -24,7 +24,6 @@
 
 void xapicNMI();
 void xapicInit(bool bsp);
-void xapicWrite(uint64_t offset, uint32_t value);
 void xapicEOI();
 void xapicHandleTimer(idt_intrerrupt_stack_t *stack);
 void xapicEnableTimer();
