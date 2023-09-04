@@ -117,3 +117,6 @@
 // Panic
 // #define K_PANIC_REBOOT // reboot on kernel panic
 // #define K_PANIC_ON_USERSPACE_CRASH // panics on userspace exceptions (useful when debugging drivers and apps)
+
+// Drivers
+// #define K_DRIVERS_LOG_TTY // log on tty driver messages (comment to log only on serial)

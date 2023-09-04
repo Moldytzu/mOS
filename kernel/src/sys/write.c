@@ -12,9 +12,14 @@ uint64_t write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, sched_
     const char *charBuffer = (const char *)PHYSICAL(buffer); // get physical address of the buffer
 
     if (task->isDriver) // log driver messsages on serial
+    {
         for (size_t i = 0; i < count; i++)
             serialWritec(charBuffer[i]);
 
+#ifndef K_DRIVERS_LOG_TTY
+        return 0;
+#endif
+    }
     if (fd == SYS_STDOUT)
     {
         struct vt_terminal *t = vtGet(task->terminal); // terminal of the task
