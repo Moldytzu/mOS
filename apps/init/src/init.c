@@ -97,7 +97,8 @@ void parseCFG()
     if (verbose)
         printf("Setting screen resolution to %ux%u\n", screenX, screenY);
 
-    sys_display(SYS_DISPLAY_SET, screenX, screenY);
+    if (sys_display(SYS_DISPLAY_SET, screenX, screenY) /*return 1 on failure*/)
+        printf("Failed to set screen resolution to %ux%u\n", screenX, screenY);
 }
 
 // linear search the toSearch string in the por
