@@ -97,7 +97,20 @@ void parseCFG()
     if (verbose)
         printf("Setting screen resolution to %ux%u\n", screenX, screenY);
 
-    if (sys_display(SYS_DISPLAY_SET, screenX, screenY) /*return 1 on failure*/)
+    // try to set resolution 10 times before giving up
+    bool success = false;
+    for (int i = 0; i < 10; i++)
+    {
+        if (sys_display(SYS_DISPLAY_SET, screenX, screenY) == SYSCALL_STATUS_OK)
+        {
+            success = true;
+            break;
+        }
+
+        sys_yield();
+    }
+
+    if (!success)
         printf("Failed to set screen resolution to %ux%u\n", screenX, screenY);
 }
 

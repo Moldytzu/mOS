@@ -2,6 +2,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define SYSCALL_STATUS_OK 0
+#define SYSCALL_STATUS_ERROR 1
+#define SYSCALL_STATUS_UNKNOWN_OPERATION 2
+#define SYSCALL_STATUS_ACCESS_DENIED 3
+
 #define SYS_INPUT_KEYBOARD 0
 #define SYS_INPUT_MOUSE 1
 
