@@ -27,6 +27,7 @@ uint32_t logOldColour;
         framebufferSetCursor(cursor);                              \
     }
 
+#ifndef K_LOG_QUIET
 #define PRINT_PREFIX_FORMAT(x, y)                                                                              \
     {                                                                                                          \
         PUSH_COLOUR(x);                                                                                        \
@@ -40,6 +41,9 @@ uint32_t logOldColour;
         POP_COLOUR();                                                                                          \
         printk("\n");                                                                                          \
     } // print prefix then a format with desired colour
+#else
+#define PRINT_PREFIX_FORMAT(x, y)
+#endif
 
 #define PRINT_SERIAL()                                                                                          \
     {                                                                                                           \
@@ -63,7 +67,7 @@ void logInfo(const char *fmt, ...)
         PRINT_SERIAL(); // do the printing on serial
 #endif
     });
-#ifdef K_FB_DOUBLE_BUFFER
+#if defined(K_FB_DOUBLE_BUFFER) && !defined(K_LOG_QUIET)
     framebufferUpdate();
 #endif
 }
@@ -77,7 +81,7 @@ void logWarn(const char *fmt, ...)
         PRINT_SERIAL(); // do the printing on serial
 #endif
     });
-#ifdef K_FB_DOUBLE_BUFFER
+#if defined(K_FB_DOUBLE_BUFFER) && !defined(K_LOG_QUIET)
     framebufferUpdate();
 #endif
 }
@@ -91,7 +95,7 @@ void logError(const char *fmt, ...)
         PRINT_SERIAL(); // do the printing on serial
 #endif
     });
-#ifdef K_FB_DOUBLE_BUFFER
+#if defined(K_FB_DOUBLE_BUFFER) && !defined(K_LOG_QUIET)
     framebufferUpdate();
 #endif
 }
@@ -106,7 +110,7 @@ void logDbg(int level, const char *fmt, ...)
         PRINT_SERIAL(); // do the printing on serial
 #endif
     });
-#ifdef K_FB_DOUBLE_BUFFER
+#if defined(K_FB_DOUBLE_BUFFER) && !defined(K_LOG_QUIET)
     framebufferUpdate();
 #endif
 }

@@ -75,6 +75,9 @@
 #define K_COM_LOG        // kernel logger on serial
 #define K_COM_WAIT       // wait for serial transmission to be done (has to be enabled on real hardware for reliable serial)
 
+// Logger
+// #define K_LOG_QUIET // enables quiet mode of logger (disables all kernel messages)
+
 // =================
 // Storage
 // =================
