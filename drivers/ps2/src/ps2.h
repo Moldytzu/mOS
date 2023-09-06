@@ -40,15 +40,15 @@
 #define PS2_TIMEOUT_YIELDS 30
 
 // helper
-void waitOutput();
-void waitInput();
-uint8_t status();
-uint8_t output();
-void write(uint8_t data);
-void command(uint8_t cmd);
+void i8042WaitOutputBuffer();
+void i8042WaitInputBuffer();
+uint8_t i8042ReadStatus();
+uint8_t i8042ReadOutput();
+void i8042WriteData(uint8_t data);
+void i8042SendCommand(uint8_t cmd);
 void port1Write(uint8_t data);
 void port2Write(uint8_t data);
-void flush();
+void i8042FlushBuffers();
 
 // these will be implemented by i8042.c
 extern bool port1Present;

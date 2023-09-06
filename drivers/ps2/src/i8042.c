@@ -52,36 +52,36 @@ bool ps2Trace(const char *msg) // todo: make this a propper logging function
 
 uint8_t ps2ReadConfigByte()
 {
-    command(PS2_CTRL_READ_CFG);
-    waitOutput();
-    return output();
+    i8042SendCommand(PS2_CTRL_READ_CFG);
+    i8042WaitOutputBuffer();
+    return i8042ReadOutput();
 }
 
 void ps2WriteConfigByte(uint8_t byte)
 {
-    command(PS2_CTRL_WRITE_CFG);
-    flush();
-    write(byte);
-    flush();
+    i8042SendCommand(PS2_CTRL_WRITE_CFG);
+    i8042FlushBuffers();
+    i8042WriteData(byte);
+    i8042FlushBuffers();
 }
 
 // perform controller self-test
 bool ps2SelfTest()
 {
-    command(PS2_CTRL_SELF_TEST); // send test command
-    waitOutput();                // wait for the test to be done
-    return output() == 0x55;     // 0x55 is success
+    i8042SendCommand(PS2_CTRL_SELF_TEST); // send test command
+    i8042WaitOutputBuffer();                // wait for the test to be done
+    return i8042ReadOutput() == 0x55;     // 0x55 is success
 }
 
 // initialize the controller
 bool ps2InitController()
 {
     // disable the devices
-    command(PS2_CTRL_DISABLE_P1);
-    flush();
+    i8042SendCommand(PS2_CTRL_DISABLE_P1);
+    i8042FlushBuffers();
 
-    command(PS2_CTRL_DISABLE_P2);
-    flush();
+    i8042SendCommand(PS2_CTRL_DISABLE_P2);
+    i8042FlushBuffers();
 
     // alter config byte
     uint8_t configByte = ps2ReadConfigByte();
@@ -94,14 +94,14 @@ bool ps2InitController()
         ps2Trace("controller failed self-test or isn't present"); // HACK: on some computers the test fails for some reason (including mine)
 
     // test the first port
-    command(PS2_CTRL_TEST_P1);
-    waitOutput();
-    port1Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
+    i8042SendCommand(PS2_CTRL_TEST_P1);
+    i8042WaitOutputBuffer();
+    port1Present = i8042ReadOutput() == 0x0; // if the controller replied with OK it means that the port is present and working
 
     // test the second port
-    command(PS2_CTRL_TEST_P2);
-    waitOutput();
-    port2Present = output() == 0x0; // if the controller replied with OK it means that the port is present and working
+    i8042SendCommand(PS2_CTRL_TEST_P2);
+    i8042WaitOutputBuffer();
+    port2Present = i8042ReadOutput() == 0x0; // if the controller replied with OK it means that the port is present and working
 
     if (!port1Present && !port2Present) // give up if there aren't any port present
         return ps2Trace("failed to detect ports");
@@ -109,47 +109,47 @@ bool ps2InitController()
     // enable the devices
     if (port1Present)
     {
-        command(PS2_CTRL_ENABLE_P1);                     // enable the first port if it's present
-        flush();                                         // flush output
+        i8042SendCommand(PS2_CTRL_ENABLE_P1);                     // enable the first port if it's present
+        i8042FlushBuffers();                                         // flush output
         port1Write(PS2_DEV_RESET);                       // reset device
-        waitOutput();                                    // wait for the status
-        port1Present = output() == 0xFA;                 // if the controller replied with OK it means that a device is in that port
-        waitOutput();                                    // wait for self test status
-        port1Present = port1Present && output() == 0xAA; // device sends 0xAA on success
+        i8042WaitOutputBuffer();                                    // wait for the status
+        port1Present = i8042ReadOutput() == 0xFA;                 // if the controller replied with OK it means that a device is in that port
+        i8042WaitOutputBuffer();                                    // wait for self test status
+        port1Present = port1Present && i8042ReadOutput() == 0xAA; // device sends 0xAA on success
     }
 
     if (port2Present)
     {
-        command(PS2_CTRL_ENABLE_P2);                     // enable the second port if it's present
-        flush();                                         // flush output
+        i8042SendCommand(PS2_CTRL_ENABLE_P2);                     // enable the second port if it's present
+        i8042FlushBuffers();                                         // flush output
         port2Write(PS2_DEV_RESET);                       // reset device
-        waitOutput();                                    // wait for the status
-        port2Present = output() == 0xFA;                 // if the controller replied with OK it means that a device is in that port
-        waitOutput();                                    // wait for self test status
-        port2Present = port2Present && output() == 0xAA; // device sends 0xAA on success
+        i8042WaitOutputBuffer();                                    // wait for the status
+        port2Present = i8042ReadOutput() == 0xFA;                 // if the controller replied with OK it means that a device is in that port
+        i8042WaitOutputBuffer();                                    // wait for self test status
+        port2Present = port2Present && i8042ReadOutput() == 0xAA; // device sends 0xAA on success
     }
 
     // detect the device types
     if (port1Present)
     {
         port1Write(PS2_DEV_DISABLE_SCANNING); // send disable scanning
-        flush();
+        i8042FlushBuffers();
 
         port1Write(PS2_DEV_IDENTIFY); // send identify
-        flush();
+        i8042FlushBuffers();
 
         // gather response
         uint8_t reply[2] = {0, 0};
-        waitOutput();
-        reply[0] = output();
-        waitOutput();
-        reply[1] = output();
+        i8042WaitOutputBuffer();
+        reply[0] = i8042ReadOutput();
+        i8042WaitOutputBuffer();
+        reply[1] = i8042ReadOutput();
 
         // decode the reply bytes
         port1Type = ps2DecodeBytes(reply);
 
         port1Write(PS2_DEV_ENABLE_SCANNING); // send enable scanning
-        flush();
+        i8042FlushBuffers();
 
         printf("ps2: detected type %s (%x %x) in port 1\n", lookup[port1Type], reply[0], reply[1]);
 
@@ -163,23 +163,23 @@ bool ps2InitController()
     if (port2Present)
     {
         port2Write(PS2_DEV_DISABLE_SCANNING); // send disable scanning
-        flush();
+        i8042FlushBuffers();
 
         port2Write(PS2_DEV_IDENTIFY); // send identify
-        flush();
+        i8042FlushBuffers();
 
         // gather response
         uint8_t reply[2] = {0, 0};
-        waitOutput();
-        reply[0] = output();
-        waitOutput();
-        reply[1] = output();
+        i8042WaitOutputBuffer();
+        reply[0] = i8042ReadOutput();
+        i8042WaitOutputBuffer();
+        reply[1] = i8042ReadOutput();
 
         // decode the reply bytes
         port2Type = ps2DecodeBytes(reply);
 
         port2Write(PS2_DEV_ENABLE_SCANNING); // send enable scanning
-        flush();
+        i8042FlushBuffers();
 
         printf("ps2: detected type %s (%x %x) in port 2\n", lookup[port2Type], reply[0], reply[1]);
 

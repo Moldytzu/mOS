@@ -1,56 +1,56 @@
 #include <ps2.h>
 
-void waitOutput()
+void i8042WaitOutputBuffer()
 {
-    for (int i = 0; i < PS2_TIMEOUT_YIELDS && status() & 0b1; i++)
+    for (int i = 0; i < PS2_TIMEOUT_YIELDS && i8042ReadStatus() & 0b1; i++)
     {
         sys_yield();
     }
 }
 
-void waitInput()
+void i8042WaitInputBuffer()
 {
-    for (int i = 0; i < PS2_TIMEOUT_YIELDS && status() & 0b10; i++)
+    for (int i = 0; i < PS2_TIMEOUT_YIELDS && i8042ReadStatus() & 0b10; i++)
     {
         sys_yield();
     }
 }
 
-uint8_t status()
+uint8_t i8042ReadStatus()
 {
     return inb(PS2_STATUS);
 }
 
-uint8_t output()
+uint8_t i8042ReadOutput()
 {
     return inb(PS2_DATA);
 }
 
-void write(uint8_t data)
+void i8042WriteData(uint8_t data)
 {
-    waitInput();
+    i8042WaitInputBuffer();
     outb(PS2_DATA, data);
 }
 
-void command(uint8_t cmd)
+void i8042SendCommand(uint8_t cmd)
 {
-    waitInput();
+    i8042WaitInputBuffer();
     outb(PS2_COMMAND, cmd);
 }
 
 void port1Write(uint8_t data)
 {
-    write(data);
+    i8042WriteData(data);
 }
 
 void port2Write(uint8_t data)
 {
     outb(PS2_COMMAND, PS2_CTRL_WRITE_P2);
-    write(data);
+    i8042WriteData(data);
 }
 
-void flush()
+void i8042FlushBuffers()
 {
-    waitOutput();
-    output();
+    i8042WaitOutputBuffer();
+    i8042ReadOutput();
 }

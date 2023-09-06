@@ -32,45 +32,45 @@ void mouseInit()
     if (port1Type == PS2_TYPE_MOUSE)
     {
         port1Write(PS2_DEV_SET_DEFAULTS); // set defaults
-        flush();
+        i8042FlushBuffers();
 
         port1Write(PS2_MS_SET_SCALING); // set scaling to 1:1
-        flush();
+        i8042FlushBuffers();
 
         port1Write(PS2_MS_SET_RESOLUTION); // set resolution
-        flush();
+        i8042FlushBuffers();
         port1Write(0x00); // 1 count/mm
-        flush();
+        i8042FlushBuffers();
 
         port1Write(PS2_MS_SET_SAMPLE_RATE); // set sample rate
-        flush();
+        i8042FlushBuffers();
         port1Write(200);
-        flush();
+        i8042FlushBuffers();
 
         port1Write(PS2_MS_ENABLE_DATA_REPORTING); // enable data reporting
-        flush();
+        i8042FlushBuffers();
     }
 
     else if (port2Type == PS2_TYPE_MOUSE)
     {
         port2Write(PS2_DEV_SET_DEFAULTS); // set defaults
-        flush();
+        i8042FlushBuffers();
 
         port2Write(PS2_MS_SET_SCALING); // set scaling to 1:1
-        flush();
+        i8042FlushBuffers();
 
         port2Write(PS2_MS_SET_RESOLUTION); // set resolution
-        flush();
+        i8042FlushBuffers();
         port2Write(0x00); // 1 count/mm
-        flush();
+        i8042FlushBuffers();
 
         port2Write(PS2_MS_SET_SAMPLE_RATE); // set sample rate
-        flush();
+        i8042FlushBuffers();
         port2Write(200);
-        flush();
+        i8042FlushBuffers();
 
         port2Write(PS2_MS_ENABLE_DATA_REPORTING); // enable data reporting
-        flush();
+        i8042FlushBuffers();
     }
 }
 
