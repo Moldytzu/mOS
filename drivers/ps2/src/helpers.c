@@ -75,6 +75,7 @@ void port2Write(uint8_t data)
 // flushes all data from the buffers
 void i8042FlushBuffers()
 {
+    i8042WaitOutputBuffer();
     while (i8042ReadStatus() & (1 << 0) > 0) // while the output full bit is set
     {
         // flush
@@ -86,7 +87,8 @@ void i8042FlushBuffers()
 }
 
 // flush one byte off the output buffer
-void i8042FlushOutput()
+void i8042FlushOnce()
 {
+    i8042WaitOutputBuffer();
     i8042ReadOutput();
 }

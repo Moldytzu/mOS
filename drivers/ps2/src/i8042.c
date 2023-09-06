@@ -12,8 +12,9 @@ drv_type_input_t *contextStruct;
 // interrupt handlers
 void i8042Port1Handler()
 {
-    uint8_t data = inb(PS2_DATA);
-    if (port1Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
+    // redirect data to the correct handler
+    uint8_t data = i8042ReadOutput();
+    if (port1Type == PS2_TYPE_KEYBOARD)
         kbHandle(data);
     else if (port1Type == PS2_TYPE_MOUSE)
         mouseHandle(data);
@@ -21,8 +22,9 @@ void i8042Port1Handler()
 
 void i8042Port2Handler()
 {
-    uint8_t data = inb(PS2_DATA);
-    if (port2Type == PS2_TYPE_KEYBOARD) // redirect data to the keyboard handler
+    // redirect data to the correct handler
+    uint8_t data = i8042ReadOutput();
+    if (port2Type == PS2_TYPE_KEYBOARD)
         kbHandle(data);
     else if (port2Type == PS2_TYPE_MOUSE)
         mouseHandle(data);
@@ -50,6 +52,7 @@ bool i8042Trace(const char *msg) // todo: make this a propper logging function
     return false;
 }
 
+// read config byte
 uint8_t i8042ReadConfigByte()
 {
     i8042SendCommand(PS2_CTRL_READ_CFG);
@@ -57,12 +60,13 @@ uint8_t i8042ReadConfigByte()
     return i8042ReadOutput();
 }
 
+// write new config byte
 void i8042WriteConfigByte(uint8_t byte)
 {
     i8042SendCommand(PS2_CTRL_WRITE_CFG);
-    i8042FlushBuffers();
+    i8042FlushOnce();
     i8042WriteData(byte);
-    i8042FlushBuffers();
+    i8042FlushOnce();
 }
 
 // perform controller self-test
@@ -78,10 +82,10 @@ bool i8042InitController()
 {
     // disable the devices
     i8042SendCommand(PS2_CTRL_DISABLE_P1);
-    i8042FlushBuffers();
+    i8042FlushOnce();
 
     i8042SendCommand(PS2_CTRL_DISABLE_P2);
-    i8042FlushBuffers();
+    i8042FlushOnce();
 
     // alter config byte
     uint8_t configByte = i8042ReadConfigByte();
@@ -109,8 +113,13 @@ bool i8042InitController()
     // enable the devices
     if (port1Present)
     {
-        i8042SendCommand(PS2_CTRL_ENABLE_P1);                     // enable the first port if it's present
-        i8042FlushBuffers();                                      // flush output
+        i8042FlushBuffers(); // start with clean buffers
+
+        // enable first port
+        i8042SendCommand(PS2_CTRL_ENABLE_P1);
+        i8042FlushOnce();
+
+        // reset and self-test device
         port1Write(PS2_DEV_RESET);                                // reset device
         i8042WaitOutputBuffer();                                  // wait for the status
         port1Present = i8042ReadOutput() == 0xFA;                 // if the controller replied with OK it means that a device is in that port
@@ -120,8 +129,13 @@ bool i8042InitController()
 
     if (port2Present)
     {
-        i8042SendCommand(PS2_CTRL_ENABLE_P2);                     // enable the second port if it's present
-        i8042FlushBuffers();                                      // flush output
+        i8042FlushBuffers(); // start with clean buffers
+
+        // enable first port
+        i8042SendCommand(PS2_CTRL_ENABLE_P2);
+        i8042FlushOnce();
+
+        // reset and self-test device
         port2Write(PS2_DEV_RESET);                                // reset device
         i8042WaitOutputBuffer();                                  // wait for the status
         port2Present = i8042ReadOutput() == 0xFA;                 // if the controller replied with OK it means that a device is in that port
@@ -132,11 +146,15 @@ bool i8042InitController()
     // detect the device types
     if (port1Present)
     {
-        port1Write(PS2_DEV_DISABLE_SCANNING); // send disable scanning
+        i8042FlushBuffers(); // start with clean buffers
+
+        // disable scanning (data reporting)
+        port1Write(PS2_DEV_DISABLE_SCANNING);
         i8042FlushBuffers();
 
-        port1Write(PS2_DEV_IDENTIFY); // send identify
-        i8042FlushBuffers();
+        // identify device
+        port1Write(PS2_DEV_IDENTIFY);
+        i8042FlushOnce();
 
         // gather response
         uint8_t reply[2] = {0, 0};
@@ -162,11 +180,15 @@ bool i8042InitController()
 
     if (port2Present)
     {
-        port2Write(PS2_DEV_DISABLE_SCANNING); // send disable scanning
+        i8042FlushBuffers(); // start with clean buffers
+
+        // disable scanning (data reporting)
+        port2Write(PS2_DEV_DISABLE_SCANNING);
         i8042FlushBuffers();
 
-        port2Write(PS2_DEV_IDENTIFY); // send identify
-        i8042FlushBuffers();
+        // identify device
+        port2Write(PS2_DEV_IDENTIFY);
+        i8042FlushOnce();
 
         // gather response
         uint8_t reply[2] = {0, 0};
