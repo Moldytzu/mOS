@@ -18,8 +18,8 @@
         pmmDeallocate(tmp);                                                         \
     }
 
-uint64_t abar;                             // ahci's pci bar 5
-drv_pci_header0_t *ahciBase;               // base pointer to pci header
+uint64_t ahciBase;                         // ahci's pci bar 5
+drv_pci_header0_t *ahciHeader;             // base pointer to pci header
 pcie_function_descriptor_t ahciDescriptor; // descriptor that houses the header and the address
 bool portImplemented[32];                  // stores which ports are present
 uint8_t portsImplemented = 0;              // stores how many ports are present
@@ -39,22 +39,22 @@ int ahciPortSlot(ahci_port_t *port)
     return -1;
 }
 
-// read from abar at offset
-uint32_t ahciRead(uint32_t offset)
+// read from ahciBase at offset
+ifunc uint32_t ahciRead(uint32_t offset)
 {
-    return *(volatile uint32_t *)(abar + offset);
+    return *(volatile uint32_t *)(ahciBase + offset);
 }
 
-// write to abar at offset
-void ahciWrite(uint32_t offset, uint32_t data)
+// write to ahciBase at offset
+ifunc void ahciWrite(uint32_t offset, uint32_t data)
 {
-    *(volatile uint32_t *)(abar + offset) = data;
+    *(volatile uint32_t *)(ahciBase + offset) = data;
 }
 
 // get pointer base address as shown by bits set in PI
-ahci_port_t *ahciPort(uint8_t bit)
+ifunc ahci_port_t *ahciPort(uint8_t bit)
 {
-    return (ahci_port_t *)(abar + 0x100 + 0x80 * bit);
+    return (ahci_port_t *)(ahciBase + 0x100 + 0x80 * bit);
 }
 
 // start command engine
@@ -95,7 +95,7 @@ void ahciPortSendCommand(ahci_port_t *port, int slot)
 }
 
 // read using dma from a port
-bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf)
+bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buffer)
 {
     port->is = (uint32_t)-1;       // clear interrupts
     int slot = ahciPortSlot(port); // allocate a slot
@@ -115,14 +115,19 @@ bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t 
     // 8K bytes (16 sectors) per PRDT
     for (; i < cmdheader->prdtl - 1; i++)
     {
-        cmdtbl->prdt_entry[i].dba = (uint32_t)(uint64_t)buf;
+        // point the data base address to the buffer
+        cmdtbl->prdt_entry[i].dba = (uint32_t)(uint64_t)buffer;
+        cmdtbl->prdt_entry[i].dbau = (uint32_t)((uint64_t)buffer >> 32);
         cmdtbl->prdt_entry[i].dbc = 8 * 1024 - 1; // 8K bytes (this value should always be set to 1 less than the actual value)
         cmdtbl->prdt_entry[i].i = 1;
-        buf += 4 * 1024; // 4K words
-        count -= 16;     // 16 sectors
+
+        // increase buffer
+        buffer += 4 * 1024; // 4K words
+        count -= 16;        // 16 sectors
     }
     // Last entry
-    cmdtbl->prdt_entry[i].dba = (uint32_t)(uint64_t)buf;
+    cmdtbl->prdt_entry[i].dba = (uint32_t)(uint64_t)buffer;
+    cmdtbl->prdt_entry[i].dbau = (uint32_t)((uint64_t)buffer >> 32);
     cmdtbl->prdt_entry[i].dbc = count * 512 - 1; // 512 bytes per sector
     cmdtbl->prdt_entry[i].i = 1;
 
@@ -149,7 +154,7 @@ bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t 
     return true;
 }
 
-bool ahciPortIdentify(ahci_port_t *port, void *buf)
+bool ahciPortIdentify(ahci_port_t *port, void *buffer)
 {
     port->is = (uint32_t)-1;       // clear interrupts
     int slot = ahciPortSlot(port); // allocate a slot
@@ -166,9 +171,10 @@ bool ahciPortIdentify(ahci_port_t *port, void *buf)
     memset(cmdtbl, 0, sizeof(ahci_tbl_t) + (cmdheader->prdtl - 1) * sizeof(ahci_prdt_t));
 
     // tell the hba where we want to store the packet
-    cmdtbl->prdt_entry[0].dba = (uint32_t)(uint64_t)buf; // self explainatory
-    cmdtbl->prdt_entry[0].dbc = 512 - 1;                 // 256 words
-    cmdtbl->prdt_entry[0].i = 1;                         // issue an interrupt on completion
+    cmdtbl->prdt_entry[0].dba = (uint32_t)(uint64_t)buffer;
+    cmdtbl->prdt_entry[0].dbau = (uint32_t)((uint64_t)buffer >> 32);
+    cmdtbl->prdt_entry[0].dbc = 512 - 1; // 256 words
+    cmdtbl->prdt_entry[0].i = 1;         // issue an interrupt on completion
 
     // Setup command
     ahci_fis_h2d_t *cmdfis = (ahci_fis_h2d_t *)(&cmdtbl->cfis);
@@ -249,13 +255,13 @@ void (*ahciReads[])(void *, uint64_t, uint64_t) = {
 
 void ahciInit()
 {
-    ahciBase = NULL;
+    ahciHeader = NULL;
     zero(portImplemented, sizeof(portImplemented));
 
     pcie_function_descriptor_t *pciDescriptors = pcieDescriptors();
     size_t n = pcieCountDescriptors();
 
-    // probe to get ahci base
+    // probe to find the controller
     for (size_t i = 0; i < n; i++)
     {
         if (!pciDescriptors[i].header)
@@ -264,22 +270,22 @@ void ahciInit()
         if (pciDescriptors[i].header->class == 1 /*mass storage device*/ && pciDescriptors[i].header->subclass == 6 /*serial ata*/)
         {
             ahciDescriptor = pciDescriptors[i];
-            ahciBase = (drv_pci_header0_t *)pciDescriptors[i].header;
+            ahciHeader = (drv_pci_header0_t *)pciDescriptors[i].header;
             break;
         }
     }
 
-    if (!ahciBase) // didn't find any controller
+    if (!ahciHeader) // didn't find any controller
         return;
 
     logInfo("ahci: detected controller at %d.%d.%d", ahciDescriptor.bus, ahciDescriptor.device, ahciDescriptor.function);
 
     // enable access to internal registers
-    ahciBase->Command |= 0b10000010111;                                               // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
-    abar = (uint64_t)(ahciBase->BAR5 & 0xFFFFE000);                                   // get base address
-    vmmMapKernel((void *)abar, (void *)abar, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
+    ahciHeader->Command |= 0b10000010111;                                                     // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
+    ahciBase = (uint64_t)(ahciHeader->BAR5 & 0xFFFFE000);                                     // get base address
+    vmmMapKernel((void *)ahciBase, (void *)ahciBase, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
 
-    logDbg(LOG_ALWAYS, "ahci: abar is at %p", abar);
+    logDbg(LOG_ALWAYS, "ahci: ahciBase is at %p", ahciBase);
 
     // don't allow 32 bit only ahci controllers
     uint32_t cap = ahciRead(0x0); // read host capabilities
@@ -295,7 +301,7 @@ void ahciInit()
 
         logDbg(LOG_ALWAYS, "ahci: waiting for ownership to change");
 
-        size_t timeout = 100;
+        size_t timeout = 1000;
         while ((ahciRead(0x28) & 0x1) && --timeout) // wait for the bios to transfer ownership
             timeSleepMilis(1);
 
@@ -306,8 +312,7 @@ void ahciInit()
     // INITIALISATION (ahci 1.3.1 spec page 112)
 
     // 1. Indicate that system software is AHCI aware by setting GHC.AE to ‘1’.
-    uint32_t control = ahciRead(0x4);
-    ahciWrite(0x4, control | 0x80000000); // set ahci enable bit
+    ahciWrite(0x4, ahciRead(0x4) | 0x80000000); // set ahci enable bit
 
     // 2. Determine which ports are implemented by the HBA, by reading the PI register
     uint32_t pi = ahciRead(0xC);    // read ports implemented
@@ -318,7 +323,7 @@ void ahciInit()
 
         pi >>= 1;
 
-        if (ahciPort(i)->sig != SATA_SIG_ATA)
+        if (ahciPort(i)->sig != SATA_SIG_ATA) // we support only sata devices
             continue;
 
         portImplemented[i] = true;
@@ -340,9 +345,9 @@ void ahciInit()
 
         ahci_port_t *port = ahciPort(p);
 
-        ahciPortStop((ahci_port_t *)port);        // 3. Ensure that the controller is not in the running state by reading and examining each implemented port’s PxCMD register
-        ahciPortAllocate((ahci_port_t *)port, p); // 5. For each implemented port, system software shall allocate memory
-        port->serr = 0xFFFFFFFF;                  // 6. For each implemented port, clear the PxSERR register, by writing ‘1s’ to each implemented bit location.
+        ahciPortStop(port);        // 3. Ensure that the controller is not in the running state by reading and examining each implemented port’s PxCMD register
+        ahciPortAllocate(port, p); // 5. For each implemented port, system software shall allocate memory
+        port->serr = 0xFFFFFFFF;   // 6. For each implemented port, clear the PxSERR register, by writing ‘1s’ to each implemented bit location.
     }
 
     // 7. Determine which events should cause an interrupt, and set each implemented port’s PxIE register with the appropriate enables. (todo: we don't want this at the moment, maybe when we create an I/O scheduler)
