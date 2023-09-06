@@ -50,6 +50,7 @@ void i8042SendCommand(uint8_t cmd);
 void port1Write(uint8_t data);
 void port2Write(uint8_t data);
 void i8042FlushBuffers();
+void i8042FlushOutput();
 
 // these will be implemented by i8042.c
 extern bool port1Present;

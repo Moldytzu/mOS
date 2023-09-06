@@ -32,33 +32,39 @@ void i8042WaitInputBuffer()
 #endif
 }
 
+// read status byte
 uint8_t i8042ReadStatus()
 {
     return inb(PS2_STATUS);
 }
 
+// read output byte
 uint8_t i8042ReadOutput()
 {
     return inb(PS2_DATA);
 }
 
+// writes one byte to data buffer
 void i8042WriteData(uint8_t data)
 {
     i8042WaitInputBuffer();
     outb(PS2_DATA, data);
 }
 
+// writes command to command buffer
 void i8042SendCommand(uint8_t cmd)
 {
     i8042WaitInputBuffer();
     outb(PS2_COMMAND, cmd);
 }
 
+// writes one byte to first port
 void port1Write(uint8_t data)
 {
     i8042WriteData(data);
 }
 
+// writes one byte to second port
 void port2Write(uint8_t data)
 {
     i8042SendCommand(PS2_CTRL_WRITE_P2);
@@ -66,11 +72,21 @@ void port2Write(uint8_t data)
     i8042WriteData(data);
 }
 
+// flushes all data from the buffers
 void i8042FlushBuffers()
 {
-    i8042WaitOutputBuffer();
-    uint8_t output = i8042ReadOutput();
+    while (i8042ReadStatus() & (1 << 0) > 0) // while the output full bit is set
+    {
+        // flush
+        uint8_t output = i8042ReadOutput();
 #ifdef PS2_DEBUG
-    printf("ps2: flushed 0x%x\n", output);
+        printf("ps2: flushed 0x%x\n", output);
 #endif
+    }
+}
+
+// flush one byte off the output buffer
+void i8042FlushOutput()
+{
+    i8042ReadOutput();
 }
