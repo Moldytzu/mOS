@@ -140,9 +140,10 @@ void handleSocket()
     if (!*(char *)sockBuffer)                                               // if empty give up
         return;
 
-    if (search(sockBuffer, "crash "))
+    char *offset;
+    if (offset = search(sockBuffer, "crash "))
     {
-        printf("%s has crashed!\n", sockBuffer + 6 /*skip "crash "*/);
+        printf("%s has crashed!\n", offset + 6 /*skip "crash "*/);
     }
 
     if (search(sockBuffer, "shutdown")) // shutdown command
