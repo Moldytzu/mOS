@@ -37,7 +37,7 @@
 #endif
 
 // LAPIC
-#define K_LAPIC_FREQ 300 // target lapic timer frequency
+#define K_LAPIC_FREQ 100 // target lapic timer frequency
 
 // ###########################################
 // Memory
