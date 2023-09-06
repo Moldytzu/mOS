@@ -94,42 +94,51 @@ void ahciPortSendCommand(ahci_port_t *port, int slot)
     ahciPortStop(port);
 }
 
-// read using dma from a port
-bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buffer)
+ahci_tbl_t *ahciPrepareCommandHeader(ahci_port_t *port, uint16_t *buffer, size_t size, uint16_t *slot)
 {
-    port->is = (uint32_t)-1;       // clear interrupts
-    int slot = ahciPortSlot(port); // allocate a slot
-    if (slot == -1)
+    port->is = (uint32_t)-1;    // clear interrupts
+    *slot = ahciPortSlot(port); // allocate a slot
+    if (*slot == -1)            // failure
         return false;
 
     ahci_command_header_t *cmdheader = (ahci_command_header_t *)port->clb;
-    cmdheader += slot;
+    cmdheader += *slot;
     cmdheader->cfl = sizeof(ahci_fis_h2d_t) / sizeof(uint32_t); // Command FIS size
     cmdheader->w = 0;                                           // Read from device
-    cmdheader->prdtl = (uint16_t)((count - 1) >> 4) + 1;        // PRDT entries count
+    cmdheader->prdtl = (uint16_t)(size / 512);                  // PRDT entries count
 
     ahci_tbl_t *cmdtbl = (ahci_tbl_t *)(cmdheader->ctba);
     memset(cmdtbl, 0, sizeof(ahci_tbl_t) + (cmdheader->prdtl - 1) * sizeof(ahci_prdt_t));
 
+    // 1 sector per prdt
     int i = 0;
-    // 8K bytes (16 sectors) per PRDT
     for (; i < cmdheader->prdtl - 1; i++)
     {
         // point the data base address to the buffer
         cmdtbl->prdt_entry[i].dba = (uint32_t)(uint64_t)buffer;
         cmdtbl->prdt_entry[i].dbau = (uint32_t)((uint64_t)buffer >> 32);
-        cmdtbl->prdt_entry[i].dbc = 8 * 1024 - 1; // 8K bytes (this value should always be set to 1 less than the actual value)
+        cmdtbl->prdt_entry[i].dbc = 512 - 1; // 1 sector
         cmdtbl->prdt_entry[i].i = 1;
 
         // increase buffer
-        buffer += 4 * 1024; // 4K words
-        count -= 16;        // 16 sectors
+        buffer += 256;
+        size -= 512;
     }
-    // Last entry
     cmdtbl->prdt_entry[i].dba = (uint32_t)(uint64_t)buffer;
     cmdtbl->prdt_entry[i].dbau = (uint32_t)((uint64_t)buffer >> 32);
-    cmdtbl->prdt_entry[i].dbc = count * 512 - 1; // 512 bytes per sector
+    cmdtbl->prdt_entry[i].dbc = align(size, 512) - 1;
     cmdtbl->prdt_entry[i].i = 1;
+
+    return cmdtbl;
+}
+
+// read using dma from a port
+bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buffer)
+{
+    uint16_t slot;
+    ahci_tbl_t *cmdtbl = ahciPrepareCommandHeader(port, buffer, count * 512, &slot);
+    if (!cmdtbl)
+        return false;
 
     // Setup command
     ahci_fis_h2d_t *cmdfis = (ahci_fis_h2d_t *)(&cmdtbl->cfis);
@@ -156,25 +165,10 @@ bool ahciPortRead(ahci_port_t *port, uint32_t startl, uint32_t starth, uint32_t 
 
 bool ahciPortIdentify(ahci_port_t *port, void *buffer)
 {
-    port->is = (uint32_t)-1;       // clear interrupts
-    int slot = ahciPortSlot(port); // allocate a slot
-    if (slot == -1)
+    uint16_t slot;
+    ahci_tbl_t *cmdtbl = ahciPrepareCommandHeader(port, buffer, 512, &slot);
+    if (!cmdtbl)
         return false;
-
-    ahci_command_header_t *cmdheader = (ahci_command_header_t *)port->clb;
-    cmdheader += slot;
-    cmdheader->cfl = sizeof(ahci_fis_h2d_t) / sizeof(uint32_t); // Command FIS size
-    cmdheader->w = 0;                                           // Read from device
-    cmdheader->prdtl = 1;                                       // PRDT entries count
-
-    ahci_tbl_t *cmdtbl = (ahci_tbl_t *)(cmdheader->ctba);
-    memset(cmdtbl, 0, sizeof(ahci_tbl_t) + (cmdheader->prdtl - 1) * sizeof(ahci_prdt_t));
-
-    // tell the hba where we want to store the packet
-    cmdtbl->prdt_entry[0].dba = (uint32_t)(uint64_t)buffer;
-    cmdtbl->prdt_entry[0].dbau = (uint32_t)((uint64_t)buffer >> 32);
-    cmdtbl->prdt_entry[0].dbc = 512 - 1; // 256 words
-    cmdtbl->prdt_entry[0].i = 1;         // issue an interrupt on completion
 
     // Setup command
     ahci_fis_h2d_t *cmdfis = (ahci_fis_h2d_t *)(&cmdtbl->cfis);
