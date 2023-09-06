@@ -13,10 +13,19 @@ int main(int argc, char **argv)
 
     uint64_t fd, size;
     fd = sys_open(argv[1]); // open the file
-    assert(fd != 0);
+    if (!fd)
+    {
+        printf("%s: Failed to open %s\n", argv[0], argv[1]);
+        return 1;
+    }
 
     size = sys_vfs(SYS_VFS_FILE_SIZE, fd, 0); // get the size
-    assert(size != 0);
+    if (!size)
+    {
+        printf("%s: Attempt to open empty file %s\n", argv[0]);
+        sys_close(fd);
+        return 1;
+    }
 
     // allocate the buffer
     void *buffer = malloc(size);
