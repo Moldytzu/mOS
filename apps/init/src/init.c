@@ -20,11 +20,13 @@ bool safe = false;
 char *shell = "/init/msh.mx";
 config_t cfg;
 
+// returns os uptime in miliseconds
 uint64_t uptimeMilis()
 {
     return sys_time_uptime_nanos() / NANOS_TO_MILIS;
 }
 
+// parses configuration
 void parseCFG()
 {
     // display a welcome message
@@ -76,7 +78,7 @@ void parseCFG()
     char *currentDriver = drivers;
     for (int i = 0; i < driversLen; i++)
     {
-        if (drivers[i] == ' ') // ignore whitespace (improves readability)
+        if (drivers[i] == ' ') // ignore whitespace
         {
             currentDriver++;
             continue;
@@ -114,7 +116,7 @@ void parseCFG()
         printf("Failed to set screen resolution to %ux%u\n", screenX, screenY);
 }
 
-// linear search the toSearch string in the por
+// linear search the toSearch string in the provided str
 char *search(char *str, char *toSearch)
 {
     if (strlen(toSearch) > strlen(str)) // don't bother if searched string is bigger than the actual string
@@ -140,33 +142,34 @@ void handleSocket()
     if (!*(char *)sockBuffer)                                               // if empty give up
         return;
 
+    // parse socket information provided by kernel and apps
     char *offset;
-    if (offset = search(sockBuffer, "crash "))
+    if (offset = search(sockBuffer, "crash ")) // crash
     {
         printf("%s has crashed!\n", offset + 6 /*skip "crash "*/);
     }
 
-    if (search(sockBuffer, "shutdown")) // shutdown command
+    if (search(sockBuffer, "shutdown")) // shutdown
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Shutdowning...");
         sys_power(SYS_POWER_SHUTDOWN, 0, 0);
     }
 
-    if (search(sockBuffer, "reboot")) // shutdown command
+    if (search(sockBuffer, "reboot")) // reboot
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
         puts("\n\n\n Rebooting...");
         sys_power(SYS_POWER_REBOOT, 0, 0);
     }
 
-    if (search(sockBuffer, "acpi_power")) // power button
+    if (search(sockBuffer, "acpi_power")) // power button sci
     {
-        uint64_t difference = uptimeMilis() - powerTimestamp;
+        uint64_t difference = uptimeMilis() - powerTimestamp; // time elapsed since last press
 
-        if ((powerCount == powerConfirmations && difference < maxPowerTimeout) || powerConfirmations == 0)
-        {
-            sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0); // set mode to tty
+        if ((powerCount == powerConfirmations && difference < maxPowerTimeout) || powerConfirmations == 0) // if the button was pressed the required time and the time elpased since last press is right or the power confirmations are disabled
+        {                                                                                                  // we can safely shutdown
+            sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);                                             // set mode to tty
             puts("\n\n\n Shutdowning...");
             sys_power(SYS_POWER_SHUTDOWN, 0, 0);
         }
@@ -175,8 +178,8 @@ void handleSocket()
             powerCount = 0;
         }
 
-        if (powerCount == 0) // if it's reset or first time print the message
-            printf("\nPress %d times in maximum %d miliseconds between presses to confirm shutdown\n", powerConfirmations, maxPowerTimeout);
+        if (powerCount == 0)                                                                                                                 // if it's reset or first time print the message
+            printf("\nPress %d times in maximum %d miliseconds between presses to confirm shutdown\n", powerConfirmations, maxPowerTimeout); // fixme: this message is technically wrong...
 
         powerCount++;
         powerTimestamp = uptimeMilis();
@@ -184,7 +187,7 @@ void handleSocket()
 
     memset(sockBuffer, 0, SOCKET_SIZE); // clear the socket buffer
 
-    sys_yield();
+    sys_yield(); // yield
 }
 
 int main(int argc, char **argv)
