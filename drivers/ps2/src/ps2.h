@@ -38,6 +38,7 @@
 
 // constants
 #define PS2_TIMEOUT_YIELDS 30
+// #define PS2_DEBUG
 
 // helper
 void i8042WaitOutputBuffer();
