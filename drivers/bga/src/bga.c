@@ -49,7 +49,7 @@ typedef struct
 drv_type_framebuffer_t *fb;
 drv_pci_header0_t *device;
 
-uint16_t readRegister(uint16_t reg)
+uint16_t bgaReadRegister(uint16_t reg)
 {
     outw(BGA_INDEX, reg); // point to the register
     return inw(BGA_DATA); // read the contents
@@ -61,17 +61,17 @@ void writeRegister(uint16_t reg, uint16_t data)
     outw(BGA_DATA, data); // write the data
 }
 
-void disableVBE()
+void bgaDisableVBE()
 {
     writeRegister(BGA_REG_VBE_ENABLE, VBE_DISABLED); // disable vbe
 }
 
-void enableVBE()
+void bgaEnableVBE()
 {
     writeRegister(BGA_REG_VBE_ENABLE, VBE_ENABLED | VBE_LFB_ENABLED | VBE_NOCLEARMEM); // enable vbe and the linear framebuffer
 }
 
-bool detectBGA()
+bool bgaDetect()
 {
     // search for qemu/bochs device
     device = (drv_pci_header0_t *)sys_pci_get(BGA_PCI_VENDOR, BGA_PCI_DEVICE);
@@ -85,24 +85,24 @@ bool detectBGA()
         return false;
 
     // detect version
-    uint32_t version = readRegister(BGA_REG_ID);
+    uint32_t version = bgaReadRegister(BGA_REG_ID);
 
     printf("bga: detected version %d", version - 0xB0C0);
 
     return version >= 0xB0C2; // we want a new version
 }
 
-bool setResolution(uint32_t xres, uint32_t yres)
+bool bgaSetResolution(uint32_t xres, uint32_t yres)
 {
     // invalid resolution
     if ((xres == 0 || yres == 0) || (xres % 8 != 0 || yres % 8 != 0) || (xres > BGA_MAX_XRES || yres > BGA_MAX_YRES))
         return false;
 
-    disableVBE();
+    bgaDisableVBE();
     writeRegister(BGA_REG_XRES, xres); // set horizontal resolution
     writeRegister(BGA_REG_YRES, yres); // set vertical resolution
     writeRegister(BGA_REG_BPP, 32);    // set 32 bits per pixel
-    enableVBE();                       // enable vbe
+    bgaEnableVBE();                    // enable vbe
 
     // update the metadata
     fb->base = (void *)(uint64_t)device->BAR0; // set the base address
@@ -113,20 +113,20 @@ bool setResolution(uint32_t xres, uint32_t yres)
     return true;
 }
 
-bga_resolution_t getResolution()
+bga_resolution_t bgaGetResolution()
 {
     bga_resolution_t res;
-    disableVBE();
-    res.x = readRegister(BGA_REG_XRES);
-    res.y = readRegister(BGA_REG_YRES);
-    enableVBE(); // enable vbe
+    bgaDisableVBE();
+    res.x = bgaReadRegister(BGA_REG_XRES);
+    res.y = bgaReadRegister(BGA_REG_YRES);
+    bgaEnableVBE(); // enable vbe
 
     return res;
 }
 
 void _mdrvmain()
 {
-    if (!detectBGA())
+    if (!bgaDetect())
     {
         puts("bga: failed to initialise!\n");
         abort();
@@ -140,7 +140,7 @@ void _mdrvmain()
         abort();
     }
 
-    setResolution(640, 480); // set a default resolution
+    bgaSetResolution(640, 480); // set a default resolution
 
     sys_driver_flush(SYS_DRIVER_TYPE_FRAMEBUFFER); // flush the changes
 
@@ -154,7 +154,7 @@ void _mdrvmain()
         if (fb->requestedXres && fb->requestedXres && fb->currentXres == fb->requestedXres && fb->currentYres == fb->requestedYres || !fb->requestedXres || !fb->requestedYres)
             continue;
 
-        if (!setResolution(fb->requestedXres, fb->requestedYres)) // try to change the resolution
+        if (!bgaSetResolution(fb->requestedXres, fb->requestedYres)) // try to change the resolution
         {
             printf("bga: failed to set %dx%d\n", fb->requestedXres, fb->requestedYres);
             fb->requestedXres = fb->currentXres;
