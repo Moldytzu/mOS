@@ -39,43 +39,16 @@
 // constants
 #define PS2_TIMEOUT_YIELDS 30
 
-// macro functions
-#define waitOutput()                                               \
-    for (int i = 0; i < PS2_TIMEOUT_YIELDS && status() & 0b1; i++) \
-    {                                                              \
-        sys_yield();                                               \
-    }
-#define waitInput()                                                 \
-    for (int i = 0; i < PS2_TIMEOUT_YIELDS && status() & 0b10; i++) \
-    {                                                               \
-        sys_yield();                                                \
-    }
-#define status() inb(PS2_STATUS)
-#define output() inb(PS2_DATA)
-#define write(data)           \
-    {                         \
-        waitInput();          \
-        outb(PS2_DATA, data); \
-    }
-#define command(cmd)            \
-    {                           \
-        waitInput();            \
-        outb(PS2_COMMAND, cmd); \
-    }
-#define port1Write(data) \
-    {                    \
-        write(data);     \
-    }
-#define port2Write(data)                      \
-    {                                         \
-        outb(PS2_COMMAND, PS2_CTRL_WRITE_P2); \
-        write(data);                          \
-    }
-#define flush()       \
-    {                 \
-        waitOutput(); \
-        output();     \
-    }
+// helper
+void waitOutput();
+void waitInput();
+uint8_t status();
+uint8_t output();
+void write(uint8_t data);
+void command(uint8_t cmd);
+void port1Write(uint8_t data);
+void port2Write(uint8_t data);
+void flush();
 
 // these will be implemented by i8042.c
 extern bool port1Present;
