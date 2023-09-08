@@ -13,7 +13,7 @@
 
 extern void xapicEntry();
 
-// #define TPS
+#define TPS
 
 #ifdef TPS
 uint64_t lapicTPS[K_MAX_CORES];
@@ -61,6 +61,9 @@ void xapicEOI()
 
 void xapicInit(bool bsp)
 {
+    if (rdmsr(MSR_APIC_BASE) & 0xFFFFF000 != (uint64_t)XAPIC_BASE)
+        panick("Out of spec xapic address.");
+
     if (bsp)
     {
         // disable pic by masking all interrupts
@@ -103,7 +106,7 @@ void xapicInit(bool bsp)
     if (bsp)
         idtSetGate(xapicEntry, XAPIC_TIMER_VECTOR); // set the isr to one that doesn't screw up the stack on an interrupt that doesn't have an error code like the timer's one while calling the same general interrupt entry point (check cpu/isr.asm)
 
-    logInfo("lapic: initialised ID: %x", xapicRead(XAPIC_REG_ID));
+    logInfo("lapic: initialised ID %x with timer initcnt of 0x%x", xapicRead(XAPIC_REG_ID), ticks);
 }
 
 // sends a non-maskable interrupt to all of the cores thus halting them
