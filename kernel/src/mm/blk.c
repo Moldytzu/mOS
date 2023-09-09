@@ -116,19 +116,17 @@ void blkDeallocate(void *blk)
         header->free = true;
         header->signature = BLK_HEADER_SIGNATURE;
 
-        // fixme: here we potentially waste a little bit of memory (23 bytes per merge) because we don't take in account the header size
-
         if (header->next && HEADER_AT(header->next)->free) // we can merge forward
         {
             blk_header_t *next = HEADER_AT(header->next);
-            header->size += next->size;
+            header->size += next->size + sizeof(blk_header_t);
             header->next = next->next;
         }
 
         if (header->prev && HEADER_AT(header->prev)->free) // we can merge backwards
         {
             blk_header_t *prev = HEADER_AT(header->prev);
-            prev->size += header->size;
+            prev->size += header->size + sizeof(blk_header_t);
             prev->free = true;
             prev->next = header->next;
             prev->signature = BLK_HEADER_SIGNATURE;
