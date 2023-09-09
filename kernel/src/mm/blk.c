@@ -56,10 +56,8 @@ void blkInit()
 void *blkBlock(size_t size)
 {
     lock(blkLock, {
-        size = align(size, BLK_ALIGNMENT); // do the alignment
-        size += BLK_ALIGNMENT;             // padding
-
-        size_t internalSize = size;
+        size = align(size, BLK_ALIGNMENT);
+        size_t fullSize = size + sizeof(blk_header_t); // this will be aligned since blk_header_t is padded internally
 
         for (blk_header_t *current = start; current; current = current->next)
         {
@@ -68,11 +66,11 @@ void *blkBlock(size_t size)
 
             if (current->size == size)
                 current->free = false;
-            else if (current->size >= internalSize)
+            else if (current->size >= fullSize)
             {
                 // create new block then add it in the chain
                 blk_header_t *newBlock = CONTENT_OF(current) + size;
-                newBlock->size = current->size - internalSize;
+                newBlock->size = current->size - fullSize;
                 newBlock->free = true;
                 newBlock->next = current->next;
                 newBlock->prev = current;
@@ -90,7 +88,7 @@ void *blkBlock(size_t size)
     });
 
     // expand then try again
-    expand(16);
+    expand(BLK_EXPAND_INCREMENT);
     return blkBlock(size - BLK_ALIGNMENT); // also remove the padding
 }
 

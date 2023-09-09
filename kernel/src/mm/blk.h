@@ -5,15 +5,14 @@
 #define BLK_HEADER_SIGNATURE 0xF00F
 #define BLK_EXPAND_INCREMENT 16
 
-pstruct
+typedef struct
 {
     uint16_t signature;
     uint32_t size;
     bool free;
     void *prev;
     void *next;
-}
-blk_header_t;
+} blk_header_t;
 
 void blkInit();
 void *blkBlock(size_t size);
