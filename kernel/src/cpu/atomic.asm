@@ -10,25 +10,18 @@ atomicWrite:
     mov QWORD [rdi], rsi
     ret
 
-%macro	CF_RESULT	0
-	mov		rcx, 1
-	mov		rax, 0
-	cmovnc	rax, rcx
-%endmacro
-
 ; releases atomic spinlock
 ; rdi=address
 atomicRelease:
 	lock btr QWORD [rdi], 0x0
-	CF_RESULT
 	ret
 
 ; aquires atomic spinlock
 ; rdi=address
 atomicAquire:
-	.acquire:
+	.acquire: ; aquire lock
 		lock bts QWORD [rdi], 0x0
-		jnc	.exit
+		jnc	.exit ; if carry bit is set then it's locked
 	.spin:
 		pause
 		bt QWORD [rdi], 0x0
