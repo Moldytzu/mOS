@@ -341,10 +341,13 @@ void schedSwitchNext()
 // reschedule if scheduler is unlocked
 void schedScheduleIfPossible()
 {
-    bool canReschedule = _enabled[smpID()] && !ATOMIC_IS_LOCKED(schedLock[smpID()]);
     pause();
+
+#ifdef K_ATOMIC_RESCHEDULE
+    bool canReschedule = _enabled[smpID()] && !ATOMIC_IS_LOCKED(schedLock[smpID()]);
     if (canReschedule)
         iasm("int $0x20");
+#endif
 }
 
 // initialise the scheduler

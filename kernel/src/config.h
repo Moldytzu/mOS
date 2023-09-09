@@ -36,6 +36,9 @@
 #define K_MAX_CORES 1 // this decreases kernel memory usage
 #endif
 
+// Atomic
+#define K_ATOMIC_RESCHEDULE // reschedules if possible to save up cpu time in spinlocks (slight performance increase on SMP systems)
+
 // LAPIC
 #define K_LAPIC_FREQ 100 // target lapic timer frequency
 
