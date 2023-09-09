@@ -82,7 +82,7 @@ void *pmmPages(uint64_t pages)
             {
                 if (((uint64_t *)pool->base)[i / bitsof(uint64_t)] == UINT64_MAX) // if the qword is all set then skip it (speeds up allocation by a lot)
                 {
-                    i += bitsof(uint64_t) - 1;
+                    i += bitsof(uint64_t) - 1; // the for loop will increase i after we use the continue statement, thus we will have to do -1
                     continue;
                 }
 
