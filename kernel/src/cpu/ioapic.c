@@ -72,10 +72,6 @@ void ioapicRedirectIRQ(uint8_t irq, uint16_t vector, uint16_t core)
 
 void ioapicInit()
 {
-    // disable pic
-    outb(PIC_MASTER_DAT, 0b11111111);
-    outb(PIC_SLAVE_DAT, 0b11111111);
-
     zero(interruptOverrides, sizeof(interruptOverrides));
 
     madt = (acpi_madt_t *)acpiGet("APIC", 0); // retrive the madt table
