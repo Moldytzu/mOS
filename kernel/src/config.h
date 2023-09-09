@@ -37,7 +37,7 @@
 #endif
 
 // Atomic
-#define K_ATOMIC_RESCHEDULE // reschedules if possible to save up cpu time in spinlocks (slight performance increase on SMP systems)
+// #define K_ATOMIC_RESCHEDULE // reschedules if possible to save up cpu time in spinlocks (slight performance increase on SMP systems at cost of stability)
 
 // LAPIC
 #define K_LAPIC_FREQ 100 // target lapic timer frequency
