@@ -27,6 +27,12 @@ void xapicHandleTimer(idt_intrerrupt_stack_t *stack)
     vmmSwap(vmmGetBaseTable()); // swap to base table
 
 #ifdef TPS
+    // the scheduler will be available here and we will deadlock
+    // thus we have to disable rescheduling
+#ifdef K_ATOMIC_RESCHEDULE
+#error atomic rescheduling is not available if printing lapic timer tps
+#endif
+
     if (hpetMillis() / 1000 != lastSeconds[smpID()])
     {
         lapicTPS[smpID()] = __tps[smpID()];
