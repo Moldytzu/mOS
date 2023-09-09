@@ -64,6 +64,8 @@ void pmmDbgDump()
         poolDump(i);
 }
 
+#define IS_QWORD_SET(base, index) (((uint64_t *)base)[index / bitsof(uint64_t)] == UINT64_MAX)
+
 void *pmmPages(uint64_t pages)
 {
     for (int i = 0; i < poolCount; i++)
@@ -80,7 +82,7 @@ void *pmmPages(uint64_t pages)
         lock(pool->lock, {
             for (size_t i = pool->lastAllocatedIndex; i < pool->size / PMM_PAGE; i++)
             {
-                if (((uint64_t *)pool->base)[i / bitsof(uint64_t)] == UINT64_MAX) // if the qword is all set then skip it (speeds up allocation by a lot)
+                if (IS_QWORD_SET(pool->base, i)) // if the qword is all set then skip it (speeds up allocation by a lot)
                 {
                     i += bitsof(uint64_t) - 1; // the for loop will increase i after we use the continue statement, thus we will have to do -1
                     continue;
