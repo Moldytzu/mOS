@@ -1,6 +1,8 @@
 #pragma once
 #include <stdbool.h>
 
+#define ATOMIC_IS_LOCKED(x) (x)
+
 typedef uint64_t spinlock_t;
 
 void atomicWrite(void *address, uint64_t val);
