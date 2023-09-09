@@ -13,7 +13,7 @@
 
 extern void xapicEntry();
 
-// #define TPS
+#define TPS
 
 #ifdef TPS
 uint64_t lapicTPS[K_MAX_CORES];
@@ -85,7 +85,8 @@ void xapicInit(bool bsp)
     // reset important registers to a known state before enabling the apic (not required by any spec)
     xapicWrite(XAPIC_REG_DFR, 0xFF000000);
     xapicWrite(XAPIC_REG_LDR, 0x01000000);
-    xapicWrite(XAPIC_REG_SIV, 0x120); // software enable apic and set the spurious vector to 0x20
+    xapicWrite(XAPIC_REG_LVT0, 0x00010000);
+    xapicWrite(XAPIC_REG_LVT1, 0x00010000);
     xapicWrite(XAPIC_REG_TPR, 0);
 
     // enable the lapic (11.4.3 volume 3 intel sdm)
@@ -96,6 +97,8 @@ void xapicInit(bool bsp)
         high |= (uint32_t)0b100000000;
 
     wrmsr(MSR_APIC_BASE, low, high); // write back the base
+
+    xapicWrite(XAPIC_REG_SIV, 0x120); // software enable apic and set the spurious vector to 0x20
 
     // 11.5.4 volume 3 intel sdm
 
