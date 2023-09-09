@@ -270,13 +270,10 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
 
 extern void saveSimdContextTo(void *simdContext);
 
-// do the context switch
+// do the context switch (it's guranteed to be called after initialisation and enable)
 void schedSchedule(idt_intrerrupt_stack_t *stack)
 {
     uint64_t id = smpID();
-
-    if (!_enabled[id])
-        return;
 
     lock(schedLock[id], {
         if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the application core don't reschedule
