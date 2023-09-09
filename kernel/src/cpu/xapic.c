@@ -100,7 +100,7 @@ void xapicInit(bool bsp)
     // 11.5.4 volume 3 intel sdm
 
     // calibrate timer for the frequency specified in config
-    xapicWrite(XAPIC_REG_TIMER_DIV, 0b0011);             // divide by 128
+    xapicWrite(XAPIC_REG_TIMER_DIV, 0b1110);             // divide by 128
     xapicWrite(XAPIC_REG_LVT_TIMER, XAPIC_TIMER_VECTOR); // oneshot mode
     xapicWrite(XAPIC_REG_TIMER_INITCNT, 0xFFFFFFFF);     // initialise with -1
 
