@@ -3,6 +3,7 @@ bits 64
 section .text
 
 global atomicWrite, atomicRelease, atomicAquire
+extern schedScheduleIfPossible
 
 ; writes atomically to address
 ; rdi=address, rsi=value
@@ -23,7 +24,7 @@ atomicAquire:
 		lock bts QWORD [rdi], 0x0
 		jnc	.exit ; if carry bit is set then it's locked
 	.spin:
-		pause
+		call schedScheduleIfPossible
 		bt QWORD [rdi], 0x0
 		jc .spin
 		jmp	.acquire

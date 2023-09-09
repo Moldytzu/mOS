@@ -25,7 +25,7 @@ uint16_t maxCore = 0;                 // max available cores
 
 spinlock_t schedLock[K_MAX_CORES];
 
-bool _enabled = false;
+bool _enabled[K_MAX_CORES];
 
 void callWithStack(void *func, void *stack);
 
@@ -273,10 +273,10 @@ extern void saveSimdContextTo(void *simdContext);
 // do the context switch
 void schedSchedule(idt_intrerrupt_stack_t *stack)
 {
-    if (!_enabled)
-        return;
-
     uint64_t id = smpID();
+
+    if (!_enabled[id])
+        return;
 
     lock(schedLock[id], {
         if (queueStart[id].next == lastTask[id] && !lastTask[id]->next && id != 0) // if we only have one thread running on the application core don't reschedule
@@ -338,6 +338,15 @@ void schedSwitchNext()
     unreachable();                                                  // hint we won't return
 }
 
+// reschedule if scheduler is unlocked
+void schedScheduleIfPossible()
+{
+    bool canReschedule = _enabled[smpID()] && !ATOMIC_IS_LOCKED(schedLock[smpID()]);
+    pause();
+    if (canReschedule)
+        iasm("int $0x20");
+}
+
 // initialise the scheduler
 void schedInit()
 {
@@ -345,6 +354,7 @@ void schedInit()
 
     maxCore = smpCores();
     zero(queueStart, sizeof(queueStart));
+    zero(_enabled, sizeof(_enabled));
 
     lastTaskID = 1;
 
@@ -459,7 +469,7 @@ void schedEnable()
     if (!smpID())
         logInfo("Jumping in userspace");
 
-    _enabled = true;
+    _enabled[smpID()] = true;
     callWithStack((void *)queueStart[smpID()].registers.rip, (void *)queueStart[smpID()].registers.rsp); // call core's initial task
     while (1)
         ;
