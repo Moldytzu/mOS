@@ -109,15 +109,13 @@ void panick_impl(const char *file, size_t line, const char *msg)
     PRINT_TRACE_IF_POSSIBLE(8);
     PRINT_TRACE_IF_POSSIBLE(9);
     PRINT_TRACE_IF_POSSIBLE(10);
+    PRINT_TRACE_IF_POSSIBLE(11);
+    PRINT_TRACE_IF_POSSIBLE(12);
+    PRINT_TRACE_IF_POSSIBLE(13);
+    PRINT_TRACE_IF_POSSIBLE(14);
+    PRINT_TRACE_IF_POSSIBLE(15);
+    PRINT_TRACE_IF_POSSIBLE(16);
 
-    // this path may not be taken......
-    // fixme: remove this
-#ifdef K_PANIC_REBOOT
-    for (volatile size_t i = 0; i < 0xFFFFFFF; i++)
-        ; // wait a bit
-
-    acpiReboot();
-#endif
-
+    // it's very, very unlikely that the stack trace will be this deep
     hang();
 }

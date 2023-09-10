@@ -121,7 +121,6 @@
 // ###########################################
 
 // Panic
-// #define K_PANIC_REBOOT // reboot on kernel panic
 // #define K_PANIC_ON_USERSPACE_CRASH // panics on userspace exceptions (useful when debugging drivers and apps)
 
 // Drivers
