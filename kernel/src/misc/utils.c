@@ -62,16 +62,26 @@ void printk_impl(const char *fmt, va_list list)
                 framebufferWritec(fmt[i]);
                 continue;
             }
-            if (fmt[i + 1] == 'd')
+
+            switch (fmt[i + 1])
+            {
+            case 'd':
                 framebufferWrite(to_string(va_arg(list, uint64_t))); // decimal
-            else if (fmt[i + 1] == 'p')
-                framebufferWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
-            else if (fmt[i + 1] == 'x')
-                framebufferWrite(to_hstring(va_arg(list, uint64_t))); // hex
-            else if (fmt[i + 1] == 's')
+                break;
+            case 'x':
+            case 'p':
+                framebufferWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer/hex
+                break;
+            case 's':
                 framebufferWrite(va_arg(list, const char *)); // string
-            else if (fmt[i + 1] == 'c')
+                break;
+            case 'c':
                 framebufferWritec(va_arg(list, int)); // char
+                break;
+            default:
+                continue;
+            }
+
             i++;
         }
     });
@@ -89,16 +99,25 @@ void printks_impl(const char *fmt, va_list list)
                 continue;
             }
 
-            if (fmt[i + 1] == 'd')
+            switch (fmt[i + 1])
+            {
+            case 'd':
                 serialWrite(to_string(va_arg(list, uint64_t))); // decimal
-            else if (fmt[i + 1] == 'p')
-                serialWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer
-            else if (fmt[i + 1] == 'x')
-                serialWrite(to_hstring(va_arg(list, uint64_t))); // hex
-            else if (fmt[i + 1] == 's')
+                break;
+            case 'x':
+            case 'p':
+                serialWrite(to_hstring((uint64_t)va_arg(list, void *))); // pointer/hex
+                break;
+            case 's':
                 serialWrite(va_arg(list, const char *)); // string
-            else if (fmt[i + 1] == 'c')
+                break;
+            case 'c':
                 serialWritec(va_arg(list, int)); // char
+                break;
+            default:
+                continue;
+            }
+
             i++;
         }
     });
