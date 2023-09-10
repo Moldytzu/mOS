@@ -26,7 +26,7 @@ void expand(uint16_t pages)
     blk_header_t *newBlock = (blk_header_t *)lastMappedVirtualAddress;
 
     // map them
-    for (int i = 0; i < pages; i++)
+    for (int i = 0; i <= pages; i++)
     {
         vmmMapKernel(lastMappedVirtualAddress, physicalPages, VMM_ENTRY_RW);
         lastMappedVirtualAddress += PMM_PAGE;
@@ -123,8 +123,10 @@ void *blkBlock(size_t size)
                 return CONTENT_OF(current); // return a pointer to the contents
             }
 
+            logInfo("blk: expanding to fit %d bytes", size);
+
             // expand then try again
-            expand(BLK_EXPAND_INCREMENT);
+            expand(size / 4096 + BLK_EXPAND_INCREMENT);
         }
     });
 }
