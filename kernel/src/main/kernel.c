@@ -76,6 +76,15 @@ void kmain()
     schedEnable();
 }
 
+// walks the stack using gcc's builtin functions
+#define STACK_TRACE_WALK(x) (__builtin_extract_return_addr(__builtin_return_address(x)))
+
+// displays the address if possible
+#define PRINT_TRACE_IF_POSSIBLE(x) \
+    if (!STACK_TRACE_WALK(x))      \
+        hang();                    \
+    logError("0x%p", STACK_TRACE_WALK(x));
+
 void panick_impl(const char *file, size_t line, const char *msg)
 {
 #ifdef K_SMP
@@ -84,15 +93,25 @@ void panick_impl(const char *file, size_t line, const char *msg)
 
     logError("\n\nKernel panic triggered.\n(%s:%d) -> %s\n", file, line, msg);
 
+    // display stack trace
     logError("Stack trace:");
-    logError("0x%p <- caller", __builtin_extract_return_addr(__builtin_return_address(0)));
-    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(1)));
-    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(2)));
-    logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(3)));
-    // logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(4)));
-    // logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(5)));
-    // logError("0x%p", __builtin_extract_return_addr(__builtin_return_address(6)));
+    logError("0x%p <- caller", STACK_TRACE_WALK(0));
+    if (!STACK_TRACE_WALK(0))
+        hang();
 
+    PRINT_TRACE_IF_POSSIBLE(1);
+    PRINT_TRACE_IF_POSSIBLE(2);
+    PRINT_TRACE_IF_POSSIBLE(3);
+    PRINT_TRACE_IF_POSSIBLE(4);
+    PRINT_TRACE_IF_POSSIBLE(5);
+    PRINT_TRACE_IF_POSSIBLE(6);
+    PRINT_TRACE_IF_POSSIBLE(7);
+    PRINT_TRACE_IF_POSSIBLE(8);
+    PRINT_TRACE_IF_POSSIBLE(9);
+    PRINT_TRACE_IF_POSSIBLE(10);
+
+    // this path may not be taken......
+    // fixme: remove this
 #ifdef K_PANIC_REBOOT
     for (volatile size_t i = 0; i < 0xFFFFFFF; i++)
         ; // wait a bit
