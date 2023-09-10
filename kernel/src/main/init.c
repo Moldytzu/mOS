@@ -40,9 +40,9 @@ void _start()
 
     pmmInit(); // initialise the physical memory manager
 
-    blkInit(); // initialise the block allocator
-
     smpBootstrap(); // bootstrap the cpus
+
+    blkInit(); // initialise the block allocator
 
     acpiInit(); // initialise the acpi interface
 

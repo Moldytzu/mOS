@@ -3,7 +3,7 @@
 
 #define BLK_ALIGNMENT 0x10
 #define BLK_HEADER_SIGNATURE 0xF00F
-#define BLK_EXPAND_INCREMENT 16
+#define BLK_EXPAND_INCREMENT 1
 
 typedef struct
 {
