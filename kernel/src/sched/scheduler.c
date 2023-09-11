@@ -61,12 +61,15 @@ void framebufferTask()
             char *buffer = (char *)vtGet(0)->buffer;
             size_t bufferSize = strlen(buffer);
 
+            if (!bufferSize) // nothing to display
+                break;
+
             // emulate framebuffer's cursor behaviour to determine maximum characters we can fit on the screen
             size_t x = 0;
             size_t y = 0;
             size_t printableCharacters = 0;
 
-            for (size_t i = bufferSize /*fixme: what happens if bufferSize == 0?*/ - 1; i; i--) // since we want to print only the last few visible characters we begin to search from the end
+            for (size_t i = bufferSize - 1; i; i--) // since we want to print only the last few visible characters we begin to search from the end
             {
                 // this is virtualy the same algorithm as in framebufferWritec except the drawing part
                 char c = buffer[i];
