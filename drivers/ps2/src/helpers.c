@@ -3,9 +3,9 @@
 // waits for output buffer to be full
 void i8042WaitOutputBuffer()
 {
-    for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++)
+    for (int i = 0; i < PS2_TIMEOUT; i++)
     {
-        sys_yield();
+        outb(0x80, 0); // io wait
 
         if (i8042ReadStatus() & (1 << 0) > 0)
             return;
@@ -19,9 +19,9 @@ void i8042WaitOutputBuffer()
 // waits for input buffer to be empty
 void i8042WaitInputBuffer()
 {
-    for (int i = 0; i < PS2_TIMEOUT_YIELDS; i++)
+    for (int i = 0; i < PS2_TIMEOUT; i++)
     {
-        sys_yield();
+        outb(0x80, 0); // io wait
 
         if (i8042ReadStatus() & (1 << 1) == 0)
             return;
