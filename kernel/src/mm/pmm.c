@@ -195,7 +195,7 @@ void *pmmReallocate(void *ptr, uint64_t oldSize, uint64_t newSize)
     void *newPages = pmmPages(newSize);
 
     // copy the contents
-    memcpy8(newPages, ptr, min(oldSize, newSize) * PMM_PAGE);
+    memcpy64(newPages, ptr, min(oldSize, newSize) * PMM_PAGE / sizeof(uint64_t));
 
     // deallocate old page
     pmmDeallocatePages(ptr, oldSize);
