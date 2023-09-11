@@ -26,7 +26,7 @@ void expand(uint16_t pages)
     blk_header_t *newBlock = (blk_header_t *)lastMappedVirtualAddress;
 
     // map them
-    for (int i = 0; i <= pages; i++)
+    for (int i = 0; i < pages; i++)
     {
         vmmMapKernel(lastMappedVirtualAddress, physicalPages, VMM_ENTRY_RW);
         lastMappedVirtualAddress += PMM_PAGE;
