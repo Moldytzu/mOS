@@ -48,7 +48,14 @@ void expand(uint16_t pages)
 
     usedPages += pages; // keep track of used pages
 
-    // todo: merge with last block if that is possible
+    // check if we can merge
+    if (last->prev && HEADER_AT(last->prev)->free)
+    {
+        blk_header_t *previous = HEADER_AT(last->prev);      // the block that we will merge to
+        previous->size += last->size + sizeof(blk_header_t); // add the full size occupied by the whole block
+        previous->next = NULL;                               // the previous block is now the last thus it doesn't have any block after it
+        last = previous;                                     // remember it's actually last
+    }
 }
 
 void blkMerge()
