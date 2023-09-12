@@ -57,18 +57,52 @@ void *slabAllocate(slab_cache_t *cache)
 
     // todo: try to allocate a new cache and link them together
 
+    cache->busy = true;
+
     return NULL; // didn't found
+}
+
+// deallocate a slab from a cache
+void slabDeallocate(slab_cache_t *cache, void *ptr)
+{
+    do
+    {
+        lock(cache->lock, {
+            if ((uint64_t)cache >> 12 == (uint64_t)ptr >> 12) // check if page index match
+            {
+                // it means the pointer is part of the cache
+                uint64_t index = ((uint64_t)ptr - (uint64_t)cache - sizeof(slab_cache_t) - cache->bitmapBytes) / cache->objectSize; // reverse of the formula used in slabAllocate
+
+                if (!bmpGet(cache, index)) // check if we can deallocate
+                {
+                    logInfo("slab: trying to deallocate free slab %p from %p", ptr, cache);
+                    return;
+                }
+
+                bmpUnset(cache, index); // mark as free
+
+                cache->busy = false;
+
+                release(cache->lock);
+                return; // return
+            }
+        });
+
+        cache = cache->next;
+    } while (cache);
+
+    logInfo("slab: failed to deallocate %p from %p", ptr, cache);
 }
 
 void slabInit()
 {
-    slab_cache_t *slab = slabCreate(32);
-    logInfo("slab: allocated slab at %p", slab);
+    slab_cache_t *cache = slabCreate(32);
+    logInfo("slab: allocated cache at %p", cache);
 
-    for (int i = 0; i < 200; i++)
-        logInfo("%p", slabAllocate(slab));
+    for (int i = 0; i < 5; i++)
+        logInfo("%p", slabAllocate(cache));
 
-    logInfo("%p", slabAllocate(slab));
+    slabDeallocate(cache, slabAllocate(cache));
 
     while (1)
         ;
