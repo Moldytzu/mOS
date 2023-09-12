@@ -2,62 +2,70 @@
 #include <mm/pmm.h>
 #include <misc/logger.h>
 
-#define OFFSET_BY(slab, x) ((slab_t *)((uint64_t)slab + x))
+#define BITMAP_OF(x) ((void *)((uint64_t)x + sizeof(slab_cache_t)))
 
-// creates a new slab list, returns a pointer to it and its total number of pages
-slab_t *slabCreate(size_t maxElements, size_t objectSize, size_t *pages)
+// creates a new slab cache for required object size, returns a pointer to it
+slab_cache_t *slabCreate(size_t objectSize)
 {
-    // todo: see slab.h
-    size_t requiredBytes = maxElements * (objectSize + sizeof(slab_t)); // we have to hold in each slab entry header and their object size
-    size_t requiredPages = align(requiredBytes, PMM_PAGE) / PMM_PAGE;   // pages to allocate
+    objectSize = align(objectSize, 8); // make sure objectSize is a multiple of 8
 
-    *pages = requiredPages; // return number of pages
+    // allocate an initial cache
+    slab_cache_t *cache = pmmPage();
 
-    logInfo("slab: creating slab with %d elements each having %d bytes (%d bytes, %d pages to allocate)", maxElements, objectSize, requiredBytes, requiredPages);
+    // determine bitmap bytes
+    // with formula (availableBytes - bitmapBytes / (bitmapBytes * 8)) we determine minimum number of bytes an object can have
+    // applying that, we can brute force the bitmapBytes variable in a few iterations
 
-    slab_t *slabs = pmmPages(requiredPages);
-
-    for (slab_t *slab = slabs; maxElements; maxElements--) // iterate over all items to set required metadata
+    uint16_t bitmapAndContentsSize = PMM_PAGE - sizeof(slab_cache_t); // page minus header
+    uint8_t bitmapBytes = 1;
+    for (; bitmapBytes <= 64; bitmapBytes++) // we set an upper limit of 64 bytes because that would be the minimum number of bitmap bytes to store metadata for 8 byte objects
     {
-        slab->free = true;
-        slab->index = maxElements;
-        slab->size = objectSize;
-
-        slab = OFFSET_BY(slab, objectSize + sizeof(slab_t)); // get next slab
+        if ((bitmapAndContentsSize - bitmapBytes) / (bitmapBytes * 8) <= objectSize)
+            break;
     }
 
-    return slabs;
+    uint16_t contentSize = bitmapAndContentsSize - bitmapBytes;
+    uint16_t objects = contentSize / objectSize;
+
+    logInfo("slab: best bitmap size for %d bytes object is %d bytes and we can hold %d objects", objectSize, bitmapBytes, objects);
+
+    // set required metadata
+    cache->busy = false;
+    cache->objects = objects;
+    cache->objectSize = objectSize;
+    cache->bitmapBytes = bitmapBytes;
+    cache->next = NULL;
+
+    return cache;
 }
 
-// allocates a new object in a slab list
-void *slabAllocate(slab_t *list)
+// allocates a new object in a slab cache
+void *slabAllocate(slab_cache_t *cache)
 {
-    size_t maxElements = list->index;
-    size_t objectSize = list->size;
-
-    for (slab_t *slab = list; maxElements; maxElements--)
-    {
-        // logInfo("%d is %s", slab->index, slab->free ? "free" : "busy");
-
-        if (slab->free) // we can use it
+    lock(cache->lock, {
+        void *bmp = BITMAP_OF(cache);
+        for (int i = 0; i < cache->objects; i++) // iterate over all indices
         {
-            slab->free = false;
-            return OFFSET_BY(slab, sizeof(slab_t));
+            if (bmpGet(bmp, i)) // find first bitmap index
+                continue;
+
+            bmpSet(bmp, i);                                                                                       // mark it as busy
+            release(cache->lock);                                                                                 // release the lock
+            return (void *)((uint64_t)cache + sizeof(slab_cache_t) + cache->bitmapBytes + cache->objectSize * i); // return the slab
         }
+    });
 
-        slab = OFFSET_BY(slab, objectSize + sizeof(slab_t)); // get next slab
-    }
+    // todo: try to allocate a new cache and link them together
 
-    return NULL;
+    return NULL; // didn't found
 }
 
 void slabInit()
 {
-    size_t pages;
-    slab_t *slab = slabCreate(10, 32, &pages);
-    logInfo("slab: allocated slab at %p with %d pages", slab, pages);
+    slab_cache_t *slab = slabCreate(32);
+    logInfo("slab: allocated slab at %p", slab);
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 200; i++)
         logInfo("%p", slabAllocate(slab));
 
     logInfo("%p", slabAllocate(slab));
