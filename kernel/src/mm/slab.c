@@ -25,7 +25,7 @@ slab_cache_t *slabCreate(size_t objectSize)
     uint16_t contentSize = bitmapAndContentsSize - bitmapBytes;
     uint16_t objects = contentSize / objectSize;
 
-    logInfo("slab: best bitmap size for %d bytes object is %d bytes and we can hold %d objects", objectSize, bitmapBytes, objects);
+    // logInfo("slab: best bitmap size for %d bytes object is %d bytes and we can hold %d objects", objectSize, bitmapBytes, objects);
 
     // set required metadata
     cache->busy = false;
@@ -40,13 +40,17 @@ slab_cache_t *slabCreate(size_t objectSize)
 // allocates a new object in a slab cache
 void *slabAllocate(slab_cache_t *cache)
 {
+retry:
+    while (cache->next && cache->busy) // select first non-busy slab
+        cache = cache->next;
+
     lock(cache->lock, {
         for (int i = 0; i < cache->objects; i++) // iterate over all indices
         {
             if (bmpGet((void *)cache->bitmap, i)) // find first bitmap index
                 continue;
 
-            logInfo("allocating %d %p", i, (void *)((uint64_t)cache + sizeof(slab_cache_t) + cache->bitmapBytes + cache->objectSize * i));
+            // logInfo("allocating %d %p", i, (void *)((uint64_t)cache + sizeof(slab_cache_t) + cache->bitmapBytes + cache->objectSize * i));
 
             bmpSet((void *)cache->bitmap, i);                                                                     // mark it as busy
             release(cache->lock);                                                                                 // release the lock
@@ -54,11 +58,10 @@ void *slabAllocate(slab_cache_t *cache)
         }
     });
 
-    // todo: try to allocate a new cache and link them together
+    cache->busy = true;                          // it's full
+    cache->next = slabCreate(cache->objectSize); // create next slab
 
-    cache->busy = true;
-
-    return NULL; // didn't found
+    goto retry; // try again
 }
 
 // deallocate a slab from a cache
@@ -72,7 +75,7 @@ void slabDeallocate(slab_cache_t *cache, void *ptr)
                 // it means the pointer is part of the cache
                 uint64_t index = ((uint64_t)ptr - (uint64_t)cache - sizeof(slab_cache_t) - cache->bitmapBytes) / cache->objectSize; // reverse of the formula used in slabAllocate
 
-                logInfo("deallocating %d", index);
+                // logInfo("deallocating %d", index);
 
                 if (!bmpGet((void *)cache->bitmap, index)) // check if we can deallocate
                 {
@@ -97,7 +100,7 @@ void slabDeallocate(slab_cache_t *cache, void *ptr)
 
 void slabInit()
 {
-    slab_cache_t *cache = slabCreate(128);
+    slab_cache_t *cache = slabCreate(1024);
     logInfo("slab: allocated cache at %p", cache);
 
     for (int i = 0; i < 5; i++)
