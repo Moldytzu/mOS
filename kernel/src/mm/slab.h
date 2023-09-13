@@ -14,6 +14,8 @@ typedef struct
     // and when it is full, we set a pointer in this structure to a new slab list with the same properties
 
     void *next;
+
+    char bitmap[]; // bitmap
 } slab_cache_t;
 
 typedef struct
