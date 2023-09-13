@@ -14,3 +14,6 @@ typedef struct
 } slab_cache_t;
 
 void slabInit();
+void slabDeallocate(slab_cache_t *cache, void *ptr);
+void *slabAllocate(slab_cache_t *cache);
+slab_cache_t *slabCreate(size_t objectSize);
