@@ -1,5 +1,7 @@
 bits 64
 
+section .text
+
 global callWithPageTable, callWithStack
 
 ; calls a function with a new page table

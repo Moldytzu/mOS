@@ -1,5 +1,7 @@
 bits 64
 
+section .text
+
 %include "registers.inc"
 
 global xapicEntry

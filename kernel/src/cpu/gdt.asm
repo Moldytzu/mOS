@@ -1,5 +1,7 @@
 bits 64
 
+section .text
+
 global gdtLoad
 
 ; load the gdt
