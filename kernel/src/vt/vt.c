@@ -42,8 +42,7 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
         return;
 
     lock(vt->lock, {
-        char *buffer = (char *)vt->buffer; // modifiable vt buffer
-        const char *input = str;           // input buffer
+        const char *input = str; // input buffer
 
         if (vt->bufferIdx + count >= VMM_PAGE * vt->bufferPages) // reallocate if we overflow
         {
@@ -53,7 +52,6 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
             volatile size_t newPages = ++vt->bufferPages;
 
             vt->buffer = pmmReallocate((void *)vt->buffer, oldPages, newPages); // perform the reallocation
-            buffer = (char *)vt->buffer;                                        // point to the buffer
 
             logDbg(LOG_SERIAL_ONLY, "vt: reallocating buffer of id %d to %d pages", vt->id, vt->bufferPages);
         }
@@ -62,11 +60,11 @@ void vtAppend(struct vt_terminal *vt, const char *str, size_t count)
         {
             if (*input == '\b') // handle ascii backspace
             {
-                buffer[--vt->bufferIdx] = '\0'; // zero the buffer early
+                vt->buffer[--vt->bufferIdx] = '\0'; // zero the buffer early
                 continue;
             }
 
-            buffer[vt->bufferIdx++] = *(input++); // set the byte
+            vt->buffer[vt->bufferIdx++] = *(input++); // set the byte
         }
     });
 
