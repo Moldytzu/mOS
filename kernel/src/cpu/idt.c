@@ -101,15 +101,10 @@ void idtClearRedirect(uint32_t tid)
 
 extern void callWithPageTable(uint64_t rip, uint64_t pagetable);
 
-bool intHasErrorCode(uint8_t int_num)
-{
-    return int_num == 0x8 || int_num == 0xA || int_num == 0xB || int_num == 0xC || int_num == 0xD || int_num == 0xE || int_num == 0x11 || int_num == 0x15 || int_num == 0x1D || int_num == 0x1E;
-}
-
 const char *exceptions[] = {
     "Divide By Zero", "Debug", "NMI", "Breakpoint", "Overflow", "Bound Range Exceeded", "Invalid Opcode", "Device Not Available", "Double Fault", "Segment Overrun", "Invalid TSS", "Segment Not Present", "Stack Fault", "General Protection Fault", "Page Fault"};
 
-void exceptionHandler(idt_intrerrupt_error_stack_t *stack /*fixme: we should probably handle error code detection in assembly handler....*/, uint64_t int_num)
+void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
 {
     vmmSwap(vmmGetBaseTable()); // swap to the base table
 
@@ -125,12 +120,8 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack /*fixme: we should pro
         return;                                                                                                         // don't execute rest of the handler
     }
 
-    idt_intrerrupt_stack_t *noErrorStack = (idt_intrerrupt_stack_t *)stack;
-
     // check if interrupt comes from userspace (only possible if CS is 0x23)
     bool userspace = stack->cs == 0x23;
-    if (!intHasErrorCode(int_num))
-        userspace = noErrorStack->cs == 0x23;
 
     // userspace exceptions
     if (userspace && int_num < 32)
@@ -142,10 +133,7 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack /*fixme: we should pro
         xapicNMI();
 #endif
 
-        if (intHasErrorCode(int_num))
-            logWarn("%s has crashed with %s at %x! Terminating it.", name, exceptions[int_num], stack->rip); // display message
-        else
-            logWarn("%s has crashed with %s at %x! Terminating it.", name, exceptions[int_num], noErrorStack->rip); // display message
+        logWarn("%s has crashed with %s at %x! Terminating it.", name, exceptions[int_num], stack->rip); // display message
 
 #ifdef K_PANIC_ON_USERSPACE_CRASH
         hang();
@@ -185,10 +173,7 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack /*fixme: we should pro
     if (int_num == 0xE) // when a page fault occurs the faulting address is set in cr2
         logError("CR2=0x%p ", controlReadCR2());
 
-    if (intHasErrorCode(int_num))                                                                                                                                           // check if interrupt pushes error
-        logError("CORE #%d: RIP=0x%p RSP=0x%p CS=0x%x SS=0x%x RFLAGS=0x%x ERROR=0x%p", smpID(), stack->rip, stack->rsp, stack->cs, stack->ss, stack->rflags, stack->error); // if it does print the error too
-    else
-        logError("CORE #%d: RIP=0x%p RSP=0x%p CS=0x%x SS=0x%x RFLAGS=0x%x", smpID(), noErrorStack->rip, noErrorStack->rsp, noErrorStack->cs, noErrorStack->ss, noErrorStack->rflags);
+    logError("CORE #%d: RIP=0x%p RSP=0x%p CS=0x%x SS=0x%x RFLAGS=0x%x ERROR=0x%p", smpID(), stack->rip, stack->rsp, stack->cs, stack->ss, stack->rflags, stack->error); // if it does print the error too
 
     panick(message);
 }
