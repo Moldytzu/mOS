@@ -21,6 +21,7 @@
 #define K_VMM_DEBUG     // virtual memory manager debug messages
 #define K_PMM_DEBUG     // physical memory manager debug messages
 #define K_SOCK_DEBUG    // socket debug messages
+#define K_AHCI_DEBUG    // ahci debug messages
 #endif
 
 // ###########################################

@@ -272,14 +272,14 @@ void ahciInit()
     if (!ahciHeader) // didn't find any controller
         return;
 
-    logInfo("ahci: detected controller at %d.%d.%d", ahciDescriptor.bus, ahciDescriptor.device, ahciDescriptor.function);
-
     // enable access to internal registers
     ahciHeader->Command |= 0b10000010111;                                                     // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
     ahciBase = (uint64_t)(ahciHeader->BAR5 & 0xFFFFE000);                                     // get base address
     vmmMapKernel((void *)ahciBase, (void *)ahciBase, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
 
+#ifdef K_AHCI_DEBUG
     logDbg(LOG_ALWAYS, "ahci: ahciBase is at %p", ahciBase);
+#endif
 
     // don't allow 32 bit only ahci controllers
     uint32_t cap = ahciRead(0x0); // read host capabilities
@@ -293,7 +293,9 @@ void ahciInit()
     {
         ahciWrite(0x28, bohc | 0b1000); // set os ownership change bit
 
+#ifdef K_AHCI_DEBUG
         logDbg(LOG_ALWAYS, "ahci: waiting for ownership to change");
+#endif
 
         size_t timeout = 1000;
         while ((ahciRead(0x28) & 0x1) && --timeout) // wait for the bios to transfer ownership
@@ -324,12 +326,12 @@ void ahciInit()
         portsImplemented++;
     }
 
-    logDbg(LOG_ALWAYS, "ahci: %d sata port(s) implemented", portsImplemented);
-
     // 4. Determine how many command slots the HBA supports, by reading CAP.NCS
     commandSlots = (ahciRead(0x0) >> 8) & 0x1F;
 
+#ifdef K_AHCI_DEBUG
     logDbg(LOG_ALWAYS, "ahci: %d command slots supported", commandSlots);
+#endif
 
     // prepare ports for commands
     for (int p = 0; p < 32; p++)
@@ -347,7 +349,7 @@ void ahciInit()
     // 7. Determine which events should cause an interrupt, and set each implemented port’s PxIE register with the appropriate enables. (todo: we don't want this at the moment, maybe when we create an I/O scheduler)
 
     // INITIALISATION complete
-    logInfo("ahci: initialised controller");
+    logInfo("ahci: initialised controller at %d.%d.%d with %d sata port(s) implemented", ahciDescriptor.bus, ahciDescriptor.device, ahciDescriptor.function, portsImplemented);
 
     // identify all devices
     for (int p = 0; p < 32; p++)
