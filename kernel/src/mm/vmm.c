@@ -177,17 +177,17 @@ vmm_page_table_t *vmmCreateTable(bool full)
             gdt_tss_t *tss = tssGet()[i];
             gdt_descriptor_t gdt = gdtGet()[i];
 
-            vmmMap(newTable, (void *)tss, (void *)tss, 0);                                          // tss struct
+            vmmMap(newTable, (void *)tss, (void *)tss, VMM_ENTRY_RW);                               // tss struct
             vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, VMM_ENTRY_RW); // context switch ist
             vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // general interrupt ist
 
             vmmMap(newTable, (void *)tss->rsp[0] - 4096, (void *)tss->rsp[0] - 4096, VMM_ENTRY_RW); // kernel stack
 
-            vmmMap(newTable, gdt.entries, gdt.entries, 0); // gdt entries
+            vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW); // gdt entries
         }
 
         // map idt gates
-        vmmMap(newTable, idtGet(), idtGet(), 0);
+        vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
 
         // copy kernel higher half
         newTable->entries[kpdp] = baseTable->entries[kpdp];
