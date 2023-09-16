@@ -66,10 +66,19 @@ void sockRead(struct sock_socket *sock, const char *str, size_t count)
     lock(sock->lock, {
         count = min(count, SOCK_BUFFER_SIZE - 1); // don't overflow
 
-        memcpy((void *)str, (void *)sock->buffer, count);                     // copy the buffer
-        memmove((void *)sock->buffer, sock->buffer + count - 1, count);       // move the content after the requested count at the front
-        zero((void *)sock->buffer + count - 1, SOCK_BUFFER_SIZE - count + 1); // clear the ghost of the content
-        sock->bufferIdx = 0;                                                  // reset the index
+        memcpy((void *)str, (void *)sock->buffer, count); // copy the wanted buffer
+
+        // shift buffer left
+        int k = 0;
+        int i = count;
+        while (i < SOCK_BUFFER_SIZE)
+            sock->buffer[k++] = sock->buffer[i++];
+
+        // decrement write pointer if possible
+        if (sock->bufferIdx > count)
+            sock->bufferIdx = sock->bufferIdx - count;
+        else
+            sock->bufferIdx = 0;
     });
 }
 
