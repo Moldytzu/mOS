@@ -164,7 +164,7 @@ sched_task_t *schedLast(uint16_t core)
 }
 
 // add new task
-sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
+sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
 {
     uint32_t id = nextCore(); // get next core id
 
@@ -192,7 +192,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     else
         t->registers.rflags = 0b1000000010;                                          // enable interrupts
     t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE - VMM_PAGE; // set the new stack
-    t->registers.rip = TASK_BASE_ADDRESS + (uint64_t)entry;                          // set instruction pointer
+    t->registers.rip = execVirtualBase + (uint64_t)entry;                            // set instruction pointer
 
     // segment registers
     t->registers.cs = (8 * 4) | 3;
@@ -207,11 +207,11 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
     for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
-        vmmMap(pt, (void *)TASK_BASE_ADDRESS + i, (void *)execBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
+        vmmMap(pt, (void *)execVirtualBase + i, (void *)execPhysicalBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
     vmmMap(pt, &t->registers, &t->registers, 0);
 
-    t->elfBase = execBase;
+    t->elfBase = execPhysicalBase;
     t->elfSize = execSize;
 
     // handle c arguments

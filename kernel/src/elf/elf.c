@@ -88,8 +88,8 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     for (int i = strlen(cwd) - 1; cwd[i] != '/'; cwd[i--] = '\0')
         ; // step back to last delimiter (removes file name)
 
-    // add the task (fixme: scheduler expects the virtual base address to be at TASK_BASE_ADDRESS, make it take it as an argument)
-    sched_task_t *task = schedAdd(path, (void *)elf->e_entry - virtualBase, K_STACK_SIZE, buffer, memsz, 0, cwd, argc, argv, true, driver);
+    // add the task
+    sched_task_t *task = schedAdd(path, (void *)elf->e_entry - virtualBase, K_STACK_SIZE, buffer, memsz, virtualBase, 0, cwd, argc, argv, true, driver);
 
     // clean up
     pmmDeallocate(cwd);

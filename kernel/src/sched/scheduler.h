@@ -4,7 +4,7 @@
 #include <mm/vmm.h>
 #include <ipc/mailbox.h>
 
-#define TASK_BASE_ADDRESS 0xA000000000
+// fixme: replace these with allocated virtual addresses
 #define TASK_BASE_ALLOC 0xB000000000
 #define TASK_BASE_FRAMEBUFFER 0xC000000000
 #define TASK_MAX_FILE_DESCRIPTORS 128
@@ -46,7 +46,7 @@ typedef struct
 } sched_task_t;
 
 void schedEnable();
-sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execBase, uint64_t execSize, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
+sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
 void schedSchedule(idt_intrerrupt_stack_t *stack);
 void schedSwitchNext();
 void schedInit();
