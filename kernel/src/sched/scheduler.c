@@ -186,13 +186,11 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         t->targetQuantum = K_SCHED_MIN_QUANTUM;
 
     // registers
-    void *stack = t->stackBase = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
     if (driver)
         t->registers.rflags = 0b11001000000010; // enable interrupts and set IOPL to 3
     else
-        t->registers.rflags = 0b1000000010;                                          // enable interrupts
-    t->registers.rsp = t->registers.rbp = (uint64_t)stack + K_STACK_SIZE - VMM_PAGE; // set the new stack
-    t->registers.rip = execVirtualBase + (uint64_t)entry;                            // set instruction pointer
+        t->registers.rflags = 0b1000000010;               // enable interrupts
+    t->registers.rip = execVirtualBase + (uint64_t)entry; // set instruction pointer
 
     // segment registers
     t->registers.cs = (8 * 4) | 3;
@@ -203,14 +201,20 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     t->registers.cr3 = (uint64_t)pt;
     t->pageTable = pt;
 
-    for (int i = 0; i < K_STACK_SIZE + VMM_PAGE; i += VMM_PAGE) // map stack
-        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
-
     for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
         vmmMap(pt, (void *)execVirtualBase + i, (void *)execPhysicalBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-    vmmMap(pt, &t->registers, &t->registers, 0);
+    vmmMap(pt, &t->registers, &t->registers, 0); // fixme: map this in higher half
 
+    // set up stack
+    void *stack = t->stackBase = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
+
+    t->registers.rsp = (uint64_t)stack + K_STACK_SIZE; // make the stack be at the very start of addressing space
+
+    for (int i = 0; i < K_STACK_SIZE + VMM_PAGE; i += VMM_PAGE) // do the mapping
+        vmmMap(pt, (void *)t->registers.rsp - i, (void *)t->registers.rsp - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
+
+    // set executable metadata
     t->elfBase = execPhysicalBase;
     t->elfSize = execSize;
 
