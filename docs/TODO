@@ -1,4 +1,8 @@
 Tasks:
+Advanced virtual memory management: []
+    - make all system tables (GDT, IDT, page table) point to virtual memory (in the higher half) []
+    - create a virtual memory allocator to manage userspace page tables (to eliminate hard coded addresses) []
+
 Non-blocking I/O: []
     - move disk drivers in userspace []
     - implement multi-state task management []

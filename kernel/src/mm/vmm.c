@@ -28,9 +28,9 @@ void vmmInit()
 }
 
 // map for address for kernel
-void vmmMapKernel(void *virtualAddress, void *physicalAddress, uint64_t flags)
+void *vmmMapKernel(void *virtualAddress, void *physicalAddress, uint64_t flags)
 {
-    vmmMap(baseTable, virtualAddress, physicalAddress, flags);
+    return vmmMap(baseTable, virtualAddress, physicalAddress, flags);
 }
 
 // set flags of some entries given by the indices
@@ -49,7 +49,7 @@ ifunc void vmmSetFlags(vmm_page_table_t *table, vmm_index_t index, uint64_t flag
 }
 
 // map a virtual address to a physical address in a page table
-void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, uint64_t flags)
+void *vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress, uint64_t flags)
 {
     vmm_index_t index = vmmIndex((uint64_t)virtualAddress); // get the offsets in the page tables
     vmm_page_table_t *pml4, *pdp, *pd, *pt;
@@ -92,6 +92,8 @@ void vmmMap(vmm_page_table_t *table, void *virtualAddress, void *physicalAddress
     pt->entries[index.P] = currentEntry | VMM_ENTRY_PRESENT;       // write the entry in the table
 
     vmmSetFlags(table, index, flags); // set the flags
+
+    return virtualAddress;
 }
 
 // unmap a virtual address
@@ -175,15 +177,11 @@ vmm_page_table_t *vmmCreateTable(bool full)
         for (int i = 0; i < smpCores(); i++)
         {
             gdt_tss_t *tss = tssGet()[i];
-            gdt_descriptor_t gdt = gdtGet()[i];
 
-            vmmMap(newTable, (void *)tss, (void *)tss, VMM_ENTRY_RW);                               // tss struct
             vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, VMM_ENTRY_RW); // context switch ist
             vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // general interrupt ist
 
             vmmMap(newTable, (void *)tss->rsp[0] - 4096, (void *)tss->rsp[0] - 4096, VMM_ENTRY_RW); // kernel stack
-
-            vmmMap(newTable, gdt.entries, gdt.entries, VMM_ENTRY_RW); // gdt entries
         }
 
         // map idt gates
@@ -296,6 +294,19 @@ void vmmDestroy(vmm_page_table_t *table)
 #ifdef K_VMM_DEBUG
     logDbg(LOG_SERIAL_ONLY, "vmm: destroyed page table at 0x%p and saved %d kb", table, (pmmTotal().available - a) / 1024);
 #endif
+}
+
+// very, very simple virtual memory allocator used in kernel start-up code
+uint64_t lastAllocatedAddress = 0xFFFFFFFFFFF00000; // last 512k of higher half
+spinlock_t vmmInitialLock;
+void *vmmAllocateInitialisationVirtualAddress()
+{
+    uint64_t address;
+    lock(vmmInitialLock, {
+        address = lastAllocatedAddress;
+        lastAllocatedAddress += VMM_PAGE;
+    });
+    return (void *)address;
 }
 
 #define VMM_BENCHMARK_SIZE 10

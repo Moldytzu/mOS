@@ -34,9 +34,9 @@ void cpuStart(struct limine_smp_info *cpu)
 {
     cli();
     fpuInit();
+    vmmSwap(vmmGetBaseTable());
     gdtInstall(smpID());
     idtInstall(smpID());
-    vmmSwap(vmmGetBaseTable());
 
     // spinlock until we're ready to jump in userspace
     while (!smpJump)
@@ -55,10 +55,10 @@ void smpBootstrap()
     logInfo("smp: we are core %d", smp->bsp_lapic_id);
 
     // load system tables first
+    vmmInit();
     gdtInit();
     gdtInstall(smp->bsp_lapic_id);
     idtInit(smp->bsp_lapic_id);
-    vmmInit();
 
 #ifdef K_SMP
     if (smp->cpu_count == 1) // we are alone
