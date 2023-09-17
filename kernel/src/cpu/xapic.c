@@ -13,11 +13,10 @@
 
 extern void xapicEntry();
 
-// #define TPS
+#define TPS
 
 #ifdef TPS
 uint64_t lapicTPS[K_MAX_CORES];
-uint64_t __tps[K_MAX_CORES];
 uint64_t lastSeconds[K_MAX_CORES];
 #endif
 bool isEnabled = false;
@@ -35,14 +34,12 @@ void xapicHandleTimer(idt_intrerrupt_stack_t *stack)
 
     if (hpetMillis() / 1000 != lastSeconds[smpID()])
     {
-        lapicTPS[smpID()] = __tps[smpID()];
-
         logInfo("%d", lapicTPS[smpID()]);
 
-        __tps[smpID()] = 0;
+        lapicTPS[smpID()] = 0;
     }
 
-    __tps[smpID()]++;
+    lapicTPS[smpID()]++;
     lastSeconds[smpID()] = hpetMillis() / 1000;
 #endif
 
