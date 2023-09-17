@@ -13,7 +13,7 @@
 
 extern void xapicEntry();
 
-#define TPS
+// #define TPS
 
 #ifdef TPS
 uint64_t lapicTPS[K_MAX_CORES];

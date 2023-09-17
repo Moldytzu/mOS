@@ -42,14 +42,14 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     logDbg(LOG_SERIAL_ONLY, "elf: found %s at 0x%p with the entry offset at 0x%p", path, elf, elf->e_entry - TASK_BASE_ADDRESS);
 #endif
 
-    // determine in-memory size of executable
+    // determine in-memory size of executable (pass 1)
     Elf64_Phdr *phdr = blkBlock(elf->e_ehsize);     // buffer to store information about the current program header
     vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff); // read first header
 
     size_t memsz = 0;
     for (int i = 0; i < elf->e_phnum; i++) // iterate over every program header
     {
-        if (phdr->p_type == PT_LOAD) // section to be loaded
+        if (phdr->p_type == PT_LOAD) // program header to be loaded
         {
 #ifdef K_ELF_DEBUG
             logDbg(LOG_SERIAL_ONLY, "elf: phdr at virtual 0x%p (physical 0x%p) with size %d bytes", phdr->p_vaddr, phdr->p_paddr, phdr->p_memsz);
@@ -61,8 +61,9 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     }
     memsz = align(memsz, PMM_PAGE); // align to page size
 
-    // load program headers
-    void *buffer = pmmPages(memsz / PMM_PAGE); // allocate the buffer for the sections
+    // load program headers (pass 2)
+    vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff); // read first header
+    void *buffer = pmmPages(memsz / PMM_PAGE);      // allocate the buffer for the sections
 
     for (int i = 0; i < elf->e_phnum; i++) // iterate over every program header
     {
