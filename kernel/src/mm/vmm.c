@@ -167,18 +167,9 @@ vmm_page_table_t *vmmCreateTable(bool full)
     uint64_t hhdm = (uint64_t)bootloaderGetHHDM();
     struct limine_kernel_address_response *kaddr = bootloaderGetKernelAddress();
 
-    // map the system tables as kernel rw
-    vmmMap(newTable, newTable, newTable, VMM_ENTRY_RW); // page table
-
-    // copy kernel higher half if we create a basic table
-    if (!full)
+    // set up default mappings based on type
+    if (full)
     {
-        // copy kernel higher half
-        newTable->entries[kpdp] = baseTable->entries[kpdp];
-    }
-    else
-    {
-        // map memory map entries as kernel rw
         for (size_t i = 0; i < memMap->entry_count; i++)
         {
             struct limine_memmap_entry *entry = memMap->entries[i];
@@ -217,6 +208,11 @@ vmm_page_table_t *vmmCreateTable(bool full)
                     vmmMap(newTable, (void *)(start + i + hhdm), (void *)(start + i), VMM_ENTRY_RW);
             }
         }
+    }
+    else
+    {
+        // copy kernel higher half
+        newTable->entries[kpdp] = baseTable->entries[kpdp];
     }
 
     logDbg(LOG_SERIAL_ONLY, "vmm: wasted %d KB on a new page table", (a - pmmTotal().available) / 1024);
