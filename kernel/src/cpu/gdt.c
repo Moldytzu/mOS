@@ -22,8 +22,8 @@ void gdtInit()
 // install a gdt
 void gdtInstall(uint16_t procID)
 {
-    gdtr[procID].entries = vmmMapKernel(vmmAllocateInitialisationVirtualAddress(), pmmPage(), VMM_ENTRY_RW); // allocate the entries in virtual memory
-    gdtr[procID].size = 0;                                                                                   // reset the size
+    gdtr[procID].entries = vmmAllocateInitialisationVirtualAddressPage(); // allocate the entries in virtual memory
+    gdtr[procID].size = 0;                                                // reset the size
 
     gdtCreateSegment(procID, 0, 0);          // null
     gdtCreateSegment(procID, 0b10011010, 1); // kernel code
@@ -52,8 +52,8 @@ void gdtCreateSegment(uint16_t procID, uint8_t access, uint8_t index)
 // create a new segment and install the tss on it
 void gdtInstallTSS(uint16_t procID)
 {
-    gdtr[procID].tss = vmmMapKernel(vmmAllocateInitialisationVirtualAddress(), pmmPage(), VMM_ENTRY_RW); // allocate tss in virtual memory
-    tsses[procID] = gdtr[procID].tss;                                                                    // remember it
+    gdtr[procID].tss = vmmAllocateInitialisationVirtualAddressPage(); // allocate tss in virtual memory
+    tsses[procID] = gdtr[procID].tss;                                 // remember it
 
     gdt_system_segment_t *segment = (gdt_system_segment_t *)&gdtr[procID].entries[gdtr[procID].size / sizeof(gdt_segment_t)]; // get address of the next segment
 

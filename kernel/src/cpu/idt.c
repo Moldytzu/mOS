@@ -51,7 +51,7 @@ void idtInit(uint16_t procID)
 {
     cli(); // disable intrerrupts
 
-    gates = pmmPage(); // allocate the gates
+    gates = vmmAllocateInitialisationVirtualAddressPage(); // allocate the gates
 
     idtr.offset = (uint64_t)gates; // set the offset to the data
     idtr.size = 0;                 // reset the size
@@ -75,10 +75,10 @@ void idtInstall(uint8_t procID)
 {
     // setup ist
     gdt_tss_t *tss = tssGet()[procID];
-    tss->ist[0] = (uint64_t)pmmPage() + VMM_PAGE; // context switch ist
-    tss->ist[1] = (uint64_t)pmmPage() + VMM_PAGE; // interrupt ist
+    tss->ist[0] = (uint64_t)vmmAllocateInitialisationVirtualAddressPage() + VMM_PAGE; // context switch ist
+    tss->ist[1] = (uint64_t)vmmAllocateInitialisationVirtualAddressPage() + VMM_PAGE; // interrupt ist
 
-    tss->rsp[0] = (uint64_t)pmmPage() + VMM_PAGE; // kernel stack
+    tss->rsp[0] = (uint64_t)vmmAllocateInitialisationVirtualAddressPage() + VMM_PAGE; // kernel stack
 
     iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 }

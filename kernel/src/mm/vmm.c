@@ -170,23 +170,9 @@ vmm_page_table_t *vmmCreateTable(bool full)
     // map the system tables as kernel rw
     vmmMap(newTable, newTable, newTable, VMM_ENTRY_RW); // page table
 
-    // map system tables for non-kernel tables (kernel tables have everything mapped)
+    // copy kernel higher half if we create a basic table
     if (!full)
     {
-        // map tss and gdt
-        for (int i = 0; i < smpCores(); i++)
-        {
-            gdt_tss_t *tss = tssGet()[i];
-
-            vmmMap(newTable, (void *)tss->ist[0] - 4096, (void *)tss->ist[0] - 4096, VMM_ENTRY_RW); // context switch ist
-            vmmMap(newTable, (void *)tss->ist[1] - 4096, (void *)tss->ist[1] - 4096, VMM_ENTRY_RW); // general interrupt ist
-
-            vmmMap(newTable, (void *)tss->rsp[0] - 4096, (void *)tss->rsp[0] - 4096, VMM_ENTRY_RW); // kernel stack
-        }
-
-        // map idt gates
-        vmmMap(newTable, idtGet(), idtGet(), VMM_ENTRY_RW);
-
         // copy kernel higher half
         newTable->entries[kpdp] = baseTable->entries[kpdp];
     }
@@ -307,6 +293,11 @@ void *vmmAllocateInitialisationVirtualAddress()
         lastAllocatedAddress += VMM_PAGE;
     });
     return (void *)address;
+}
+
+void *vmmAllocateInitialisationVirtualAddressPage()
+{
+    return vmmMapKernel(vmmAllocateInitialisationVirtualAddress(), pmmPage(), VMM_ENTRY_RW); // maps one virtual address to a physical one
 }
 
 #define VMM_BENCHMARK_SIZE 10
