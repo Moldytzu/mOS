@@ -3,7 +3,7 @@ ENTRY(_mmain)
 
 SECTIONS
 {
-	. = 0xA000000000;
+	. = 0x100000;
 	.text :
 	{
 		*(.text)

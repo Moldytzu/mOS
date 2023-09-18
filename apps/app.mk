@@ -16,7 +16,7 @@ OUTFILE := $(OUTFOLDER)$(APPNAME).mx # generate output name
 
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS :=   		 \
-	-mcmodel=large           \
+	-mcmodel=small           \
 	-I./src/
 
 # Internal linker flags that should not be changed by the user.
