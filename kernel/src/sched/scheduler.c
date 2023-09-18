@@ -204,7 +204,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
         vmmMap(pt, (void *)execVirtualBase + i, (void *)execPhysicalBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-    vmmMap(pt, &t->registers, &t->registers, 0); // fixme: map this in higher half
+    vmmMap(pt, (void *)TASK_BASE_SWITCH_TO_BUFFER, &t->registers, 0); // map the registers in a low part of addressing space
 
     // set up stack
     void *stack = t->stackBase = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
@@ -315,7 +315,7 @@ void schedSchedule(idt_intrerrupt_stack_t *stack)
     unreachable();     // hint we won't return
 }
 
-extern void switchTo(void *stack, void *simdContext);
+extern void switchTo(void *interruptStack, void *simdContext, vmm_page_table_t *pageTable);
 
 // performs context switch to next context
 void schedSwitchNext()
@@ -338,8 +338,11 @@ void schedSwitchNext()
 #endif
     });
 
-    switchTo(&lastTask[id]->registers, &lastTask[id]->simdContext); // switch to the context
-    unreachable();                                                  // hint we won't return
+    if (lastTask[id] != &queueStart[id]) // use virtual address of the register pointer if it is a userspace task
+        switchTo((void *)(TASK_BASE_SWITCH_TO_BUFFER + offsetof(sched_task_t, registers)), &lastTask[id]->simdContext, (void *)lastTask[id]->registers.cr3);
+    else
+        switchTo(&lastTask[id]->registers, &lastTask[id]->simdContext, (void *)lastTask[id]->registers.cr3);
+    unreachable(); // hint we won't return
 }
 
 // reschedule if scheduler is unlocked

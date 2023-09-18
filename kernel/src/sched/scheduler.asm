@@ -15,9 +15,13 @@ saveSimdContextTo:
 ; switches to a new context
 ; rdi=stack context
 ; rsi=simd context
+; rdx=new page table
 switchTo: 
     fxrstor [rsi] ; restore simd context
 
-    mov rsp, rdi ; in rdi (first C argument) we store the interrupt stack's address
-    POP_REG      ; restore registers
+    ; restore page table
+    mov cr3, rdx
+
+    mov rsp, rdi ; first argument holds the interrupt stack's address
+    POP_REG      ; restore registers (fixme: here we might restore the page table a second time thus clearing the tlb which takes a lot of time)
     iretq        ; restore flags, segments, stack and instruction pointer
