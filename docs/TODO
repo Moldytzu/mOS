@@ -1,6 +1,6 @@
 Tasks:
 Advanced virtual memory management: []
-    - make all system tables (GDT, IDT, page table) point to virtual memory (in the higher half) []
+    - make all system tables (GDT, IDT, page table) point to virtual memory (in the higher half) [x]
     - create a virtual memory allocator to manage userspace page tables (to eliminate hard coded addresses) []
 
 Non-blocking I/O: []
