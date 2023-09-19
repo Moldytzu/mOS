@@ -10,7 +10,6 @@
 #include <mm/pmm.h>
 #include <sys/syscall.h>
 #include <sched/scheduler.h>
-#include <sched/scheduler.h>
 #include <misc/logger.h>
 
 bool smpJump = false;
@@ -54,6 +53,7 @@ void smpBootstrap()
 
     logInfo("smp: we are core %d", smp->bsp_lapic_id);
 
+    // fixme: move these out of here
     // load system tables first
     vmmInit();
     gdtInit();

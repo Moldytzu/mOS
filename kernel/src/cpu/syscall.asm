@@ -2,6 +2,8 @@ bits 64
 
 section .text
 
+%include "localStorage.inc"
+
 %macro PUSH_REG_SYSCALL 0
     ; save registers used by syscall instruction
     push r11
@@ -47,8 +49,15 @@ sysretInit:
 	ret
 
 ; this is where the cpu jumps when we execute the syscall instruction
-syscallHandlerEntry:    ; we start with flags cleared because of FMASK set in cpu/userspace.asm
-    PUSH_REG_SYSCALL    ; save old registers
-    call syscallHandler ; call the syscall handler
+syscallHandlerEntry:              ; we start with flags cleared because of FMASK set in cpu/userspace.asm
+	SWAPGS_TO_KERNEL_IF_NECESSARY ; swap to kernel gs
+	mov [gs:8], rsp  			  ; save userspace stack
+	mov rsp, [gs:0]  			  ; load kernel stack
+	
+	PUSH_REG_SYSCALL    ; save old registers
+	call syscallHandler ; call the syscall handler
     POP_REG_SYSCALL     ; restore registers
-    o64 sysret          ; return to userspace
+
+	mov rsp, [gs:8] ; load userspace stack
+	swapgs          ; swap to userspace gs
+    o64 sysret      ; return to userspace

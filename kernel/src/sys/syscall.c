@@ -1,7 +1,9 @@
 #include <sys/syscall.h>
 #include <sys/sys.h>
 #include <cpu/idt.h>
+#include <cpu/localStorage.h>
 #include <mm/vmm.h>
+#include <mm/blk.h>
 #include <sched/scheduler.h>
 #include <vt/vt.h>
 #include <misc/logger.h>
@@ -58,7 +60,10 @@ uint64_t syscallHandler(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t reser
     if (rdi < (sizeof(syscallHandlers) / sizeof(void *)))    // check if the syscall is in range
         return syscallHandlers[rdi](rsi, rdx, r8, r9, task); // call the handler
     else
+    {
+        logError("syscall: %s executed unknown syscall 0x%x", task->name, rdi);
         return SYSCALL_STATUS_UNKNOWN_OPERATION;
+    }
 }
 
 extern void sysretInit();
@@ -66,6 +71,15 @@ extern void sysretInit();
 // init syscall handling
 void syscallInit()
 {
+    // initialise local storage
+    cpu_local_storage_t *kernelStorage = (cpu_local_storage_t *)vmmAllocateInitialisationVirtualAddressPage();
+    kernelStorage->kernelSyscallStack = vmmAllocateInitialisationVirtualAddressPage();
+    kernelStorage->kernel = 1;
+    localStorageLoadKernel(kernelStorage);
+
+    cpu_local_storage_t *userspaceStorage = (cpu_local_storage_t *)vmmAllocateInitialisationVirtualAddressPage();
+    localStorageLoadUserspace(userspaceStorage);
+
     sysretInit(); // enable sysret/syscall capability
     logInfo("syscall: enabled syscall/sysret functionality");
 }
