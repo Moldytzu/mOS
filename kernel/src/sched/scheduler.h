@@ -6,6 +6,7 @@
 
 // fixme: replace these with allocated virtual addresses
 #define TASK_BASE_SWITCH_TO_BUFFER 0x1000
+#define TASK_BASE_STACK (TASK_BASE_SWITCH_TO_BUFFER + 0x1000)
 #define TASK_BASE_ALLOC 0xB000000000
 #define TASK_BASE_FRAMEBUFFER 0xC000000000
 #define TASK_MAX_FILE_DESCRIPTORS 128

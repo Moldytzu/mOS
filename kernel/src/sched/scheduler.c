@@ -210,7 +210,7 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     void *stack = t->stackBase = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
     uint64_t stackTop = (uint64_t)stack + K_STACK_SIZE + PMM_PAGE;
 
-    t->registers.rsp = 0x1000 + K_STACK_SIZE + PMM_PAGE; // point the stack be at the very start of addressing space
+    t->registers.rsp = TASK_BASE_STACK + K_STACK_SIZE + PMM_PAGE; // point the stack be at the very start of virtual memory
 
     for (int i = 0; i < K_STACK_SIZE + VMM_PAGE; i += VMM_PAGE) // do the mapping
         vmmMap(pt, (void *)t->registers.rsp - i, (void *)stackTop - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
