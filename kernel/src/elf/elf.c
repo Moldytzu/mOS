@@ -89,7 +89,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         ; // step back to last delimiter (removes file name)
 
     // add the task
-    sched_task_t *task = schedAdd(path, (void *)elf->e_entry - virtualBase, K_STACK_SIZE, buffer, memsz, virtualBase, 0, cwd, argc, argv, true, driver);
+    sched_task_t *task = schedAdd(path, (void *)elf->e_entry - virtualBase, buffer, memsz, virtualBase, 0, cwd, argc, argv, true, driver);
 
     // clean up
     pmmDeallocate(cwd);

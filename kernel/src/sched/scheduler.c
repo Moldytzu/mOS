@@ -164,7 +164,7 @@ sched_task_t *schedLast(uint16_t core)
 }
 
 // add new task
-sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
+sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
 {
     uint32_t id = nextCore(); // get next core id
 
@@ -207,40 +207,47 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
     vmmMap(pt, (void *)TASK_BASE_SWITCH_TO_BUFFER, &t->registers, 0); // map the registers in a low part of addressing space
 
     // set up stack
-    void *stack = t->stackBase = pmmPages(K_STACK_SIZE / VMM_PAGE + 1 /*one page for arguments*/);
-    uint64_t stackTop = (uint64_t)stack + K_STACK_SIZE + PMM_PAGE;
+    void *stack = t->stackBase = pmmPages(1 + 1 /*one page for arguments and one for the stack*/);
+    uint64_t stackTop = (uint64_t)stack + 2 * PMM_PAGE - sizeof(uint64_t);
 
-    t->registers.rsp = TASK_BASE_STACK + K_STACK_SIZE + PMM_PAGE; // point the stack be at the very start of virtual memory
+    t->registers.rsp = execVirtualBase - sizeof(uint64_t); // point the stack at the very start of the executable
 
-    for (int i = 0; i < K_STACK_SIZE + VMM_PAGE; i += VMM_PAGE) // do the mapping
+    for (int i = 0; i < 2 * VMM_PAGE; i += VMM_PAGE) // do the mapping
         vmmMap(pt, (void *)t->registers.rsp - i, (void *)stackTop - i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
     // set executable metadata
     t->elfBase = execPhysicalBase;
     t->elfSize = execSize;
 
-    // handle c arguments (fixme: for the love of god, make this even more readable)
+    // handle c arguments
     argc = min(argc, K_SCHED_MAX_ARGUMENTS);
 
-    t->registers.rdi = 1 + argc;                                                    // arguments count the path + the optional arguments
-    t->registers.rsi = t->registers.rsp - PMM_PAGE - (argc + 1) * sizeof(uint64_t); // point rsi to the buffer where we will put the arguments' pointers (one page is reserved for arguments)
+    // allocate the arguments buffer on the stack
+    uint64_t virtualArgumentsBuffer = t->registers.rsp - PMM_PAGE;
+    t->registers.rsp -= PMM_PAGE;
 
-    void **arguments = (void **)(stackTop - PMM_PAGE - (argc + 1) * sizeof(uint64_t)); // buffer in which we will put our arguments
-    char *copy = (char *)(stackTop - PMM_PAGE);                                        // buffer with which we will copy the strings
-    char *virtual = (char *)(t->registers.rsp - PMM_PAGE);                             // virtual address (address the app sees) of the copy buffer
+    t->registers.rdi = 1 + argc; // arguments count the path + the optional arguments
 
-    memcpy(copy, name, strlen(name)); // copy name
-    arguments[0] = virtual;           // point to it
-    copy += strlen(name);             // move pointer after it
-    *copy++ = '\0';                   // terminate string
-    virtual += strlen(name) + 1;      // also move the virtual pointer
+    // allocate a buffer where we will store the arguments pointers
+    t->registers.rsi = t->registers.rsp - (argc + 1) * sizeof(uint64_t);
+    t->registers.rsp -= (argc + 1) * sizeof(uint64_t);
 
-    for (int i = 0; i < argc; i++) // put every argument
+    uint64_t *argumentsPointerBuffer = (uint64_t *)(stackTop - PMM_PAGE - (argc + 1) * sizeof(uint64_t)); // physical address of rsi
+    char *copy = (char *)(stackTop - PMM_PAGE);                                                           // physical buffer we will use to do the copy stuff
+    uint64_t virtualPointer = execVirtualBase - 8 - PMM_PAGE;                                             // virtual address of the copy buffer
+
+    // copy the path as first argument
+    memcpy(copy, name, strlen(name)); // this will be automatically null terminated because the stack is initialised with zero
+    argumentsPointerBuffer[0] = virtualPointer;
+    copy += strlen(name) + 1;
+    virtualPointer += strlen(name) + 1;
+
+    for (int i = 0; i < argc; i++) // insert every argument
     {
         size_t len = strlen(argv[i]);
 
-        memcpy(copy, argv[i], len); // copy argument
-        arguments[i + 1] = virtual; // point to its virtual address
+        memcpy(copy, argv[i], len);                     // copy argument
+        argumentsPointerBuffer[i + 1] = virtualPointer; // point to its virtual address
 
         if ((uint64_t)copy + len >= stackTop) // don't overflow
         {
@@ -248,9 +255,8 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
             break;
         }
 
-        copy += len;        // move after text
-        *copy++ = '\0';     // terminate string
-        virtual += len + 1; // also move the virtual pointer
+        copy += len + 1;           // point after this argument
+        virtualPointer += len + 1; // also move the virtual pointer
     }
 
     // memory fields
@@ -465,7 +471,7 @@ void schedKill(uint32_t id)
         pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);
 
         // deallocate stack
-        pmmDeallocatePages(task->stackBase, K_STACK_SIZE / VMM_PAGE + 1);
+        pmmDeallocatePages(task->stackBase, 2);
 
         // deallocate enviroment
         pmmDeallocate(task->enviroment);
