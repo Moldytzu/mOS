@@ -243,7 +243,10 @@ sched_task_t *schedAdd(const char *name, void *entry, uint64_t stackSize, void *
         arguments[i + 1] = virtual; // point to its virtual address
 
         if ((uint64_t)copy + len >= stackTop) // don't overflow
+        {
+            t->registers.rdi = i; // make sure the app doesn't access the argument that isn't there
             break;
+        }
 
         copy += len;        // move after text
         *copy++ = '\0';     // terminate string
