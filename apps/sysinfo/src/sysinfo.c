@@ -29,7 +29,11 @@ int main(int argc, char **argv)
     uint64_t screenW, screenH;
     sys_display(SYS_DISPLAY_GET, (uint64_t)&screenW, (uint64_t)&screenH);
 
-    printf("Screen resolution: %dx%d pixels\n", screenW, screenH);
-    printf("Used: %d KiB; Available: %d KiB\n", used / 1024, available / 1024);
+    uint64_t total = used + available;
+    uint64_t usedPercentage = used * 100 / total;
+    uint64_t availablePercentage = 100 - usedPercentage;
+
+    printf("Screen resolution: %dx%d pixels\n", screenW, screenH, usedPercentage);
+    printf("Used: %d KiB (%d%%); Available: %d KiB (%d%%); Total: %d KiB\n", used / 1024, usedPercentage, available / 1024, availablePercentage, total / 1024);
     printf("CPU %d * %s (%s)\n", cores, name, vendor);
 }
