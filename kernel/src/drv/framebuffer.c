@@ -235,7 +235,7 @@ void framebufferWritec(char c)
 
     // NOTE: here we should use the lock but, for performance concerns, we omit it...
 
-    if (c != ' ')                                     // we waste time iterating over all empty pixels of the spacing
+    if (c > ' ' || c == '\n')                         // check if it is a graph character
         framebufferPlotc_impl(c, cursor.X, cursor.Y); // use inline version of framebufferPlotc
     cursor.X += font->width;                          // add character's width
 }
