@@ -23,6 +23,9 @@ uint32_t acpiTimerRead()
 
 void acpiTimerInit()
 {
+    if (!fadt) // no fadt/aml loaded
+        return;
+
     extendedTimer = fadt->flags & ACPI_FADT_TMR_VAL_EXT; // extended timer has 32 bits instead of 24
     present = fadt->PMTimer64.address > 0;
 
