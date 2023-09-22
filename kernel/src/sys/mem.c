@@ -1,10 +1,6 @@
 #include <sys/sys.h>
 #include <mm/pmm.h>
 
-#define ADDRESSES_IN_PAGES(x) (x * VMM_PAGE / sizeof(uint64_t))
-#define PAGES_IN_ADDRESSES(x) (x * sizeof(uint64_t) / VMM_PAGE)
-#define RESERVED_PAGES 8
-
 // mem (rsi = call, rdx = arg1, r8 = arg2)
 uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t *task)
 {
@@ -23,26 +19,15 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_tas
 
         // we store the newly allocated pages' address in a buffer
         void *newPages[pages];
-        for (int i = 0; i < pages; i++)
+        for (int i = 0; i < pages; i++) // fixme: doing allocations between these iterations could lead to undefined behaviour.......
             newPages[i] = pmmPage();
 
         // map every page
         for (size_t p = 0; p < pages; p++)
         {
             vmmMap(task->pageTable, (void *)task->lastVirtualAddress, newPages[p], VMM_ENTRY_RW | VMM_ENTRY_USER); // map the page in the virtual address space of the task
-
-            if (task->allocatedIndex + 1 >= ADDRESSES_IN_PAGES(task->allocatedBufferPages)) // check if we can not store the newly allocated page's address
-            {
-                // calculate required indices
-                // NOTE: without the volatile keyword the compiler will f-up the values
-                volatile size_t oldPages = task->allocatedBufferPages;
-                volatile size_t newPages = ++task->allocatedBufferPages;
-
-                task->allocated = pmmReallocate(task->allocated, oldPages, newPages); // do the reallocation
-            }
-
-            task->allocated[task->allocatedIndex++] = newPages[p]; // store the address to free up later
-            task->lastVirtualAddress += VMM_PAGE;                  // point to next page
+            pushUsedPage(task, newPages[p]);                                                                       // push the page in the allocated pages array
+            task->lastVirtualAddress += VMM_PAGE;                                                                  // point to next page
         }
 
         return virtualStart;

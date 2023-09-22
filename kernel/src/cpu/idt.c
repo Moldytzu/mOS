@@ -137,7 +137,7 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
 
             // expand the stack by a page
             volatile uint64_t pageAddress = faultAddress & ~0xFFF;
-            volatile void *page = pmmPage();
+            volatile void *page = pmmPage(); // fixme: memory leak
             vmmMap((void *)stack->cr3, (void *)pageAddress, (void *)page, VMM_ENTRY_USER | VMM_ENTRY_RW);
 
             logInfo("idt: expanding stack of %s with one page", currentTask->name);

@@ -11,6 +11,22 @@
 uint64_t (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver, time, perf, mailbox};
 const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver", "time", "perf", "mailbox"};
 
+// push a page on the used array
+void pushUsedPage(sched_task_t *task, void *page)
+{
+    if (task->allocatedIndex + 1 >= ADDRESSES_IN_PAGES(task->allocatedBufferPages)) // check if we can not store the newly allocated page's address
+    {
+        // calculate required indices
+        // NOTE: without the volatile keyword the compiler will f-up the values
+        volatile size_t oldPages = task->allocatedBufferPages;
+        volatile size_t newPages = ++task->allocatedBufferPages;
+
+        task->allocated = pmmReallocate(task->allocated, oldPages, newPages); // do the reallocation
+    }
+
+    task->allocated[task->allocatedIndex++] = page; // store the address to free up later
+}
+
 // open file at relative path
 uint64_t openRelativePath(const char *path, sched_task_t *task)
 {
