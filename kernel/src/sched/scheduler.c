@@ -179,6 +179,7 @@ sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, ui
     t->terminal = terminal;
     t->isElf = elf;
     t->isDriver = driver;
+    t->virtualBaseAddress = execVirtualBase;
 
     if (driver) // give speed advantage to regular apps
         t->targetQuantum = 0;

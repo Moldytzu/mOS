@@ -126,7 +126,27 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
     // userspace exceptions
     if (userspace && int_num < 32)
     {
-        const char *name = schedGetCurrent(smpID())->name;
+        sched_task_t *currentTask = schedGetCurrent(smpID());
+
+        if (int_num == 0xE) // handle page faults caused by stack being overused
+        {
+            volatile uint64_t faultAddress = controlReadCR2(); // for some reason volatile is required here.....
+
+            if (faultAddress >= currentTask->virtualBaseAddress || faultAddress <= TASK_BASE_SWITCH_TO_BUFFER - 1) // check if the fault is outside the stack
+                goto panic;                                                                                        // if it is then panic
+
+            // expand the stack by a page
+            volatile uint64_t pageAddress = faultAddress & ~0xFFF;
+            volatile void *page = pmmPage();
+            vmmMap((void *)stack->cr3, (void *)pageAddress, (void *)page, VMM_ENTRY_USER | VMM_ENTRY_RW);
+
+            logInfo("idt: expanding stack of %s with one page", currentTask->name);
+
+            return; // try again
+        }
+
+    panic:
+        const char *name = currentTask->name;
 
 #ifdef K_PANIC_ON_USERSPACE_CRASH
         framebufferZero();
