@@ -66,6 +66,17 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     }
     memsz = align(memsz, PMM_PAGE); // align to page size
 
+    if (virtualBase < TASK_BASE_SWITCH_TO_BUFFER + 2 * VMM_PAGE /*minimum possible address space*/ || virtualBase + memsz > 0x800000000000 /*outside lower half*/) // boundary check for addressing space usage
+    {
+        logError("elf: failing to load an executable with virtual base at 0x%p", virtualBase);
+
+        // clean up
+        blkDeallocate(elf);
+        blkDeallocate(phdr);
+
+        return NULL;
+    }
+
     // load program headers (pass 2)
     vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff); // read first header
     void *buffer = pmmPages(memsz / PMM_PAGE);      // allocate the buffer for the sections
