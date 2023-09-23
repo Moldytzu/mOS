@@ -16,6 +16,7 @@ pstruct
 }
 vma_context_t;
 
+void vmaDestroyContext(vma_context_t *context);
 vma_context_t *vmaCreateContext();
 vma_context_t *vmaReserveRange(vma_context_t *context, void *start, uint64_t size);
 void *vmaAllocatePage(vma_context_t *context);

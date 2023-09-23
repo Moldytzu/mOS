@@ -2,6 +2,7 @@
 #include <misc/utils.h>
 #include <cpu/idt.h>
 #include <mm/vmm.h>
+#include <mm/vma.h>
 #include <ipc/mailbox.h>
 
 // fixme: replace these with allocated virtual addresses
@@ -33,6 +34,7 @@ typedef struct
     char *enviroment;
 
     // internal
+    vma_context_t *virtualMemoryContext;
     uint64_t fileDescriptorPointers[TASK_MAX_FILE_DESCRIPTORS];
     void *stackBase;
     void *elfBase;

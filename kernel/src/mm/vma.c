@@ -5,6 +5,8 @@
 
 #define NEXT_OF(x) ((vma_used_range_t *)x->next)
 
+// fixme: this isn't thread safe!
+
 void dumpRanges(vma_context_t *context)
 {
     vma_used_range_t *range = context->usedRanges;
@@ -22,6 +24,14 @@ vma_context_t *vmaCreateContext()
     vma_context_t *ctx = blkBlock(sizeof(vma_context_t));
     ctx->usedRanges = blkBlock(sizeof(vma_used_range_t));
     return ctx;
+}
+
+void vmaDestroyContext(vma_context_t *context)
+{
+    for (vma_used_range_t *range = context->usedRanges; range; range = NEXT_OF(range))
+        blkDeallocate(range);
+
+    blkDeallocate(context);
 }
 
 void vmaMerge(vma_context_t *context)

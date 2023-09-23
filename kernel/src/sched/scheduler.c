@@ -180,6 +180,7 @@ sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, ui
     t->isElf = elf;
     t->isDriver = driver;
     t->virtualBaseAddress = execVirtualBase;
+    t->virtualMemoryContext = vmaCreateContext();
 
     if (driver) // give speed advantage to regular apps
         t->targetQuantum = 0;
@@ -206,6 +207,8 @@ sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, ui
         vmmMap(pt, (void *)execVirtualBase + i, (void *)execPhysicalBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
     vmmMap(pt, (void *)TASK_BASE_SWITCH_TO_BUFFER, &t->registers, 0); // map the registers in a low part of addressing space
+
+    vmaReserveRange(t->virtualMemoryContext, NULL, execVirtualBase + execSize); // reserve the stack and executable base
 
     // set up stack
     void *stack = t->stackBase = pmmPages(1 + 1 /*one page for arguments and one for the stack*/);
@@ -479,6 +482,9 @@ void schedKill(uint32_t id)
 
         // destroy page table
         vmmDestroy(task->pageTable);
+
+        // destroy virtual memory allocation context
+        vmaDestroyContext(task->virtualMemoryContext);
 
         // deallocate task structure
         pmmDeallocate(task);
