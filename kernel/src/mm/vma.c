@@ -26,22 +26,23 @@ vma_context_t *vmaCreateContext()
 
 void vmaMerge(vma_context_t *context)
 {
-    // merge ranges
-    for (vma_used_range_t *range = context->usedRanges; range->next; range = NEXT_OF(range))
-    {
-        vma_used_range_t *next = NEXT_OF(range);
-
-        // check if we can merge forward
-        if (range->start + range->size == next->start)
+    // merge ranges (try 2 passes)
+    for (int i = 0; i < 2; i++)
+        for (vma_used_range_t *range = context->usedRanges; range->next; range = NEXT_OF(range))
         {
-            range->size += next->size;
-            range->next = next->next;
-            blkDeallocate(next);
+            vma_used_range_t *next = NEXT_OF(range);
 
-            if (!range->next)
-                return;
+            // check if we can merge forward
+            if (range->start + range->size == next->start)
+            {
+                range->size += next->size;
+                range->next = next->next;
+                blkDeallocate(next);
+
+                if (!range->next)
+                    return;
+            }
         }
-    }
 }
 
 vma_context_t *vmaReserveRange(vma_context_t *context, void *start, uint64_t size)
@@ -83,16 +84,8 @@ vma_context_t *vmaReserveRange(vma_context_t *context, void *start, uint64_t siz
     vma_used_range_t *newRange = blkBlock(sizeof(vma_used_range_t));
     newRange->size = size;
     newRange->start = (uint64_t)start;
-    newRange->next = NULL;
-
-    if (range->next) // if we're inserting in between two ranges
-    {
-        vma_used_range_t *oldNextRange = range->next;
-        range->next = newRange;
-        newRange->next = oldNextRange;
-    }
-    else
-        range->next = newRange;
+    newRange->next = range->next;
+    range->next = newRange;
 
     return context;
 }
@@ -121,7 +114,27 @@ void *vmaAllocatePage(vma_context_t *context)
 
 void vmaDeallocateRange(vma_context_t *context, void *start, uint64_t size)
 {
-    // do boundary check across multiple ranges and removes those from the used list
+    vmaMerge(context); // make sure everything is merged
+
+    for (vma_used_range_t *range = context->usedRanges; range; range = NEXT_OF(range))
+    {
+        if ((uint64_t)start >= range->start && (uint64_t)start + size <= range->start + range->size)
+        {
+            // we can split up here
+            uint64_t rest = range->size;
+            range->size = (uint64_t)start - range->start;
+            rest -= range->size;
+            rest -= size;
+
+            vma_used_range_t *newRange = blkBlock(sizeof(vma_used_range_t));
+            newRange->size = rest;
+            newRange->next = range->next;
+            newRange->start = (uint64_t)start + size;
+            range->next = newRange;
+
+            return;
+        }
+    }
 }
 
 void vmaDeallocatePage(vma_context_t *context, void *page)
