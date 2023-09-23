@@ -143,6 +143,8 @@ ifunc uint16_t nextCore()
         }
     }
 
+    logInfo("sched: adding a new task on core %d (has %d tasks)", leastUsedCore, leastUsedLen + 1);
+
     return leastUsedCore;
 }
 
