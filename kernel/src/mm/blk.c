@@ -125,6 +125,8 @@ void *blkBlock(size_t size)
                         current->free = false; // if we can't split, just mark it as busy
                 }
 
+                current->free = false; // make sure it's not free
+
                 zero(CONTENT_OF(current), size); // initialise memory
                 release(blkLock);
                 return CONTENT_OF(current); // return a pointer to the contents
