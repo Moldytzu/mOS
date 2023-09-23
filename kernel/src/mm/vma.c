@@ -24,6 +24,26 @@ vma_context_t *vmaCreateContext()
     return ctx;
 }
 
+void vmaMerge(vma_context_t *context)
+{
+    // merge ranges
+    for (vma_used_range_t *range = context->usedRanges; range->next; range = NEXT_OF(range))
+    {
+        vma_used_range_t *next = NEXT_OF(range);
+
+        // check if we can merge forward
+        if (range->start + range->size == next->start)
+        {
+            range->size += next->size;
+            range->next = next->next;
+            blkDeallocate(next);
+
+            if (!range->next)
+                return;
+        }
+    }
+}
+
 vma_context_t *vmaReserveRange(vma_context_t *context, void *start, uint64_t size)
 {
     // check if already reserved
@@ -94,8 +114,7 @@ void *vmaAllocatePage(vma_context_t *context)
 
     void *virtualAddress = (void *)(range->start + range->size); // calculate the virtual address
     vmaReserveRange(context, virtualAddress, VMM_PAGE);          // reserve the range
-
-    dumpRanges(context);
+    vmaMerge(context);                                           // merge if possible
 
     return virtualAddress; // return the address
 }
