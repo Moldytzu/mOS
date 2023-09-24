@@ -177,7 +177,6 @@ sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, ui
     t->id = lastTaskID++;                          // set ID
     t->core = id;                                  // set core id
     memcpy(t->name, name, min(strlen(name), 128)); // set a name
-    t->lastVirtualAddress = TASK_BASE_ALLOC;
     t->terminal = terminal;
     t->isElf = elf;
     t->isDriver = driver;
@@ -266,10 +265,9 @@ sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, ui
     }
 
     // memory fields
-    t->allocated = pmmPage();                // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
-    t->allocatedIndex = 0;                   // the current index in the array
-    t->allocatedBufferPages++;               // we have one page already allocated
-    t->lastVirtualAddress = TASK_BASE_ALLOC; // set the last address
+    t->allocated = pmmPage();  // the array to store the allocated addresses (holds 1 page address until an allocation occurs)
+    t->allocatedIndex = 0;     // the current index in the array
+    t->allocatedBufferPages++; // we have one page already allocated
 
     // enviroment
     t->enviroment = pmmPage(); // 4k should be enough for now

@@ -5,10 +5,8 @@
 #include <mm/vma.h>
 #include <ipc/mailbox.h>
 
-// fixme: replace these with allocated virtual addresses
-#define TASK_BASE_SWITCH_TO_BUFFER 0x1000
-#define TASK_BASE_ALLOC 0xB000000000
-#define TASK_BASE_FRAMEBUFFER 0xC000000000
+#define TASK_BASE_SWITCH_TO_BUFFER 0x1000  // this has to be hardcoded
+#define TASK_BASE_FRAMEBUFFER 0xC000000000 // fixme: replace this with allocated virtual addresses
 #define TASK_MAX_FILE_DESCRIPTORS 128
 
 typedef struct
@@ -30,7 +28,6 @@ typedef struct
     uint8_t align_addr(16) simdContext[512];
     idt_intrerrupt_stack_t align_addr(16) registers;
     vmm_page_table_t *pageTable;
-    uint64_t lastVirtualAddress;
     char *enviroment;
 
     // internal

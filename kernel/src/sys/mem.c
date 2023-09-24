@@ -30,7 +30,6 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_tas
 
             vmmMap(task->pageTable, virtualPage, newPages[p], VMM_ENTRY_RW | VMM_ENTRY_USER); // map the page in the virtual address space of the task
             pushUsedPage(task, newPages[p]);                                                  // push the page in the allocated pages array
-            task->lastVirtualAddress += VMM_PAGE;                                             // point to next page
         }
 
         return virtualStart;
