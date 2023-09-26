@@ -10,7 +10,7 @@ uint64_t rdmsr(uint32_t ecx)
     return ((uint64_t)high << 32) | low;
 }
 
-void wrmsr(uint32_t ecx, uint32_t low, uint32_t high)
+void wrmsr(uint32_t ecx, uint64_t value)
 {
-    iasm("wrmsr" ::"a"(high), "d"(low), "c"(ecx));
+    iasm("wrmsr" ::"d"((value >> 32) & 0xFFFFFFFF), "a"(value & 0xFFFFFFFF), "c"(ecx));
 }

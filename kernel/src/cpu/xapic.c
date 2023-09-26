@@ -107,13 +107,12 @@ void xapicInit(bool bsp)
     xapicWrite(XAPIC_REG_TPR, 0);
 
     // enable the lapic (11.4.3 volume 3 intel sdm)
-    uint32_t low = (uint64_t)rdmsr(MSR_APIC_BASE) >> 32;
-    uint32_t high = (uint64_t)rdmsr(MSR_APIC_BASE) | 0b100000000000; // set global enable flag
+    uint64_t base = rdmsr(MSR_APIC_BASE) | 0b100000000000; // set global enable flag
 
     if (bsp) // set the bsp flag
-        high |= (uint32_t)0b100000000;
+        base |= (uint32_t)0b100000000;
 
-    wrmsr(MSR_APIC_BASE, low, high); // write back the base
+    wrmsr(MSR_APIC_BASE, base); // write back the base
 
     xapicWrite(XAPIC_REG_SIV, 0x120); // software enable apic and set the spurious vector to 0x20
 
