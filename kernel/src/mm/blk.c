@@ -96,36 +96,29 @@ void *blkBlock(size_t size)
         {
             for (blk_header_t *current = start; current; current = current->next) // iterate over all blocks
             {
-                if (!current->free) // this one is busy
-                    continue;       // skip it
+                if (!current->free || current->size < size) // skip any block that isn't free and the right size
+                    continue;
 
-                if (current->size == size)          // it's exactly the same!
-                    current->free = false;          // allocate it
-                else if (current->size >= fullSize) // it's too big
+                if (current->size - fullSize >= sizeof(blk_header_t) + BLK_ALIGNMENT) // split the block if needeed and possible
                 {
-                    if (current->size - fullSize >= sizeof(blk_header_t) + BLK_ALIGNMENT) // split it if a new block can hold at least the alignment
-                    {
-                        // create new block then add it in the chain
-                        blk_header_t *newBlock = CONTENT_OF(current) + size;
-                        newBlock->size = current->size - fullSize;
-                        newBlock->free = true;
-                        newBlock->next = current->next;
-                        newBlock->prev = current;
-                        newBlock->signature = BLK_HEADER_SIGNATURE;
+                    // create new block then add it in the chain
+                    blk_header_t *newBlock = CONTENT_OF(current) + size;
+                    newBlock->size = current->size - fullSize;
+                    newBlock->free = true;
+                    newBlock->next = current->next;
+                    newBlock->prev = current;
+                    newBlock->signature = BLK_HEADER_SIGNATURE;
 
-                        // add it in the chain
-                        current->next = newBlock;
-                        current->free = false;
-                        current->size = size;
+                    // add it in the chain
+                    current->next = newBlock;
+                    current->free = false;
+                    current->size = size;
 
-                        if (!newBlock->next) // check if it's the last block
-                            last = newBlock; // if it is, remember it
-                    }
-                    else
-                        current->free = false; // if we can't split, just mark it as busy
+                    if (!newBlock->next) // check if it's the last block
+                        last = newBlock; // if it is, remember it
                 }
 
-                current->free = false; // make sure it's not free
+                current->free = false; // mark it as busy
 
                 zero(CONTENT_OF(current), size); // initialise memory
                 release(blkLock);
