@@ -1,6 +1,8 @@
 #include <sys/syscall.h>
 #include <sys/sys.h>
 #include <cpu/idt.h>
+#include <cpu/smp.h>
+#include <cpu/gdt.h>
 #include <cpu/localStorage.h>
 #include <mm/vmm.h>
 #include <mm/blk.h>
@@ -89,7 +91,7 @@ void syscallInit()
 {
     // initialise local storage
     cpu_local_storage_t *kernelStorage = (cpu_local_storage_t *)vmmAllocateInitialisationVirtualAddressPage();
-    kernelStorage->kernelSyscallStack = vmmAllocateInitialisationVirtualAddressPage();
+    kernelStorage->kernelSyscallStack = (void *)tssGet()[smpID()]->ist[0]; // set the stack to ist
     kernelStorage->kernel = 1;
     localStorageLoadKernel(kernelStorage);
 
