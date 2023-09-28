@@ -34,12 +34,7 @@ void idtSetGate(void *handler, uint8_t entry)
     gate->offset = base;         // first 16 bits of address
     gate->offset2 = base >> 16;  // second 16 bits of address
     gate->offset3 = base >> 32;  // last 32 bits of address
-
-    // enable ists
-    if (entry == XAPIC_TIMER_VECTOR)
-        gate->ist = 1;
-    else
-        gate->ist = 2;
+    gate->ist = 1;               // enable IST
 }
 
 void *idtGet()
@@ -76,10 +71,7 @@ void idtInstall(uint8_t procID)
 {
     // setup ist
     gdt_tss_t *tss = tssGet()[procID];
-    tss->ist[0] = (uint64_t)vmmAllocateInitialisationVirtualAddressPage() + VMM_PAGE; // context switch ist
-    tss->ist[1] = (uint64_t)vmmAllocateInitialisationVirtualAddressPage() + VMM_PAGE; // interrupt ist
-
-    tss->rsp[0] = (uint64_t)vmmAllocateInitialisationVirtualAddressPage() + VMM_PAGE; // kernel stack
+    tss->ist[0] = tss->rsp[0] = (uint64_t)vmmAllocateInitialisationVirtualAddressPage() + VMM_PAGE; // kernel stack and IST
 
     iasm("lidt %0" ::"m"(idtr)); // load the idtr and don't enable intrerrupts yet
 }
