@@ -207,7 +207,7 @@ sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, ui
     for (size_t i = 0; i < execSize; i += VMM_PAGE) // map task as user, read-write
         vmmMap(pt, (void *)execVirtualBase + i, (void *)execPhysicalBase + i, VMM_ENTRY_RW | VMM_ENTRY_USER);
 
-    vmmMap(pt, (void *)TASK_BASE_SWITCH_TO_BUFFER, &t->registers, 0); // map the registers in a low part of addressing space
+    vmmMap(pt, (void *)TASK_BASE_SWITCH_TO_BUFFER, &t->registers, VMM_ENTRY_RO); // map the registers in a low part of addressing space
 
     vmaReserveRange(t->virtualMemoryContext, NULL, execVirtualBase + execSize); // reserve the stack and executable base
 

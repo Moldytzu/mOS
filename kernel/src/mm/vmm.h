@@ -5,6 +5,7 @@
 
 #define VMM_ENTRY_PRESENT (1 << 0)
 #define VMM_ENTRY_RW (1 << 1)
+#define VMM_ENTRY_RO 0
 #define VMM_ENTRY_USER (1 << 2)
 #define VMM_ENTRY_WRITE_THROUGH (1 << 3)
 #define VMM_ENTRY_CACHE_DISABLE (1 << 4)
