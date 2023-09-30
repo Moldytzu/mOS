@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     screenMetadataUpdate();                                           // generate initial screen information
 
     // read last mail
-    mailbox_t *mail = sys_mailbox_read();
+    mail_t *mail = sys_mailbox_read();
     if (mail)
     {
         sys_display(SYS_DISPLAY_MODE, SYS_DISPLAY_TTY, 0);

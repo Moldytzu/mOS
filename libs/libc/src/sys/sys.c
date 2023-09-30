@@ -105,7 +105,7 @@ uint64_t sys_mailbox(uint8_t call)
     return _syscall(SYS_MAILBOX, call, 0, 0, 0, 0);
 }
 
-mailbox_t *sys_mailbox_read()
+mail_t *sys_mailbox_read()
 {
-    return (mailbox_t *)_syscall(SYS_MAILBOX, SYS_MAILBOX_READ_FIRST, 0, 0, 0, 0);
+    return (mail_t *)_syscall(SYS_MAILBOX, SYS_MAILBOX_READ_FIRST, 0, 0, 0, 0);
 }

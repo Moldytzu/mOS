@@ -5,19 +5,23 @@ uint64_t mailbox(uint64_t call, uint64_t rdx, uint64_t r8, uint64_t r9, sched_ta
     switch (call)
     {
     case 0: // read last
-        // returns last mail
+
+        // read next mail
         mailbox_t *mail = mailReadNext(&task->mailbox);
 
         if (!mail)
             return 0;
 
-        for (int i = 0; i < mailPages(mail); i++)
-            vmmMap(task->pageTable, (void *)((uint64_t)mail + i * 4096), (void *)((uint64_t)mail + i * 4096), VMM_ENTRY_USER); // todo: allocate a virtual memory address
+        // allocate a virtual memory range
+        void *virtualStart = vmaAllocatePage(task->virtualMemoryContext); // fixme: this isn't ok if contents >1 pages
+
+        // map contents in virtual memory
+        vmmMap(task->pageTable, virtualStart, mail->contents, VMM_ENTRY_RO | VMM_ENTRY_USER);
 
         // fixme: add returned pages to allocated buffer to prevent potential memory leaks in case the app doesn't free the mail
         // a new helper function would help
 
-        return (uint64_t)mail;
+        return (uint64_t)virtualStart;
     default:
         return 0;
     }
