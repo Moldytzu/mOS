@@ -232,8 +232,8 @@ void amlEnableACPI()
     if (!aml)
         return;
 
-    // enable SCIs
-    if (!amlIsACPIEnabled()) // already enabled
+    // enable ACPI mode if not already
+    if (!amlIsACPIEnabled())
     {
         logInfo("aml: enabling acpi mode");
 
@@ -243,7 +243,7 @@ void amlEnableACPI()
         for (int i = 0; i < 1000; i++)
         {
             if (amlIsACPIEnabled())
-                return;
+                goto sci;
 
             hpetMillis(1);
         }
@@ -251,7 +251,8 @@ void amlEnableACPI()
         logWarn("aml: enabling timed out");
     }
 
-    // set scis for buttons
+sci:
+    // enable SCIs
     uint32_t pm1aEnable = fadt->PM1aEvent + fadt->PM1EventLen / 2;
     uint32_t pm1bEnable = fadt->PM1bEvent + fadt->PM1EventLen / 2;
 
