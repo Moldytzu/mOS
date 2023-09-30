@@ -80,9 +80,9 @@ void kmain()
 #define STACK_TRACE_WALK(x) (__builtin_extract_return_addr(__builtin_return_address(x)))
 
 // displays the address if possible
-#define PRINT_TRACE_IF_POSSIBLE(x) \
-    if (!STACK_TRACE_WALK(x))      \
-        hang();                    \
+#define PRINT_TRACE_IF_POSSIBLE(x)                              \
+    if ((uint64_t)STACK_TRACE_WALK(x) <= 0xFFF8000000000000ULL) \
+        hang();                                                 \
     logError("0x%p", STACK_TRACE_WALK(x));
 
 void panick_impl(const char *file, size_t line, const char *msg)
