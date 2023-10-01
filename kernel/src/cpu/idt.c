@@ -133,7 +133,7 @@ void exceptionHandler(idt_intrerrupt_error_stack_t *stack, uint64_t int_num)
             volatile void *page = pmmPage();
             vmmMap((void *)stack->cr3, (void *)pageAddress, (void *)page, VMM_ENTRY_USER | VMM_ENTRY_RW);
 
-            pushUsedPage(currentTask, (void *)page);
+            sysPushUsedPage(currentTask, (void *)page);
 
             logInfo("idt: expanding stack of %s with one page", currentTask->name);
 

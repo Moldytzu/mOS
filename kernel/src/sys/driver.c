@@ -23,7 +23,7 @@ uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sche
             return SYSCALL_STATUS_ERROR;
 
         // open the relative path
-        uint64_t fd = openRelativePath(PHYSICAL(arg1), task);
+        uint64_t fd = sysOpenRelativePath(PHYSICAL(arg1), task);
         if (!fd)
             return SYSCALL_STATUS_ERROR;
 

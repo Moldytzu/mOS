@@ -19,8 +19,8 @@ uint64_t mailbox(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sch
         // map contents in virtual memory
         vmmMap(task->pageTable, virtualStart, mail->contents, VMM_ENTRY_RO | VMM_ENTRY_USER);
 
-        pushUsedPage(task, PHYSICAL(virtualStart)); // push physical page to clean up
-        mailFreeBox(mail);                          // free metadata of mail
+        sysPushUsedPage(task, PHYSICAL(virtualStart)); // push physical page to clean up
+        mailFreeBox(mail);                             // free metadata of mail
 
         return (uint64_t)virtualStart;
 

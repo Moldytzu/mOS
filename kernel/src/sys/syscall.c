@@ -14,7 +14,7 @@ uint64_t (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task
 const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver", "time", "perf", "mailbox"};
 
 // push a page on the used array
-void pushUsedPage(sched_task_t *task, void *page)
+void sysPushUsedPage(sched_task_t *task, void *page)
 {
     if (task->allocatedIndex + 1 >= ADDRESSES_IN_PAGES(task->allocatedBufferPages)) // check if we can not store the newly allocated page's address
     {
@@ -30,7 +30,7 @@ void pushUsedPage(sched_task_t *task, void *page)
 }
 
 // open file at relative path
-uint64_t openRelativePath(const char *path, sched_task_t *task)
+uint64_t sysOpenRelativePath(const char *path, sched_task_t *task)
 {
     // todo: an expandRelativePath function would be great here
 

@@ -25,9 +25,9 @@
 #define FD_TO_NODE(x) (((x)-2) < TASK_MAX_FILE_DESCRIPTORS ? task->fileDescriptorPointers[(x)-2] : 0) // in open we offset by 2 to skip ids 0 and 1 which have other purposese
 #define IS_PRIVILEGED ((task->isDriver) || (task->id == 1))                                           // privileged apps are drivers and init system
 
-void pushUsedPage(sched_task_t *task, void *page);
-uint64_t openRelativePath(const char *path, sched_task_t *task);
-void yield();
+void sysPushUsedPage(sched_task_t *task, void *page);
+uint64_t sysOpenRelativePath(const char *path, sched_task_t *task);
+void sysYield();
 
 DEFINE_SYSCALL(exit);
 DEFINE_SYSCALL(write);

@@ -7,7 +7,7 @@ uint64_t open(uint64_t path, uint64_t rbx, uint64_t r8, uint64_t r9, sched_task_
     if (!IS_MAPPED(path)) // be sure that the arguments are under the stack
         return SYSCALL_STATUS_ERROR;
 
-    uint64_t node = openRelativePath(PHYSICAL(path), task); // open the file
+    uint64_t node = sysOpenRelativePath(PHYSICAL(path), task); // open the file
 
     if (!node)
         return 0;

@@ -21,7 +21,7 @@ uint64_t exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_t
 
     uint64_t *ret = PHYSICAL(pid);
     sys_exec_packet_t *input = PHYSICAL(packet);
-    uint64_t fd = openRelativePath(PHYSICAL(path), task); // expand the path
+    uint64_t fd = sysOpenRelativePath(PHYSICAL(path), task); // expand the path
 
     if (!fd)
         return 0;
