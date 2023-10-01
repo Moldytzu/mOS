@@ -99,7 +99,7 @@ void *blkBlock(size_t size)
                 if (!current->free || current->size < size) // skip any block that isn't free and the right size
                     continue;
 
-                if (current->size - fullSize >= sizeof(blk_header_t) + BLK_ALIGNMENT) // split the block if needeed and possible
+                if (current->size > fullSize && current->size - fullSize >= sizeof(blk_header_t) + BLK_ALIGNMENT) // split the block if needeed and possible
                 {
                     // create new block then add it in the chain
                     blk_header_t *newBlock = CONTENT_OF(current) + size;
