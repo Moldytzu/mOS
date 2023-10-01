@@ -24,3 +24,4 @@ mailbox_t *mailReadNext(mailbox_t *mailbox);
 void mailFreeContents(mailbox_t *mail);
 void mailFreeBox(mailbox_t *mail);
 void mailFree(mailbox_t *mail);
+void mailFreeAll(mailbox_t *mail);

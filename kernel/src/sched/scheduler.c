@@ -464,12 +464,7 @@ void schedKill(uint32_t id)
             vfsClose(task->fileDescriptorPointers[i]);
 
         // deallocate mails
-        mailbox_t *mail = mailReadNext(&task->mailbox);
-        while (mail)
-        {
-            mailFree(mail);
-            mail = mailReadNext(&task->mailbox);
-        }
+        mailFreeAll(&task->mailbox);
 
         // deallocate executable
         pmmDeallocatePages(task->elfBase, task->elfSize / VMM_PAGE);

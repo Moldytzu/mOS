@@ -15,7 +15,7 @@ mailbox_t *mailCompose(mailbox_t *mailbox, uint32_t sender, size_t subject, char
         mail = NEXT_OF(mail);
 
     // do the allocation
-    lock(mail->lock, {
+    lock(mailbox->lock, {
         mail->next = blkBlock(sizeof(mailbox_t)); // allocate the mailbox in the linked list
     });
 
@@ -72,4 +72,12 @@ void mailFree(mailbox_t *mail)
 {
     mailFreeContents(mail);
     mailFreeBox(mail);
+}
+
+// frees all mails from a box
+void mailFreeAll(mailbox_t *mail)
+{
+    mailbox_t *m;
+    while (m = mailReadNext(mail))
+        mailFree(m);
 }
