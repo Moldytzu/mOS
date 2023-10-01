@@ -49,12 +49,27 @@ mailbox_t *mailReadNext(mailbox_t *mailbox)
     return mail; // return it
 }
 
-// frees resources of a mail
-void mailFree(mailbox_t *mail)
+// frees contents of a mail
+void mailFreeContents(mailbox_t *mail)
 {
     if (!mail)
         return;
 
     pmmDeallocatePages(mail->contents, mail->contentsPages); // deallocate contents
-    blkDeallocate(mail);                                     // deallocate metadata
+}
+
+// frees outer box of a mail
+void mailFreeBox(mailbox_t *mail)
+{
+    if (!mail)
+        return;
+
+    blkDeallocate(mail); // deallocate metadata
+}
+
+// frees all resources of a mail
+void mailFree(mailbox_t *mail)
+{
+    mailFreeContents(mail);
+    mailFreeBox(mail);
 }

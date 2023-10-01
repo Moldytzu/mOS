@@ -21,4 +21,6 @@ typedef struct
 
 mailbox_t *mailCompose(mailbox_t *mailbox, uint32_t sender, size_t subject, char *message, size_t messageLength);
 mailbox_t *mailReadNext(mailbox_t *mailbox);
+void mailFreeContents(mailbox_t *mail);
+void mailFreeBox(mailbox_t *mail);
 void mailFree(mailbox_t *mail);
