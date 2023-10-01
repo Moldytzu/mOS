@@ -187,7 +187,7 @@ int main(int argc, char **argv)
 
         // determine the path len
         uint16_t len;
-        for (len = 0; path[len] != '|'; len++)
+        for (len = 0; path[len] != '|' && path[len]; len++)
             ;
 
         path[len] = 0; // terminate path
