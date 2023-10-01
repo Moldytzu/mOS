@@ -52,7 +52,11 @@ $(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJS) src/limine.h
+	rm -rf $(KERNEL) $(OBJS)
+
+.PHONY: distclean
+distclean: clean
+	rm -rf src/limine.h
 
 .PHONY: setup
 setup: vendor

@@ -61,7 +61,7 @@ run-efi-debug: image
 	reset
 
 limine:
-	-git clone https://github.com/limine-bootloader/limine.git --branch=v5.x-branch-binary --depth=1
+	if ! [ -d "limine" ]; then git clone https://github.com/limine-bootloader/limine.git --branch=v5.x-branch-binary --depth=1; fi
 	make -C limine
 
 initrd:
@@ -121,6 +121,10 @@ umount:
 clean:
 	chmod +x ./clean.sh
 	bash ./clean.sh
+
+distclean:
+	chmod +x ./distclean.sh
+	bash ./distclean.sh
 
 apt:
 	sudo apt update
