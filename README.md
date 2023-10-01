@@ -35,7 +35,7 @@
 
 * **CPU:** x86 CPU (minimum required with 64-bit Long Mode, SSE3 and FXSR)
 * **Storage:** AHCI/ATA Hard Disks or SSDs
-* **Graphics:** VBE, VMware SVGA, UEFI GOP, VESA (at least one of them required)
+* **Graphics:** VBE, UEFI GOP, BGA, VMware SVGA (at least one of them required)
 * **Input:** PS/2 keyboard and mouse
 * **Networking:** none
 * **Others:** HPET (required), ACPI (required 1.0), PCIe, Serial
