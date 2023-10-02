@@ -1,6 +1,6 @@
 include ../compile.mk
 
-OBJCOPY := ~/cross_compiler/bin/x86_64-elf-objcopy
+OBJCOPY := $(PREFIX)objcopy
 
 KERNEL := ../out/kernel.elf
 FONT := ../kfont.psf

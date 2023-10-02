@@ -1,11 +1,14 @@
+# prefix
+PREFIX := ~/cross_compiler/bin/x86_64-elf-
+
 # c compiler
-CC := ~/cross_compiler/bin/x86_64-elf-gcc
+CC := $(PREFIX)gcc
 
 # archiver
-AR := ~/cross_compiler/bin/x86_64-elf-ar
+AR := $(PREFIX)ar
 
 # linker
-LD := ~/cross_compiler/bin/x86_64-elf-ld
+LD := $(PREFIX)ld
 
 # assembler
 ASM := nasm
