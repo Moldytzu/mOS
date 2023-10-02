@@ -1,6 +1,6 @@
 #include <sys/sys.h>
 
-uint64_t mailbox(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t r10, sched_task_t *task)
+uint64_t mailbox(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, sched_task_t *task)
 {
     switch (call)
     {
@@ -32,7 +32,7 @@ uint64_t mailbox(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, uin
         if (!IS_MAPPED(arg2))
             return SYSCALL_STATUS_ACCESS_DENIED;
 
-        mailCompose(&destination->mailbox, task->id, 1, PHYSICAL(arg2), arg3); // fixme: we shouldn't trust arg3 here, also we should take a subject too
+        mailCompose(&destination->mailbox, task->id, arg4, PHYSICAL(arg2), arg3); // fixme: we shouldn't trust arg3 here
 
         return SYSCALL_STATUS_OK;
     default:

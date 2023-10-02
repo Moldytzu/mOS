@@ -100,12 +100,17 @@ uint64_t sys_perf(uint8_t call, uint64_t arg1, uint64_t arg2)
     return _syscall(SYS_PERF, call, arg1, arg2, 0, 0);
 }
 
-uint64_t sys_mailbox(uint8_t call)
+uint64_t sys_mailbox(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4)
 {
-    return _syscall(SYS_MAILBOX, call, 0, 0, 0, 0);
+    return _syscall(SYS_MAILBOX, call, arg1, arg2, arg3, arg4);
 }
 
 mail_t *sys_mailbox_read()
 {
     return (mail_t *)_syscall(SYS_MAILBOX, SYS_MAILBOX_READ_FIRST, 0, 0, 0, 0);
+}
+
+uint64_t sys_mailbox_compose(uint64_t pid, char *buffer, size_t bufferLength, uint64_t subject)
+{
+    return sys_mailbox(SYS_MAILBOX_COMPOSE, pid, (uint64_t)buffer, bufferLength, subject);
 }

@@ -50,6 +50,7 @@
 #define SYS_PERF_GET_CPU 1
 
 #define SYS_MAILBOX_READ_FIRST 0
+#define SYS_MAILBOX_COMPOSE 1
 
 #define SYS_EXIT 0
 #define SYS_WRITE 1
@@ -111,6 +112,8 @@ uint64_t sys_power(uint8_t call, uint64_t arg1, uint64_t arg2);
 uint64_t sys_driver(uint8_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 uint64_t sys_perf(uint8_t call, uint64_t arg1, uint64_t arg2);
 
+uint64_t sys_mailbox(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4);
 mail_t *sys_mailbox_read();
+uint64_t sys_mailbox_compose(uint64_t pid, char *buffer, size_t bufferLength, uint64_t subject);
 
 void sys_yield();
