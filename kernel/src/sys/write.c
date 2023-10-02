@@ -4,7 +4,7 @@
 #include <drv/serial.h>
 
 // write (rsi = buffer, rdx = count, r8 = fd)
-uint64_t write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, sched_task_t *task)
+uint64_t write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, uint64_t r10, sched_task_t *task)
 {
     if (!IS_MAPPED(buffer) && count > 1) // prevent a crash
         return SYSCALL_STATUS_ERROR;

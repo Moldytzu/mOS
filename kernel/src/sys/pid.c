@@ -2,7 +2,7 @@
 #include <misc/logger.h>
 
 // pid (rsi = pid, rdx = call, r8 = arg1, r9 = arg2)
-uint64_t pid(uint64_t pid, uint64_t call, uint64_t arg1, uint64_t arg2, sched_task_t *task)
+uint64_t pid(uint64_t pid, uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r10, sched_task_t *task)
 {
     sched_task_t *t = schedGet(pid);
 

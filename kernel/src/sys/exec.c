@@ -14,7 +14,7 @@ pstruct
 sys_exec_packet_t;
 
 // exec (rsi = path, rdx = pid, r8 = packet)
-uint64_t exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, sched_task_t *task)
+uint64_t exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, uint64_t r10, sched_task_t *task)
 {
     if (!IS_MAPPED(path) || !IS_MAPPED(pid) || !IS_MAPPED(packet)) // prevent a crash
         return 0;

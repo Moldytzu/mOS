@@ -2,7 +2,7 @@
 #include <fs/vfs.h>
 
 // (rsi = path)
-uint64_t open(uint64_t path, uint64_t rbx, uint64_t r8, uint64_t r9, sched_task_t *task)
+uint64_t open(uint64_t path, uint64_t rbx, uint64_t r8, uint64_t r9, uint64_t r10, sched_task_t *task)
 {
     if (!IS_MAPPED(path)) // be sure that the arguments are under the stack
         return SYSCALL_STATUS_ERROR;

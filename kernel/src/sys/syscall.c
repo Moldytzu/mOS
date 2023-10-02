@@ -10,7 +10,7 @@
 #include <vt/vt.h>
 #include <misc/logger.h>
 
-uint64_t (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver, time, perf, mailbox};
+uint64_t (*syscallHandlers[])(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, sched_task_t *) = {exit, write, read, input, display, exec, pid, mem, vfs, open, close, socket, power, driver, time, perf, mailbox};
 const char *syscallNames[] = {"exit", "write", "read", "input", "display", "exec", "pid", "mem", "vfs", "open", "close", "socket", "power", "driver", "time", "perf", "mailbox"};
 
 // push a page on the used array
@@ -65,7 +65,7 @@ void yield()
 }
 
 // handler called on syscall
-uint64_t syscallHandler(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t reserved /*rcx register used by syscall instruction*/, uint64_t r8, uint64_t r9)
+uint64_t syscallHandler(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t r10, uint64_t r8, uint64_t r9)
 {
     vmmSwap(vmmGetBaseTable()); // swap the page table with the base so we can access every piece of memory
 
@@ -75,8 +75,8 @@ uint64_t syscallHandler(uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t reser
     logDbg(LOG_SERIAL_ONLY, "syscall: %s requested %s (0x%x), argument 1 is 0x%x, argument 2 is 0x%x, argument 3 is 0x%x, argument 4 is 0x%x", task->name, syscallNames[rdi], rdi, rsi, rdx, r8, r9);
 #endif
 
-    if (rdi < (sizeof(syscallHandlers) / sizeof(void *)))    // check if the syscall is in range
-        return syscallHandlers[rdi](rsi, rdx, r8, r9, task); // call the handler
+    if (rdi < (sizeof(syscallHandlers) / sizeof(void *)))         // check if the syscall is in range
+        return syscallHandlers[rdi](rsi, rdx, r8, r9, r10, task); // call the handler
     else
     {
         logError("syscall: %s executed unknown syscall 0x%x", task->name, rdi);

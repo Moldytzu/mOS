@@ -11,7 +11,7 @@
 #define SYS_DRIVER_TYPE_INPUT 2
 
 // driver (rsi = call, rdx = arg1, r8 = arg2, r9 = arg3)
-uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_task_t *task)
+uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t r10, sched_task_t *task)
 {
     if (!IS_PRIVILEGED) // don't let regular apps use these
         return SYSCALL_STATUS_ACCESS_DENIED;

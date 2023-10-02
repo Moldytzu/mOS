@@ -2,7 +2,7 @@
 #include <fw/acpi.h>
 
 // power (rsi = call, rbx = arg1, r8 = arg2)
-uint64_t power(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, sched_task_t *task)
+uint64_t power(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, uint64_t r10, sched_task_t *task)
 {
     if (call <= 1 && !IS_PRIVILEGED) // reboot and shutdown be available only to the privileged apps
         return SYSCALL_STATUS_ACCESS_DENIED;

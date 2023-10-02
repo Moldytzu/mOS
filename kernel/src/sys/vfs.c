@@ -13,7 +13,7 @@ size_t count(const char *str, char c)
 }
 
 // vfs (rsi = call, rdx = arg1, r8 = retVal)
-uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, sched_task_t *task)
+uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, uint64_t r10, sched_task_t *task)
 {
     struct vfs_node_t *currentNode;
     uint64_t *retAddr = PHYSICAL(retVal);

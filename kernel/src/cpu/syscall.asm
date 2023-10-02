@@ -53,8 +53,9 @@ syscallHandlerEntry:              ; we start with flags cleared because of FMASK
 	SWAPGS_TO_KERNEL_IF_NECESSARY ; swap to kernel gs
 	mov [gs:8], rsp  			  ; save userspace stack
 	mov rsp, [gs:0]  			  ; load kernel stack
-	
+
 	PUSH_REG_SYSCALL    ; save old registers
+	mov rcx, r10        ; move last argument in the right register
 	call syscallHandler ; call the syscall handler
     POP_REG_SYSCALL     ; restore registers
 

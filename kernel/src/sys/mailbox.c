@@ -1,6 +1,6 @@
 #include <sys/sys.h>
 
-uint64_t mailbox(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, sched_task_t *task)
+uint64_t mailbox(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t r10, sched_task_t *task)
 {
     switch (call)
     {
