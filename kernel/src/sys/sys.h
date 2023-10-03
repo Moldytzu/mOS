@@ -17,7 +17,7 @@
 
 #define ADDRESSES_IN_PAGES(x) (x * VMM_PAGE / sizeof(uint64_t))
 #define PAGES_IN_ADDRESSES(x) (x * sizeof(uint64_t) / VMM_PAGE)
-#define RESERVED_PAGES 8
+#define RESERVED_PAGES 16
 
 #define PHYSICAL(virtual) ((void *)(vmmGetPhysical((void *)task->pageTable, (void *)(virtual))))
 #define IS_MAPPED(address) ((uint64_t)PHYSICAL(address) > 0)

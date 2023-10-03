@@ -275,9 +275,11 @@ pmm_pool_t pmmTotal()
 
     for (int i = 0; i < poolCount; i++) // loop thru each pool
     {
-        total.available += pools[i].available; // add each useful property
-        total.used += pools[i].used;
-        total.bitmapBytes += pools[i].bitmapBytes;
+        lock(pools[i].lock, {
+            total.available += pools[i].available; // add each useful property
+            total.used += pools[i].used;
+            total.bitmapBytes += pools[i].bitmapBytes;
+        });
     }
 
     return total; // and return the total

@@ -12,8 +12,11 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, uint64_t 
         if (!pages)          // make sure we don't allocate null
             pages = 1;
 
-        if (pmmTotal().available < (pages + RESERVED_PAGES) * 4096) // make sure we don't run in an out of memory panic
-            return 0;
+        if (pmmTotal().available <= (pages + RESERVED_PAGES) * 4096) // make sure we don't run in an out of memory panic
+        {
+            logWarn("sys: %s tried to use more RAM (%d kB) than available (%d kB)", task->name, pages * 4096 / 1024, pmmTotal().available / 1024);
+            exit(UINT64_MAX, 0, 0, 0, 0, task); // kill task
+        }
 
         // we store the newly allocated pages' address in a buffer
         void *newPages[pages];
