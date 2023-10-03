@@ -18,25 +18,18 @@ uint64_t mem(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t r9, uint64_t 
             exit(UINT64_MAX, 0, 0, 0, 0, task); // kill task
         }
 
-        // we store the newly allocated pages' address in a buffer
-        size_t requiredPages = pages / 512 + 1;
-        void **newPages = pmmPages(requiredPages);
-        for (int i = 0; i < pages; i++) // fixme: doing allocations between these iterations could lead to undefined behaviour.......
-            newPages[i] = pmmPage();
-
         // map every page
         size_t virtualStart = 0; // virtual address of the starting byte of the newly allocated block
         for (size_t p = 0; p < pages; p++)
         {
             volatile void *virtualPage = vmaAllocatePage(task->virtualMemoryContext); // newly allocated virtual page
+            volatile void *phyiscalPage = pmmPage();
             if (!virtualStart)
                 virtualStart = (uint64_t)virtualPage;
 
-            vmmMap(task->pageTable, (void *)virtualPage, newPages[p], VMM_ENTRY_RW | VMM_ENTRY_USER); // map the page in the virtual address space of the task
-            // sysPushUsedPage(task, newPages[p]);                                               // push the page in the allocated pages array
+            vmmMap(task->pageTable, (void *)virtualPage, (void *)phyiscalPage, VMM_ENTRY_RW | VMM_ENTRY_USER); // map the page in the virtual address space of the task
+            sysPushUsedPage(task, (void *)phyiscalPage);                                                       // push the page in the allocated pages array
         }
-
-        pmmDeallocatePages(newPages, requiredPages); // clean up buffer
 
         return virtualStart;
     }
