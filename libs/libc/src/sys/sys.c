@@ -45,6 +45,11 @@ uint64_t sys_mem(uint8_t call, uint64_t arg1, uint64_t arg2)
     return _syscall(SYS_MEM, call, arg1, arg2, 0, 0);
 }
 
+void *sys_mem_allocate(uint64_t pages)
+{
+    return (void *)sys_mem(SYS_MEM_ALLOCATE, pages, 0);
+}
+
 uint64_t sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2)
 {
     return _syscall(SYS_VFS, call, arg1, arg2, 0, 0);

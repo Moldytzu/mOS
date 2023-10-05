@@ -20,7 +20,7 @@ void fontLoad(const char *path)
 
     uint16_t pages = size / 4096 + 1;
 
-    font = (psf2_header_t *)sys_mem(SYS_MEM_ALLOCATE, pages, 0);
+    font = (psf2_header_t *)sys_mem_allocate(pages);
     assert(font);
 
     sys_read(font, size, fd); // read the file

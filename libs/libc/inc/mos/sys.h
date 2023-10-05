@@ -104,6 +104,8 @@ uint64_t sys_time(uint8_t call, uint64_t arg1, uint64_t arg2);
 uint64_t sys_time_uptime_nanos();
 
 uint64_t sys_mem(uint8_t call, uint64_t arg1, uint64_t arg2);
+void *sys_mem_allocate(uint64_t pages);
+
 uint64_t sys_vfs(uint8_t call, uint64_t arg1, uint64_t arg2);
 uint64_t sys_open(const char *path);
 uint64_t sys_close(uint64_t fd);

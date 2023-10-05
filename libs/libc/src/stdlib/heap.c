@@ -7,7 +7,7 @@
 
 void *malloc(size_t s)
 {
-    return (void *)sys_mem(SYS_MEM_ALLOCATE, s / 4096 + 1, 0); // allocate
+    return sys_mem_allocate(s / 4096 + 1);
 }
 
 void free(void *ptr)

@@ -54,7 +54,7 @@ void allocation()
 
     BENCHMARK(&b, {
         for (volatile int i = 0; i < PAGES; i++)
-            sys_mem(SYS_MEM_ALLOCATE, (uint64_t)&unused, 0);
+            sys_mem_allocate(1);
     });
 
     printf("allocated %d pages in %llu miliseconds\n", PAGES, b.elapsedMiliseconds);
