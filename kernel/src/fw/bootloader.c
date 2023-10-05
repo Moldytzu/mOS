@@ -34,6 +34,11 @@ static volatile struct limine_stack_size_request stack_request = {
     .revision = 0,
     .stack_size = 4 * 1024};
 
+static volatile struct limine_kernel_file_request kernel_request = {
+    .id = LIMINE_KERNEL_FILE_REQUEST,
+    .revision = 0,
+};
+
 struct limine_file *bootloaderGetModule(const char *name)
 {
     if (!module_request.response)
@@ -78,4 +83,9 @@ void *bootloaderGetRSDP()
 void *bootloaderGetHHDM()
 {
     return (void *)hhdm_request.response->offset;
+}
+
+char *bootloaderGetCommandLine()
+{
+    return kernel_request.response->kernel_file->cmdline;
 }

@@ -1,4 +1,5 @@
 #include <misc/utils.h>
+#include <misc/logger.h>
 #include <cpu/idt.h>
 #include <cpu/gdt.h>
 #include <cpu/fpu.h>
@@ -35,6 +36,8 @@ void _start()
     serialInit(); // initialise the serial port
 
     framebufferInit(); // initialise framebuffer
+
+    logInfo("cmdline: %s", bootloaderGetCommandLine());
 
     initrdInit(); // initialise the initrd
 

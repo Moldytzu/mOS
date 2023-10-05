@@ -9,3 +9,4 @@ struct limine_kernel_address_response *bootloaderGetKernelAddress();
 struct limine_smp_response *bootloaderGetSMP();
 void *bootloaderGetRSDP();
 void *bootloaderGetHHDM();
+char *bootloaderGetCommandLine();
