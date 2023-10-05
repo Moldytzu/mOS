@@ -45,13 +45,13 @@ uint32_t logOldColour;
 #define PRINT_PREFIX_FORMAT(x, y)
 #endif
 
-#define PRINT_SERIAL()                                                                                          \
-    {                                                                                                           \
-        printks("[c%d] (%d.%d%d%d) ", smpID(), milis / 1000, milis % 1000 / 100, milis % 100 / 10, milis % 10); \
-        va_start(args, fmt);                                                                                    \
-        printks_impl(fmt, args);                                                                                \
-        va_end(args);                                                                                           \
-        printks("\n");                                                                                          \
+#define PRINT_SERIAL(c)                                                                                                                                                     \
+    {                                                                                                                                                                       \
+        printks("\033[38;2;%d;%d;%dm[c%d] (%d.%d%d%d) ", c >> 16 & 0xFF, c >> 8 & 0xFF, c & 0xFF, smpID(), milis / 1000, milis % 1000 / 100, milis % 100 / 10, milis % 10); \
+        va_start(args, fmt);                                                                                                                                                \
+        printks_impl(fmt, args);                                                                                                                                            \
+        va_end(args);                                                                                                                                                       \
+        printks("\n");                                                                                                                                                      \
     } // print prefix then format on serial
 
 #define BOILERPLATE \
@@ -64,7 +64,7 @@ void logInfo(const char *fmt, ...)
         BOILERPLATE;
         PRINT_PREFIX_FORMAT(PREFIX_COLOUR, INFO_COLOUR); // print our prefix
 #ifdef K_COM_LOG
-        PRINT_SERIAL(); // do the printing on serial
+        PRINT_SERIAL(INFO_COLOUR); // do the printing on serial
 #endif
     });
 #if defined(K_FB_DOUBLE_BUFFER) && !defined(K_LOG_QUIET)
@@ -78,7 +78,7 @@ void logWarn(const char *fmt, ...)
         BOILERPLATE;
         PRINT_PREFIX_FORMAT(PREFIX_COLOUR, WARN_COLOUR); // print our prefix
 #ifdef K_COM_LOG
-        PRINT_SERIAL(); // do the printing on serial
+        PRINT_SERIAL(WARN_COLOUR); // do the printing on serial
 #endif
     });
 #if defined(K_FB_DOUBLE_BUFFER) && !defined(K_LOG_QUIET)
@@ -92,7 +92,7 @@ void logError(const char *fmt, ...)
         BOILERPLATE;
         PRINT_PREFIX_FORMAT(PREFIX_COLOUR, ERROR_COLOUR); // print our prefix
 #ifdef K_COM_LOG
-        PRINT_SERIAL(); // do the printing on serial
+        PRINT_SERIAL(ERROR_COLOUR); // do the printing on serial
 #endif
     });
 #if defined(K_FB_DOUBLE_BUFFER) && !defined(K_LOG_QUIET)
@@ -107,7 +107,7 @@ void logDbg(int level, const char *fmt, ...)
         if (level != LOG_SERIAL_ONLY)
             PRINT_PREFIX_FORMAT(DEBUG_COLOUR, DEBUG_COLOUR); // print our prefix
 #ifdef K_COM_LOG
-        PRINT_SERIAL(); // do the printing on serial
+        PRINT_SERIAL(DEBUG_COLOUR); // do the printing on serial
 #endif
     });
 #if defined(K_FB_DOUBLE_BUFFER) && !defined(K_LOG_QUIET)
