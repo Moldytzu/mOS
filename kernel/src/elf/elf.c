@@ -45,8 +45,8 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     uint64_t virtualBase = UINT64_MAX; // base virtual address of the executable in memory
 
     // determine in-memory size of executable and virtual base (pass 1)
-    Elf64_Phdr *phdr = blkBlock(elf->e_ehsize);     // buffer to store information about the current program header
-    vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff); // read first header
+    Elf64_Phdr *phdr = blkBlock(elf->e_phentsize);     // buffer to store information about the current program header
+    vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff); // read first header
 
     size_t memsz = 0;
     for (int i = 0; i < elf->e_phnum; i++) // iterate over every program header
@@ -62,10 +62,11 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
                 virtualBase = phdr->p_vaddr;
         }
 
-        vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff + i); // read next program header
+        vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff + i * elf->e_phentsize); // read next program header
     }
     memsz = align(memsz, PMM_PAGE); // align to page size
 
+    // fixme: do memory availability check
     if (virtualBase < TASK_BASE_SWITCH_TO_BUFFER + 2 * VMM_PAGE /*minimum possible address space*/ || virtualBase + memsz > 0x800000000000 /*outside lower half*/) // boundary check for addressing space usage
     {
         logError("elf: failing to load an executable with virtual base at 0x%p", virtualBase);
@@ -77,9 +78,22 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         return NULL;
     }
 
-    // load program headers (pass 2)
-    vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff); // read first header
-    void *buffer = pmmPages(memsz / PMM_PAGE);      // allocate the buffer for the sections
+    // parse section headers
+    Elf64_Shdr *shdr = blkBlock(elf->e_shentsize);
+
+    vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff); // read first header
+
+    for (int i = 0; i < elf->e_shnum; i++) // iterate over every section header
+    {
+        logDbg(LOG_SERIAL_ONLY, "elf: section %d is at 0x%p", i, shdr->sh_addr);
+        vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff + i * elf->e_shentsize); // read next header
+    }
+
+    blkDeallocate(shdr);
+
+    // load program headers (pass 3)
+    vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff); // read first header
+    void *buffer = pmmPages(memsz / PMM_PAGE);         // allocate the buffer for the sections
 
     for (int i = 0; i < elf->e_phnum; i++) // iterate over every program header
     {
@@ -88,7 +102,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
             vfsRead(fd, (void *)((uint64_t)buffer + phdr->p_vaddr - virtualBase), phdr->p_filesz, phdr->p_offset); // copy the program header to the buffer using the vfs
         }
 
-        vfsRead(fd, phdr, elf->e_ehsize, elf->e_phoff + i); // read next program header
+        vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff + i); // read next program header
     }
 
     blkDeallocate(phdr); // clean up
