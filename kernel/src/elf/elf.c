@@ -78,6 +78,12 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         return NULL;
     }
 
+    // get string table
+    Elf64_Shdr *stringTableHeader = blkBlock(elf->e_shentsize);
+    vfsRead(fd, stringTableHeader, elf->e_shentsize, elf->e_shoff + elf->e_shstrndx * elf->e_shentsize); // e_shstrnidx is the index of the section header that holds the strings table
+
+    logDbg(LOG_SERIAL_ONLY, "elf: string table is at 0x%p (section %d)", elf->e_shoff + elf->e_shstrndx * elf->e_shentsize, elf->e_shstrndx);
+
     // parse section headers
     Elf64_Shdr *shdr = blkBlock(elf->e_shentsize);
 
@@ -85,11 +91,12 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 
     for (int i = 0; i < elf->e_shnum; i++) // iterate over every section header
     {
-        logDbg(LOG_SERIAL_ONLY, "elf: section %d is at 0x%p", i, shdr->sh_addr);
+        logDbg(LOG_SERIAL_ONLY, "elf: section %d is at 0x%p and has name %d", i, shdr->sh_addr, shdr->sh_name);
         vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff + i * elf->e_shentsize); // read next header
     }
 
     blkDeallocate(shdr);
+    blkDeallocate(stringTableHeader);
 
     // load program headers (pass 3)
     vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff); // read first header
