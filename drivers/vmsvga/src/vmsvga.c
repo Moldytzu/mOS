@@ -67,7 +67,9 @@ uint32_t vramSize = 0;
 
 uint32_t fbOffset = 0;
 
-const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {};
+const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {
+    .friendlyName = "vmsvga",
+};
 
 uint32_t vmsvgaReadRegister(uint32_t reg)
 {

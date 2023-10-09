@@ -4,6 +4,7 @@
 #include <mm/vmm.h>
 #include <mm/vma.h>
 #include <ipc/mailbox.h>
+#include <drv/drv.h>
 
 #define TASK_BASE_SWITCH_TO_BUFFER 0x1000  // this has to be hardcoded
 #define TASK_BASE_FRAMEBUFFER 0xC000000000 // fixme: replace this with allocated virtual addresses
@@ -31,6 +32,7 @@ typedef struct
     char *enviroment;
 
     // internal
+    drv_metadata_section_t *driverMetadata;
     vma_context_t *virtualMemoryContext;
     uint64_t fileDescriptorPointers[TASK_MAX_FILE_DESCRIPTORS];
     void *stackBase;

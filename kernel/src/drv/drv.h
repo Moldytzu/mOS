@@ -28,6 +28,11 @@ pstruct
 }
 drv_context_fb_t;
 
+typedef struct
+{
+    char friendlyName[128];
+} drv_metadata_section_t;
+
 void drvInit();
 void drvExit(uint32_t drv);
 void *drvRegister(uint32_t drv, uint32_t type);

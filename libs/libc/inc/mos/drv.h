@@ -32,9 +32,7 @@ struct stack_frame;
 
 typedef struct
 {
-    uint64_t to;
-    uint64_t be;
-    uint64_t filled;
+    char friendlyName[128];
 } drv_metadata_section_t;
 
 pstruct

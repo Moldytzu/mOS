@@ -120,7 +120,10 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         if (metaPresent)
         {
             // shdr holds the metadata header
-            // todo: parse it
+            drv_metadata_section_t *sections = blkBlock(sizeof(drv_metadata_section_t));
+            vfsRead(fd, sections, sizeof(drv_metadata_section_t), shdr->sh_offset);
+
+            logDbg(LOG_SERIAL_ONLY, "elf: loading driver with friendly name \"%s\"", sections->friendlyName);
         }
 
         blkDeallocate(shdr);

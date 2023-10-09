@@ -9,7 +9,9 @@ uint8_t port2Type = PS2_TYPE_INVALID;
 
 drv_type_input_t *contextStruct;
 
-const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {};
+const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {
+    .friendlyName = "i8042 ps/2",
+};
 
 // interrupt handlers
 void i8042Port1Handler()

@@ -12,7 +12,9 @@ drv_type_input_t *input;
 char kbuffer[256];
 uint8_t kindex = 0;
 
-const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {};
+const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {
+    .friendlyName = "serial kernel debugger",
+};
 
 uint8_t comRead()
 {
