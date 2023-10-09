@@ -6,11 +6,16 @@
 #define DRV_TYPE_FB 1
 #define DRV_TYPE_INPUT 2
 
+#define MOUSE_BUTTON_LEFT 0
+#define MOUSE_BUTTON_MIDDLE 1
+#define MOUSE_BUTTON_RIGHT 2
+
 pstruct
 {
-    uint32_t pid;       // driver pid
-    uint8_t keys[64];   // key buffers
-    int mouseX, mouseY; // mouse relative coordonates
+    uint32_t pid;
+    uint8_t keys[64];        // key buffers
+    int mouseX, mouseY;      // mouse relative coordonates
+    uint8_t mouseButtons[5]; // mouse button states
 }
 drv_context_input_t;
 

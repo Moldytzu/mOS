@@ -33,10 +33,15 @@ struct stack_frame;
 pstruct
 {
     uint32_t pid;
-    uint8_t keys[64];   // key buffers
-    int mouseX, mouseY; // mouse relative coordonates
+    uint8_t keys[64];        // key buffers
+    int mouseX, mouseY;      // mouse relative coordonates
+    uint8_t mouseButtons[5]; // mouse button states
 }
 drv_type_input_t;
+
+#define MOUSE_BUTTON_LEFT 0
+#define MOUSE_BUTTON_MIDDLE 1
+#define MOUSE_BUTTON_RIGHT 2
 
 pstruct
 {

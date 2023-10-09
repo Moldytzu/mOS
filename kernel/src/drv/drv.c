@@ -8,6 +8,9 @@
 #define PAGES_PER_CONTEXT_ARRAY (1)
 #define MAX_CONTEXTS_PER_ARRAY ((PAGES_PER_CONTEXT_ARRAY * PMM_PAGE) / sizeof(uint64_t))
 
+// fixme: try to phase out this way of handling devices
+// todo: implement a better way of abstracting devices (maybe use the unix way but with a quirk????????????)
+
 drv_context_input_t **inputContexts;
 uint16_t inputIndex = 0;
 

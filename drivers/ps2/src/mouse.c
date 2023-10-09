@@ -87,20 +87,26 @@ void mouseHandle(uint8_t scancode)
         int x = packet->xMovement;
         int y = packet->yMovement;
 
+        // I don't know how to handle this. fixme: find out how
         if (packet->xOverflow || packet->yOverflow)
         {
             packetState = 0;
             return;
         }
 
+        // handle sign
         if (packet->xSign)
             x -= 0x100;
 
         if (packet->ySign)
             y -= 0x100;
 
+        // fill context struct metadata
         contextStruct->mouseX += x;
         contextStruct->mouseY += -y;
+        contextStruct->mouseButtons[MOUSE_BUTTON_LEFT] = packet->buttonLeft;
+        contextStruct->mouseButtons[MOUSE_BUTTON_MIDDLE] = packet->buttonMiddle;
+        contextStruct->mouseButtons[MOUSE_BUTTON_RIGHT] = packet->buttonRight;
         packetState = 0;
     }
 }
