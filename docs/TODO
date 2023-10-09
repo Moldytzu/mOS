@@ -3,6 +3,18 @@ Advanced virtual memory management: [x]
     - make all system tables (GDT, IDT, page table) point to virtual memory (in the higher half) [x]
     - create a virtual memory allocator to manage userspace page tables (to eliminate hard coded addresses) [x]
 
+Advanced device management: [/]
+    - make drivers have a special section [/]
+        - make it store requirements to be loaded []
+            - drivers can set what devices they target []
+            - drivers can set a friendly name []
+        - make the kernel only accept drivers that have it [x]
+    - create a device namespace tree []
+        - have a root to be the PCIe bus []
+        - add devices to it from drivers []
+        - implement locks on all devices []
+            - include serial port in namespace too []
+
 Non-blocking I/O: []
     - move disk drivers in userspace []
     - implement multi-state task management []
@@ -11,7 +23,7 @@ Non-blocking I/O: []
 Window management: []
     - implement PS/2 mouse support [x]
     - implement userspace framebuffer support [x]
-    - improve IPC to support multiple clients []
+    - improve IPC to support multiple clients [/]
         - create mailbox IPC [x]
         - add support for it in userspace []
         - make window manager listen for them []
@@ -73,3 +85,8 @@ Security:
     - support NX bit []
     - SMAP []
     - SMEP []
+
+Legend:
+x -> done
+/ -> work in progress
+  -> not implemented at all
