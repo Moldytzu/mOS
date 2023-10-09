@@ -7,6 +7,8 @@
 #include <sched/scheduler.h>
 #include <misc/logger.h>
 
+#define DRIVER_METADATA_SECTION ".mdrivermeta"
+
 #define ELF_MAGIC "\x7F" \
                   "ELF"
 
@@ -78,25 +80,63 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         return NULL;
     }
 
-    // get string table
-    Elf64_Shdr *stringTableHeader = blkBlock(elf->e_shentsize);
-    vfsRead(fd, stringTableHeader, elf->e_shentsize, elf->e_shoff + elf->e_shstrndx * elf->e_shentsize); // e_shstrnidx is the index of the section header that holds the strings table
-
-    logDbg(LOG_SERIAL_ONLY, "elf: string table is at 0x%p (section %d)", elf->e_shoff + elf->e_shstrndx * elf->e_shentsize, elf->e_shstrndx);
-
-    // parse section headers
-    Elf64_Shdr *shdr = blkBlock(elf->e_shentsize);
-
-    vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff); // read first header
-
-    for (int i = 0; i < elf->e_shnum; i++) // iterate over every section header
+    // parse sections if driver is loading
+    if (driver)
     {
-        logDbg(LOG_SERIAL_ONLY, "elf: section %d is at 0x%p and has name %d", i, shdr->sh_addr, shdr->sh_name);
-        vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff + i * elf->e_shentsize); // read next header
-    }
+        // get string table
+        Elf64_Shdr *stringTableHeader = blkBlock(elf->e_shentsize);
+        vfsRead(fd, stringTableHeader, elf->e_shentsize, elf->e_shoff + elf->e_shstrndx * elf->e_shentsize); // e_shstrnidx is the index of the section header that holds the strings table
 
-    blkDeallocate(shdr);
-    blkDeallocate(stringTableHeader);
+#ifdef K_ELF_DEBUG
+        logDbg(LOG_SERIAL_ONLY, "elf: string table is at 0x%p (section %d) and holds %d bytes", elf->e_shoff + elf->e_shstrndx * elf->e_shentsize, elf->e_shstrndx, stringTableHeader->sh_size);
+#endif
+
+        char *stringTable = blkBlock(stringTableHeader->sh_size);
+        vfsRead(fd, stringTable, stringTableHeader->sh_size, stringTableHeader->sh_offset);
+
+        // parse section headers to find the driver metadata section
+        Elf64_Shdr *shdr = blkBlock(elf->e_shentsize);
+
+        vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff); // read first header
+
+        bool metaPresent = false;
+        for (int i = 0; i < elf->e_shnum; i++) // iterate over every section header
+        {
+            char *sectionName = stringTable + shdr->sh_name;
+
+            // #ifdef K_ELF_DEBUG
+            logDbg(LOG_SERIAL_ONLY, "elf: section %d is at 0x%p and has name %s", i, shdr->sh_addr, sectionName);
+            // #endif
+
+            if (strcmp(sectionName, DRIVER_METADATA_SECTION) == 0)
+            {
+                metaPresent = true;
+                break;
+            }
+
+            vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff + i * elf->e_shentsize); // read next header
+        }
+
+        if (metaPresent)
+        {
+            // shdr holds the metadata header
+            // todo: parse it
+        }
+
+        blkDeallocate(shdr);
+        blkDeallocate(stringTableHeader);
+        blkDeallocate(stringTable);
+
+        if (!metaPresent)
+        {
+            logError("elf: failing to load driver %s without metadata", path);
+
+            blkDeallocate(elf);
+            blkDeallocate(phdr);
+
+            return NULL;
+        }
+    }
 
     // load program headers (pass 3)
     vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff); // read first header
