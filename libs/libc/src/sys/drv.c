@@ -64,9 +64,7 @@ uint64_t sys_idt_reset(uint64_t vector)
 
 uint64_t sys_driver_start(char *path)
 {
-    uint64_t pid = 0;
-    sys_driver(SYS_DRIVER_START, (uint64_t)path, (uint64_t)&pid, 0);
-    return pid;
+    return sys_driver(SYS_DRIVER_START, (uint64_t)path, 0, 0);
 }
 
 drv_pci_header_t *sys_pci_get(uint32_t vendor, uint32_t device)
