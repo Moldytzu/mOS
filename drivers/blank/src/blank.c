@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {};
+
 void _mdrvmain()
 {
     // use this as a template for other drivers

@@ -12,6 +12,8 @@ drv_type_input_t *input;
 char kbuffer[256];
 uint8_t kindex = 0;
 
+const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {};
+
 uint8_t comRead()
 {
     while (!(inb(COM1_LINE_STATUS) & 1)) // wait for data ready bit to be set

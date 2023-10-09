@@ -49,6 +49,8 @@ typedef struct
 drv_type_framebuffer_t *fb;
 drv_pci_header0_t *device;
 
+const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {};
+
 uint16_t bgaReadRegister(uint16_t reg)
 {
     outw(BGA_INDEX, reg); // point to the register

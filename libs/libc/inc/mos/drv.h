@@ -30,6 +30,13 @@ struct stack_frame;
 #define SYS_DRIVER_TYPE_FRAMEBUFFER 1
 #define SYS_DRIVER_TYPE_INPUT 2
 
+typedef struct
+{
+    uint64_t to;
+    uint64_t be;
+    uint64_t filled;
+} drv_metadata_section_t;
+
 pstruct
 {
     uint32_t pid;
