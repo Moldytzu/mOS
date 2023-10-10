@@ -91,11 +91,11 @@ vma_context_t *vmaReserveRange(vma_context_t *context, void *start, uint64_t siz
     }
 
     // do the reserving
-    vma_used_range_t *newRange = blkBlock(sizeof(vma_used_range_t));
+    volatile vma_used_range_t *newRange = (vma_used_range_t *)blkBlock(sizeof(vma_used_range_t));
     newRange->size = size;
     newRange->start = (uint64_t)start;
     newRange->next = range->next;
-    range->next = newRange;
+    range->next = (vma_used_range_t *)newRange;
 
     return context;
 }
