@@ -10,6 +10,7 @@ INTERNALCFLAGS :=              \
 	-I./src/                   \
 	-Wno-int-to-pointer-cast   \
 	-fstack-protector    	   \
+#	-fsanitize=undefined
 
 # linker flags particular for the kernel
 INTERNALLDFLAGS :=         \
