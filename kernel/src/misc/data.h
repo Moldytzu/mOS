@@ -12,7 +12,7 @@ static inline __attribute__((always_inline)) void bmpSet(void *bmp, uint64_t idx
     word += idx / BMP_ACCESS_BITS;
     idx = idx % BMP_ACCESS_BITS;
 
-    *word |= (1 << idx);
+    *word |= (1UL << idx);
 }
 
 static inline __attribute__((always_inline)) void bmpUnset(void *bmp, uint64_t idx)
@@ -21,7 +21,7 @@ static inline __attribute__((always_inline)) void bmpUnset(void *bmp, uint64_t i
     word += idx / BMP_ACCESS_BITS;
     idx = idx % BMP_ACCESS_BITS;
 
-    *word &= ~(1 << idx);
+    *word &= ~(1UL << idx);
 }
 
 static inline __attribute__((always_inline)) uint64_t bmpGet(void *bmp, uint64_t idx)
@@ -30,5 +30,5 @@ static inline __attribute__((always_inline)) uint64_t bmpGet(void *bmp, uint64_t
     word += idx / BMP_ACCESS_BITS;
     idx = idx % BMP_ACCESS_BITS;
 
-    return *word & (1 << idx);
+    return *word & (1UL << idx);
 }
