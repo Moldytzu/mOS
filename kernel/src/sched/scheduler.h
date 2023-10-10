@@ -48,10 +48,10 @@ typedef struct
     void *prev;
 } sched_task_t;
 
-void schedEnable();
+noreturn void schedEnable();
 sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
 void schedSchedule(idt_intrerrupt_stack_t *stack);
-void schedSwitchNext();
+noreturn void schedSwitchNext();
 void schedInit();
 sched_task_t *schedGetCurrent(uint32_t core);
 sched_task_t *schedGet(uint32_t id);

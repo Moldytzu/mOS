@@ -17,7 +17,7 @@ uint32_t acpiTimerRead()
     case ACPI_GAS_ACCESS_IO:
         return ind(fadt->PMTimer64.address);
     default:
-        break;
+        return 0;
     }
 }
 

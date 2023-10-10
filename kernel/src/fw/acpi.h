@@ -186,8 +186,8 @@ acpi_sdt_t *acpiGet(const char *sig, int index);
 
 // power
 void acpiInit();
-void acpiReboot();
-void acpiShutdown();
+noreturn void acpiReboot();
+noreturn void acpiShutdown();
 
 // aml
 void amlInit();

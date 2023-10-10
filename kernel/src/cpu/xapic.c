@@ -77,6 +77,8 @@ uint64_t xapicCalibrateHPET(uint64_t divisor)
 
     xapicWrite(XAPIC_REG_LVT_TIMER, XAPIC_TIMER_VECTOR | (1 << 17)); // periodic mode
     xapicWrite(XAPIC_REG_TIMER_INITCNT, ticks);                      // initialise with calibrated tick
+
+    return ticks;
 }
 
 void xapicInit(bool bsp)

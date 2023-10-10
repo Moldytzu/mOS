@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <stdnoreturn.h>
 #include <limits.h>
 #include <config.h>
 #include <cpu/atomic.h>
@@ -201,7 +202,7 @@ const char *to_string(uint64_t val);
 const char *to_hstring(uint64_t val);
 
 // hang
-void hang();
+noreturn void hang();
 
 // printk
 void printk(const char *fmt, ...);

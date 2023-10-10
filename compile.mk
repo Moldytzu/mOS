@@ -24,6 +24,8 @@ CFLAGS :=   		              \
 	-mabi=sysv           	      \
 	-mno-red-zone        	      \
 	-Werror 			          \
+	-Werror=return-type           \
+	-Werror=uninitialized         \
 	-Wno-address-of-packed-member \
 	-mcmodel=kernel               \
 	-Og                           \
