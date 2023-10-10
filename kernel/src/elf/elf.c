@@ -104,9 +104,9 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         {
             char *sectionName = stringTable + shdr->sh_name;
 
-            // #ifdef K_ELF_DEBUG
+#ifdef K_ELF_DEBUG
             logDbg(LOG_SERIAL_ONLY, "elf: section %d is at 0x%p and has name %s", i, shdr->sh_addr, sectionName);
-            // #endif
+#endif
 
             if (strcmp(sectionName, DRIVER_METADATA_SECTION) == 0)
             {
@@ -116,6 +116,9 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 
             vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff + i * elf->e_shentsize); // read next header
         }
+
+        // check if the section is the right size
+        metaPresent = metaPresent && (shdr->sh_size == sizeof(drv_metadata_section_t));
 
         if (metaPresent)
         {
