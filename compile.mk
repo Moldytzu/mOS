@@ -28,7 +28,7 @@ CFLAGS :=   		              \
 	-Werror=uninitialized         \
 	-Wno-address-of-packed-member \
 	-mcmodel=kernel               \
-	-Og                           \
+	-O2                           \
 	-march=nocona                 \
 	-MMD                          \
 	-g
