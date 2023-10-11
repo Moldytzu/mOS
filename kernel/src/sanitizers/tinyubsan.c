@@ -142,6 +142,7 @@ extern "C"
         else if (ptr & ((1 << data->log_alignment) - 1))
         {
             tu_print_location("use of misaligned pointer", data->location);
+            printks("ptr: %p\n", ptr);
         }
         else
         {
