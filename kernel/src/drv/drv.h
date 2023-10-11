@@ -10,23 +10,21 @@
 #define MOUSE_BUTTON_MIDDLE 1
 #define MOUSE_BUTTON_RIGHT 2
 
-pstruct
+typedef struct
 {
     uint32_t pid;
     uint8_t keys[64];        // key buffers
     int mouseX, mouseY;      // mouse relative coordonates
     uint8_t mouseButtons[5]; // mouse button states
-}
-drv_context_input_t;
+} drv_context_input_t;
 
-pstruct
+typedef struct
 {
     uint32_t pid; // driver pid
     void *base;   // base address
     uint32_t currentXres, currentYres;
     uint32_t requestedXres, requestedYres;
-}
-drv_context_fb_t;
+} drv_context_fb_t;
 
 typedef struct
 {

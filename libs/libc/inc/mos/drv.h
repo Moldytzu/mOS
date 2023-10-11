@@ -35,27 +35,25 @@ typedef struct
     char friendlyName[128];
 } drv_metadata_section_t;
 
-pstruct
+typedef struct
 {
     uint32_t pid;
     uint8_t keys[64];        // key buffers
     int mouseX, mouseY;      // mouse relative coordonates
     uint8_t mouseButtons[5]; // mouse button states
-}
-drv_type_input_t;
+} drv_type_input_t;
 
 #define MOUSE_BUTTON_LEFT 0
 #define MOUSE_BUTTON_MIDDLE 1
 #define MOUSE_BUTTON_RIGHT 2
 
-pstruct
+typedef struct
 {
     uint32_t pid;
     void *base; // base address
     uint32_t currentXres, currentYres;
     uint32_t requestedXres, requestedYres;
-}
-drv_type_framebuffer_t;
+} drv_type_framebuffer_t;
 
 pstruct
 {
