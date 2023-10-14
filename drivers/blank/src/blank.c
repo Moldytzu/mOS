@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-const volatile drv_metadata_section_t metadata __attribute__((section(".mdrivermeta"))) = {
+GENERATE_METADATA(metadata) = {
     .friendlyName = "blank",
 };
 

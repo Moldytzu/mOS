@@ -107,6 +107,8 @@ pstruct
 }
 drv_pci_header0_t;
 
+#define GENERATE_METADATA(m) const volatile drv_metadata_section_t m __attribute__((section(".mdrivermeta")))
+
 uint64_t *sys_driver_announce(uint64_t type);
 uint64_t sys_driver_start(char *path);
 drv_pci_header_t *sys_pci_get(uint32_t vendor, uint32_t device);
