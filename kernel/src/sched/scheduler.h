@@ -49,7 +49,7 @@ typedef struct
 } sched_task_t;
 
 noreturn void schedEnable();
-sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver);
+sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, drv_metadata_section_t *driverMetadata);
 void schedSchedule(idt_intrerrupt_stack_t *stack);
 noreturn void schedSwitchNext();
 void schedInit();

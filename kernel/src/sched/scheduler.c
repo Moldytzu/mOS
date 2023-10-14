@@ -166,7 +166,7 @@ sched_task_t *schedLast(uint16_t core)
 }
 
 // add new task
-sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, bool driver)
+sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, uint64_t execSize, uint64_t execVirtualBase, uint64_t terminal, const char *cwd, int argc, char **argv, bool elf, drv_metadata_section_t *driverMetadata)
 {
     uint32_t id = nextCore(); // get next core id
 
@@ -179,17 +179,18 @@ sched_task_t *schedAdd(const char *name, void *entry, void *execPhysicalBase, ui
     memcpy(t->name, name, min(strlen(name), 128)); // set a name
     t->terminal = terminal;
     t->isElf = elf;
-    t->isDriver = driver;
+    t->isDriver = driverMetadata != NULL;
     t->virtualBaseAddress = execVirtualBase;
     t->virtualMemoryContext = vmaCreateContext();
+    t->driverMetadata = driverMetadata;
 
-    if (driver) // give speed advantage to regular apps
+    if (t->isDriver) // give speed advantage to regular apps
         t->targetQuantum = 0;
     else
         t->targetQuantum = K_SCHED_MIN_QUANTUM;
 
     // registers
-    if (driver)
+    if (t->isDriver)
         t->registers.rflags = 0b11001000000010; // enable interrupts and set IOPL to 3
     else
         t->registers.rflags = 0b1000000010;               // enable interrupts
@@ -462,6 +463,10 @@ void schedKill(uint32_t id)
         // close all files
         for (int i = 0; i < TASK_MAX_FILE_DESCRIPTORS; i++)
             vfsClose(task->fileDescriptorPointers[i]);
+
+        // deallocate metadata section
+        if (task->isDriver)
+            blkDeallocate(task->driverMetadata);
 
         // deallocate mails
         mailFreeAll(&task->mailbox);

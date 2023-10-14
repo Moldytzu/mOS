@@ -81,6 +81,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     }
 
     // parse sections if driver is loading
+    drv_metadata_section_t *sections = NULL;
     if (driver)
     {
         // get string table
@@ -123,7 +124,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         if (metaPresent)
         {
             // shdr holds the metadata header
-            drv_metadata_section_t *sections = blkBlock(sizeof(drv_metadata_section_t));
+            sections = blkBlock(sizeof(drv_metadata_section_t));
             vfsRead(fd, sections, sizeof(drv_metadata_section_t), shdr->sh_offset);
 
             logDbg(LOG_SERIAL_ONLY, "elf: loading driver with friendly name \"%s\"", sections->friendlyName);
@@ -167,7 +168,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         ; // step back to last delimiter (removes file name)
 
     // add the task
-    sched_task_t *task = schedAdd(path, (void *)elf->e_entry - virtualBase, buffer, memsz, virtualBase, 0, cwd, argc, argv, true, driver);
+    sched_task_t *task = schedAdd(path, (void *)elf->e_entry - virtualBase, buffer, memsz, virtualBase, 0, cwd, argc, argv, true, sections);
 
     // clean up
     pmmDeallocate(cwd);
