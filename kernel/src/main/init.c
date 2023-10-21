@@ -57,7 +57,7 @@ void _start()
 
     acpiInstallSCIInterrupt(); // install SCI interrupt handler
 
-    // vfsInit(); // initialise the virtual filesystem
+    vfsInit(); // initialise the virtual filesystem
 
     // initrdMount(); // mount the initrd
 
