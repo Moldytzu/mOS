@@ -4,6 +4,7 @@
 #include <mm/pmm.h>
 
 // todo: before adding any other feature to this, clean this mess
+/*
 
 #ifdef K_FAT
 
@@ -315,3 +316,4 @@ bool fatCreate(fat_bpb_t *bpb, vfs_drive_t *drive, size_t partition)
     return true;
 }
 #endif
+*/

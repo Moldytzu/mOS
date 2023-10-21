@@ -7,6 +7,7 @@
 #include <sched/time.h>
 #include <fs/vfs.h>
 
+#if 0
 #ifdef K_AHCI
 
 #define GEN_HANDLER_READ(port)                                                      \
@@ -262,154 +263,155 @@ void ahciInit()
             continue;
 
         if (pciDescriptors[i].header->class == 1 /*mass storage device*/ && pciDescriptors[i].header->subclass == 6 /*serial ata*/)
-        {
-            ahciDescriptor = pciDescriptors[i];
-            ahciHeader = (drv_pci_header0_t *)pciDescriptors[i].header;
-            break;
-        }
-    }
-
-    if (!ahciHeader) // didn't find any controller
-        return;
-
-    // enable access to internal registers
-    ahciHeader->Command |= 0b10000010111;                                                     // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
-    ahciBase = (uint64_t)(ahciHeader->BAR5 & 0xFFFFE000);                                     // get base address
-    vmmMapKernel((void *)ahciBase, (void *)ahciBase, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
-
-#ifdef K_AHCI_DEBUG
-    logDbg(LOG_ALWAYS, "ahci: ahciBase is at %p", ahciBase);
-#endif
-
-    // don't allow 32 bit only ahci controllers
-    uint32_t cap = ahciRead(0x0); // read host capabilities
-
-    if (!(cap & 0x80000000)) // if controller doesn't support 64 bit addressing give up
-        return;
-
-    // transfer ownership to operating system
-    uint32_t bohc = ahciRead(0x28); // read bios/os handoff control and status
-    if (bohc & 0x1)                 // bios owns hba
-    {
-        ahciWrite(0x28, bohc | 0b1000); // set os ownership change bit
-
-#ifdef K_AHCI_DEBUG
-        logDbg(LOG_ALWAYS, "ahci: waiting for ownership to change");
-#endif
-
-        size_t timeout = 1000;
-        while ((ahciRead(0x28) & 0x1) && --timeout) // wait for the bios to transfer ownership
-            timeSleepMilis(1);
-
-        if (!timeout)
-            logWarn("ahci: ownership change timed out (maybe firmware bug?)");
-    }
-
-    // INITIALISATION (ahci 1.3.1 spec page 112)
-
-    // 1. Indicate that system software is AHCI aware by setting GHC.AE to ‘1’.
-    ahciWrite(0x4, ahciRead(0x4) | 0x80000000); // set ahci enable bit
-
-    // 2. Determine which ports are implemented by the HBA, by reading the PI register
-    uint32_t pi = ahciRead(0xC);    // read ports implemented
-    for (size_t i = 0; i < 32; i++) // each bit represents a port's presence
-    {
-        if (!(pi & 1))
-            continue;
-
-        pi >>= 1;
-
-        if (ahciPort(i)->sig != SATA_SIG_ATA) // we support only sata devices
-            continue;
-
-        portImplemented[i] = true;
-        portsImplemented++;
-    }
-
-    // 4. Determine how many command slots the HBA supports, by reading CAP.NCS
-    commandSlots = (ahciRead(0x0) >> 8) & 0x1F;
-
-#ifdef K_AHCI_DEBUG
-    logDbg(LOG_ALWAYS, "ahci: %d command slots supported", commandSlots);
-#endif
-
-    // prepare ports for commands
-    for (int p = 0; p < 32; p++)
-    {
-        if (portImplemented[p] == false)
-            continue;
-
-        ahci_port_t *port = ahciPort(p);
-
-        ahciPortStop(port);        // 3. Ensure that the controller is not in the running state by reading and examining each implemented port’s PxCMD register
-        ahciPortAllocate(port, p); // 5. For each implemented port, system software shall allocate memory
-        port->serr = 0xFFFFFFFF;   // 6. For each implemented port, clear the PxSERR register, by writing ‘1s’ to each implemented bit location.
-    }
-
-    // 7. Determine which events should cause an interrupt, and set each implemented port’s PxIE register with the appropriate enables. (todo: we don't want this at the moment, maybe when we create an I/O scheduler)
-
-    // INITIALISATION complete
-    logInfo("ahci: initialised controller at %d.%d.%d with %d sata port(s) implemented", ahciDescriptor.bus, ahciDescriptor.device, ahciDescriptor.function, portsImplemented);
-
-    // identify all devices
-    for (int p = 0; p < 32; p++)
-    {
-        if (portImplemented[p] == false)
-            continue;
-
-        ahci_port_t *port = ahciPort(p);
-        ata_identify_device_packet_t *response = pmmPage();
-        ahciPortIdentify(port, response);
-
-        uint16_t *raw = (uint16_t *)response;
-
-        printks("ahci port %d identification packet: ", p);
-        for (int i = 0; i < 256; i++)
-            printks("%x ", raw[i]);
-        printks(" model number: ");
-        for (int i = 0; i < 20; i += 2)
-            printks("%c%c", response->modelNumber[i + 1], response->modelNumber[i]);
-        printks("\n");
-    }
-
-    // map all drives in the vfs
-    for (int p = 0; p < 32; p++)
-    {
-        if (portImplemented[p] == false)
-            continue;
-
-        ahci_port_t *port = ahciPort(p);
-
-        // register the drive in vfs
-        vfs_drive_t drive;
-        zero(&drive, sizeof(drive));
-        drive.interface = "ahci";
-        drive.friendlyName = pmmPage();
-        drive.read = ahciReads[p];
-        const char *str = to_string(p);
-        memcpy((void *)drive.friendlyName, str, strlen(str));
-
-        vfs_mbr_t *firstSector = pmmPage();
-        ahciReads[p](firstSector, 0, 1);
-
-        if (vfsCheckMBR(firstSector)) // check if mbr is valid
-        {
-            int part = 0;
-            for (int i = 0; i < 4; i++) // parse all the partitions
-            {
-                vfs_mbr_partition_t *partition = &firstSector->partitions[i];
-                if (!partition->startSector)
-                    continue;
-
-                vfs_partition_t *vfsPart = &drive.partitions[part++];
-                vfsPart->startLBA = partition->startSector;
-                vfsPart->endLBA = partition->startSector + partition->sectors;
-                vfsPart->sectors = partition->sectors;
-            }
-        }
-
-        vfsAddDrive(drive);
-    }
+{
+    ahciDescriptor = pciDescriptors[i];
+    ahciHeader = (drv_pci_header0_t *)pciDescriptors[i].header;
+    break;
+}
 }
 
+if (!ahciHeader) // didn't find any controller
+    return;
+
+// enable access to internal registers
+ahciHeader->Command |= 0b10000010111;                                                     // enable i/o space, enable memory space, enable bus mastering, enable memory write and invalidate and disable intrerrupts
+ahciBase = (uint64_t)(ahciHeader->BAR5 & 0xFFFFE000);                                     // get base address
+vmmMapKernel((void *)ahciBase, (void *)ahciBase, VMM_ENTRY_CACHE_DISABLE | VMM_ENTRY_RW); // map base
+
+#ifdef K_AHCI_DEBUG
+logDbg(LOG_ALWAYS, "ahci: ahciBase is at %p", ahciBase);
+#endif
+
+// don't allow 32 bit only ahci controllers
+uint32_t cap = ahciRead(0x0); // read host capabilities
+
+if (!(cap & 0x80000000)) // if controller doesn't support 64 bit addressing give up
+    return;
+
+// transfer ownership to operating system
+uint32_t bohc = ahciRead(0x28); // read bios/os handoff control and status
+if (bohc & 0x1)                 // bios owns hba
+{
+    ahciWrite(0x28, bohc | 0b1000); // set os ownership change bit
+
+#ifdef K_AHCI_DEBUG
+    logDbg(LOG_ALWAYS, "ahci: waiting for ownership to change");
+#endif
+
+    size_t timeout = 1000;
+    while ((ahciRead(0x28) & 0x1) && --timeout) // wait for the bios to transfer ownership
+        timeSleepMilis(1);
+
+    if (!timeout)
+        logWarn("ahci: ownership change timed out (maybe firmware bug?)");
+}
+
+// INITIALISATION (ahci 1.3.1 spec page 112)
+
+// 1. Indicate that system software is AHCI aware by setting GHC.AE to ‘1’.
+ahciWrite(0x4, ahciRead(0x4) | 0x80000000); // set ahci enable bit
+
+// 2. Determine which ports are implemented by the HBA, by reading the PI register
+uint32_t pi = ahciRead(0xC);    // read ports implemented
+for (size_t i = 0; i < 32; i++) // each bit represents a port's presence
+{
+    if (!(pi & 1))
+        continue;
+
+    pi >>= 1;
+
+    if (ahciPort(i)->sig != SATA_SIG_ATA) // we support only sata devices
+        continue;
+
+    portImplemented[i] = true;
+    portsImplemented++;
+}
+
+// 4. Determine how many command slots the HBA supports, by reading CAP.NCS
+commandSlots = (ahciRead(0x0) >> 8) & 0x1F;
+
+#ifdef K_AHCI_DEBUG
+logDbg(LOG_ALWAYS, "ahci: %d command slots supported", commandSlots);
+#endif
+
+// prepare ports for commands
+for (int p = 0; p < 32; p++)
+{
+    if (portImplemented[p] == false)
+        continue;
+
+    ahci_port_t *port = ahciPort(p);
+
+    ahciPortStop(port);        // 3. Ensure that the controller is not in the running state by reading and examining each implemented port’s PxCMD register
+    ahciPortAllocate(port, p); // 5. For each implemented port, system software shall allocate memory
+    port->serr = 0xFFFFFFFF;   // 6. For each implemented port, clear the PxSERR register, by writing ‘1s’ to each implemented bit location.
+}
+
+// 7. Determine which events should cause an interrupt, and set each implemented port’s PxIE register with the appropriate enables. (todo: we don't want this at the moment, maybe when we create an I/O scheduler)
+
+// INITIALISATION complete
+logInfo("ahci: initialised controller at %d.%d.%d with %d sata port(s) implemented", ahciDescriptor.bus, ahciDescriptor.device, ahciDescriptor.function, portsImplemented);
+
+// identify all devices
+for (int p = 0; p < 32; p++)
+{
+    if (portImplemented[p] == false)
+        continue;
+
+    ahci_port_t *port = ahciPort(p);
+    ata_identify_device_packet_t *response = pmmPage();
+    ahciPortIdentify(port, response);
+
+    uint16_t *raw = (uint16_t *)response;
+
+    printks("ahci port %d identification packet: ", p);
+    for (int i = 0; i < 256; i++)
+        printks("%x ", raw[i]);
+    printks(" model number: ");
+    for (int i = 0; i < 20; i += 2)
+        printks("%c%c", response->modelNumber[i + 1], response->modelNumber[i]);
+    printks("\n");
+}
+
+// map all drives in the vfs
+for (int p = 0; p < 32; p++)
+{
+    if (portImplemented[p] == false)
+        continue;
+
+    ahci_port_t *port = ahciPort(p);
+
+    // register the drive in vfs
+    vfs_drive_t drive;
+    zero(&drive, sizeof(drive));
+    drive.interface = "ahci";
+    drive.friendlyName = pmmPage();
+    drive.read = ahciReads[p];
+    const char *str = to_string(p);
+    memcpy((void *)drive.friendlyName, str, strlen(str));
+
+    vfs_mbr_t *firstSector = pmmPage();
+    ahciReads[p](firstSector, 0, 1);
+
+    if (vfsCheckMBR(firstSector)) // check if mbr is valid
+    {
+        int part = 0;
+        for (int i = 0; i < 4; i++) // parse all the partitions
+        {
+            vfs_mbr_partition_t *partition = &firstSector->partitions[i];
+            if (!partition->startSector)
+                continue;
+
+            vfs_partition_t *vfsPart = &drive.partitions[part++];
+            vfsPart->startLBA = partition->startSector;
+            vfsPart->endLBA = partition->startSector + partition->sectors;
+            vfsPart->sectors = partition->sectors;
+        }
+    }
+
+    vfsAddDrive(drive);
+}
+}
+
+#endif
 #endif

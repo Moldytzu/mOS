@@ -37,7 +37,7 @@ uint64_t exec(uint64_t path, uint64_t pid, uint64_t packet, uint64_t r9, uint64_
     }
 
     char execPath[512];
-    vfsGetPath(fd, (void *)execPath);
+    // vfsGetPath(fd, (void *)execPath);
 
     sched_task_t *newTask = elfLoad(execPath, input->argc, input->argv, false); // do the loading
     *ret = newTask->id;                                                         // set the pid

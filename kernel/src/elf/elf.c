@@ -25,18 +25,18 @@ bool elfIsCompatible(Elf64_Ehdr *elf)
 // load a static elf binary as a userspace task
 sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
 {
-    uint64_t fd = vfsOpen(path);                    // open the file
-    uint64_t fdSize = vfsSize(fd);                  // get the size
+    // uint64_t fd = vfsOpen(path);                    // open the file
+    // uint64_t fdSize = vfsSize(fd);                  // get the size
     Elf64_Ehdr *elf = blkBlock(sizeof(Elf64_Ehdr)); // allocate the elf header
 
-    vfsRead(fd, elf, sizeof(Elf64_Ehdr), 0); // read the header
+    // vfsRead(fd, elf, sizeof(Elf64_Ehdr), 0); // read the header
 
     // check compatibility
     if (!elfIsCompatible(elf))
     {
         // clean up
         blkDeallocate(elf);
-        vfsClose(fd);
+        // vfsClose(fd);
         return NULL;
     }
 
@@ -47,8 +47,8 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     uint64_t virtualBase = UINT64_MAX; // base virtual address of the executable in memory
 
     // determine in-memory size of executable and virtual base (pass 1)
-    Elf64_Phdr *phdr = blkBlock(elf->e_phentsize);     // buffer to store information about the current program header
-    vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff); // read first header
+    Elf64_Phdr *phdr = blkBlock(elf->e_phentsize); // buffer to store information about the current program header
+    // vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff); // read first header
 
     size_t memsz = 0;
     for (int i = 0; i < elf->e_phnum; i++) // iterate over every program header
@@ -64,7 +64,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
                 virtualBase = phdr->p_vaddr;
         }
 
-        vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff + i * elf->e_phentsize); // read next program header
+        // vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff + i * elf->e_phentsize); // read next program header
     }
     memsz = align(memsz, PMM_PAGE); // align to page size
 
@@ -86,19 +86,19 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     {
         // get string table
         Elf64_Shdr *stringTableHeader = blkBlock(elf->e_shentsize);
-        vfsRead(fd, stringTableHeader, elf->e_shentsize, elf->e_shoff + elf->e_shstrndx * elf->e_shentsize); // e_shstrnidx is the index of the section header that holds the strings table
+        // vfsRead(fd, stringTableHeader, elf->e_shentsize, elf->e_shoff + elf->e_shstrndx * elf->e_shentsize); // e_shstrnidx is the index of the section header that holds the strings table
 
 #ifdef K_ELF_DEBUG
         logDbg(LOG_SERIAL_ONLY, "elf: string table is at 0x%p (section %d) and holds %d bytes", elf->e_shoff + elf->e_shstrndx * elf->e_shentsize, elf->e_shstrndx, stringTableHeader->sh_size);
 #endif
 
         char *stringTable = blkBlock(stringTableHeader->sh_size);
-        vfsRead(fd, stringTable, stringTableHeader->sh_size, stringTableHeader->sh_offset);
+        // vfsRead(fd, stringTable, stringTableHeader->sh_size, stringTableHeader->sh_offset);
 
         // parse section headers to find the driver metadata section
         Elf64_Shdr *shdr = blkBlock(elf->e_shentsize);
 
-        vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff); // read first header
+        // vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff); // read first header
 
         bool metaPresent = false;
         for (int i = 0; i < elf->e_shnum; i++) // iterate over every section header
@@ -115,7 +115,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
                 break;
             }
 
-            vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff + i * elf->e_shentsize); // read next header
+            // vfsRead(fd, shdr, elf->e_shentsize, elf->e_shoff + i * elf->e_shentsize); // read next header
         }
 
         // check if the section is the right size
@@ -125,7 +125,7 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
         {
             // shdr holds the metadata header
             sections = blkBlock(sizeof(drv_metadata_section_t));
-            vfsRead(fd, sections, sizeof(drv_metadata_section_t), shdr->sh_offset);
+            // vfsRead(fd, sections, sizeof(drv_metadata_section_t), shdr->sh_offset);
 
             logDbg(LOG_SERIAL_ONLY, "elf: loading driver with friendly name \"%s\"", sections->friendlyName);
         }
@@ -146,17 +146,17 @@ sched_task_t *elfLoad(const char *path, int argc, char **argv, bool driver)
     }
 
     // load program headers (pass 3)
-    vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff); // read first header
-    void *buffer = pmmPages(memsz / PMM_PAGE);         // allocate the buffer for the sections
+    // vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff); // read first header
+    void *buffer = pmmPages(memsz / PMM_PAGE); // allocate the buffer for the sections
 
     for (int i = 0; i < elf->e_phnum; i++) // iterate over every program header
     {
         if (phdr->p_type == PT_LOAD) // program header to be loaded
         {
-            vfsRead(fd, (void *)((uint64_t)buffer + phdr->p_vaddr - virtualBase), phdr->p_filesz, phdr->p_offset); // copy the program header to the buffer using the vfs
+            // vfsRead(fd, (void *)((uint64_t)buffer + phdr->p_vaddr - virtualBase), phdr->p_filesz, phdr->p_offset); // copy the program header to the buffer using the vfs
         }
 
-        vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff + i); // read next program header
+        // vfsRead(fd, phdr, elf->e_phentsize, elf->e_phoff + i); // read next program header
     }
 
     blkDeallocate(phdr); // clean up

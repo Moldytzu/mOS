@@ -2,6 +2,7 @@
 #include <misc/utils.h>
 #include <fs/vfs.h>
 
+/*
 pstruct
 {
     uint8_t jump[3];
@@ -33,7 +34,8 @@ pstruct
     uint64_t identifier;
     uint8_t bootCode[420];
     uint16_t bootSignature;
-} fat_bpb_t;
+}
+fat_bpb_t;
 
 pstruct
 {
@@ -44,7 +46,8 @@ pstruct
     unsigned directory : 1;
     unsigned archive : 1;
     unsigned reserved : 2;
-} fat_attributes_t;
+}
+fat_attributes_t;
 
 pstruct
 {
@@ -60,7 +63,8 @@ pstruct
     uint16_t lastWriteDate;
     uint16_t clusterLow;
     uint32_t size;
-} fat_dir_t;
+}
+fat_dir_t;
 
 pstruct
 {
@@ -72,14 +76,17 @@ pstruct
     uint16_t name2[6];
     uint16_t reserved;
     uint16_t name3[2];
-} fat_lfn_t;
+}
+fat_lfn_t;
 
 pstruct
 {
     fat_bpb_t *bpb;
     vfs_drive_t *drive;
     size_t partition;
-} fat_context_t;
+}
+fat_context_t;
 
 bool fatIsValid(fat_bpb_t *bpb);
 bool fatCreate(fat_bpb_t *bpb, vfs_drive_t *drive, size_t partition);
+*/

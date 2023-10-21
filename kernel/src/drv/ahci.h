@@ -1,6 +1,7 @@
 #pragma once
 #include <misc/utils.h>
 
+/*
 #define SATA_SIG_ATA 0x00000101   // SATA drive
 #define SATA_SIG_ATAPI 0xEB140101 // SATAPI drive
 #define SATA_SIG_SEMB 0xC33C0101  // Enclosure management bridge
@@ -281,3 +282,4 @@ pstruct
 ata_identify_device_packet_t;
 
 void ahciInit();
+*/

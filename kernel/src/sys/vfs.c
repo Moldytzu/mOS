@@ -25,7 +25,7 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, uint64_
         if (!IS_MAPPED(arg1))
             return 0;
 
-        return vfsExists(PHYSICAL(arg1));
+        // return vfsExists(PHYSICAL(arg1));
     }
 
     case 1: // directory path exists
@@ -33,6 +33,7 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, uint64_
         if (!IS_MAPPED(arg1))
             return false;
 
+        /*
         const char *target = PHYSICAL(arg1); // target directory
         char fullPath[512];                  // full path of node
 
@@ -51,11 +52,13 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, uint64_
             currentNode = currentNode->next; // next node
         } while (currentNode);
 
+*/
         return false;
     }
 
     case 2: // list directory
     {
+        /*
         if (!IS_MAPPED(arg1) || !retAddr)
         {
             *retAddr = 0;
@@ -108,12 +111,14 @@ uint64_t vfs(uint64_t call, uint64_t arg1, uint64_t retVal, uint64_t r9, uint64_
             currentNode = currentNode->next; // next node
         } while (currentNode);
 
+        */
+
         return SYSCALL_STATUS_OK;
     }
 
     case 3: // size of descriptor
     {
-        return vfsSize(FD_TO_NODE(arg1));
+        // return vfsSize(FD_TO_NODE(arg1));
     }
 
     default:

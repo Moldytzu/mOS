@@ -29,10 +29,10 @@ uint64_t driver(uint64_t call, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint
 
         // gather the full path
         char path[512];
-        vfsGetPath(fd, path);
+        // vfsGetPath(fd, path);
 
         // close the file descriptor
-        vfsClose(fd);
+        // vfsClose(fd);
 
         if (elfLoad(path, 0, 0, true)) // start the driver
             return SYSCALL_STATUS_OK;

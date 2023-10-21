@@ -23,6 +23,6 @@ uint64_t open(uint64_t path, uint64_t rbx, uint64_t r8, uint64_t r9, uint64_t r1
         return i + 2;
     }
 
-    vfsClose(node);
+    // vfsClose(node);
     return 0;
 }

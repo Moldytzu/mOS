@@ -4,6 +4,7 @@
 #include <mm/pmm.h>
 #include <fs/vfs.h>
 
+/*
 #ifdef K_ATA
 
 // constants
@@ -240,3 +241,4 @@ void ataInit()
     }
 }
 #endif
+*/

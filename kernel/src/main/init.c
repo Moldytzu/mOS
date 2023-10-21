@@ -39,7 +39,7 @@ void _start()
 
     logInfo("cmdline: %s", bootloaderGetCommandLine());
 
-    initrdInit(); // initialise the initrd
+    // initrdInit(); // initialise the initrd
 
     pmmInit(); // initialise the physical memory manager
 
@@ -57,16 +57,16 @@ void _start()
 
     acpiInstallSCIInterrupt(); // install SCI interrupt handler
 
-    vfsInit(); // initialise the virtual filesystem
+    // vfsInit(); // initialise the virtual filesystem
 
-    initrdMount(); // mount the initrd
+    // initrdMount(); // mount the initrd
 
 #ifdef K_ATA
-    ataInit(); // initialise ide/ata pio hard drives
+    // ataInit(); // initialise ide/ata pio hard drives
 #endif
 
 #ifdef K_AHCI
-    ahciInit(); // initialise ahci controller
+    // ahciInit(); // initialise ahci controller
 #endif
 
     schedInit(); // create initial tasks

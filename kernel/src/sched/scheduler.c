@@ -461,8 +461,8 @@ void schedKill(uint32_t id)
         pmmDeallocatePages(task->allocated, task->allocatedBufferPages);
 
         // close all files
-        for (int i = 0; i < TASK_MAX_FILE_DESCRIPTORS; i++)
-            vfsClose(task->fileDescriptorPointers[i]);
+        // for (int i = 0; i < TASK_MAX_FILE_DESCRIPTORS; i++)
+        //    vfsClose(task->fileDescriptorPointers[i]);
 
         // deallocate metadata section
         if (task->isDriver)

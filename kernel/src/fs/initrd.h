@@ -16,6 +16,8 @@ pstruct
 }
 dsfs_entry_t;
 
+/*
 void initrdInit();
 void initrdMount();
+*/
 dsfs_entry_t *initrdGet(const char *name);

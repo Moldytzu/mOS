@@ -9,7 +9,7 @@ uint64_t read(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, uint64_
 
     void *charBuffer = PHYSICAL(buffer); // get physical address of the buffer
 
-    vfsRead(FD_TO_NODE(fd), charBuffer, count, 0); // read from the vfs
+    // vfsRead(FD_TO_NODE(fd), charBuffer, count, 0); // read from the vfs
 
     // todo: also support reading from another terminal
 

@@ -11,7 +11,7 @@
 #define IS_LAST(x) (x->size == 0 && entry->name[0] == 0)
 
 dsfs_header_t *dsfs;
-vfs_fs_t dsfsFS;
+// vfs_fs_t dsfsFS;
 
 // initialize the initrd
 void initrdInit()
@@ -33,27 +33,7 @@ void initrdInit()
     }
 }
 
-// open handler
-uint8_t dsfsFSOpen(struct vfs_node_t *node)
-{
-    return 1; // always a success
-}
-
-// read handler
-void dsfsFSRead(struct vfs_node_t *node, void *buffer, uint64_t size, uint64_t offset)
-{
-    dsfs_entry_t *entry = initrdGet(node->path);
-
-    if (!entry) // fail
-        return;
-
-    // limit the size
-    if (size > entry->size)
-        size = entry->size;
-
-    memcpy(buffer, CONTENTS_OF(entry) + offset, size); // do the actual copy
-}
-
+/*
 // mount the filesystem
 void initrdMount()
 {
@@ -82,6 +62,7 @@ void initrdMount()
         entry = NEXT_ENTRY_OF(entry); // point to the next entry
     }
 }
+*/
 
 // get an entry from the filesystem
 dsfs_entry_t *initrdGet(const char *name)

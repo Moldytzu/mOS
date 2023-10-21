@@ -27,7 +27,7 @@ uint64_t write(uint64_t buffer, uint64_t count, uint64_t fd, uint64_t r9, uint64
     }
     else
     {
-        vfsWrite(FD_TO_NODE(fd), (void *)charBuffer, count, 0); // write to the descriptor
+        // vfsWrite(FD_TO_NODE(fd), (void *)charBuffer, count, 0); // write to the descriptor
 
         // todo: also support writing to another terminal
     }

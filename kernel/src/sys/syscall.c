@@ -34,8 +34,8 @@ uint64_t sysOpenRelativePath(const char *path, sched_task_t *task)
 {
     // todo: an expandRelativePath function would be great here
 
-    if (vfsExists(path))      // if a file exists at that given path
-        return vfsOpen(path); // open it then return its file descriptor
+    // if (vfsExists(path))      // if a file exists at that given path
+    //     return vfsOpen(path); // open it then return its file descriptor
 
     // todo: implement more advanced path traversal like .. and .
     if (strlen(path) > 2 && memcmp(path, "./", 2) == 0) // remove ./
@@ -44,12 +44,12 @@ uint64_t sysOpenRelativePath(const char *path, sched_task_t *task)
     char *buffer = (char *)pmmPage();         // allocate an internal buffer
     sprintf(buffer, "%s%s", task->cwd, path); // combine cwd and path
 
-    if (vfsExists(buffer)) // check if it exists
+    // if (vfsExists(buffer)) // check if it exists
     {
-        uint64_t node = vfsOpen(buffer);
+        // uint64_t node = vfsOpen(buffer);
 
         pmmDeallocate(buffer); // do clean up
-        return node;           // return the node
+        // return node;           // return the node
     }
 
     // fail
