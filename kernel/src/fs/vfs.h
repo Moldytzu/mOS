@@ -3,13 +3,15 @@
 
 typedef struct
 {
+    // metadata
     char *name;
 
-    // vertical (deep)
+    // tree links
+    //    vertical (deep)
     void *parent;
     void *child;
 
-    // horizontal (long)
+    //    horizontal (long)
     void *prev;
     void *next;
 } vfs_node_t;

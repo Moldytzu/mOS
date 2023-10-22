@@ -37,6 +37,30 @@ void vfsDumpSerial()
     } while (node);
 }
 
+vfs_node_t *vfsGetChildOf(vfs_node_t *node, const char *child)
+{
+    // scan the node for the requested child
+    node = node->child; // point to the child list
+
+    do
+    {
+        if (strcmp(node->name, child) == 0)
+            return node;
+
+        node = NODE(node->next);
+    } while (node);
+
+    return NULL;
+}
+
+vfs_node_t *vfsCreateNode(const char *path)
+{
+    // traverse the tree
+    vfs_node_t *root;
+
+    return NULL;
+}
+
 void vfsInit()
 {
     // create the root node
@@ -66,6 +90,8 @@ void vfsInit()
     layer->name = "bar";
 
     vfsDumpSerial();
+
+    printks("/init %s\n", vfsGetChildOf(root, "init")->name);
 
     while (1)
         ;
