@@ -55,6 +55,24 @@ vfs_node_t *vfsGetChildOf(vfs_node_t *node, const char *child)
     return NULL;
 }
 
+void vfsAppendChildTo(vfs_node_t *node, vfs_node_t *child)
+{
+    if (!node->child) // no child
+    {
+        node->child = child;
+        return;
+    }
+
+    node = NODE(node->child); // point to the child
+
+    while (node->next) // get last valid child
+        node = NODE(node->next);
+
+    // link in the list
+    node->next = child;
+    child->prev = node;
+}
+
 vfs_node_t *vfsCreateNodeAtPath(const char *path)
 {
     printks("creating node: %s\n", path);
@@ -112,8 +130,9 @@ vfs_node_t *vfsCreateNodeAtPath(const char *path)
 
             vfs_node_t *newNode = blkBlock(sizeof(vfs_node_t));
             newNode->name = layerName;
+            newNode->parent = node;
 
-            node->child = newNode;
+            vfsAppendChildTo(node, newNode);
             return newNode;
         }
 
@@ -169,6 +188,9 @@ void vfsInit()
     // layer->name = "bar";
 
     // vfsCreateNodeAtPath("/etc/abc");
+
+    vfsCreateNodeAtPath("/etc");
+    vfsCreateNodeAtPath("/abc");
 
     vfsDumpSerial();
 
