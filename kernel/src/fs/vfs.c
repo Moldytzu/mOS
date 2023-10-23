@@ -85,6 +85,11 @@ vfs_node_t *vfsCreateNodeAtPath(const char *path)
 
     path++; // skip the first delimiter
 
+    // determine if we create a file or a directory
+    bool isDirectory = path[strlen(path) - 1] == VFS_PATH_DELIMITER;
+    if (isDirectory)
+        ((char *)path)[strlen(path) - 1] = 0; // eliminate the delimiter
+
     // traverse the tree
     vfs_node_t *node = root;
 
@@ -93,11 +98,10 @@ vfs_node_t *vfsCreateNodeAtPath(const char *path)
         // find the next layer name
         // step 1: determine how long it's its name
         size_t layerNameSize = 0;
-        while (path[layerNameSize] != 0 && path[layerNameSize] != VFS_PATH_DELIMITER)
+        while (path[layerNameSize] != 0)
             layerNameSize++;
 
         bool lastLayer = path[layerNameSize] == 0; // null termination of string
-        bool isDirectory = !layerNameSize && path[layerNameSize] == '/';
 
         // step 2: copy its name in a buffer
         char *layerName = blkBlock(layerNameSize + 1);
@@ -119,6 +123,9 @@ vfs_node_t *vfsCreateNodeAtPath(const char *path)
             vfs_node_t *newNode = blkBlock(sizeof(vfs_node_t));
             newNode->name = layerName;
             newNode->parent = node;
+
+            if (isDirectory)
+                newNode->flags |= VFS_FLAG_DIRECTORY;
 
             // fixme: check if node is a directory (i.e. accepts children)
 
@@ -179,8 +186,7 @@ void vfsInit()
 
     // vfsCreateNodeAtPath("/etc/abc");
 
-    vfsCreateNodeAtPath("/etc");
-    vfsCreateNodeAtPath("/etc");
+    vfsCreateNodeAtPath("/etc/");
     vfsCreateNodeAtPath("/abc");
 
     vfsDumpSerial();
