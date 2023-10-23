@@ -75,15 +75,13 @@ void vfsAppendChildTo(vfs_node_t *node, vfs_node_t *child)
 
 vfs_node_t *vfsCreateNodeAtPath(const char *path)
 {
-    printks("creating node: %s\n", path);
+    logDbg(LOG_SERIAL_ONLY, "vfs: creating node at %s", path);
 
     // determine the depth of the path
     size_t depth = 0;
     for (size_t i = 0; path[i]; i++)
         if (path[i] == VFS_PATH_DELIMITER)
             depth++;
-
-    printks("depth: %d\n", depth);
 
     path++; // skip the first delimiter
 
@@ -101,27 +99,17 @@ vfs_node_t *vfsCreateNodeAtPath(const char *path)
         bool lastLayer = path[layerNameSize] == 0; // null termination of string
         bool isDirectory = !layerNameSize && path[layerNameSize] == '/';
 
-        printks("layer name size: %d\n", layerNameSize);
-
         // step 2: copy its name in a buffer
         char *layerName = blkBlock(layerNameSize + 1);
         memcpy(layerName, path, layerNameSize);
         printks("in layer: %s\n", layerName);
 
         // step 3: create the node if we're the last layer
-        if (isDirectory)
-        {
-            // fixme: mark it only and only if the node exists!!
-            printks("%s is a directory now\n", node->name);
-            node->flags |= VFS_FLAG_DIRECTORY;
-            return node;
-        }
-
         if (lastLayer)
         {
             if (vfsGetChildOf(node, layerName)) // already exists
             {
-                printks("%s already exists in %s\n", layerName, node->name);
+                logWarn("vfs: %s already exists in %s", layerName, node->name);
 
                 node = vfsGetChildOf(node, layerName); // get that child
                 blkDeallocate(layerName);              // deallocate
@@ -131,6 +119,8 @@ vfs_node_t *vfsCreateNodeAtPath(const char *path)
             vfs_node_t *newNode = blkBlock(sizeof(vfs_node_t));
             newNode->name = layerName;
             newNode->parent = node;
+
+            // fixme: check if node is a directory (i.e. accepts children)
 
             vfsAppendChildTo(node, newNode);
             return newNode;
@@ -143,7 +133,7 @@ vfs_node_t *vfsCreateNodeAtPath(const char *path)
         if (!node) // it doesn't exist
         {
             // printks("achtung: %s doesn't exist\n", parent->name);
-            //  todo: create here a path and use it to recursively create the node
+            return NULL; //  todo: create here a path and use it to recursively create the node
         }
 
         // step 5: move the path forward
@@ -189,6 +179,7 @@ void vfsInit()
 
     // vfsCreateNodeAtPath("/etc/abc");
 
+    vfsCreateNodeAtPath("/etc");
     vfsCreateNodeAtPath("/etc");
     vfsCreateNodeAtPath("/abc");
 
