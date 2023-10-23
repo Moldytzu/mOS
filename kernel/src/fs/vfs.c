@@ -73,7 +73,7 @@ void vfsAppendChildTo(vfs_node_t *node, vfs_node_t *child)
     child->prev = node;
 }
 
-vfs_node_t *vfsCreateNodeAtPath(const char *path)
+vfs_node_t *vfsCreateNodeUnder(vfs_node_t *root, const char *path)
 {
     logDbg(LOG_SERIAL_ONLY, "vfs: creating node at %s", path);
 
@@ -155,6 +155,11 @@ vfs_node_t *vfsCreateNodeAtPath(const char *path)
     return NULL;
 }
 
+vfs_node_t *vfsCreateNodeAtPath(const char *path)
+{
+    return vfsCreateNodeUnder(root, path);
+}
+
 void vfsInit()
 {
     // create the root node
@@ -162,31 +167,8 @@ void vfsInit()
     root->name = "/";
     root->flags |= VFS_FLAG_DIRECTORY;
 
-    // // create a child called init
-    // vfs_node_t *init = root->child = blkBlock(sizeof(vfs_node_t));
-    // init->name = "init";
-
-    // // make nodes in init
-    // vfs_node_t *layer = init->child = blkBlock(sizeof(vfs_node_t));
-    // layer->name = "abc";
-
-    // layer = layer->next = blkBlock(sizeof(vfs_node_t));
-    // layer->name = "def";
-
-    // // create another child
-    // vfs_node_t *ahci0p0 = init->next = blkBlock(sizeof(vfs_node_t));
-    // ahci0p0->name = "ahci0p0";
-
-    // // make some nodes in it
-    // layer = ahci0p0->child = blkBlock(sizeof(vfs_node_t));
-    // layer->name = "foo";
-
-    // layer = layer->next = blkBlock(sizeof(vfs_node_t));
-    // layer->name = "bar";
-
-    // vfsCreateNodeAtPath("/etc/abc");
-
-    vfsCreateNodeAtPath("/etc/");
+    vfs_node_t *etc = vfsCreateNodeAtPath("/etc/");
+    vfsCreateNodeUnder(etc, "/test");
     vfsCreateNodeAtPath("/abc");
 
     vfsDumpSerial();
